@@ -20,7 +20,7 @@ const MENU = [
   { id:'p14',cat:'pizza',name:'Kathiyavadi',spicy:2,prices:P2(300,470),img:'kathiyavadi',desc:'Our Gujarati special: Kathiyavadi gravy, onion, capsicum and green chilli. Hot!'},
   { id:'p15',cat:'pizza',name:'5 Cheese',jain:1,prices:P2(320,490),img:'fivecheese',desc:'Mozzarella, Monterey Jack, orange, Colby, cheddar and creamy cheese. Five times cheesy.'},
   { id:'p16',cat:'pizza',name:'Cheesy Special',jain:1,prices:P2(320,490),img:'cheesyspecial',desc:'The house special: masala paneer, olives, jalapeno, corn and three bell peppers.'},
-  { id:'s1',cat:'pockets',name:'Classic Paneer Pockets',price:170,best:1,img:'paneerpockets',desc:'2 crispy baked pockets stuffed with spiced paneer and veggies. No mayo.'},
+  { id:'s1',cat:'pockets',name:'Classic Paneer Pockets',options:['Spicy','No spicy','Less paneer','Less onion','Less capsicum'],price:170,best:1,img:'paneerpockets',desc:'2 crispy baked pockets stuffed with spiced paneer and veggies. No mayo.'},
   { id:'s2',cat:'pockets',name:'Garlic Paneer Pockets',price:170,img:'garlicpockets',desc:'Paneer pockets brushed with garlic butter and herbs. 2 pcs, no mayo.'},
   { id:'s3',cat:'pockets',name:'Jain Paneer Pockets',price:170,jain:1,desc:'Jain-friendly paneer filling, no onion or garlic. 2 pcs, no mayo.'},
   { id:'b1',cat:'bread',name:'Cheesy Garlic Bread',price:160,jain:1,img:'garlicbread',desc:'6 soft sticks with garlic butter, herbs and melted cheese.'},
@@ -53,12 +53,14 @@ function seedData(now = Date.now()) {
       { id: 'cash', label: 'Cash', color: '#1f8a4c' },
       { id: 'upi', label: 'GPay / UPI', color: '#1a93a8' },
       { id: 'card', label: 'Card', color: '#6b4fd0' },
+      { id: 'bank', label: 'Bank / Cheque', color: '#56727a' },
       { id: 'wallet', label: 'Wallet', color: '#0b3a43' },
       { id: 'zomato', label: 'Zomato', color: '#d23f35' },
       { id: 'due', label: 'Baki (Due)', color: '#b76a00' },
     ],
     config: {
-      prepMin: 15,          // minutes from oven to box
+      prepMin: 15,          // minutes from oven to box (default waiting time)
+      waitTimes: [15, 20, 30, 40], // waiting times the cashier can pick
       rideMin: 20,          // delivery ride time
       coinRate: 0.05,       // Cheese Coins earned per rupee
       openHour: 12,         // 12 noon
@@ -79,7 +81,7 @@ function seedData(now = Date.now()) {
       ],
     },
     state: {
-      sizes: [{ id: '7', label: '7"', pcs: 4 }, { id: '10', label: '10"', pcs: 6 }],
+      sizes: [{ id: '7', label: '7"', pcs: 4, color: '#1a93a8' }, { id: '10', label: '10"', pcs: 6, color: '#0f2e36' }],
       outlets: [
         { id: 'o1', code: 'A', name: 'Main Outlet', area: 'Set your address', phone: '7778043066', upi: 'cheesypizza@upi', tables: 10,
           riders: [{ name: 'Jay', phone: '9800000001' }, { name: 'Rahul', phone: '9800000002' }] },
@@ -90,7 +92,8 @@ function seedData(now = Date.now()) {
       addons: {
         burst: { name: 'Cheese Burst base', prices: P2(70, 90) },
         cheese: { name: 'Extra Cheese', prices: P2(40, 60) },
-        veg: { name: 'Extra Veg Topping', prices: P2(20, 30) },
+        veg: { name: 'Extra Veg Topping', prices: P2(20, 30),
+          choices: ['Onion', 'Capsicum', 'Tomato', 'Corn', 'Olive', 'Jalapeno', 'Red Paprika', 'Red Capsicum', 'Yellow Capsicum'] },
       },
       offers: [
         { id: 'of1', type: 'day', name: 'Terrific Tuesday', pct: 20, days: [2], scope: 'pizza', min: 0, active: true },
