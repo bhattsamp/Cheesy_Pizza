@@ -1,0 +1,19 @@
+{
+  "name": "cheesy-pizza",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Cheesy Pizza customer site and outlet POS, backed by a SQLite database",
+  "main": "server/server.js",
+  "scripts": {
+    "start": "node server/server.js",
+    "seed": "node server/seed.js",
+    "test": "node --test test/*.test.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "better-sqlite3": "^13.0.3",
+    "express": "^5.2.1"
+  }
+}
