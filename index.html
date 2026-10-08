@@ -990,7 +990,8 @@ function animatePub(){
   revealObs?.disconnect();
   revealObs=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');revealObs.unobserve(e.target)}}),{rootMargin:'0px 0px -6% 0px'});
   const els=app.querySelectorAll('.pub .item,.pub .coupon,.pub .combo-card,.pub .how>div,.pub .sec-h,.pub .outlet-bar,.pub .foot,.hm-col,.hm-box,.hm-bev,.hm-banner,.hm-cats,.hm-nomayo,.hm-addr,.hm-feat,.hm-flow,.hm-pz,.hm-steps');
-  let i=0;els.forEach(el=>{const r=el.getBoundingClientRect();if(r.top<innerHeight){el.style.setProperty('--d',(i++%8)*55+'ms')}else el.style.setProperty('--d',(i++%4)*70+'ms');el.classList.add('rv');revealObs.observe(el)});
+  // What is on screen already stays visible (the page fades in); only what is further down rises in
+  let i=0;els.forEach(el=>{if(el.getBoundingClientRect().top<innerHeight)return;el.style.setProperty('--d',(i++%4)*70+'ms');el.classList.add('rv');revealObs.observe(el)});
 }
 // A drawn pizza for items without a photo: toppings come from the item's description
 function pizzaArt(m){
