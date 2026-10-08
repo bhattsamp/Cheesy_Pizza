@@ -32,6 +32,9 @@ test('seeded state matches the old hardcoded data', () => withServer(async ({ ge
   assert.equal(state.config.prepMin, 15);
   assert.ok(state.config.payModes.some(p => p.id === 'bank'));
   assert.equal(state.addons.veg.choices.length, 9);
+  assert.deepEqual(state.extras.map(g => g.name), ['Extra veg topping', 'Toppings']);
+  assert.equal(state.extras[0].items.length, 9);
+  assert.deepEqual(state.extras[1].items[0], { name: 'Extra Cheese', prices: { 7: 40, 10: 60 } });
   // PIN hashes are never sent to the browser
   assert.deepEqual(state.users.map(u => u.pin), [true, true, true]);
   assert.ok(!JSON.stringify(state).includes('scrypt'));

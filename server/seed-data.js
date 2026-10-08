@@ -106,6 +106,15 @@ function seedData(now = Date.now()) {
         { id: 'of8', type: 'code', name: 'Party Order', code: 'PARTY10', kind: 'pct', value: 10, cap: 150, min: 999, days: [], active: true },
         { id: 'of9', type: 'code', name: 'First Order Treat', code: 'WELCOME100', kind: 'flat', value: 100, min: 299, firstOnly: true, days: [], active: true },
       ],
+      // Extra menus shown when a pizza is added. `from` names the add-on whose
+      // prices an older database copies (see Store.addExtraMenus).
+      extras: [
+        { id: 'xveg', name: 'Extra veg topping', active: true, pizzas: 'all',
+          items: ['Onion', 'Capsicum', 'Tomato', 'Corn', 'Olive', 'Jalapeno', 'Red Paprika', 'Red Capsicum', 'Yellow Capsicum']
+            .map(name => ({ name, prices: P2(20, 30), from: 'veg' })) },
+        { id: 'xtop', name: 'Toppings', active: true, pizzas: 'all',
+          items: [{ name: 'Extra Cheese', prices: P2(40, 60), from: 'cheese' }] },
+      ],
       combos: [
         { id: 'c1', name: 'Solo Meal', desc: 'Any 7" pizza up to ₹270 + Salted Fries + Cheesy Dip', price: 299, pizzas: 1, size: '7', tier: 270, extras: ['f1', 'x1'], active: true },
         { id: 'c2', name: 'Duo Date', desc: 'Any two 7" pizzas + Cheesy Garlic Bread + Chocolava', price: 649, pizzas: 2, size: '7', tier: 320, extras: ['b1', 'd1'], active: true },

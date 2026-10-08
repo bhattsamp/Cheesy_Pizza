@@ -55,6 +55,7 @@ select.pill{border:1px solid var(--line);background:var(--surface);border-radius
 .btn.ok{background:var(--ok);border-color:var(--ok);color:#fff}
 .btn.lg{padding:12px 20px;font-size:16px;border-radius:12px}
 .btn.sm{padding:4px 10px;font-size:13px;border-radius:8px}
+.xg{border:1px solid var(--line);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:10px}.xg.off{opacity:.6}
 .btn.block{width:100%}
 .btn:disabled{opacity:.45;cursor:not-allowed}
 .field{display:flex;flex-direction:column;gap:4px;min-width:0}
@@ -624,8 +625,11 @@ const COUNTER_MODES=['cash','upi','card','bank'];
 // Extra choices for non-pizza items (owners can change them per item on the Menu screen)
 const ITEM_OPTS={pockets:['Spicy','No spicy','Less paneer','Less onion','Less capsicum'],bread:['Spicy','No spicy','Less onion','Extra crispy']};
 const itemOpts=m=>m.options||ITEM_OPTS[m.cat]||[];
-const VEG_TOPS=['Onion','Capsicum','Tomato','Corn','Olive','Jalapeno','Red Paprika','Red Capsicum','Yellow Capsicum'];
-const vegTops=()=>S.addons.veg?.choices||VEG_TOPS;
+// Extra menus (Extra veg topping, Toppings, ...) the owner sets up on the Menu screen.
+// A line's picks are in l.ex as [{g: menu id, n: item name}], a name twice = double.
+const extraMenus=m=>(S.extras||[]).filter(g=>g.active!==false&&(!Array.isArray(g.pizzas)||g.pizzas.includes(m.id)));
+function exPrice(e,size){const g=(S.extras||[]).find(x=>x.id===e.g);if(!g)return 0;const it=g.items.find(i=>i.name===e.n)||(e.c?g.items.find(i=>+i.prices?.[size]):null);return +(it?.prices?.[size]||0)}
+const exText=ex=>topsText((ex||[]).map(e=>e.n));
 const SIZE_COLS=['#1a93a8','#0f2e36','#6b4fd0','#b76a00','#d23f35'];
 const sizeColor=id=>{const i=S.sizes.findIndex(s=>s.id===id);return (S.sizes[i]||{}).color||SIZE_COLS[Math.max(0,i)%SIZE_COLS.length]};
 const topsText=t=>{const c={};(t||[]).forEach(x=>c[x]=(c[x]||0)+1);return Object.entries(c).map(([n,q])=>n+(q>1?' ×'+q:''))};
@@ -638,7 +642,7 @@ const noteText=l=>[...(l.notes||[]),l.note].filter(Boolean).join(' · ');
 // site mode and who is signed in.
 const LKEY='cheesy_local_v1';
 const LOCAL_KEYS=['cur','mode','me','staffId'];
-const SYNCED=['sizes','outlets','menu','addons','offers','combos','users','customers','orders'];
+const SYNCED=['sizes','outlets','menu','addons','offers','combos','extras','users','customers','orders'];
 const MAPS={addons:1,customers:1};
 let S,VER=0,SNAP={},pendingFlush=null,inFlight=0,syncQ=Promise.resolve();
 const today=(d=new Date())=>d.toLocaleDateString('en-CA');
@@ -730,8 +734,8 @@ function seedDemoOrders(){
 }
 function itemPrice(item,size){return item.cat==='pizza'?(+item.prices[size]||0):item.price}
 // tops: picked extra veg toppings, a name twice = double topping; each costs the veg topping price
-function price(item,size,addons,tops){let p=itemPrice(item,size);(addons||[]).forEach(a=>{p+=+(S.addons[a]?.prices[size]||0)});if(tops&&tops.length)p+=tops.length*(+(S.addons.veg?.prices[size]||0));return p}
-function mkLine(item,size,addons,qty,tops){const l={itemId:item.id,cat:item.cat,name:item.name,size:item.cat==='pizza'?size:null,addons:addons||[],qty:qty||1,unit:price(item,size,addons,tops),custom:false};if(tops&&tops.length)l.tops=tops.slice();return l}
+function price(item,size,addons,tops,ex){let p=itemPrice(item,size);(ex||[]).forEach(e=>{p+=exPrice(e,size)});(addons||[]).forEach(a=>{p+=+(S.addons[a]?.prices[size]||0)});if(tops&&tops.length)p+=tops.length*(+(S.addons.veg?.prices[size]||0));return p}
+function mkLine(item,size,addons,qty,tops,ex){const l={itemId:item.id,cat:item.cat,name:item.name,size:item.cat==='pizza'?size:null,addons:addons||[],qty:qty||1,unit:price(item,size,addons,tops,ex),custom:false};if(tops&&tops.length)l.tops=tops.slice();if(ex&&ex.length)l.ex=ex.map(e=>({...e}));return l}
 function newOrder(p){return Object.assign({id:uid('ord'),no:'',ts:Date.now(),date:today(),status:'preparing',source:'pos',type:'takeaway',table:'',address:'',pay:{mode:'cash',given:0,change:0},paid:true,times:{}},p)}
 const sizeLabel=id=>(S.sizes.find(s=>s.id===id)||{label:id+'"'}).label;
 const menuItem=id=>S.menu.find(m=>m.id===id);
@@ -837,10 +841,10 @@ function commitOrder(o){
 function setStatus(o,st){o.status=st;o.times=o.times||{};o.times[st]=Date.now();save()}
 function addonText(l){
   if(l.combo)return (l.picks||[]).join(' · ');
-  const a=[];if(l.size)a.push(sizeLabel(l.size));l.addons.forEach(x=>a.push(S.addons[x]?.name||x));if(l.tops&&l.tops.length)a.push('+ '+topsText(l.tops).join(', '));return a.join(' · ');
+  const a=[];if(l.size)a.push(sizeLabel(l.size));l.addons.forEach(x=>a.push(S.addons[x]?.name||x));if(l.tops&&l.tops.length)a.push('+ '+topsText(l.tops).join(', '));if(l.ex&&l.ex.length)a.push('+ '+exText(l.ex).join(', '));return a.join(' · ');
 }
 // Same as addonText without the size, for screens that show the size as a coloured chip
-const extrasText=l=>l.combo?(l.picks||[]).join(' · '):[...l.addons.map(x=>S.addons[x]?.name||x),...(l.tops&&l.tops.length?['+ '+topsText(l.tops).join(', ')]:[])].join(' · ');
+const extrasText=l=>l.combo?(l.picks||[]).join(' · '):[...l.addons.map(x=>S.addons[x]?.name||x),...(l.tops&&l.tops.length?['+ '+topsText(l.tops).join(', ')]:[]),...(l.ex&&l.ex.length?['+ '+exText(l.ex).join(', ')]:[])].join(' · ');
 // Minutes the customer was told to wait, and how many are left
 const waitOf=o=>+o.wait||PREP_MIN;
 function minsLeft(o){const start=o.times?.preparing||o.times?.placed||o.ts;return Math.ceil(waitOf(o)-(Date.now()-start)/60000)}
@@ -1041,8 +1045,8 @@ function renderHome(){
 function openCustomizer(id,target,edit){
   const m=menuItem(id);if(!m){toast('This item is no longer on the menu');return}
   const cart=target==='pub'?U.cart:U.pos.cart;const old=edit!=null?cart[edit]:null;
-  const st={size:null,addons:[],tops:[],qty:1,notes:[],note:''};
-  if(old)Object.assign(st,{size:old.size,addons:old.addons.slice(),tops:(old.tops||[]).slice(),qty:old.qty,notes:(old.notes||[]).slice(),note:old.note||''});
+  const st={size:null,addons:[],tops:[],ex:[],qty:1,notes:[],note:''};
+  if(old)Object.assign(st,{size:old.size,addons:old.addons.slice(),tops:(old.tops||[]).slice(),ex:(old.ex||[]).map(e=>({...e})),qty:old.qty,notes:(old.notes||[]).slice(),note:old.note||''});
   const save=l=>{if(st.notes.length)l.notes=st.notes.slice();if(st.note.trim())l.note=st.note.trim();closeModal();
     if(old){cart[edit]=l;toast(l.name+' updated');render();if(target==='pub')openPubCart()}else addLine(target,l)};
   const noteBox=(opts,n)=>`${opts.length?`<div class="grp-h">${n} · Options</div>
@@ -1063,14 +1067,20 @@ function openCustomizer(id,target,edit){
   }
   const sizes=S.sizes.filter(s=>+m.prices[s.id]);if(!sizes.length){toast('No price set for this pizza');return}
   if(!sizes.some(s=>s.id===st.size))st.size=sizes[0].id;
+  // Lines saved before extra menus used the veg / cheese add-ons: move them into the menus
+  if(old&&!old.ex){st.tops.forEach(n=>st.ex.push({g:'xveg',n}));st.tops=[];
+    if(st.addons.includes('cheese')&&S.extras.some(g=>g.id==='xtop')){st.ex.push({g:'xtop',n:'Extra Cheese'});st.addons=st.addons.filter(a=>a!=='cheese')}
+    st.addons=st.addons.filter(a=>a!=='veg'||!st.ex.length)}
   const draw=()=>{
-    const p=price(m,st.size,st.addons,st.tops);const ap=a=>+(S.addons[a]?.prices[st.size]||0);
-    const tags=itemOfferTags(m,new Date().getDay());const tops=Object.keys(S.addons).filter(a=>a!=='burst'&&ap(a)&&(a!=='veg'||st.addons.includes('veg')));
-    const vp=ap('veg');const veg=[...new Set([...vegTops(),...st.tops])];const cnt=n=>st.tops.filter(x=>x===n).length;
+    const p=price(m,st.size,st.addons,st.tops,st.ex);const ap=a=>+(S.addons[a]?.prices[st.size]||0);
+    const tags=itemOfferTags(m,new Date().getDay());
+    const legacy=Object.keys(S.addons).filter(a=>a!=='burst'&&st.addons.includes(a));
+    const menus=extraMenus(m).map(g=>({g,items:[...g.items.filter(i=>+i.prices?.[st.size]),...st.ex.filter(e=>e.g===g.id&&e.c&&!g.items.some(i=>i.name===e.n)).filter((e,i,a)=>a.findIndex(x=>x.n===e.n)===i).map(e=>({name:e.n,custom:1}))]})).filter(x=>x.items.length);
+    const cnt=(g,n)=>st.ex.filter(e=>e.g===g&&e.n===n).length;const nEx=st.ex.length;
     let step=1;
     showModal(`<div class="mh"><h3>${esc(m.name)}</h3><button class="x" data-act="close" aria-label="Close">×</button></div>
     <div class="mb">
-      ${pizzaViz(m,st.size,st.tops.length?[...st.addons,'veg']:st.addons)}<div class="vizcap num">${esc(sizeLabel(st.size))} · ${(S.sizes.find(x=>x.id===st.size)||{}).pcs||''} slices${st.addons.map(a=>' · '+S.addons[a].name).join('')}${st.tops.length?' · '+st.tops.length+' extra topping'+(st.tops.length>1?'s':''):''}</div>
+      ${pizzaViz(m,st.size,[...st.addons,...(nEx||st.tops.length?['veg']:[]),...(st.ex.some(e=>/cheese/i.test(e.n))?['cheese']:[])])}<div class="vizcap num">${esc(sizeLabel(st.size))} · ${(S.sizes.find(x=>x.id===st.size)||{}).pcs||''} slices${st.addons.map(a=>' · '+S.addons[a].name).join('')}${nEx?' · '+nEx+' extra'+(nEx>1?'s':''):''}</div>
       <div class="muted small">${esc(m.desc)}</div>
       ${tags.length?`<div class="row">${tags.map(t=>`<span class="chip r">${esc(t)}</span>`).join('')}<span class="small muted">applied in cart</span></div>`:''}
       <div class="grp-h">${step++} · Size</div>
@@ -1080,27 +1090,26 @@ function openCustomizer(id,target,edit){
         <label class="opt"><input type="radio" name="base" value="" ${!st.addons.includes('burst')?'checked':''}> Regular base<span class="p">—</span></label>
         <label class="opt"><input type="radio" name="base" value="burst" ${st.addons.includes('burst')?'checked':''}> ${esc(S.addons.burst.name)}<span class="p num">+${rs(ap('burst'))}</span></label>
       </div>`:''}
-      ${vp?`<div class="grp-h">${step++} · Extra veg topping <span style="text-transform:none;font-weight:500">· ${rs(vp)} each · tap once for single, twice for double</span></div>
-      <div class="vt">${veg.map(n=>{const c=cnt(n);return `<button data-act="cz-top" data-v="${esc(n)}" class="${c===1?'on1':c>1?'on2':''}" aria-label="${esc(n)}${c?', '+(c>1?'double':'single'):''}"><span>${esc(n)}</span><b>${c===1?'Single':c>1?'Double':''}</b></button>`}).join('')}</div>
-      <div class="row"><input class="inp grow" id="cz-newtop" placeholder="+ Topping not in the list" maxlength="30" aria-label="Other topping" style="width:auto"><button class="btn" data-act="cz-addtop">+ Topping</button></div>`:''}
-      ${tops.length?`<div class="grp-h">${step++} · Extras</div>
-      <div class="opts">${tops.map(a=>`<label class="opt"><input type="checkbox" name="ad" value="${a}" ${st.addons.includes(a)?'checked':''}> ${esc(S.addons[a].name)}<span class="p num">+${rs(ap(a))}</span></label>`).join('')}</div>`:''}
+      ${menus.map(({g,items},gi)=>`<div class="grp-h">${step++} · ${esc(g.name)} <span style="text-transform:none;font-weight:500">· tap once for single, twice for double</span></div>
+      <div class="vt">${items.map(it=>{const c=cnt(g.id,it.name);const pr=exPrice({g:g.id,n:it.name,c:it.custom},st.size);return `<button data-act="cz-ex" data-g="${g.id}" data-v="${esc(it.name)}" ${it.custom?'data-c="1"':''} class="${c===1?'on1':c>1?'on2':''}" aria-label="${esc(it.name)}${c?', '+(c>1?'double':'single'):''}"><span>${esc(it.name)}<br><small class="num">+${rs(pr)}</small></span><b>${c===1?'Single':c>1?'Double':''}</b></button>`}).join('')}</div>
+      ${gi===0?`<div class="row"><input class="inp grow" id="cz-newtop" placeholder="+ Topping not in the list" maxlength="30" aria-label="Other topping" style="width:auto"><button class="btn" data-act="cz-addtop" data-g="${g.id}">+ Topping</button></div>`:''}`).join('')}
+      ${legacy.length||st.tops.length?`<div class="small muted">Also on this pizza: ${esc([...legacy.map(a=>S.addons[a].name),...topsText(st.tops)].join(', '))}</div>`:''}
       <div class="grp-h">${step++} · Cooking instructions <span style="text-transform:none;font-weight:500">(optional)</span></div>
       <div class="days">${COOK.map(c=>`<label><input type="checkbox" name="ck" value="${esc(c)}" ${st.notes.includes(c)?'checked':''}>${esc(c)}</label>`).join('')}</div>
       <input class="inp" id="cz-note" value="${esc(st.note)}" placeholder="Anything else for the chef? e.g. extra sauce on base" maxlength="120" aria-label="Note for the chef">
       ${qtyRow(p)}
     </div>`,{onChange:e=>{
-        if(e.target.name==='sz'){st.size=e.target.value;st.addons=st.addons.filter(a=>+(S.addons[a]?.prices[st.size]||0))}
+        if(e.target.name==='sz'){st.size=e.target.value;st.addons=st.addons.filter(a=>+(S.addons[a]?.prices[st.size]||0));st.ex=st.ex.filter(x=>exPrice(x,st.size))}
         if(e.target.name==='base'){st.addons=st.addons.filter(a=>a!=='burst');if(e.target.value)st.addons.unshift('burst')}
-        if(e.target.name==='ad'){st.addons=st.addons.filter(a=>a!==e.target.value);if(e.target.checked)st.addons.push(e.target.value)}
         if(e.target.name==='ck'){st.notes=COOK.filter(c=>c===e.target.value?e.target.checked:st.notes.includes(c))}
         if(e.target.id==='cz-note'||e.target.id==='cz-newtop')return;
         draw();
       },onInput:e=>{if(e.target.id==='cz-note')st.note=e.target.value},onAct:(act,el)=>{
         if(act==='cz-q'){st.qty=Math.max(1,st.qty+ +el.dataset.v);draw();return true}
-        if(act==='cz-top'){const n=el.dataset.v,c=cnt(n);st.tops=st.tops.filter(x=>x!==n);if(c<2)st.tops.push(...Array(c+1).fill(n));draw();return true}
-        if(act==='cz-addtop'){const n=document.getElementById('cz-newtop').value.trim();if(n){const k=vegTops().find(x=>x.toLowerCase()===n.toLowerCase())||n;if(!st.tops.includes(k))st.tops.push(k)}draw();return true}
-        if(act==='cz-add'){const l=mkLine(m,st.size,st.addons.slice(),st.qty,st.tops);save(l);return true}
+        if(act==='cz-ex'){const g=el.dataset.g,n=el.dataset.v,c=cnt(g,n);st.ex=st.ex.filter(x=>!(x.g===g&&x.n===n));if(c<2)for(let i=0;i<=c;i++)st.ex.push(el.dataset.c?{g,n,c:1}:{g,n});draw();return true}
+        if(act==='cz-addtop'){const n=document.getElementById('cz-newtop').value.trim();const g=S.extras.find(x=>x.id===el.dataset.g);
+          if(n&&g){const k=g.items.find(i=>i.name.toLowerCase()===n.toLowerCase());if(!st.ex.some(x=>x.g===g.id&&x.n===(k?k.name:n)))st.ex.push(k?{g:g.id,n:k.name}:{g:g.id,n,c:1})}draw();return true}
+        if(act==='cz-add'){const l=mkLine(m,st.size,st.addons.slice(),st.qty,st.tops,st.ex);save(l);return true}
       }});
   };draw();
 }
@@ -1125,7 +1134,7 @@ function openCombo(id,target){
 const canEdit=l=>!l.combo&&!!menuItem(l.itemId);
 function addLine(target,l){
   const cart=target==='pub'?U.cart:U.pos.cart;
-  const same=!l.combo&&cart.find(x=>!x.combo&&x.itemId===l.itemId&&x.size===l.size&&x.addons.join()===l.addons.join()&&(x.tops||[]).slice().sort().join()===(l.tops||[]).slice().sort().join()&&noteText(x)===noteText(l)&&!x.custom);
+  const same=!l.combo&&cart.find(x=>!x.combo&&x.itemId===l.itemId&&x.size===l.size&&x.addons.join()===l.addons.join()&&(x.tops||[]).slice().sort().join()===(l.tops||[]).slice().sort().join()&&JSON.stringify((x.ex||[]).map(e=>e.g+':'+e.n).sort())===JSON.stringify((l.ex||[]).map(e=>e.g+':'+e.n).sort())&&noteText(x)===noteText(l)&&!x.custom);
   if(same)same.qty+=l.qty;else cart.push(l);
   toast(l.name+' added');render();
 }
@@ -1483,7 +1492,7 @@ function kotText(o,round){
   const L=[];const hr='='.repeat(32);
   L.push(center(round>1?'KOT · ADDED ITEMS ('+round+')':'KOT'),hr,pad('Order '+o.no,TYPES[o.type]),pad(fmtTime(round>1?Date.now():o.ts),o.table?'Table '+o.table:''));
   if(o.zomatoId)L.push('Zomato ID: '+o.zomatoId);if(o.customer.name)L.push('Cust: '+o.customer.name.slice(0,26));if(!round||round===1)L.push('Wait: '+waitOf(o)+' min');L.push(hr);
-  o.items.filter(l=>!round||(l.round||1)===round).forEach(l=>{L.push(l.qty+' x '+l.name);if(l.combo)(l.picks||[]).forEach(p=>L.push('    - '+p));if(l.size)L.push('    Size: '+sizeLabel(l.size));l.addons.forEach(a=>L.push('    + '+(S.addons[a]?.name||a)));topsText(l.tops).forEach(t=>L.push('    + '+t));if(noteText(l))wrapTxt(noteText(l),26).forEach((t,i)=>L.push((i?'       ':'    >> ')+t))});if(o.note){L.push('-'.repeat(32));wrapTxt('NOTE: '+o.note,32).forEach(t=>L.push(t))}
+  o.items.filter(l=>!round||(l.round||1)===round).forEach(l=>{L.push(l.qty+' x '+l.name);if(l.combo)(l.picks||[]).forEach(p=>L.push('    - '+p));if(l.size)L.push('    Size: '+sizeLabel(l.size));l.addons.forEach(a=>L.push('    + '+(S.addons[a]?.name||a)));topsText(l.tops).forEach(t=>L.push('    + '+t));exText(l.ex).forEach(t=>L.push('    + '+t));if(noteText(l))wrapTxt(noteText(l),26).forEach((t,i)=>L.push((i?'       ':'    >> ')+t))});if(o.note){L.push('-'.repeat(32));wrapTxt('NOTE: '+o.note,32).forEach(t=>L.push(t))}
   L.push(hr);return L.join('\n');
 }
 function openReceipt(o,kind){
@@ -1511,7 +1520,7 @@ function vKitchen(){
     const h=o.status==='placed'?265:Math.round(130*Math.max(0,Math.min(1,1-mins/w)));
     return `<div class="kt ${o.status==='placed'?'placed':''} ${o.status==='preparing'&&left<0?'late':''}" style="--h:${h}" ${o.status==='preparing'?`data-act="ktap" data-id="${o.id}"`:''}>
     <div class="row"><span class="no num">${o.no}</span><span class="grow"></span><span class="chip ${o.type==='zomato'?'r':'t'}">${TYPES[o.type]}${o.table?' · T'+esc(o.table):''}</span></div>
-    <div class="row"><span class="small muted num grow">${fmtTime(o.ts)} · ${mins<1?'just now':mins+' min'}${o.source==='online'?' · online':''}${o.zomatoId?' · Zomato '+esc(o.zomatoId):''}</span>${o.status==='preparing'?`<span class="left num">${leftText(left)}</span>`:''}</div>
+    <div class="row"><span class="small muted num grow">${fmtTime(o.ts)} · ${mins<1?'just now':mins+' min'}${o.source==='online'?' · online':''}${o.zomatoId?' · Zomato '+esc(o.zomatoId):''}</span>${o.status==='preparing'?`<span class="left num">${leftText(left)}</span>`:''}<button class="btn sm" data-act="set-wait" data-id="${o.id}" title="Change waiting time">⏱ ${w} min</button></div>
     ${o.scheduled?`<span class="chip c" style="align-self:flex-start">Scheduled for ${esc(o.scheduled)}</span>`:''}
     ${o.status==='preparing'?`<div class="pbar" title="Waiting time ${w} min"><i style="width:${Math.min(100,mins/w*100)}%;background:hsl(${h} 65% 42%)"></i></div>`:''}
     ${items(o)}
@@ -1525,6 +1534,20 @@ function vKitchen(){
 }
 
 function collectRow(o){return o.paid?'':`<div class="small" style="font-weight:700;color:var(--bad)">Collect ${rs(o.total)}${o.pay.mode==='due'?' (on baki account)':''}:</div><div class="row" style="gap:4px">${COUNTER_MODES.map(k=>`<button class="btn sm" data-act="collect" data-id="${o.id}" data-v="${k}">${PAY[k]}</button>`).join('')}</div>`}
+// Change the waiting time told to the customer after the order is made
+function openWait(o){
+  const draw=()=>showModal(`<div class="mh"><h3>Waiting time · #${o.no}</h3><button class="x" data-act="close" aria-label="Close">×</button></div>
+  <div class="mb"><div class="small muted">Now ${waitOf(o)} min · ${leftText(minsLeft(o))}</div>
+    <div class="waits">${[...new Set([...WAITS,waitOf(o)])].sort((a,b)=>a-b).map(w=>`<button data-act="w-set" data-v="${w}" aria-pressed="${waitOf(o)===w}">${w} min</button>`).join('')}</div>
+    <div class="row"><input class="inp num grow" id="w-min" type="number" min="1" max="600" placeholder="Type minutes" aria-label="Waiting minutes" style="width:auto"><button class="btn" data-act="w-type">Set</button>
+    <button class="btn" data-act="w-add" data-v="10">+10 min</button></div></div>`,{onAct:(a,el)=>{
+      const set=v=>{v=Math.round(+v);if(!(v>0&&v<=600)){toast('Type minutes between 1 and 600');return}o.wait=v;save();closeModal();toast('#'+o.no+' waiting time '+v+' min');render()};
+      if(a==='w-set'){set(el.dataset.v);return true}
+      if(a==='w-add'){set(waitOf(o)+10);return true}
+      if(a==='w-type'){set(document.getElementById('w-min').value);return true}
+    }});
+  draw();
+}
 function openCollect(o){
   showModal(`<div class="mh"><h3>Collect ${rs(o.total)} · ${o.no}</h3><button class="x" data-act="close" aria-label="Close">×</button></div>
   <div class="mb"><div class="small muted">${esc(o.customer.name||'Walk-in')} ${o.customer.phone?'· '+fmtPhone(o.customer.phone):''}${o.pay.mode==='due'?' · on baki account':''}</div>
@@ -1582,7 +1605,7 @@ function vOrders(){
     <td>${TYPES[o.type]}${o.table?' · T'+esc(o.table):''}${o.source==='online'?' <span class="chip t">online</span>':''}${o.zomatoId?`<div class="small muted num">ID ${esc(o.zomatoId)}</div>`:''}</td>
     <td class="small">${o.items.map(l=>l.qty+'× '+esc(l.name)+(l.size?' '+sizeLabel(l.size):'')).join(', ')}</td><td class="r num"><b>${rs(o.total)}</b>${o.subtotal>o.total?`<div class="small" style="color:var(--ok)">−${rs(o.subtotal-o.total)}</div>`:''}</td>
     <td>${o.status==='cancelled'?PAY[o.pay.mode]:o.paid?`<span class="chip ready">Done</span> <span class="small">${PAY[o.pay.mode]}</span>`:`<span class="chip r">Baki</span>${o.pay.mode==='due'?' <span class="small">on account</span>':''} <button class="btn sm" data-act="collect-open" data-id="${o.id}">Collect</button>`}</td>
-    <td class="st"><span class="chip ${o.status}">${statusName(o.status,o.type)}</span>${isActive(o)?`<div class="small num" style="font-weight:700;color:${minsLeft(o)<0?'var(--bad)':'var(--warn)'}">${leftText(minsLeft(o))}</div><div class="small muted">wait ${waitOf(o)} min</div>`:''}</td>
+    <td class="st"><span class="chip ${o.status}">${statusName(o.status,o.type)}</span>${isActive(o)?`<div class="small num" style="font-weight:700;color:${minsLeft(o)<0?'var(--bad)':'var(--warn)'}">${leftText(minsLeft(o))}</div><button class="btn sm" data-act="set-wait" data-id="${o.id}" title="Change waiting time">⏱ wait ${waitOf(o)} min</button>`:''}</td>
     <td class="small">${o.source==='online'?'Customer site':esc(o.by||'—')}</td>
     <td style="white-space:nowrap">${U.confirmCancel===o.id?`<span class="small">Cancel ${o.no}?</span> <button class="btn sm bad solid" data-act="cancel-yes" data-id="${o.id}">Yes, cancel</button> <button class="btn sm" data-act="cancel-no">Keep</button>`:
       `<button class="btn sm" data-act="bill" data-id="${o.id}">Bill</button> <button class="btn sm" data-act="kot" data-id="${o.id}">KOT</button> <button class="btn sm" data-act="track" data-id="${o.id}">Track</button> ${o.status==='cancelled'?`<button class="btn sm bad" data-act="del" data-id="${o.id}">Delete</button>`:`<button class="btn sm bad" data-act="cancel" data-id="${o.id}">Cancel</button>`}`}</td></tr>`).join('')||`<tr><td colspan="10" class="empty">No orders on ${fmtDate(day)}${all?'':' at '+esc(cur().name)}.</td></tr>`}
@@ -1726,6 +1749,39 @@ function vCust(){
   </tbody></table></div>`}${detail}`;
 }
 
+// Extra menus editor: each menu has items with a price per size
+function extrasEditor(sz){
+  const pizzas=S.menu.filter(m=>m.cat==='pizza');
+  return `<div class="card" style="padding:14px;margin-bottom:12px;display:flex;flex-direction:column;gap:12px">
+    <div class="ph1" style="margin:0"><div class="grp-h" style="margin:0">Extra menus on pizzas</div><span class="muted small">Customers and cashier pick these when adding a pizza. Leave a price empty to hide that item for that size.</span></div>
+    ${(S.extras||[]).map(g=>{const all=!Array.isArray(g.pizzas);return `<div class="xg${g.active===false?' off':''}">
+      <div class="row"><input class="inp grow" data-xg="${g.id}" data-f="name" value="${esc(g.name)}" placeholder="Menu name e.g. Extra veg topping" maxlength="40" aria-label="Extra menu name" style="width:auto;font-weight:700">
+        <label class="row small" style="gap:6px"><span class="switch"><input type="checkbox" data-xg="${g.id}" data-f="active" ${g.active===false?'':'checked'} aria-label="${esc(g.name)} on"><span></span></span>On</label>
+        <button class="btn bad" data-act="xg-del" data-id="${g.id}">Delete menu</button></div>
+      <div class="row small"><b>Show on:</b>
+        <label><input type="radio" name="xp-${g.id}" data-xg="${g.id}" data-f="all" value="1" ${all?'checked':''}> All pizzas</label>
+        <label><input type="radio" name="xp-${g.id}" data-xg="${g.id}" data-f="all" value="" ${all?'':'checked'}> Chosen pizzas</label></div>
+      ${all?'':`<div class="days">${pizzas.map(m=>`<label><input type="checkbox" data-xg="${g.id}" data-f="pz" value="${m.id}" ${g.pizzas.includes(m.id)?'checked':''}>${esc(m.name)}</label>`).join('')}</div>`}
+      <div class="tw"><table><thead><tr><th>Item</th>${sz.map(s=>`<th class="r">${esc(s.label)}</th>`).join('')}<th></th></tr></thead><tbody>
+      ${g.items.map((it,i)=>`<tr><td><input class="inp" data-xg="${g.id}" data-xi="${i}" data-f="name" value="${esc(it.name)}" placeholder="Item name" maxlength="30" aria-label="Item name" style="min-width:140px"></td>
+        ${sz.map(s=>`<td class="r"><input class="lp-in num" type="number" min="0" data-xg="${g.id}" data-xi="${i}" data-s="${s.id}" value="${it.prices?.[s.id]??''}" placeholder="—" aria-label="${esc(it.name)} ${esc(s.label)} price"></td>`).join('')}
+        <td><button class="btn" data-act="xi-del" data-id="${g.id}" data-v="${i}" aria-label="Remove ${esc(it.name)}">×</button></td></tr>`).join('')}
+      </tbody></table></div>
+      <div><button class="btn" data-act="xi-add" data-id="${g.id}">+ Add item</button></div>
+    </div>`}).join('')}
+    <div><button class="btn primary" data-act="xg-add">+ Add extra menu</button></div>
+  </div>`;
+}
+function onExtraChange(t){
+  const g=(S.extras||[]).find(x=>x.id===t.dataset.xg);if(!g)return;const f=t.dataset.f;
+  if(t.dataset.xi!==undefined){const it=g.items[+t.dataset.xi];if(!it)return;
+    if(f==='name'){const v=t.value.trim();if(!v){t.value=it.name;toast('Item name cannot be empty');return}it.name=v;save();toast('Item saved');return}
+    it.prices=it.prices||{};if(t.value==='')delete it.prices[t.dataset.s];else it.prices[t.dataset.s]=Math.max(0,+t.value||0);save();toast('Price saved');return}
+  if(f==='name'){const v=t.value.trim();if(!v){t.value=g.name;toast('Menu name cannot be empty');return}g.name=v;save();toast('Menu name saved');return}
+  if(f==='active'){g.active=t.checked;save();toast(g.name+(t.checked?' on':' off'));render();return}
+  if(f==='all'){g.pizzas=t.value?'all':[];save();render();return}
+  if(f==='pz'){const ids=new Set(g.pizzas);t.checked?ids.add(t.value):ids.delete(t.value);g.pizzas=S.menu.filter(m=>ids.has(m.id)).map(m=>m.id);save();toast('Saved')}
+}
 function vMenu(){
   const sz=S.sizes;
   const dd=m=>`<div class="menu-dd"><button data-act="mdd" data-id="${m.id}" aria-label="More for ${esc(m.name)}" aria-expanded="${U.menuDD===m.id}">⋯</button>${U.menuDD===m.id?`<div class="dd" role="menu">
@@ -1739,12 +1795,12 @@ function vMenu(){
     <div class="sizechips">${sz.map(s=>`<span class="chip"><input type="color" data-szc="${s.id}" value="${sizeColor(s.id)}" aria-label="${esc(s.label)} colour" style="width:22px;height:22px;border:0;padding:0;background:none">${esc(s.label)} ${s.pcs?`· ${s.pcs} pcs`:''}${sz.length>1?`<button data-act="del-size" data-id="${s.id}" aria-label="Remove ${esc(s.label)}">×</button>`:''}</span>`).join('')}
       <input class="inp" id="ns-label" placeholder='New size e.g. 12"' style="width:150px" aria-label="New size name"><input class="inp num" id="ns-pcs" type="number" placeholder="Pieces" style="width:100px" aria-label="Pieces"><button class="btn" data-act="add-size">+ Add size</button></div>
     <div class="small muted">After adding a size, fill its price for each pizza below. A pizza with an empty price is not offered in that size.</div>
-    <div class="grp-h">Base & toppings price per size</div>
+    <div class="grp-h">Base price per size</div>
     <div class="tw"><table><thead><tr><th>Option</th>${sz.map(s=>`<th class="r">${esc(s.label)}</th>`).join('')}</tr></thead><tbody>
-    ${Object.entries(S.addons).map(([k,a])=>`<tr><td>${esc(a.name)}${k==='veg'?' <span class="small muted">(price of each topping)</span>':''}</td>${sz.map(s=>`<td class="r"><input class="lp-in num" type="number" data-ad="${k}" data-s="${s.id}" value="${a.prices[s.id]??''}" placeholder="—" aria-label="${esc(a.name)} ${esc(s.label)}"></td>`).join('')}</tr>`).join('')}
+    ${Object.entries(S.addons).filter(([k])=>k!=='veg'&&k!=='cheese').map(([k,a])=>`<tr><td>${esc(a.name)}</td>${sz.map(s=>`<td class="r"><input class="lp-in num" type="number" data-ad="${k}" data-s="${s.id}" value="${a.prices[s.id]??''}" placeholder="—" aria-label="${esc(a.name)} ${esc(s.label)}"></td>`).join('')}</tr>`).join('')}
     </tbody></table></div>
-    ${S.addons.veg?`<div class="field"><label for="veg-list">Extra veg toppings to pick from (one per line)</label><textarea class="inp" id="veg-list" rows="3">${esc(vegTops().join('\n'))}</textarea></div>`:''}
   </div>
+  ${extrasEditor(sz)}
   ${CATS.map(([cat,cn])=>{const items=S.menu.filter(m=>m.cat===cat);return `<div class="card tw" style="margin-bottom:12px"><table><thead><tr><th>${cn}</th><th>Short description</th>${cat==='pizza'?sz.map(s=>`<th class="r">${esc(s.label)}</th>`).join(''):'<th class="r">Price</th>'}<th>On</th><th></th></tr></thead><tbody>
   ${items.map(m=>`<tr><td style="min-width:150px"><div class="row" style="gap:8px;flex-wrap:nowrap"><button class="mthumb" data-act="mi-edit" data-id="${m.id}" title="Change photo">${m.img?`<img src="${esc(IMG(m.img))}" alt="">`:'<span>+ Photo</span>'}</button><b>${esc(m.name)}</b></div>${cat!=='pizza'&&itemOpts(m).length?`<div class="small muted">${itemOpts(m).map(esc).join(' · ')}</div>`:''}</td>
    <td style="min-width:240px"><textarea class="inp desc-in" rows="2" data-desc="${m.id}" aria-label="${esc(m.name)} description">${esc(m.desc)}</textarea></td>
@@ -1884,7 +1940,7 @@ document.addEventListener('click',e=>{
     case 'od-new':U.ordersNew=!U.ordersNew;render();break;
     case 'print-txt':printText(el.dataset.t);break;
     case 'rate':{const o=find(el.dataset.id);o.rating=+el.dataset.v;save();toast('Thanks for rating!');openTrack();break}
-    case 'reorder':{const o=find(el.dataset.id);U.cart=o.items.map(l=>{if(l.combo||l.custom)return {...l};const m=menuItem(l.itemId);return m&&!m.off?Object.assign(mkLine(m,l.size,l.addons.filter(a=>S.addons[a]),l.qty,l.tops),l.notes?{notes:l.notes}:{},l.note?{note:l.note}:{}):null}).filter(Boolean);pubForm.phone=o.customer.phone;pubForm.name=o.customer.name;if(o.address)pubForm.address=o.address;closeModal();render();openPubCart();break}
+    case 'reorder':{const o=find(el.dataset.id);U.cart=o.items.map(l=>{if(l.combo||l.custom)return {...l};const m=menuItem(l.itemId);return m&&!m.off?Object.assign(mkLine(m,l.size,l.addons.filter(a=>S.addons[a]),l.qty,l.tops,(l.ex||[]).filter(e=>exPrice(e,l.size))),l.notes?{notes:l.notes}:{},l.note?{note:l.note}:{}):null}).filter(Boolean);pubForm.phone=o.customer.phone;pubForm.name=o.customer.name;if(o.address)pubForm.address=o.address;closeModal();render();openPubCart();break}
     case 'pub-add':openCustomizer(el.dataset.id,'pub');break;
     case 'combo-add':openCombo(el.dataset.id,el.dataset.t);break;
     case 'pub-cart':openPubCart();break;
@@ -1927,6 +1983,11 @@ document.addEventListener('click',e=>{
     case 'mdd':U.menuDD=U.menuDD===el.dataset.id?null:el.dataset.id;render();break;
     case 'mi-edit':U.menuDD=null;render();openItemForm(el.dataset.id);break;
     case 'mi-move':moveItem(el.dataset.id,+el.dataset.v);render();break;
+    case 'set-wait':{const o=S.orders.find(x=>x.id===el.dataset.id);if(o)openWait(o);break}
+    case 'xg-add':{S.extras=S.extras||[];const g={id:uid('x'),name:'New extra menu',active:true,pizzas:'all',items:[{name:'',prices:{}}]};S.extras.push(g);save();render();const el2=document.querySelector(`[data-xg="${g.id}"][data-f=name]`);if(el2){el2.select();el2.scrollIntoView({block:'center'})}break}
+    case 'xi-add':{const g=S.extras.find(x=>x.id===el.dataset.id);g.items.push({name:'',prices:{}});save();render();const ins=document.querySelectorAll(`[data-xg="${g.id}"][data-xi][data-f=name]`);ins[ins.length-1]?.focus();break}
+    case 'xi-del':{const g=S.extras.find(x=>x.id===el.dataset.id);g.items.splice(+el.dataset.v,1);save();render();toast('Item removed');break}
+    case 'xg-del':{const g=S.extras.find(x=>x.id===el.dataset.id);showModal(`<div class="mh"><h3>Delete ${esc(g.name)}?</h3><button class="x" data-act="close" aria-label="Close">×</button></div><div class="mb"><p>This removes the menu and its ${g.items.length} item${g.items.length===1?'':'s'}. Orders already placed keep their extras.</p><div class="row"><button class="btn bad" data-act="xg-del-yes">Delete</button><button class="btn" data-act="close">Keep it</button></div></div>`,{onAct:a=>{if(a==='xg-del-yes'){S.extras=S.extras.filter(x=>x.id!==g.id);save();closeModal();toast('Menu deleted');render();return true}}});break}
     case 'mi-del':U.menuDD=null;render();openItemForm(el.dataset.id,null,true);break;
     case 'add-size':{const lab=document.getElementById('ns-label').value.trim();const pcs=+document.getElementById('ns-pcs').value||0;if(!lab){toast('Type a size name first, e.g. 12"');break}
       let id=(lab.match(/\d+/)||[''])[0];if(!id||S.sizes.some(s=>s.id===id))id=uid('s');const label=/^\d+$/.test(lab)?lab+'"':lab;
@@ -1973,7 +2034,7 @@ document.addEventListener('change',e=>{
   if(t.dataset.toggle){const [k,id]=t.dataset.toggle.split(':');const x=(k==='c'?S.combos:S.offers).find(o=>o.id===id);x.active=t.checked;save();render()}
   if(t.dataset.desc)toast('Description saved');
   if(t.dataset.szc){const sz=S.sizes.find(x=>x.id===t.dataset.szc);sz.color=t.value;save();toast(sz.label+' colour saved')}
-  if(t.id==='veg-list'){const list=t.value.split('\n').map(x=>x.trim()).filter(Boolean);S.addons.veg.choices=list.length?list:undefined;if(!list.length)delete S.addons.veg.choices;save();toast('Toppings saved');render()}
+  if(t.dataset.xg){onExtraChange(t);return}
   if(t.id&&t.id.startsWith('lp-'))commitLinePrice(t);
 });
 function commitLinePrice(t){const i=+t.id.slice(3);const l=U.pos.cart[i];if(l){const v=Math.max(0,+t.value||0);if(v!==l.unit){l.unit=v;l.custom=true}}U.editLine=null;render()}

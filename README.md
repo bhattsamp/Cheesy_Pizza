@@ -46,6 +46,7 @@ Demo logins: staff PINs Owner 1234, Cashier 1111, Kitchen 2222; customer 9825011
 | `customers` | Accounts, wallet and coin history, personal coupons |
 | `orders` | Orders with their lines, payment and status times |
 | `counters` | Per-outlet daily bill numbers and the change counter |
+| `extra_menus` | Extra menus shown when adding a pizza (Extra veg topping, Toppings, ...), each with items and a price per size |
 | `images` | Menu photos uploaded from the Menu screen (served at `/api/images/:id`) |
 | `settings` | Prep and ride times, coin rate, opening hours, cooking notes, order note chips, prize wheel |
 
