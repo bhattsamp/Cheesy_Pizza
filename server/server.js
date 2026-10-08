@@ -6,7 +6,7 @@ const { Store, COLLECTIONS } = require('./db');
 const { seedData } = require('./seed-data');
 
 const ROOT = path.join(__dirname, '..');
-const DEFAULT_URI = 'mongodb://127.0.0.1:27017/cheesy_pizza';
+const DEFAULT_URI = 'mongodb://localhost:27017/ChessyPizza';
 
 async function openStore(uri = process.env.MONGODB_URI || DEFAULT_URI) {
   const store = await new Store().connect(uri);
