@@ -18,7 +18,7 @@ async function withServer(fn) {
   const get = p => fetch(base + p).then(r => r.json());
   const post = (p, b) => fetch(base + p, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(b) })
     .then(async r => ({ status: r.status, ...(await r.json()) }));
-  try { await fn({ get, post, store }); } finally { server.close(); }
+  try { await fn({ get, post, store, base }); } finally { server.close(); }
 }
 
 test('seeded state matches the old hardcoded data', () => withServer(async ({ get }) => {
@@ -80,6 +80,16 @@ test('edited values keep their type', () => withServer(async ({ get, post }) => 
 test('demo orders are handed out once', () => withServer(async ({ post }) => {
   assert.equal((await post('/api/demo/claim', {})).ok, true);
   assert.equal((await post('/api/demo/claim', {})).ok, false);
+}));
+
+test('menu photos are stored and served', () => withServer(async ({ post, base }) => {
+  const png = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+  const { url } = await post('/api/images', { data: 'data:image/png;base64,' + png });
+  assert.match(url, /^api\/images\/[0-9a-f]+$/);
+  const r = await fetch(base + '/' + url);
+  assert.equal(r.headers.get('content-type'), 'image/png');
+  assert.deepEqual(Buffer.from(await r.arrayBuffer()), Buffer.from(png, 'base64'));
+  assert.equal((await post('/api/images', { data: 'data:text/html;base64,AAAA' })).status, 400);
 }));
 
 test('unknown collections are rejected', () => withServer(async ({ post }) => {

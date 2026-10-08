@@ -7,6 +7,7 @@ const { seedData } = require('./seed-data');
 
 const ROOT = path.join(__dirname, '..');
 const DEFAULT_URI = 'mongodb://localhost:27017/ChessyPizza';
+const MAX_IMAGE = 3 * 1024 * 1024; // photos are shrunk in the browser first
 
 async function openStore(uri = process.env.MONGODB_URI || DEFAULT_URI) {
   const store = await new Store().connect(uri);
@@ -45,6 +46,20 @@ function createApp(store) {
   app.post('/api/auth/staff', async (req, res) => {
     const { id, pin } = req.body || {};
     res.json({ ok: await store.checkStaffPin(id, pin) });
+  });
+
+  /* ----- menu photos: { data: 'data:image/jpeg;base64,...' } -> { url } ----- */
+  app.post('/api/images', async (req, res) => {
+    const m = /^data:(image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/=]+)$/.exec(String((req.body || {}).data || ''));
+    if (!m) return res.status(400).json({ error: 'Send a JPEG, PNG or WebP image' });
+    const buf = Buffer.from(m[2], 'base64');
+    if (buf.length > MAX_IMAGE) return res.status(413).json({ error: 'Image is too big' });
+    res.json({ url: 'api/images/' + await store.saveImage(m[1], buf) });
+  });
+  app.get('/api/images/:id', async (req, res) => {
+    const img = await store.getImage(req.params.id);
+    if (!img) return res.status(404).end();
+    res.set('Cache-Control', 'public, max-age=31536000, immutable').type(img.type).send(Buffer.isBuffer(img.data) ? img.data : Buffer.from(img.data.buffer)); // a BSON Binary from MongoDB
   });
 
   /* ----- demo data ----- */

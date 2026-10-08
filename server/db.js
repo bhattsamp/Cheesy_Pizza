@@ -155,6 +155,14 @@ class Store {
     return { prev: version - 1, version, renumbered, seq: await this.readSeq() };
   }
 
+  /* ----- uploaded photos ----- */
+  async saveImage(type, data) {
+    const id = crypto.randomBytes(12).toString('hex');
+    await M.Image.create({ _id: id, type, data, ts: Date.now() });
+    return id;
+  }
+  async getImage(id) { return M.Image.findById(String(id)).lean(); }
+
   /* ----- auth ----- */
   async checkCustomerPin(phone, pin) {
     const c = await M.Customer.findById(String(phone), { pinHash: 1 }).lean();

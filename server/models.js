@@ -20,6 +20,7 @@ const models = {
   PaymentMode: mongoose.model('PaymentMode', doc({ label: String, color: String }), 'payment_modes'),
   Setting: mongoose.model('Setting', new Schema({ _id: String, value: Schema.Types.Mixed }, opts), 'settings'),
   Counter: mongoose.model('Counter', new Schema({ _id: String, n: Number }, opts), 'counters'),
+  Image: mongoose.model('Image', new Schema({ _id: String, type: String, data: Buffer, ts: Number }, { versionKey: false }), 'images'), // uploaded menu photos
 
   // App data
   Size: mongoose.model('Size', doc({ id: String }), 'sizes'),

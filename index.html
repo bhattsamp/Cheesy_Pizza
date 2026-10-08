@@ -572,6 +572,12 @@ td.r,th.r{text-align:right}
   .hm-tops .hm-col:nth-child(3) ol{columns:2;column-gap:36px}.hm-bev{grid-column:1/-1}
   .hm-boxes{grid-template-columns:1fr}.hm-bottom{grid-template-columns:1fr}.hm-pz{justify-self:center}
 }
+.field label.btn{text-transform:none;letter-spacing:0;font-size:14px;color:var(--ink);cursor:pointer}
+.photo-row{display:grid;grid-template-columns:minmax(0,260px) 1fr;gap:14px;align-items:start}
+.item.prev{pointer-events:none}.item.prev .ph{aspect-ratio:4/3}
+.mthumb{width:44px;height:44px;border-radius:8px;border:1px dashed var(--line);background:var(--surface2);padding:0;overflow:hidden;flex:none;font-size:10px;font-weight:700;color:var(--muted)}
+.mthumb img{width:100%;height:100%;object-fit:cover;display:block}
+@media (max-width:560px){.photo-row{grid-template-columns:1fr}}
 #printRoot{display:none}
 @media print{body>*:not(#printRoot){display:none!important}#printRoot{display:block!important}#printRoot pre{font:12px/1.3 "Courier New",monospace;margin:0;white-space:pre}@page{margin:4mm}}
 </style>
@@ -595,7 +601,8 @@ td.r,th.r{text-align:right}
 <div id="printRoot"></div>
 
 <script>
-const IMG=n=>'img/'+n+'.jpg';
+// Built-in photos are named (img/margherita.jpg); uploaded ones are stored as a path (api/images/…)
+const IMG=n=>/[\/:]/.test(n)?n:'img/'+n+'.jpg';
 const DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
 /* Lookup lists and settings come from the database (see applyConfig) */
@@ -1739,18 +1746,32 @@ function vMenu(){
     ${S.addons.veg?`<div class="field"><label for="veg-list">Extra veg toppings to pick from (one per line)</label><textarea class="inp" id="veg-list" rows="3">${esc(vegTops().join('\n'))}</textarea></div>`:''}
   </div>
   ${CATS.map(([cat,cn])=>{const items=S.menu.filter(m=>m.cat===cat);return `<div class="card tw" style="margin-bottom:12px"><table><thead><tr><th>${cn}</th><th>Short description</th>${cat==='pizza'?sz.map(s=>`<th class="r">${esc(s.label)}</th>`).join(''):'<th class="r">Price</th>'}<th>On</th><th></th></tr></thead><tbody>
-  ${items.map(m=>`<tr><td style="min-width:150px"><b>${esc(m.name)}</b>${cat!=='pizza'&&itemOpts(m).length?`<div class="small muted">${itemOpts(m).map(esc).join(' · ')}</div>`:''}</td>
+  ${items.map(m=>`<tr><td style="min-width:150px"><div class="row" style="gap:8px;flex-wrap:nowrap"><button class="mthumb" data-act="mi-edit" data-id="${m.id}" title="Change photo">${m.img?`<img src="${esc(IMG(m.img))}" alt="">`:'<span>+ Photo</span>'}</button><b>${esc(m.name)}</b></div>${cat!=='pizza'&&itemOpts(m).length?`<div class="small muted">${itemOpts(m).map(esc).join(' · ')}</div>`:''}</td>
    <td style="min-width:240px"><textarea class="inp desc-in" rows="2" data-desc="${m.id}" aria-label="${esc(m.name)} description">${esc(m.desc)}</textarea></td>
    ${cat==='pizza'?sz.map(s=>`<td class="r"><input class="lp-in num" type="number" data-mi="${m.id}" data-s="${s.id}" value="${m.prices[s.id]??''}" placeholder="—" aria-label="${esc(m.name)} ${esc(s.label)}"></td>`).join(''):`<td class="r"><input class="lp-in num" type="number" data-mi="${m.id}" data-s="" value="${m.price}" aria-label="${esc(m.name)} price"></td>`}
    <td><label class="switch"><input type="checkbox" data-av="${m.id}" ${m.off?'':'checked'} aria-label="${esc(m.name)} available"><span></span></label></td><td>${dd(m)}</td></tr>`).join('')}
    <tr><td colspan="${cat==='pizza'?sz.length+4:5}"><button class="btn sm" data-act="add-item" data-v="${cat}">+ Add ${esc(cn)}</button></td></tr>
   </tbody></table></div>`}).join('')}`;
 }
+// Shrink a chosen photo in the browser so uploads stay small (max 1200px, JPEG)
+function shrinkImage(file){return new Promise((ok,bad)=>{
+  if(!/^image\//.test(file.type))return bad(new Error('Choose a photo (JPG, PNG or WebP)'));
+  const url=URL.createObjectURL(file);const im=new Image();
+  im.onload=()=>{const k=Math.min(1,1200/Math.max(im.width,im.height));const c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);
+    c.getContext('2d').drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(url);ok(c.toDataURL('image/jpeg',.85))};
+  im.onerror=()=>{URL.revokeObjectURL(url);bad(new Error('Could not read this photo'))};im.src=url})}
+// How the item will look on the customer site
+function itemPreview(it,src){
+  const pz=it.cat==='pizza';const sizes=S.sizes.filter(x=>+it.prices?.[x.id]);
+  return `<article class="card item prev"><div class="ph">${src?`<img src="${esc(src)}" alt="">`:thumb({...it,img:''})}</div>
+    <div class="bd"><h3><span class="veg"></span>${esc(it.name||'Item name')}</h3><div class="desc">${esc(it.desc||'')}</div>
+    <div class="ft">${pz?`<div class="sizes">${sizes.map(x=>`<span>${esc(x.label)} <b class="num">${rs(it.prices[x.id])}</b></span>`).join('')}</div>`:`<div class="price num">${rs(+it.price||0)}</div>`}<span class="btn pri">Add</span></div></div></article>`;
+}
 // Add a new item (id empty) or edit one; new items go to the bottom of their category
 function openItemForm(id,cat,askDelete){
   const ex=id&&menuItem(id);
   const it=ex?JSON.parse(JSON.stringify(ex)):{id:uid('m'),cat:cat||'pizza',name:'',desc:'',prices:{},price:0};
-  it.prices=it.prices||{};let opts=(ex?itemOpts(ex):ITEM_OPTS[it.cat]||[]).join('\n');let confirmDel=!!askDelete;
+  it.prices=it.prices||{};let opts=(ex?itemOpts(ex):ITEM_OPTS[it.cat]||[]).join('\n');let confirmDel=!!askDelete;let photo=undefined,busy=false; // photo: new data URL, null = removed
   const draw=()=>showModal(`<div class="mh"><h3>${ex?'Edit '+esc(ex.name):'Add menu item'}</h3><button class="x" data-act="close" aria-label="Close">×</button></div>
   <div class="mb">
     <div class="row"><div class="field grow"><label for="ni-name">Item name</label><input class="inp" id="ni-name" data-k="name" value="${esc(it.name)}"></div>
@@ -1758,21 +1779,31 @@ function openItemForm(id,cat,askDelete){
     <div class="field"><label for="ni-desc">Short description</label><textarea class="inp" id="ni-desc" data-k="desc" rows="2" placeholder="Toppings or what makes it special">${esc(it.desc)}</textarea></div>
     ${it.cat==='pizza'?`<div class="row">${S.sizes.map(s=>`<div class="field grow"><label for="ni-p${s.id}">${esc(s.label)} price</label><input class="inp num" type="number" id="ni-p${s.id}" data-ps="${s.id}" value="${it.prices[s.id]??''}"></div>`).join('')}</div>`:`<div class="field"><label for="ni-pr">Price ₹</label><input class="inp num" type="number" id="ni-pr" data-k="price" value="${it.price||''}"></div>
     <div class="field"><label for="ni-opts">Options the cashier and customer can pick (one per line)</label><textarea class="inp" id="ni-opts" rows="4" placeholder="e.g. Spicy">${esc(opts)}</textarea></div>`}
+    <div class="grp-h">Photo · how customers will see it</div>
+    <div class="photo-row">${itemPreview(it,photo===null?'':photo||(it.img?IMG(it.img):''))}
+      <div class="field" style="gap:8px"><label class="btn" for="ni-photo">${photo||it.img?'Change photo':'Upload photo'}</label><input type="file" id="ni-photo" accept="image/*" hidden>
+      ${photo||(it.img&&photo!==null)?'<button class="btn bad sm" data-act="ni-nophoto">Remove photo</button>':''}
+      <span class="small muted">${photo?'New photo · saved when you press Save':'Square photos look best. Big photos are made smaller for you.'}</span></div></div>
     <div id="ni-err" class="small" style="color:var(--bad)"></div>
     <div class="row">${ex?(confirmDel?`<button class="btn bad solid" data-act="ni-del-yes">Yes, delete</button><button class="btn" data-act="ni-del-no">Keep</button>`:`<button class="btn bad" data-act="ni-del">Delete</button>`):''}<span class="grow"></span><button class="btn pri lg" data-act="ni-save">${ex?'Save':'Add to menu'}</button></div></div>`,
   {onInput:e=>{readField(it,e);if(e.target.dataset.ps)it.prices[e.target.dataset.ps]=+e.target.value||'';if(e.target.id==='ni-opts')opts=e.target.value},
-   onChange:e=>{if(e.target.dataset.k==='cat'){it.cat=e.target.value;if(!ex)opts=(ITEM_OPTS[it.cat]||[]).join('\n');draw()}},
-   onAct:act=>{
+   onChange:e=>{if(e.target.dataset.k==='cat'){it.cat=e.target.value;if(!ex)opts=(ITEM_OPTS[it.cat]||[]).join('\n');draw()}
+     if(e.target.id==='ni-photo'&&e.target.files[0])shrinkImage(e.target.files[0]).then(d=>{photo=d;draw()},er=>{document.getElementById('ni-err').textContent=er.message})},
+   onAct:(act,el)=>{
      if(act==='ni-del'){confirmDel=true;draw();return true}
      if(act==='ni-del-no'){confirmDel=false;draw();return true}
      if(act==='ni-del-yes'){S.menu=S.menu.filter(m=>m.id!==it.id);save();closeModal();toast(it.name+' deleted');render();return true}
+     if(act==='ni-nophoto'){photo=null;draw();return true}
      if(act==='ni-save'){
-     const err=document.getElementById('ni-err');
+     const err=document.getElementById('ni-err');if(busy)return true;
      if(!it.name.trim()){err.textContent='Enter the item name.';return true}
      if(it.cat==='pizza'&&!Object.values(it.prices).some(v=>+v)){err.textContent='Enter a price for at least one size.';return true}
      if(it.cat!=='pizza'&&!it.price){err.textContent='Enter the price.';return true}
      if(it.cat!=='pizza'){delete it.prices;it.options=opts.split('\n').map(x=>x.trim()).filter(Boolean)}else{delete it.price;delete it.options}
      it.name=it.name.trim();
+     if(photo){busy=true;el.disabled=true;el.textContent='Uploading photo…';
+       api('/api/images',{data:photo}).then(r=>{photo=undefined;it.img=r.url;busy=false;mh.onAct('ni-save',el)},e=>{busy=false;err.textContent='Photo not saved: '+e.message;el.disabled=false;el.textContent='Save'});return true}
+     if(photo===null)delete it.img;
      if(ex){Object.keys(ex).forEach(k=>delete ex[k]);Object.assign(ex,it)}
      else{const last=S.menu.reduce((a,m,i)=>m.cat===it.cat?i:a,-1);S.menu.splice(last<0?S.menu.length:last+1,0,it);numberMenu()}
      save();closeModal();toast(it.name+(ex?' saved':' added to menu'));render();return true}}});

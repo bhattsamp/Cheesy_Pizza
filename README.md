@@ -46,6 +46,7 @@ Demo logins: staff PINs Owner 1234, Cashier 1111, Kitchen 2222; customer 9825011
 | `customers` | Accounts, wallet and coin history, personal coupons |
 | `orders` | Orders with their lines, payment and status times |
 | `counters` | Per-outlet daily bill numbers and the change counter |
+| `images` | Menu photos uploaded from the Menu screen (served at `/api/images/:id`) |
 | `settings` | Prep and ride times, coin rate, opening hours, cooking notes, order note chips, prize wheel |
 
 Models are in `server/models.js` and the starting data in `server/seed-data.js`.
@@ -60,6 +61,7 @@ Method | Path | |
 | GET | `/api/menu`, `/api/offers`, `/api/combos`, `/api/outlets`, `/api/sizes`, `/api/addons`, `/api/config` | Read-only lists |
 | GET | `/api/orders?outlet=&date=&status=&phone=` | Orders, filtered |
 | GET | `/api/customers/:phone` | One customer |
+| POST | `/api/images` | Upload a menu photo: `{ data: 'data:image/jpeg;base64,...' }` returns `{ url }` |
 | POST | `/api/reset` | Reset to demo data |
 
 The API has no login of its own yet: anyone who can reach the server can read and change
