@@ -475,7 +475,82 @@ td.r,th.r{text-align:right}
   .how{grid-template-columns:1fr}
   .foot{grid-template-columns:1fr}
 }
-@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}.ticker .tk{padding-left:16px;white-space:normal;flex-wrap:wrap}}
+/* ===== v7: customer site look and motion ===== */
+.pubnav .sh,.pubnav svg{display:none}
+.pubnav button{transition:background .2s,color .2s,transform .15s}
+.pzart{position:absolute;inset:8% 14%;width:72%;height:84%;margin:auto;filter:drop-shadow(0 10px 14px rgba(90,40,10,.18));transition:transform .6s cubic-bezier(.2,.8,.2,1)}
+.item:hover .pzart{transform:rotate(24deg) scale(1.05)}
+.item .ph{background:radial-gradient(circle at 50% 45%,var(--surface) 0 40%,var(--surface2) 75%)}
+.pubmode .btn{transition:transform .12s,box-shadow .2s,background .2s,filter .2s}
+.pubmode .btn:active{transform:scale(.95)}
+.pubmode .btn.pri:hover,.pubmode .btn.chz:hover{filter:brightness(1.06);box-shadow:0 8px 20px rgba(26,147,168,.25)}
+.pub .item{border-radius:20px;box-shadow:var(--shadow)}
+@media (hover:hover){.pub .item:hover{transform:translateY(-5px);box-shadow:var(--shadow-lg)}.pub .combo-card,.pub .coupon{transition:transform .2s,box-shadow .2s}.pub .combo-card:hover,.pub .coupon:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg)}}
+.pub .item h3{font-family:var(--display);letter-spacing:.01em}
+.foot .staff{margin-top:10px;color:#d8eef1;border-color:rgba(255,255,255,.25)}
+.hm-staff{text-align:center;margin:18px 0 6px}
+/* page enter + scroll reveal */
+@keyframes rise{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none}}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+#app.enter>.pub,#app.enter>main{animation:fadein .45s ease both}
+.rv{opacity:0;transform:translateY(26px) scale(.98);transition:opacity .6s ease var(--d,0ms),transform .7s cubic-bezier(.2,.8,.2,1) var(--d,0ms)}
+.rv.in{opacity:1;transform:none}
+.hero3 .h-copy>*{animation:rise .7s cubic-bezier(.2,.8,.2,1) both}
+.hero3 .h-copy>*:nth-child(2){animation-delay:.08s}.hero3 .h-copy>*:nth-child(3){animation-delay:.16s}.hero3 .h-copy>*:nth-child(4){animation-delay:.24s}.hero3 .h-copy>*:nth-child(5){animation-delay:.32s}
+.hero3 .plate{animation:rise .9s .1s cubic-bezier(.2,.8,.2,1) both}
+.hero3 .sw svg path{stroke-dasharray:220;stroke-dashoffset:220;animation:draw 1s .6s ease forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+.hm-card{animation:rise .7s cubic-bezier(.2,.8,.2,1) both}
+.hm-pz{animation:spin 40s linear infinite}
+.hm-badge{animation:pop 2.6s ease-in-out infinite}
+@keyframes pop{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+/* cart bar */
+.cartbar{animation:slideup .35s cubic-bezier(.2,.8,.2,1)}
+.cartbar.bump .btn{animation:bump .5s}
+@keyframes slideup{from{transform:translateY(100%)}to{transform:none}}
+@keyframes bump{30%{transform:scale(1.12)}60%{transform:scale(.96)}}
+/* modal */
+.scrim.pop{animation:fadein .2s ease both}
+.scrim.pop .modal{animation:zoomin .3s cubic-bezier(.2,.8,.2,1) both}
+@keyframes zoomin{from{opacity:0;transform:translateY(16px) scale(.97)}to{opacity:1;transform:none}}
+@keyframes sheet{from{transform:translateY(100%)}to{transform:none}}
+/* phone layout */
+@media (max-width:720px){
+  .pubmode .top .seg{display:none}
+  .pubmode .top-in{flex-wrap:nowrap;gap:8px;padding:8px 12px}
+  .pubmode .brand{gap:6px;min-width:0}.pubmode .brand b{font-size:17px}.pubmode .brand .pin{width:26px}
+  .pubmode #outletSel{max-width:118px;font-size:13px;padding:6px 8px}
+  .pubmode #acct .btn{padding:6px 10px;font-size:13px}
+  .pubmode{padding-bottom:calc(64px + env(safe-area-inset-bottom,0px))}
+  .pubnav{position:fixed;left:0;right:0;bottom:0;z-index:26;border-top:1px solid var(--line);border-bottom:0;box-shadow:0 -8px 24px rgba(15,46,54,.08);background:color-mix(in srgb,var(--surface) 92%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+  .pubnav .in{padding:6px 4px calc(6px + env(safe-area-inset-bottom,0px));gap:0;overflow:visible}
+  .pubnav button{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;padding:4px 2px;min-width:0;border-radius:12px;background:transparent!important}
+  .pubnav svg{display:block;width:22px;height:22px;transition:transform .25s cubic-bezier(.2,.8,.2,1)}
+  .pubnav .lg{display:none}.pubnav .sh{display:block}
+  .pubnav button[aria-current="page"] svg{transform:translateY(-2px) scale(1.12)}
+  .pubnav button[aria-current="page"]::after{content:"";width:18px;height:3px;border-radius:3px;background:var(--teal);margin-top:1px}
+  .pubnav .nb-orders,.pubnav .nb-wallet,.pubnav .nb-signup{display:none}
+  .pubmode .cartbar{bottom:calc(62px + env(safe-area-inset-bottom,0px));left:10px;right:10px;border-radius:18px;border:0;padding:10px 12px;background:var(--teal-deep);color:#fff;box-shadow:0 12px 30px rgba(15,111,128,.4)}
+  .pubmode .cartbar .muted{color:rgba(255,255,255,.8)}
+  .pub .grid{grid-template-columns:1fr;gap:12px}
+  .pub .item{flex-direction:row;border-radius:18px}
+  .pub .item .ph{order:2;width:116px;min-width:116px;aspect-ratio:auto;margin:12px 12px 12px 0;border-radius:16px;align-self:flex-start;height:116px}
+  .pub .item .ph img{border-radius:16px}
+  .pub .item .pzart{inset:6%;width:88%;height:88%}
+  .pub .item .bd{padding:12px 4px 12px 14px;min-width:0}
+  .pub .item h3{font-size:17px}
+  .pub .item .desc{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .pub .item .ft{flex-wrap:wrap}
+  .pub .item .ribbon{left:4px;top:4px}
+  .pub .item .ribbon span{font-size:10px;padding:2px 6px}
+  .scrim{place-items:end center;padding:0}
+  .scrim .modal{border-radius:22px 22px 0 0;max-height:92vh;width:100%}
+  .scrim.pop .modal{animation:sheet .32s cubic-bezier(.2,.8,.2,1) both}
+  .hero3{border-radius:24px}
+  .pubmode .cats{top:calc(env(safe-area-inset-top,0px) + 50px)}
+  .pubmode .toast{bottom:calc(142px + env(safe-area-inset-bottom,0px))}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}.rv{opacity:1!important;transform:none!important}.ticker .tk{padding-left:16px;white-space:normal;flex-wrap:wrap}}
 /* ===== v6: order screen, kitchen colours, table hold ===== */
 .ticket.order{position:static;max-height:none}
 @media (min-height:820px) and (min-width:1051px){.ticket.order .ft{position:sticky;bottom:0;background:var(--surface);z-index:2;border-radius:0 0 var(--r) var(--r);box-shadow:0 -8px 16px -12px rgba(0,0,0,.25)}}
@@ -884,10 +959,13 @@ function render(){
   document.getElementById('m-pub').setAttribute('aria-pressed',S.mode==='public');
   document.getElementById('m-pos').setAttribute('aria-pressed',S.mode==='pos');
   document.getElementById('outletSel').innerHTML=S.outlets.map(o=>`<option value="${o.id}" ${o.id===S.cur?'selected':''}>${esc(o.name)}</option>`).join('');
+  document.body.classList.toggle('pubmode',S.mode==='public');
+  const vk=S.mode+'|'+(S.mode==='public'?U.pubView+'|'+(U.accTab||''):'');U.enter=vk!==U.lastView;U.lastView=vk;
   app.innerHTML=S.mode==='public'?pubNav()+(U.pubView==='account'&&me()?renderAccount():U.pubView==='auth'&&!me()?renderAuth():U.pubView==='home'?renderHome():renderPublic()):renderPOS();renderAcct();
   renderBoard();afterRender();
 }
 function afterRender(){
+  if(S.mode==='public')animatePub();
   if(typeof initScratch==='function')initScratch();
   document.querySelectorAll('[data-qr]').forEach(el=>{
     if(el.dataset.done)return;el.dataset.done=1;
@@ -902,8 +980,45 @@ function afterRender(){
 }
 
 /* ===== PUBLIC ===== */
+// Customer pages: fade in when a page opens, and cards rise in as they scroll into view.
+// A re-render of the same page (a poll, a filter) shows everything at once, without replaying.
+let revealObs=null;
+function animatePub(){
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches||!('IntersectionObserver' in window))return;
+  if(!U.enter)return;
+  app.classList.remove('enter');void app.offsetWidth;app.classList.add('enter');
+  revealObs?.disconnect();
+  revealObs=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');revealObs.unobserve(e.target)}}),{rootMargin:'0px 0px -6% 0px'});
+  const els=app.querySelectorAll('.pub .item,.pub .coupon,.pub .combo-card,.pub .how>div,.pub .sec-h,.pub .outlet-bar,.pub .foot,.hm-col,.hm-box,.hm-bev,.hm-banner,.hm-cats,.hm-nomayo,.hm-addr,.hm-feat,.hm-flow,.hm-pz,.hm-steps');
+  // What is on screen already stays visible (the page fades in); only what is further down rises in
+  let i=0;els.forEach(el=>{if(el.getBoundingClientRect().top<innerHeight)return;el.style.setProperty('--d',(i++%4)*70+'ms');el.classList.add('rv');revealObs.observe(el)});
+}
+// A drawn pizza for items without a photo: toppings come from the item's description
+function pizzaArt(m){
+  const t=(m.name+' '+m.desc).toLowerCase();let seed=[...m.id+m.name].reduce((a,c)=>a*31+c.charCodeAt(0)>>>0,7);
+  const rnd=()=>(seed=(seed*1103515245+12345)>>>0)/4294967296;
+  const kinds=[['capsicum|veggi|bell','cap','#3f9b3a'],['tomato','tom','#e0452f'],['olive','oli','#2a2a2a'],['corn','corn','#f6c443'],['paneer|cottage','pan','#fff7e6'],['onion','oni','#9b3b7a'],['jalapeno','jal','#5aa832'],['paprika|red cap|chilli|peri|spicy|kadai|kathiyavadi','pap','#c8281e'],['yellow','ycap','#f2c230'],['mushroom','mush','#b48b63']];
+  let tops=kinds.filter(([re])=>new RegExp(re).test(t));if(!tops.length)tops=[['','basil','#2f7d32']];
+  const parts=[];const n=Math.min(26,10+tops.length*4);
+  for(let i=0;i<n;i++){const k=tops[i%tops.length];const a=rnd()*Math.PI*2,r=Math.sqrt(rnd())*62,x=100+Math.cos(a)*r,y=100+Math.sin(a)*r,rot=rnd()*180|0;
+    const c=k[2];
+    if(k[1]==='cap'||k[1]==='ycap'||k[1]==='pap')parts.push(`<path d="M-8 0q8-9 16 0" transform="translate(${x|0} ${y|0}) rotate(${rot})" fill="none" stroke="${c}" stroke-width="4" stroke-linecap="round"/>`);
+    else if(k[1]==='oni')parts.push(`<path d="M-7 2a7 7 0 0 1 14 0" transform="translate(${x|0} ${y|0}) rotate(${rot})" fill="none" stroke="${c}" stroke-width="2.4" opacity=".8"/>`);
+    else if(k[1]==='oli')parts.push(`<circle cx="${x|0}" cy="${y|0}" r="4.5" fill="none" stroke="${c}" stroke-width="3"/>`);
+    else if(k[1]==='pan')parts.push(`<rect x="${x-5|0}" y="${y-5|0}" width="10" height="10" rx="2" transform="rotate(${rot} ${x|0} ${y|0})" fill="${c}" stroke="#e5c48f"/>`);
+    else if(k[1]==='corn')parts.push(`<circle cx="${x|0}" cy="${y|0}" r="3" fill="${c}" stroke="#d49a1c" stroke-width=".8"/>`);
+    else if(k[1]==='tom')parts.push(`<circle cx="${x|0}" cy="${y|0}" r="7" fill="${c}" opacity=".92"/><circle cx="${x+2|0}" cy="${y-1|0}" r="2.3" fill="#f6a089"/>`);
+    else parts.push(`<ellipse cx="${x|0}" cy="${y|0}" rx="5" ry="3" transform="rotate(${rot} ${x|0} ${y|0})" fill="${c}"/>`);
+  }
+  const id='pa'+m.id.replace(/\W/g,'');
+  return `<svg class="pzart" viewBox="0 0 200 200" aria-hidden="true"><defs><radialGradient id="${id}c" cx=".45" cy=".4"><stop offset=".8" stop-color="#eeb15e"/><stop offset="1" stop-color="#b9682a"/></radialGradient><radialGradient id="${id}h" cx=".42" cy=".38"><stop offset="0" stop-color="#fde7a2"/><stop offset=".7" stop-color="#f6cf6b"/><stop offset="1" stop-color="#eab04a"/></radialGradient></defs>
+    <ellipse cx="100" cy="108" rx="92" ry="88" fill="rgba(0,0,0,.12)"/><circle cx="100" cy="100" r="92" fill="url(#${id}c)"/><circle cx="100" cy="100" r="79" fill="#cf4a2a"/><circle cx="100" cy="100" r="76" fill="url(#${id}h)"/>
+    ${[...Array(9)].map(()=>`<circle cx="${100+(rnd()-.5)*110|0}" cy="${100+(rnd()-.5)*110|0}" r="${6+rnd()*9|0}" fill="#fff3c4" opacity=".45"/>`).join('')}
+    ${parts.join('')}<g stroke="rgba(120,60,20,.18)" stroke-width="1.4">${[0,45,90,135].map(a=>`<line x1="100" y1="24" x2="100" y2="176" transform="rotate(${a} 100 100)"/>`).join('')}</g></svg>`;
+}
 function thumb(m){
   if(m.img)return `<img src="${IMG(m.img)}" alt="${esc(m.name)}" loading="lazy">`;
+  if(m.cat==='pizza')return pizzaArt(m);
   return `<div class="pz ${m.cat==='pizza'?'':m.cat==='dessert'?'dessert':m.cat==='dip'?'dip':'side'}"></div>`;
 }
 function itemOfferTags(m,dow){
@@ -927,7 +1042,7 @@ function renderPublic(){
   const live=S.offers.filter(x=>x.active);const liveToday=activeOffers(dow);
   const combos=S.combos.filter(c=>c.active);
   const cats=CATS.filter(([k])=>U.pubCat==='all'||U.pubCat===k);
-  const cartN=U.cart.reduce((s,l)=>s+l.qty,0);const b=computeBill(U.cart);
+  const cartN=U.cart.reduce((s,l)=>s+l.qty,0);const b=computeBill(U.cart);setTimeout(()=>{U.lastCartN=cartN},0);
   const tick=[...liveToday.map(x=>`<span><b>${x.type==='code'?'CODE '+esc(x.code):'TODAY'}</b> ${esc(x.name)}: ${esc(offerText(x))}</span>`),...combos.map(c=>`<span><b>COMBO</b> ${esc(c.name)} at ${rs(c.price)}</span>`),'<span><b>CHEESE COINS</b> 5% back on every order</span>','<span><b>PURE VEG</b> No mayonnaise products</span>'];
   const best=liveToday.find(x=>x.type==='bogo')||liveToday.find(x=>x.type==='day')||liveToday.find(x=>x.type!=='code');
   const pizzasCount=S.menu.filter(m=>m.cat==='pizza'&&!m.off).length;
@@ -987,11 +1102,11 @@ function renderPublic(){
   </nav>
   ${sections}${!shown?`<div class="empty card">Nothing matches${filtered?' these filters':''}. <button class="btn sm" data-act="pubclear">Clear filters</button></div>`:''}
   <footer class="foot">
-    <div><h3>CHEESY PIZZA</h3><p>Really Cheesy · ચીઝી પિઝ્ઝા<br>Pure veg · No mayonnaise products<br>Open 12:00 noon to 10:00 pm</p><p class="small">We also book orders on phone call. Pay first; waiting time depends on booked orders.</p></div>
+    <div><h3>CHEESY PIZZA</h3><p>Really Cheesy · ચીઝી પિઝ્ઝા<br>Pure veg · No mayonnaise products<br>Open 12:00 noon to 10:00 pm</p><p class="small">We also book orders on phone call. Pay first; waiting time depends on booked orders.</p><button class="btn sm ghost staff" data-act="mode" data-v="pos">Staff login</button></div>
     <div class="ol">${S.outlets.map(x=>`<div><b>${esc(x.name)}</b><br><small>${esc(x.area)}</small><br><span class="num">${esc(fmtPhone(x.phone))}</span>${x.id!==S.cur?`<br><button class="btn sm ghost" style="margin-top:6px" data-act="use-outlet" data-id="${x.id}">Order from here</button>`:'<br><small>Ordering from here</small>'}</div>`).join('')}</div>
   </footer>
   </main>
-  ${cartN?`<div class="cartbar"><div class="in"><div class="grow"><b class="num">${cartN} item${cartN>1?'s':''} · ${rs(b.total)}</b>${b.saved?` <span class="chip ready num">You save ${rs(b.saved)}</span>`:''}<div class="small muted">${b.hint?esc(b.hint):esc(o.name)}</div></div><button class="btn chz lg" data-act="pub-cart">View cart</button></div></div>`:''}`;
+  ${cartN?`<div class="cartbar${cartN>(U.lastCartN||0)?' bump':''}"><div class="in"><div class="grow"><b class="num">${cartN} item${cartN>1?'s':''} · ${rs(b.total)}</b>${b.saved?` <span class="chip ready num">You save ${rs(b.saved)}</span>`:''}<div class="small muted">${b.hint?esc(b.hint):esc(o.name)}</div></div><button class="btn chz lg" data-act="pub-cart">View cart</button></div></div>`:''}`;
 }
 
 /* ===== HOME (like the shop's poster) ===== */
@@ -1037,6 +1152,7 @@ function renderHome(){
     </div>
     <div class="hm-flow"><span>Save our number</span>→<span>Call us</span>→<span>Book order</span>→<span>Pay first</span>→<span>Confirm order</span></div>
   </section>
+  <div class="hm-staff"><button class="btn sm ghost" data-act="mode" data-v="pos">Staff login</button></div>
   </main>`;
 }
 
@@ -1897,7 +2013,8 @@ const mroot=document.getElementById('modalRoot');let mh={};
 function showModal(html,handlers={}){
   mh=handlers;const prev=document.activeElement&&mroot.contains(document.activeElement)?document.activeElement.id:null;
   const sc=mroot.querySelector('.modal')?.scrollTop||0;
-  mroot.innerHTML=`<div class="scrim" data-act="scrim"><div class="modal" role="dialog" aria-modal="true">${html}</div></div>`;
+  const fresh=!mroot.innerHTML;
+  mroot.innerHTML=`<div class="scrim${fresh?' pop':''}" data-act="scrim"><div class="modal" role="dialog" aria-modal="true">${html}</div></div>`;
   mroot.querySelector('.modal').scrollTop=sc;
   afterRender();
   if(prev){const el=document.getElementById(prev);if(el&&mroot.contains(el)){el.focus();if(el.setSelectionRange&&el.type!=='number'&&el.tagName!=='SELECT')try{el.setSelectionRange(el.value.length,el.value.length)}catch(e){}}}
@@ -2210,8 +2327,10 @@ async function authGo(){
 function pubNav(){
   const v=U.pubView,c=me();
   const cur2=k=>(k===v&&k==='home')||(k==='menu'&&v==='menu')||(k==='orders'&&v==='account'&&U.accTab==='orders')||(k==='wallet'&&v==='account'&&U.accTab==='wallet')||(k==='account'&&v==='account'&&!['orders','wallet'].includes(U.accTab))||(k==='signin'&&v==='auth');
-  const b=(k,n,cls='')=>`<button class="${cls}" data-act="pn" data-v="${k}" ${cur2(k)?'aria-current="page"':''}>${n}</button>`;
-  return `<nav class="pubnav" aria-label="Customer menu"><div class="in">${b('home','Home')}${b('menu','Menu')}${b('offers','Offers')}${b('track','Track order')}${b('orders','My orders')}${b('wallet','Wallet'+(c?' · '+rs(c.wallet||0):''))}${c?b('account','My account'):b('signin','Sign in')+b('signup','Sign up','su')}</div></nav>`;
+  const I={home:'<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',menu:'<path d="M12 3a9 9 0 0 1 9 9H3a9 9 0 0 1 9-9zM3 15h18l-2 5H5z"/>',offers:'<path d="M3 12V4h8l10 10-8 8zM7.5 7.5h.01"/>',track:'<path d="M12 21s-7-6.2-7-12a7 7 0 0 1 14 0c0 5.8-7 12-7 12z"/><circle cx="12" cy="9" r="2.5"/>',orders:'<path d="M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6"/>',wallet:'<path d="M3 7h16a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM3 7l12-4v4M16 13h.01"/>',account:'<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>'};
+  const ic=k=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${I[k]||I.account}</svg>`;
+  const b=(k,n,cls='',short)=>`<button class="nb-${k} ${cls}" data-act="pn" data-v="${k}" ${cur2(k)?'aria-current="page"':''}>${ic(k)}<span class="lg">${n}</span><span class="sh">${short||n}</span></button>`;
+  return `<nav class="pubnav" aria-label="Customer menu"><div class="in">${b('home','Home')}${b('menu','Menu')}${b('offers','Offers')}${b('track','Track order','','Track')}${b('orders','My orders','','Orders')}${b('wallet','Wallet'+(c?' · '+rs(c.wallet||0):''),'','Wallet')}${c?b('account','My account','','Account'):b('signin','Sign in','','Sign in')+b('signup','Sign up','su')}</div></nav>`;
 }
 /* ----- account page ----- */
 function renderAccount(){
