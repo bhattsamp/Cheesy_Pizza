@@ -16,6 +16,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     defaults:
       run:
         working-directory: mobile
@@ -58,3 +60,23 @@ jobs:
           name: cheesy-pizza-debug-apk
           path: mobile/android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
+
+      # Builds from main and manual runs are also published as a release, so the APK
+      # has a plain link a phone can download from without signing in to GitHub:
+      # https://github.com/<owner>/<repo>/releases/download/android-latest/cheesy-pizza.apk
+      - name: Publish APK to the android-latest release
+        if: github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SERVER_URL: ${{ inputs.server_url || vars.CHEESY_SERVER_URL }}
+        working-directory: .
+        run: |
+          cp mobile/android/app/build/outputs/apk/debug/app-debug.apk cheesy-pizza.apk
+          if [ -n "$SERVER_URL" ]; then mode="Opens $SERVER_URL"; else mode="Offline: runs on the phone, data stays on that phone"; fi
+          notes="Latest Cheesy Pizza Android app (build ${{ github.run_number }} from ${{ github.ref_name }}). $mode. Download cheesy-pizza.apk on the phone and open it to install."
+          if gh release view android-latest >/dev/null 2>&1; then
+            gh release edit android-latest --title "Cheesy Pizza Android app" --notes "$notes"
+          else
+            gh release create android-latest --target "$GITHUB_SHA" --title "Cheesy Pizza Android app" --notes "$notes"
+          fi
+          gh release upload android-latest cheesy-pizza.apk --clobber

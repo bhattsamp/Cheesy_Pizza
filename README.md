@@ -49,8 +49,10 @@ in one of two ways, chosen when it is built:
 **Get an APK without installing anything:** in GitHub open Actions > Android APK > Run workflow.
 Leave `server_url` blank for the offline app, or paste a server address (a repository variable
 `CHEESY_SERVER_URL` under Settings > Secrets and variables > Actions > Variables sets it for every
-build). Download the `cheesy-pizza-debug-apk` artifact, unzip it and open `app-debug.apk` on the
-phone, allowing installs from unknown sources when asked. Each build installs over the previous one.
+build). When it finishes, open
+https://github.com/bhattsamp/Cheesy_Pizza/releases/download/android-latest/cheesy-pizza.apk on the
+phone (every build from `main` updates it too) and install it, allowing installs from unknown
+sources when asked. Each build installs over the previous one.
 
 **Build locally** (Node 22+, Android Studio or Xcode):
 
