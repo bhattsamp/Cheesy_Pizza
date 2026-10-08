@@ -85,6 +85,8 @@ textarea.inp{resize:vertical}
 .ticker{background:var(--ink);color:var(--bg);overflow:hidden;white-space:nowrap;font-weight:600;font-size:13px}
 .ticker .tk{display:inline-flex;gap:36px;padding:8px 0;animation:tick 40s linear infinite;padding-left:100%}
 .ticker .tk span b{color:var(--cheese)}
+.ticker{cursor:default;touch-action:pan-y;-webkit-user-select:none;user-select:none}
+.ticker:hover .tk,.ticker.hold .tk{animation-play-state:paused}
 @keyframes tick{to{transform:translateX(-100%)}}
 .pub{max-width:1180px;margin:0 auto;padding-inline:16px;padding-block:0 120px}
 .hero{position:relative;display:grid;grid-template-columns:1.1fr 1fr;gap:28px;align-items:center;padding:36px 32px;margin-top:18px;border-radius:28px;overflow:hidden;
@@ -1037,13 +1039,21 @@ function matchFilter(m,dow){
   const q=U.pubQ.trim().toLowerCase();if(q&&!(m.name+' '+m.desc).toLowerCase().includes(q))return false;
   const f=U.pubF;if(f.jain&&!m.jain)return false;if(f.spicy&&!m.spicy)return false;if(f.offer&&!itemOfferTags(m,dow).length)return false;return true;
 }
+// Scrolling offers strip on the home and menu pages. It moves slowly and stops
+// while the mouse is over it or a finger is on it, so customers can read it.
+function offerTicker(){
+  const dow=new Date().getDay();
+  const tick=[...activeOffers(dow).map(x=>`<span><b>${x.type==='code'?'CODE '+esc(x.code):'TODAY'}</b> ${esc(x.name)}: ${esc(offerText(x))}</span>`),...S.combos.filter(c=>c.active).map(c=>`<span><b>COMBO</b> ${esc(c.name)} at ${rs(c.price)}</span>`),'<span><b>CHEESE COINS</b> 5% back on every order</span>','<span><b>PURE VEG</b> No mayonnaise products</span>'];
+  const secs=Math.max(45,Math.round(tick.join('').replace(/<[^>]+>/g,'').length*.32));
+  // the delay keeps its place when the page re-renders, instead of starting over
+  return `<div class="ticker${U.tickHold?' hold':''}" aria-label="Offers" title="Hold to pause"><div class="tk" style="animation-duration:${secs}s;animation-delay:-${(Date.now()/1000%secs).toFixed(1)}s">${tick.join('')}${tick.join('')}</div></div>`;
+}
 function renderPublic(){
   const o=cur();const open=isOpen();const dow=new Date().getDay();
   const live=S.offers.filter(x=>x.active);const liveToday=activeOffers(dow);
   const combos=S.combos.filter(c=>c.active);
   const cats=CATS.filter(([k])=>U.pubCat==='all'||U.pubCat===k);
   const cartN=U.cart.reduce((s,l)=>s+l.qty,0);const b=computeBill(U.cart);setTimeout(()=>{U.lastCartN=cartN},0);
-  const tick=[...liveToday.map(x=>`<span><b>${x.type==='code'?'CODE '+esc(x.code):'TODAY'}</b> ${esc(x.name)}: ${esc(offerText(x))}</span>`),...combos.map(c=>`<span><b>COMBO</b> ${esc(c.name)} at ${rs(c.price)}</span>`),'<span><b>CHEESE COINS</b> 5% back on every order</span>','<span><b>PURE VEG</b> No mayonnaise products</span>'];
   const best=liveToday.find(x=>x.type==='bogo')||liveToday.find(x=>x.type==='day')||liveToday.find(x=>x.type!=='code');
   const pizzasCount=S.menu.filter(m=>m.cat==='pizza'&&!m.off).length;
   const filtered=U.pubQ||U.pubF.jain||U.pubF.spicy||U.pubF.offer;let shown=0;
@@ -1057,7 +1067,7 @@ function renderPublic(){
       <div class="ft">${m.cat==='pizza'?`<div class="sizes">${S.sizes.filter(s=>+m.prices[s.id]).map(s=>`<span>${esc(s.label)} <b class="num">${rs(m.prices[s.id])}</b></span>`).join('')}</div>`:`<div class="price num">${rs(m.price)}</div>`}
       <button class="btn pri" data-act="pub-add" data-id="${m.id}">Add</button></div></div></article>`}).join('')}</div></section>`;
   }).join('');
-  return `<div class="ticker" aria-label="Offers"><div class="tk">${tick.join('')}${tick.join('')}</div></div>
+  return `${offerTicker()}
   <main class="pub">
   <section class="hero3">
     <svg class="drip" viewBox="0 0 1200 46" preserveAspectRatio="none" aria-hidden="true"><path d="${dripPath()}" fill="#f2b632"/></svg>
@@ -1114,7 +1124,7 @@ function renderHome(){
   const o=cur();const ph=o.phone||'7778043066';const open=isOpen();
   const addr=o.area&&o.area!=='Set your address'?o.area:'B/H Gopi Cinema, Maniyani Khad, Anand, Gujarat';
   const col=(price,label,list,note)=>`<div class="hm-col"><h3><span class="hm-slice" aria-hidden="true"></span>${label}</h3>${note?`<div class="hm-note">${note}</div>`:''}<span class="hm-badge num">${price}<small>Rs</small></span><ol class="${note?'':'plain'}">${list.map(x=>`<li>${x}</li>`).join('')}</ol></div>`;
-  return `<main class="pub hm">
+  return `${offerTicker()}<main class="pub hm">
   <section class="hm-card">
     <div class="hm-head">
       <div class="hm-logo"><svg viewBox="0 0 40 48" aria-hidden="true"><path d="M20 47C20 47 3 29 3 18a17 17 0 0 1 34 0c0 11-17 29-17 29z" fill="var(--teal)"/><circle cx="20" cy="18" r="10" fill="var(--surface)"/><text x="20" y="23" text-anchor="middle" font-family="Baloo Bhai 2, sans-serif" font-weight="800" font-size="14" fill="var(--teal)">C</text></svg><small>Really Cheesy…!<br>ચીઝી પિઝ્ઝા</small></div>
@@ -2493,6 +2503,10 @@ document.addEventListener('change',e=>{if(e.target.id==='au-bday'&&U.au)U.au.bda
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.target.id||'').startsWith('au-')&&U.au){e.preventDefault();authGo()}});
 document.addEventListener('keydown',e=>{if(S.mode==='pos'&&!staff()&&!mroot.innerHTML&&/^[0-9]$/.test(e.key))lgKey(e.key);else if(S.mode==='pos'&&!staff()&&e.key==='Backspace')lgKey('←')});
 
+// Touch on the offers strip pauses it until the finger lifts, then a moment longer
+let tickT;
+document.addEventListener('touchstart',e=>{const t=e.target.closest('.ticker');if(t){clearTimeout(tickT);U.tickHold=true;t.classList.add('hold')}},{passive:true});
+document.addEventListener('touchend',e=>{const t=document.querySelector('.ticker.hold');if(t){clearTimeout(tickT);tickT=setTimeout(()=>{U.tickHold=false;document.querySelectorAll('.ticker.hold').forEach(x=>x.classList.remove('hold'))},2500)}},{passive:true});
 (async function boot(){
   let loc={};try{loc=JSON.parse(localStorage.getItem(LKEY))||{}}catch(_){}
   let d;try{d=await api('/api/state')}catch(_){
