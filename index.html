@@ -518,7 +518,6 @@ td.r,th.r{text-align:right}
 @keyframes sheet{from{transform:translateY(100%)}to{transform:none}}
 /* phone layout */
 @media (max-width:720px){
-  .pubmode .top .seg{display:none}
   .pubmode .top-in{flex-wrap:nowrap;gap:8px;padding:8px 12px}
   .pubmode .brand{gap:6px;min-width:0}.pubmode .brand b{font-size:17px}.pubmode .brand .pin{width:26px}
   .pubmode #outletSel{max-width:118px;font-size:13px;padding:6px 8px}
@@ -562,13 +561,17 @@ td.r,th.r{text-align:right}
   .side{position:sticky;top:var(--toph,61px);height:calc(100vh - var(--toph,61px));overflow-y:auto;align-self:start}
 }
 @media (max-width:760px){
-  body:not(.pubmode) .top-in{flex-wrap:nowrap;gap:6px;padding:8px 10px}
-  body:not(.pubmode) .brand b,body:not(.pubmode) .brand small{display:none}
-  body:not(.pubmode) .brand .pin{width:28px}
-  body:not(.pubmode) .seg{flex-wrap:nowrap}
-  body:not(.pubmode) .seg button{padding:6px 10px;font-size:0;white-space:nowrap}
-  body:not(.pubmode) #m-pub::after{content:"Site";font-size:12px}
-  body:not(.pubmode) #m-pos::after{content:"POS";font-size:12px}
+  /* phones: one header row with a short Customer | Owner switch */
+  .top-in{flex-wrap:nowrap!important;gap:6px!important;padding:8px 10px!important}
+  .brand{margin-right:auto}.brand b,.brand small{display:none!important}
+  .brand .pin{width:28px!important}
+  .seg{flex-wrap:nowrap}
+  .seg button{padding:6px 10px;font-size:0;white-space:nowrap}
+  #m-pub::after{content:"Customer";font-size:12px}
+  #m-pos::after{content:"Owner";font-size:12px}
+  .pubmode #outletSel{max-width:104px}
+  #acct .btn{white-space:nowrap;padding:6px 9px!important;font-size:12px!important}
+  #outletSel{font-size:12px!important;padding:6px 6px!important}
   body:not(.pubmode) #acct .chip{display:none}
   body:not(.pubmode) #acct .btn{padding:6px 9px;font-size:12px}
   body:not(.pubmode) #outletSel{max-width:112px;font-size:12px;padding:6px 8px;margin-left:auto}
