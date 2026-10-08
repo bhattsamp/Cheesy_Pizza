@@ -4,6 +4,9 @@
 const { openStore } = require('./server');
 const { seedData } = require('./seed-data');
 
-const store = openStore();
-store.seed(seedData(), { demoOrders: !process.argv.includes('--empty') });
-console.log('Database reset:', store.file);
+(async () => {
+  const store = await openStore();
+  await store.seed(seedData(), { demoOrders: !process.argv.includes('--empty') });
+  console.log('Database reset:', store.uri);
+  await store.close();
+})().catch(e => { console.error(e.message); process.exit(1); });

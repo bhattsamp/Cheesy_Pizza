@@ -4,9 +4,15 @@ const { Store } = require('../server/db');
 const { createApp } = require('../server/server');
 const { seedData } = require('../server/seed-data');
 
+// Needs a MongoDB to test against: MONGODB_TEST_URI, or a local one on the default port.
+// The test database is wiped.
+const URI = process.env.MONGODB_TEST_URI || 'mongodb://127.0.0.1:27017/cheesy_pizza_test';
+let store;
+test.before(async () => { store = await new Store().connect(URI); });
+test.after(() => store.close());
+
 async function withServer(fn) {
-  const store = new Store(':memory:');
-  store.seed(seedData());
+  await store.seed(seedData());
   const server = createApp(store).listen(0);
   const base = `http://127.0.0.1:${server.address().port}`;
   const get = p => fetch(base + p).then(r => r.json());
@@ -65,6 +71,7 @@ test('edited values keep their type', () => withServer(async ({ get, post }) => 
   await post('/api/sync', { upsert: { outlets: [o] }, delete: { menu: ['x1'] } });
   const outs = await get('/api/outlets');
   assert.deepEqual(outs[0], o);
+  assert.equal(typeof outs[0].tables, 'string');
   assert.equal((await get('/api/menu')).length, 26);
 }));
 
