@@ -13,6 +13,7 @@ async function openStore(uri = process.env.MONGODB_URI || DEFAULT_URI) {
   const store = await new Store().connect(uri);
   store.uri = uri.replace(/\/\/[^@/]*@/, '//***@'); // hide credentials in logs
   if (!(await store.isSeeded())) await store.seed(seedData());
+  else await store.addExtraMenus(seedData().state.extras);
   return store;
 }
 

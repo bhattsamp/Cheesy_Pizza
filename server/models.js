@@ -29,6 +29,7 @@ const models = {
   Addon: mongoose.model('Addon', doc(), 'addons'),                                          // prices: {size: price}
   Offer: mongoose.model('Offer', doc({ id: String, type: String }), 'offers'),
   Combo: mongoose.model('Combo', doc({ id: String }), 'combos'),
+  ExtraMenu: mongoose.model('ExtraMenu', doc({ id: String }), 'extra_menus'),               // items: [{name, prices: {size: price}}]
   Staff: mongoose.model('Staff', doc({ id: String, pinHash: String }), 'staff'),
   Customer: mongoose.model('Customer', doc({ phone: String, pinHash: String }), 'customers'), // tx, myCodes
   Order: mongoose.model('Order', orderSchema, 'orders'),                                   // items, customer, pay, times

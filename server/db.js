@@ -12,6 +12,7 @@ const SPECS = {
   addons: { model: M.Addon, map: true },
   offers: { model: M.Offer, key: 'id' },
   combos: { model: M.Combo, key: 'id' },
+  extras: { model: M.ExtraMenu, key: 'id' },
   users: { model: M.Staff, key: 'id', pin: true },
   customers: { model: M.Customer, map: true, pin: true },
   orders: { model: M.Order, key: 'id' },
@@ -189,8 +190,27 @@ class Store {
     await M.PaymentMode.insertMany(withPos(data.payModes));
     await this.setSetting('config', data.config);
     await this.setSetting('demoPending', !!demoOrders);
-    await this.applyChanges({ upsert: data.state });
+    const extras = (data.state.extras || []).map(g => ({ ...g, items: g.items.map(({ from, ...it }) => it) }));
+    await this.applyChanges({ upsert: { ...data.state, extras } });
     await this.setSetting('seeded', true);
+    await this.setSetting('extrasAdded', true);
+  }
+
+  // Databases made before extra menus existed get them once, built from the
+  // old Extra Veg Topping and Extra Cheese add-ons and their prices.
+  async addExtraMenus(defaults) {
+    if (await this.getSetting('extrasAdded', false)) return;
+    if (!(await M.ExtraMenu.countDocuments())) {
+      const addons = await this.readCollection('addons');
+      const menus = defaults.map(g => ({ ...g, items: g.items.map(it => {
+        const from = addons[it.from];
+        const { from: _, ...rest } = it;
+        return from ? { ...rest, prices: { ...from.prices } } : rest;
+      }) }));
+      menus.forEach(g => { if (g.id === 'xveg' && addons.veg?.choices) g.items = addons.veg.choices.map(n => ({ name: n, prices: { ...addons.veg.prices } })); });
+      await this.applyChanges({ upsert: { extras: menus } });
+    }
+    await this.setSetting('extrasAdded', true);
   }
 
   // The first browser to call this generates the demo orders.
