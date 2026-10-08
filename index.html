@@ -552,6 +552,34 @@ td.r,th.r{text-align:right}
   .pubmode .cats{top:calc(env(safe-area-inset-top,0px) + 50px)}
   .pubmode .toast{bottom:calc(142px + env(safe-area-inset-bottom,0px))}
 }
+/* POS: left menu stays put while the page scrolls; phone layout */
+.tkjump{display:none}
+.moregrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.moregrid button{display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 6px;border:1px solid var(--line);border-radius:14px;background:var(--surface);font-weight:600;color:var(--ink);font-size:13px}
+.moregrid button svg{width:22px;height:22px;color:var(--teal)}
+.moregrid button[aria-current="page"]{background:var(--teal-soft);border-color:var(--teal);color:var(--teal)}
+@media (min-width:761px){
+  .side{position:sticky;top:var(--toph,61px);height:calc(100vh - var(--toph,61px));overflow-y:auto;align-self:start}
+}
+@media (max-width:760px){
+  body:not(.pubmode) .top-in{flex-wrap:nowrap;gap:6px;padding:8px 10px}
+  body:not(.pubmode) .brand b,body:not(.pubmode) .brand small{display:none}
+  body:not(.pubmode) .brand .pin{width:28px}
+  body:not(.pubmode) .seg{flex-wrap:nowrap}
+  body:not(.pubmode) .seg button{padding:6px 10px;font-size:0;white-space:nowrap}
+  body:not(.pubmode) #m-pub::after{content:"Site";font-size:12px}
+  body:not(.pubmode) #m-pos::after{content:"POS";font-size:12px}
+  body:not(.pubmode) #acct .chip{display:none}
+  body:not(.pubmode) #acct .btn{padding:6px 9px;font-size:12px}
+  body:not(.pubmode) #outletSel{max-width:112px;font-size:12px;padding:6px 8px;margin-left:auto}
+  .mobnav{overflow:visible}
+  .mobnav button{min-width:0;white-space:nowrap;padding:4px 2px}
+  .mobnav button span:not(.cnt){max-width:100%;overflow:hidden;text-overflow:ellipsis}
+  .main{padding:12px;padding-bottom:150px}
+  .tkjump{display:flex;position:fixed;left:10px;right:10px;bottom:calc(64px + env(safe-area-inset-bottom,0px));z-index:24;align-items:center;justify-content:space-between;gap:10px;border:0;border-radius:16px;padding:12px 16px;background:var(--teal-deep);color:#fff;font-weight:700;box-shadow:0 10px 26px rgba(15,111,128,.35);animation:slideup .3s ease}
+  .ticket{scroll-margin-top:60px}
+  .tiles{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}.rv{opacity:1!important;transform:none!important}.ticker .tk{padding-left:16px;white-space:normal;flex-wrap:wrap}}
 /* ===== v6: order screen, kitchen colours, table hold ===== */
 .ticket.order{position:static;max-height:none}
@@ -962,6 +990,7 @@ function render(){
   document.getElementById('m-pos').setAttribute('aria-pressed',S.mode==='pos');
   document.getElementById('outletSel').innerHTML=S.outlets.map(o=>`<option value="${o.id}" ${o.id===S.cur?'selected':''}>${esc(o.name)}</option>`).join('');
   document.body.classList.toggle('pubmode',S.mode==='public');
+  const th=document.querySelector('.top')?.offsetHeight;if(th)document.documentElement.style.setProperty('--toph',th+'px');
   const vk=S.mode+'|'+(S.mode==='public'?U.pubView+'|'+(U.accTab||''):'');U.enter=vk!==U.lastView;U.lastView=vk;
   app.innerHTML=S.mode==='public'?pubNav()+(U.pubView==='account'&&me()?renderAccount():U.pubView==='auth'&&!me()?renderAuth():U.pubView==='home'?renderHome():renderPublic()):renderPOS();renderAcct();
   renderBoard();afterRender();
@@ -1402,11 +1431,17 @@ function renderPOS(){
   const k=mine.filter(o=>o.status==='placed'||o.status==='preparing').length;
   const c=mine.filter(o=>o.status==='ready'||o.status==='out').length;
   const nav=()=>allowed.map(([t,n])=>{const cnt=t==='kitchen'?k:t==='counter'?c:0;return `<button data-act="tab" data-v="${t}" ${U.pos.tab===t?'aria-current="page"':''}>${I[t]}<span>${n}</span>${cnt?`<span class="cnt num">${cnt}</span>`:''}</button>`}).join('');
+  // Phones show four tabs and a More button; the rest open in a sheet
+  const mobNav=()=>{if(allowed.length<=5)return nav();const four=allowed.slice(0,4),more=allowed.slice(4);
+    return four.map(([t,n])=>{const cnt=t==='kitchen'?k:t==='counter'?c:0;return `<button data-act="tab" data-v="${t}" ${U.pos.tab===t?'aria-current="page"':''}>${I[t]}<span>${n}</span>${cnt?`<span class="cnt num">${cnt}</span>`:''}</button>`}).join('')+
+      `<button data-act="pos-more" ${more.some(([t])=>t===U.pos.tab)?'aria-current="page"':''}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="5" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="19" cy="12" r="1.4"/></svg><span>${esc((more.find(([t])=>t===U.pos.tab)||[0,'More'])[1])}</span></button>`};
+  U.posMore=()=>showModal(`<div class="mh"><h3>All sections</h3><button class="x" data-act="close" aria-label="Close">×</button></div><div class="mb"><div class="moregrid">${allowed.map(([t,n])=>`<button data-act="tab" data-v="${t}" ${U.pos.tab===t?'aria-current="page"':''}>${I[t]}<span>${n}</span></button>`).join('')}</div>
+    <div class="row small muted"><span class="grow">Signed in as <b>${esc(su.name)}</b> · ${ROLES[su.role]}</span><button class="btn sm" data-act="lock">Lock screen</button></div></div>`);
   const views={new:vNew,kitchen:vKitchen,counter:vCounter,orders:vOrders,sales:vSales,offers:vOffers,cust:vCust,menu:vMenu,outlet:vOutlets,staff:vStaff};
   return `<div class="pos"><nav class="side" aria-label="POS sections">${nav()}
     <div style="margin-top:auto;padding:10px;display:flex;flex-direction:column;gap:6px" class="small muted"><span>Signed in as <b>${esc(su.name)}</b> · ${ROLES[su.role]}</span><button class="btn sm" data-act="lock">Lock screen</button>${su.role==='owner'?'<span>Example orders are loaded for testing.</span><button class="btn sm" data-act="reset">Reset demo data</button>':''}</div></nav>
   <section class="main">${U.pos.tab!=='kitchen'&&su.role!=='kitchen'?onlineBanner():''}${views[U.pos.tab]()}</section></div>
-  <nav class="mobnav" aria-label="POS sections">${nav()}</nav>`;
+  <nav class="mobnav" aria-label="POS sections">${mobNav()}</nav>`;
 }
 // Orders placed on the customer site wait here for the owner or cashier to accept
 function onlineBanner(){
@@ -1473,7 +1508,8 @@ function vNew(){
       <nav class="cats" style="position:static" aria-label="Categories"><button data-act="poscat" data-v="combo" aria-pressed="${P.cat==='combo'&&!P.q}">Combos</button>${CATS.map(([k,n])=>`<button data-act="poscat" data-v="${k}" aria-pressed="${P.cat===k&&!P.q}">${n}</button>`).join('')}</nav>
       <div class="tiles">${items.map(m=>`<button class="tile" data-act="${m.combo?'combo-add':'pos-add'}" data-id="${m.id}" data-t="pos" ${m.off?'disabled':''}>${m.tag?'<span class="tg" title="Offer applies"></span>':''}<b>${esc(m.name)}</b><span class="num">${m.label}${m.off?' · off':''}</span></button>`).join('')||'<div class="empty">No items</div>'}</div>
     </div>
-    <aside class="card ticket order">
+    ${P.cart.length?`<button class="tkjump" data-act="to-ticket"><b class="num">${P.cart.reduce((n,l)=>n+l.qty,0)} item${P.cart.reduce((n,l)=>n+l.qty,0)>1?'s':''} · ${rs(b.total)}</b><span>View order ↓</span></button>`:''}
+    <aside class="card ticket order" id="ticket">
       <div class="sec">
         <div class="types">${Object.entries(TYPES).map(([k,n])=>`<button data-act="pos-type" data-v="${k}" aria-pressed="${P.type===k}">${n}</button>`).join('')}</div>
         ${zom?`<div class="field"><label for="pos-zid">Zomato order ID</label><input class="inp num" id="pos-zid" value="${esc(P.zid)}" placeholder="e.g. 5123456789"></div>`:''}
@@ -2077,7 +2113,9 @@ document.addEventListener('click',e=>{
     case 'pf-place':placePublic();break;
     case 'pub-track-find':openTrackFind();break;
     case 'track':U.trackId=el.dataset.id;openTrack();break;
-    case 'tab':P.tab=el.dataset.v;U.confirmCancel=null;render();window.scrollTo(0,0);break;
+    case 'tab':P.tab=el.dataset.v;U.confirmCancel=null;closeModal();render();window.scrollTo(0,0);break;
+    case 'pos-more':U.posMore&&U.posMore();break;
+    case 'to-ticket':document.getElementById('ticket')?.scrollIntoView({behavior:'smooth',block:'start'});break;
     case 'poscat':P.cat=el.dataset.v;P.q='';render();break;
     case 'pos-add':openCustomizer(el.dataset.id,'pos');break;
     case 'pos-type':P.type=el.dataset.v;if(P.type!=='dine'){P.addTo=null;P.table=''}if(P.type==='zomato')P.pay='zomato';else if(P.pay==='zomato')P.pay='cash';render();break;
