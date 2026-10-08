@@ -33,6 +33,30 @@ Settings (in `.env`): `MONGODB_URI` (default `mongodb://localhost:27017/ChessyPi
 
 Demo logins: staff PINs Owner 1234, Cashier 1111, Kitchen 2222; customer 9825011111 with PIN 1234.
 
+## Mobile app
+
+`mobile/` holds an Android and iOS app built with [Capacitor](https://capacitorjs.com). It is a
+full-screen shell around the Cheesy Pizza server, so the phone shows the same customer site and
+POS screens and shares the same live data. The server must be reachable online from the phone
+(a hosted address such as `https://cheesy-pizza.example.com`, or the shop computer's LAN address
+like `http://192.168.1.20:3000` on the same Wi-Fi); `localhost` will not work.
+
+**Get an APK without installing anything:** in GitHub, set a repository variable
+`CHEESY_SERVER_URL` (Settings > Secrets and variables > Actions > Variables) to the server
+address, then open Actions > Android APK > Run workflow (or paste an address into its
+`server_url` box). Download the `cheesy-pizza-debug-apk` artifact, unzip it and open
+`app-debug.apk` on the phone, allowing installs from unknown sources when asked. Each build
+installs over the previous one.
+
+**Build locally** (Node 22+, Android Studio or Xcode):
+
+```sh
+cd mobile
+npm install
+CHEESY_SERVER_URL=https://your-server.example.com npx cap sync
+npx cap open android      # or: npx cap open ios (on a Mac)
+```
+
 ## What is stored where
 
 | Collection | Holds |
