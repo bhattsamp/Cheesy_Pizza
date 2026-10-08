@@ -1,8 +1,8 @@
-// The app is a thin shell around the Cheesy Pizza server: it opens the server's
-// address full screen, so the phone uses the same live menu, orders and POS as
-// every other device. Set the address when building:
-//   CHEESY_SERVER_URL=https://your-server.example.com npx cap sync
-// Without it, the app shows the page in www/ explaining what to set.
+// Without a server address the app runs offline: www/ (built by `npm run build`)
+// holds the whole site and keeps its data on the phone only.
+// With an address, the app opens that Cheesy Pizza server full screen instead, so
+// the phone shares the same live menu, orders and POS as every other device:
+//   CHEESY_SERVER_URL=https://your-server.example.com npm run sync
 const serverUrl = (process.env.CHEESY_SERVER_URL || '').trim().replace(/\/+$/, '');
 
 /** @type {import('@capacitor/cli').CapacitorConfig} */

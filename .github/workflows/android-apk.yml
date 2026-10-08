@@ -3,13 +3,13 @@ name: Android APK
 on:
   push:
     branches: [main]
-    paths: ['mobile/**', '.github/workflows/android-apk.yml']
+    paths: ['mobile/**', 'index.html', 'img/**', 'server/seed-data.js', '.github/workflows/android-apk.yml']
   pull_request:
-    paths: ['mobile/**', '.github/workflows/android-apk.yml']
+    paths: ['mobile/**', 'index.html', 'img/**', 'server/seed-data.js', '.github/workflows/android-apk.yml']
   workflow_dispatch:
     inputs:
       server_url:
-        description: 'Cheesy Pizza server address the app opens (blank uses the CHEESY_SERVER_URL repository variable)'
+        description: 'Cheesy Pizza server address the app opens. Blank uses the CHEESY_SERVER_URL repository variable, or builds the offline app if that is not set either.'
         required: false
         default: ''
 
@@ -37,15 +37,16 @@ jobs:
       - name: Install Capacitor
         run: npm ci
 
-      - name: Copy app config into the Android project
+      - name: Build the app and copy it into the Android project
         env:
           CHEESY_SERVER_URL: ${{ inputs.server_url || vars.CHEESY_SERVER_URL }}
         run: |
           if [ -z "$CHEESY_SERVER_URL" ]; then
-            echo "::warning::No server address set. The APK will open a page saying so. Set the CHEESY_SERVER_URL repository variable or the server_url input."
+            echo "No server address set: building the offline app (data stays on the phone)"
           else
             echo "App will open $CHEESY_SERVER_URL"
           fi
+          npm run build
           npx cap sync android
 
       - name: Build debug APK
