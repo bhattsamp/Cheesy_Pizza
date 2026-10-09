@@ -8,6 +8,7 @@ public class MainActivity extends BridgeActivity {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        registerPlugin(UpiPayPlugin.class); // pay with a UPI app from checkout
         super.onCreate(savedInstanceState);
         // Android keeps the page clear of the status bar and navigation buttons; colour the
         // strips behind them like the app's header and menu bar (light or dark theme).
