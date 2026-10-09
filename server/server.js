@@ -44,7 +44,7 @@ function createApp(store) {
     let before = null;
     if (push.pushEnabled() && (orders.length || offers.length)) {
       before = { orders: new Map(), offers: new Map() };
-      if (orders.length) (await store.readCollection('orders', { _id: { $in: orders.map(o => String(o.id)) } })).forEach(o => before.orders.set(o.id, o.status));
+      if (orders.length) (await store.readCollection('orders', { _id: { $in: orders.map(o => String(o.id)) } })).forEach(o => before.orders.set(o.id, { status: o.status, check: o.pay && o.pay.check }));
       if (offers.length) (await store.readCollection('offers', { _id: { $in: offers.map(o => String(o.id)) } })).forEach(o => before.offers.set(o.id, !!o.active));
     }
     let r;
@@ -57,12 +57,14 @@ function createApp(store) {
     if (before) {
       const withNo = o => ({ ...o, no: r.renumbered[o.id] || o.no });
       const fresh = orders.filter(o => !before.orders.has(o.id) && o.source === 'online' && o.status === 'placed').map(withNo);
-      const moved = orders.filter(o => before.orders.has(o.id) && before.orders.get(o.id) !== o.status).map(withNo);
+      const moved = orders.filter(o => before.orders.has(o.id) && before.orders.get(o.id).status !== o.status).map(withNo);
+      const checked = orders.filter(o => before.orders.has(o.id) && o.pay && ['ok', 'failed'].includes(o.pay.check) && before.orders.get(o.id).check !== o.pay.check).map(withNo);
       const live = offers.filter(o => o.active && !before.offers.get(o.id));
       const fail = e => console.error('Push alert failed:', e.message);
       push.notifyNewOrders(fresh).catch(fail);
       push.notifyOrderUpdates(moved).catch(fail);
       push.notifyNewOffers(live).catch(fail);
+      push.notifyPayments(checked).catch(fail);
     }
   });
 

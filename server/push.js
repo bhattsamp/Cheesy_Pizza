@@ -32,7 +32,8 @@ const removeToken = token => PushToken.deleteOne({ _id: String(token) });
 
 function orderText(o) {
   const items = (o.items || []).map(l => `${l.qty}× ${l.name}`).join(', ');
-  return [o.total != null ? '₹' + o.total : '', o.customer && o.customer.name, items].filter(Boolean).join(' · ');
+  const upi = o.pay && o.pay.check === 'pending' ? 'UPI to check, UTR ' + o.pay.utr : '';
+  return [o.total != null ? '₹' + o.total : '', upi, o.customer && o.customer.name, items].filter(Boolean).join(' · ');
 }
 
 // Sends one alert per new online order to the phones signed in at its outlet
@@ -113,6 +114,21 @@ async function notifyOrderUpdates(orders) {
   }
 }
 
+// A UPI payment was checked: the customer hears the result, and so does every staff phone at the outlet
+async function notifyPayments(orders) {
+  if (!messaging) return;
+  for (const o of orders) {
+    const ok = o.pay.check === 'ok';
+    const amt = '₹' + ((o.total || 0) - (o.walletUsed || 0));
+    const cust = (await PushToken.find({ role: 'customer', orders: String(o.id) }).lean()).map(x => x._id);
+    if (cust.length) await sendTo(cust, updateMsg(ok ? `Payment received ✓${o.no ? ' · ' + o.no : ''}` : `UPI payment not found${o.no ? ' · ' + o.no : ''}`,
+      ok ? `We got your ${amt} UPI payment. Thank you!` : `We could not find your ${amt} UPI payment. Please pay cash, or call the outlet.`, { orderId: String(o.id) }, 'pay-' + o.id));
+    const staff = (await PushToken.find({ outletId: String(o.outletId), role: { $ne: 'customer' } }).lean()).map(x => x._id);
+    if (staff.length) await sendTo(staff, updateMsg(ok ? `UPI ${amt} received · ${o.no || ''}`.trim() : `UPI ${amt} not received · ${o.no || ''}`.trim(),
+      `${o.customer && o.customer.name ? o.customer.name + ' · ' : ''}UTR ${o.pay.utr || '—'}${o.paidBy ? ' · checked by ' + o.paidBy : ''}`, { orderId: String(o.id) }, 'pay-' + o.id));
+  }
+}
+
 // Tells every customer phone about offers that just went live
 async function notifyNewOffers(offers) {
   if (!messaging || !offers.length) return;
@@ -134,4 +150,4 @@ async function notifyBroadcast(title, body, image) {
 const customerCount = () => PushToken.countDocuments({ role: 'customer' });
 
 module.exports = { initPush, setMessaging, pushEnabled, saveToken, refreshToken, removeToken, notifyNewOrders, orderText,
-  saveCustomerToken, notifyOrderUpdates, notifyNewOffers, notifyBroadcast, customerCount, offerText, STATUS_TEXT };
+  saveCustomerToken, notifyOrderUpdates, notifyPayments, notifyNewOffers, notifyBroadcast, customerCount, offerText, STATUS_TEXT };
