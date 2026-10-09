@@ -17,3 +17,9 @@ services:
       # Firebase service account key (JSON) for Admin app alerts; leave empty to keep them off
       - key: FIREBASE_SERVICE_ACCOUNT
         sync: false
+      # Brevo API key (free plan, 300 emails a day) for sign-up email codes; leave empty to sign up without a code
+      - key: BREVO_API_KEY
+        sync: false
+      # The sender address you verified in Brevo, e.g. your Gmail address
+      - key: MAIL_FROM
+        sync: false
