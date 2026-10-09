@@ -568,6 +568,11 @@ td.r,th.r{text-align:right}
 .waits button{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:4px 10px;font-weight:700;font-size:13px}
 .waits button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 .waits input{width:70px;padding:4px 8px}
+.ringpop{position:fixed;left:50%;top:calc(12px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:65;width:min(440px,calc(100% - 24px));max-height:calc(100vh - 24px);overflow:auto;background:var(--surface);border:2px solid var(--plum);border-radius:18px;box-shadow:var(--shadow-lg);padding:12px;display:flex;flex-direction:column;gap:10px;animation:ringIn .35s cubic-bezier(.2,.9,.3,1.3)}
+.ringpop .bell{font-size:24px;display:inline-block;animation:bellShake 1s ease-in-out infinite;transform-origin:50% 10%}
+.ringpop .rp1{background:var(--plum-soft);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:6px}
+@keyframes ringIn{from{opacity:0;transform:translate(-50%,-20px) scale(.95)}to{opacity:1;transform:translateX(-50%)}}
+@keyframes bellShake{0%,50%,100%{transform:rotate(0)}10%,30%{transform:rotate(18deg)}20%,40%{transform:rotate(-18deg)}}
 .online{border:2px solid var(--plum);background:var(--plum-soft);border-radius:14px;padding:10px 12px;margin-bottom:14px;display:flex;flex-direction:column;gap:8px}
 .online .on1{display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:var(--surface);border-radius:10px;padding:8px 10px}
 .tables button.held{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
@@ -740,6 +745,7 @@ td.r,th.r{text-align:right}
 <div id="app"></div>
 <div id="modalRoot"></div>
 <div id="boardRoot"></div>
+<div id="ringRoot"></div>
 <div id="printRoot"></div>
 
 <script>
@@ -1028,7 +1034,7 @@ function render(){
   document.body.classList.toggle('pubmode',S.mode==='public');
   const vk=S.mode+'|'+(S.mode==='public'?U.pubView+'|'+(U.accTab||''):'');U.enter=vk!==U.lastView;U.lastView=vk;
   app.innerHTML=S.mode==='public'?pubNav()+(U.pubView==='account'&&me()?renderAccount():U.pubView==='auth'&&!me()?renderAuth():U.pubView==='home'?renderHome():renderPublic()):renderPOS();renderAcct();
-  renderBoard();afterRender();
+  renderBoard();renderRing();afterRender();
 }
 function afterRender(){
   if(S.mode==='public')animatePub();
@@ -1467,7 +1473,7 @@ function renderPOS(){
 // Orders placed on the customer site wait here for the owner or cashier to accept
 function onlineBanner(){
   const pl=liveOrders().filter(o=>o.status==='placed').sort((a,b)=>a.ts-b.ts);if(!pl.length)return '';
-  return `<div class="online" role="region" aria-label="New online orders"><div class="row"><b class="grow">${pl.length} new online order${pl.length>1?'s':''} from the customer site</b>${ringTimer?'<button class="btn sm" data-act="mute-ring">Stop ringing</button>':''}</div>
+  return `<div class="online" role="region" aria-label="New online orders"><div class="row"><b class="grow">${pl.length} new online order${pl.length>1?'s':''} from the customer site</b>${ringTimer||ringAudio?'<button class="btn sm" data-act="mute-ring">Stop ringing</button>':''}</div>
     ${pl.map(o=>`<div class="on1"><b class="num">${o.no}</b><span class="small">${fmtTime(o.ts)} · ${esc(o.customer.name)} · <span class="num">${fmtPhone(o.customer.phone)}</span> · ${TYPES[o.type]}${o.scheduled?' · for '+esc(o.scheduled):''}</span>
       <span class="small muted grow">${o.items.map(l=>l.qty+'× '+esc(l.name)+(l.size?' '+sizeLabel(l.size):'')).join(', ')}</span><b class="num">${rs(o.total)}</b>${payTag(o)}
       <button class="btn sm ok" data-act="accept" data-id="${o.id}">Accept</button><button class="btn sm bad" data-act="reject" data-id="${o.id}">Reject</button></div>`).join('')}</div>`;
@@ -1477,7 +1483,7 @@ let seenPlaced=null;
 // owner in Outlets (o.alert = {tone, vol, loop}; o.alertSound holds an uploaded sound).
 const TONES=[['chime','Pizza chime'],['bell','Shop bell'],['ring','Phone ring'],['siren','Siren'],['ding','Soft ding'],['custom','My own sound']];
 const alertCfg=o=>({tone:'chime',vol:80,loop:true,...(o&&o.alert||{})});
-let actx=null,ringTimer=null,ringUntil=0,ringAudio=null;
+let actx=null,ringTimer=null,ringUntil=0,ringAudio=null,ringIds=new Set();
 function audioCtx(){if(!actx)try{actx=new (window.AudioContext||window.webkitAudioContext)()}catch(_){}if(actx&&actx.state==='suspended')actx.resume().catch(()=>{});return actx}
 // Phones only allow sound after a tap, so unlock audio on the first one (the PIN pad, usually)
 document.addEventListener('pointerdown',()=>audioCtx(),{once:true,capture:true});
@@ -1495,18 +1501,33 @@ function playTone(o){
   try{navigator.vibrate&&navigator.vibrate([300,150,300])}catch(_){}
 }
 const placedHere=()=>liveOrders().filter(o=>o.status==='placed');
-function stopRing(){const was=!!ringTimer;clearInterval(ringTimer);ringTimer=null;if(was&&S.mode==='pos'&&!mroot.innerHTML&&!isBusy())render();if(ringAudio){ringAudio.pause();ringAudio=null}}
-function startRing(){
-  const o=cur(),c=alertCfg(o);stopRing();playTone(o);if(!c.loop)return;
-  ringUntil=Date.now()+3*60e3;  // keeps ringing until the order is accepted or rejected, at most 3 minutes
-  ringTimer=setInterval(()=>{if(!placedHere().length||S.mode!=='pos'||!staff()||Date.now()>ringUntil){stopRing();return}playTone(cur())},4000);
+// Orders still waiting that the alert is ringing for; it stops once each is accepted or rejected
+const ringing=()=>S.orders.filter(o=>ringIds.has(o.id)&&o.status==='placed');
+function stopRing(){clearInterval(ringTimer);ringTimer=null;ringIds.clear();if(ringAudio){ringAudio.pause();ringAudio=null}renderRing();if(S.mode==='pos'&&!mroot.innerHTML&&!isBusy())render()}
+function ringDone(id){ringIds.delete(id);if(!ringing().length)stopRing();else renderRing()}
+function startRing(fresh){
+  const o=cur(),c=alertCfg(o);fresh.forEach(id=>ringIds.add(id));clearInterval(ringTimer);ringTimer=null;playTone(o);renderRing();
+  if(!c.loop)return;
+  ringUntil=Date.now()+3*60e3;  // keeps ringing until accepted or rejected, at most 3 minutes
+  ringTimer=setInterval(()=>{if(!ringing().length||S.mode!=='pos'||!staff()){stopRing();return}if(Date.now()>ringUntil){clearInterval(ringTimer);ringTimer=null;return}playTone(cur())},4000);
+}
+// Pop-up over every POS screen while an order is ringing: accept, reject or just stop the sound
+function renderRing(){
+  const root=document.getElementById('ringRoot'),list=S.mode==='pos'&&staff()?ringing():[];
+  if(!list.length){root.innerHTML='';return}
+  root.innerHTML=`<div class="ringpop" role="alertdialog" aria-label="New online order"><div class="row"><span class="bell" aria-hidden="true">🔔</span><b class="grow">${list.length>1?list.length+' new online orders':'New online order'}</b>
+    ${ringTimer||ringAudio?'<button class="btn sm" data-act="mute-ring">Stop ringing</button>':''}<button class="x" data-act="hide-ring" aria-label="Close">×</button></div>
+    ${list.map(o=>`<div class="rp1"><div class="row"><b class="num">${o.no}</b><span class="small muted grow">${fmtTime(o.ts)} · ${TYPES[o.type]}</span><b class="num">${rs(o.total)}</b></div>
+      <div class="small">${esc(o.customer.name)} · <span class="num">${fmtPhone(o.customer.phone)}</span>${o.address?' · '+esc(o.address):''}</div>
+      <div class="small muted">${o.items.map(l=>l.qty+'× '+esc(l.name)+(l.size?' '+sizeLabel(l.size):'')).join(', ')}</div>
+      <div class="row"><button class="btn ok grow" data-act="accept" data-id="${o.id}">Accept</button><button class="btn bad grow" data-act="reject" data-id="${o.id}">Reject</button></div></div>`).join('')}</div>`;
 }
 function checkNewOnline(){
   const ids=placedHere().map(o=>o.id);
   const fresh=seenPlaced?ids.filter(id=>!seenPlaced.has(id)):[];seenPlaced=new Set(ids);
-  if(!ids.length)stopRing();
+  if(ringIds.size&&!ringing().length)stopRing();else if(ringIds.size)renderRing();
   if(!fresh.length||S.mode!=='pos'||!staff())return;
-  toast('New online order');startRing();if(!mroot.innerHTML&&!isBusy())render();
+  toast('New online order');startRing(fresh);if(!mroot.innerHTML&&!isBusy())render();
 }
 function custInfo(ph){
   if(!ph||ph.length<10)return null;
@@ -1737,7 +1758,7 @@ function vKitchen(){
     ${o.status==='placed'?`<div class="row"><button class="btn ok grow" data-act="accept" data-id="${o.id}">Accept</button><button class="btn bad" data-act="reject" data-id="${o.id}">Reject</button></div>`:`<button class="btn ok" data-act="kready" data-id="${o.id}">Ready → counter</button>`}
   </div>`};
   return `<div class="ph1"><h2>Kitchen display</h2><span class="muted small">${esc(cur().name)} · tap an item when it is done · green turns red as the waiting time runs out</span></div>
-  ${pl.length?`<div class="kcol-h"><span class="chip placed num">${pl.length}</span><h3>New online orders</h3>${ringTimer?'<button class="btn sm" data-act="mute-ring">Stop ringing</button>':''}</div><div class="kds" style="margin-bottom:22px">${pl.map(card).join('')}</div>`:''}
+  ${pl.length?`<div class="kcol-h"><span class="chip placed num">${pl.length}</span><h3>New online orders</h3>${ringTimer||ringAudio?'<button class="btn sm" data-act="mute-ring">Stop ringing</button>':''}</div><div class="kds" style="margin-bottom:22px">${pl.map(card).join('')}</div>`:''}
   <div class="kcol-h"><span class="chip preparing num">${pr.length}</span><h3>Preparing</h3></div>
   <div class="kds">${pr.map(card).join('')||'<div class="empty card">No orders in the oven.</div>'}</div>`;
 }
@@ -2182,8 +2203,8 @@ document.addEventListener('click',e=>{
     case 'copy':{const t=el.dataset.t;try{navigator.clipboard.writeText(t).then(()=>toast('Copied'),selectReceipt)}catch(_){selectReceipt()}break}
     case 'ktap':{const id=el.dataset.id,now=Date.now();
       if(U.lastTap[id]&&now-U.lastTap[id]<400){const o=find(id);if(o.status==='preparing'){setStatus(o,'ready');toast(o.no+' ready → counter');render()}U.lastTap[id]=0}else U.lastTap[id]=now;break}
-    case 'accept':{const o=find(el.dataset.id);setStatus(o,'preparing');toast(o.no+' accepted');render();break}
-    case 'reject':{const o=find(el.dataset.id);refundOrder(o);{const c=S.customers[o.customer.phone];if(c)c.coins=Math.max(0,(c.coins||0)+(o.coinsUsed||0)-(o.coinsEarned||0))}setStatus(o,'cancelled');toast(o.no+' rejected');render();break}
+    case 'accept':{const o=find(el.dataset.id);setStatus(o,'preparing');ringDone(o.id);toast(o.no+' accepted');render();break}
+    case 'reject':{const o=find(el.dataset.id);refundOrder(o);{const c=S.customers[o.customer.phone];if(c)c.coins=Math.max(0,(c.coins||0)+(o.coinsUsed||0)-(o.coinsEarned||0))}setStatus(o,'cancelled');ringDone(o.id);toast(o.no+' rejected');render();break}
     case 'handover':case 'delivered':{const o=find(el.dataset.id);setStatus(o,'done');toast(o.no+' · '+doneLabel(o.type));render();break}
     case 'dispatch':{const o=find(el.dataset.id);const nm=document.getElementById('rs-'+o.id).value;o.rider=(cur().riders||[]).find(r=>r.name===nm);setStatus(o,'out');toast(o.no+' out with '+nm);render();break}
     case 'board':U.board=true;renderBoard();break;
@@ -2213,8 +2234,9 @@ document.addEventListener('click',e=>{
     case 'del-size':{const id=el.dataset.id;S.sizes=S.sizes.filter(s=>s.id!==id);save();render();break}
     case 'use-outlet':S.cur=el.dataset.id;save();render();break;
     case 'add-outlet':{const code=String.fromCharCode(65+S.outlets.length);S.outlets.push({id:uid('o'),code,name:'Outlet '+code,area:'Set your address',phone:'',upi:'',riders:[]});save();render();break}
-    case 'test-ring':{const o=S.outlets.find(x=>x.id===el.dataset.o);audioCtx();stopRing();playTone(o);break}
-    case 'mute-ring':stopRing();render();break;
+    case 'test-ring':{const o=S.outlets.find(x=>x.id===el.dataset.o);audioCtx();playTone(o);break}
+    case 'mute-ring':clearInterval(ringTimer);ringTimer=null;if(ringAudio){ringAudio.pause();ringAudio=null}renderRing();render();break;
+    case 'hide-ring':stopRing();break;
     case 'del-sound':{if(staff()?.role!=='owner')break;const o=S.outlets.find(x=>x.id===el.dataset.o);delete o.alertSound;o.alert={...alertCfg(o),tone:alertCfg(o).tone==='custom'?'chime':alertCfg(o).tone};save();render();break}
     case 'add-rider':{const o=S.outlets.find(x=>x.id===el.dataset.o);const n=document.getElementById('rn-'+o.id).value.trim(),p=document.getElementById('rp-'+o.id).value.replace(/\D/g,'');if(!n){toast('Enter the rider name');break}(o.riders=o.riders||[]).push({name:n,phone:p});save();render();break}
     case 'del-rider':{const o=S.outlets.find(x=>x.id===el.dataset.o);o.riders.splice(+el.dataset.i,1);save();render();break}
@@ -2246,9 +2268,9 @@ document.addEventListener('change',e=>{
   if(mh.onChange&&mroot.contains(e.target)){mh.onChange(e);return}
   const t=e.target;
   if(t.id==='pc-coins'){U.pos.useCoins=t.checked;render()}
-  if(t.dataset.al&&staff()?.role==='owner'){const o=S.outlets.find(x=>x.id===t.dataset.al);const c=alertCfg(o);c[t.dataset.f]=t.type==='checkbox'?t.checked:t.dataset.f==='vol'?+t.value:t.value;o.alert=c;save();render();if(t.dataset.f!=='loop'){stopRing();playTone(o)}toast('Alert saved')}
+  if(t.dataset.al&&staff()?.role==='owner'){const o=S.outlets.find(x=>x.id===t.dataset.al);const c=alertCfg(o);c[t.dataset.f]=t.type==='checkbox'?t.checked:t.dataset.f==='vol'?+t.value:t.value;o.alert=c;save();render();if(t.dataset.f!=='loop')playTone(o);toast('Alert saved')}
   if(t.dataset.alsnd&&t.files[0]&&staff()?.role==='owner'){const o=S.outlets.find(x=>x.id===t.dataset.alsnd),f=t.files[0];
-    if(f.size>1048576){toast('That sound is over 1 MB. Pick a shorter one.')}else{const r=new FileReader();r.onload=()=>{o.alertSound=r.result;o.alert={...alertCfg(o),tone:'custom'};save();render();stopRing();playTone(o);toast('Ringtone saved')};r.readAsDataURL(f)}}
+    if(f.size>1048576){toast('That sound is over 1 MB. Pick a shorter one.')}else{const r=new FileReader();r.onload=()=>{o.alertSound=r.result;o.alert={...alertCfg(o),tone:'custom'};save();render();playTone(o);toast('Ringtone saved')};r.readAsDataURL(f)}}
   if(t.id==='outletSel'){S.cur=t.value;save();U.pos.cart=[];render();toast('Switched to '+cur().name)}
   if(t.id==='od-date'&&t.value){U.ordersDate=t.value===today()?null:t.value;render()}
   if(t.id==='sd-date'&&t.value){U.salesDate=t.value===today()?null:t.value;render()}
