@@ -2430,7 +2430,7 @@ document.addEventListener('change',e=>{
   if(t.dataset.al&&staff()?.role==='owner'){const o=S.outlets.find(x=>x.id===t.dataset.al);const c=alertCfg(o);c[t.dataset.f]=t.type==='checkbox'?t.checked:t.dataset.f==='vol'?+t.value:t.value;o.alert=c;save();render();if(t.dataset.f!=='loop')playTone(o);toast('Alert saved')}
   if(t.dataset.alsnd&&t.files[0]&&staff()?.role==='owner'){const o=S.outlets.find(x=>x.id===t.dataset.alsnd),f=t.files[0];
     if(f.size>1048576){toast('That sound is over 1 MB. Pick a shorter one.')}else{const r=new FileReader();r.onload=()=>{o.alertSound=r.result;o.alert={...alertCfg(o),tone:'custom'};save();render();playTone(o);toast('Ringtone saved')};r.readAsDataURL(f)}}
-  if(t.id==='outletSel'){S.cur=t.value;save();U.pos.cart=[];render();toast('Switched to '+cur().name)}
+  if(t.id==='outletSel'){S.cur=t.value;save();pushOutlet();U.pos.cart=[];render();toast('Switched to '+cur().name)}
   if(t.id==='od-date'&&t.value){U.ordersDate=t.value===today()?null:t.value;render()}
   if(t.id==='sd-date'&&t.value){U.salesDate=t.value===today()?null:t.value;render()}
   if(t.dataset.mi){const m=menuItem(t.dataset.mi);const v=t.value===''?'':Math.max(0,+t.value||0);if(t.dataset.s)m.prices[t.dataset.s]=v;else m.price=+v||0;save();toast(m.name+' price saved')}
@@ -2450,6 +2450,32 @@ document.addEventListener('keydown',e=>{
 document.addEventListener('focusout',e=>{if(e.target.id&&e.target.id.startsWith('lp-')&&U.editLine!==null)setTimeout(()=>{if(U.editLine!==null)commitLinePrice(e.target)},0)});
 
 const isBusy=()=>document.activeElement&&/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName);
+/* ===== Admin app push alerts: new online orders ring even when the app is closed =====
+   Only in Cheesy Pizza Admin builds with Firebase set up, against a server with push on. */
+const PUSH=APP_ROLE==='admin'&&/CheesyPush/.test(navigator.userAgent)&&window.Capacitor&&Capacitor.Plugins&&Capacitor.Plugins.PushNotifications;
+const PKEY='cheesy_push_token';let pushPin=null;
+const pushTok=()=>{try{return localStorage.getItem(PKEY)}catch(_){return null}};
+async function pushSetup(){
+  if(!PUSH)return;try{if(!(await api('/api/push/status')).enabled)return}catch(_){return}
+  try{
+    let p=await PUSH.checkPermissions();if(p.receive!=='granted'&&p.receive!=='denied')p=await PUSH.requestPermissions();
+    if(p.receive!=='granted'){toast('Allow notifications to hear new orders while the app is closed');return}
+    await PUSH.createChannel({id:'orders',name:'New orders',description:'Rings when a customer places an online order',importance:5,visibility:1,sound:'order_ring',vibration:true,lights:true,lightColor:'#1A93A8'});
+    await PUSH.register();
+  }catch(e){console.error(e)}
+}
+if(PUSH){
+  PUSH.addListener('registration',async t=>{const old=pushTok();try{
+    if(pushPin){await api('/api/push/register',{token:t.value,staffId:S.staffId,pin:pushPin,outletId:S.cur});pushPin=null}
+    else if(!old||!(await api('/api/push/refresh',{old,token:t.value,outletId:S.cur})).ok)return;
+    localStorage.setItem(PKEY,t.value)}catch(e){console.error(e)}});
+  // Tapping the alert opens the app; the order is waiting with Accept and Reject
+  PUSH.addListener('pushNotificationActionPerformed',()=>{refresh().then(()=>{checkNewOnline();if(!mroot.innerHTML&&!isBusy())render()}).catch(()=>{})});
+}
+function pushLogin(pin){if(PUSH){pushPin=pin;pushSetup()}}
+function pushLogout(){const t=pushTok();if(!PUSH||!t)return;try{localStorage.removeItem(PKEY)}catch(_){}api('/api/push/unregister',{token:t}).catch(()=>{})}
+function pushOutlet(){const t=pushTok();if(PUSH&&t)api('/api/push/refresh',{old:t,token:t,outletId:S.cur}).catch(()=>{})}
+
 function startPolling(){setInterval(async()=>{
   if(U.trackId&&mroot.innerHTML&&document.querySelector('canvas[data-scratch]'))return;
   let changed=false;try{changed=await refresh()}catch(_){}
@@ -2712,7 +2738,7 @@ function lgKey(k){
   if(!L.uid){L.err='Choose your name first.';render();return}
   if(L.busy)return;if(k==='C')L.buf='';else if(k==='←')L.buf=L.buf.slice(0,-1);else if(L.buf.length<4)L.buf+=k;L.err='';
   if(L.buf.length===4&&!L.busy){const u=S.users.find(x=>x.id===L.uid);L.busy=true;
-    api('/api/auth/staff',{id:L.uid,pin:L.buf}).then(r=>{if(r.ok&&u){S.staffId=u.id;L.uid=null;saveLocal();U.pos.tab=ROLE_TABS[u.role][0];toast('Welcome, '+u.name)}else L.err='Wrong PIN. Try again.'},()=>{L.err='Could not reach the server.'}).finally(()=>{L.buf='';L.busy=false;render()})}
+    api('/api/auth/staff',{id:L.uid,pin:L.buf}).then(r=>{if(r.ok&&u){S.staffId=u.id;pushLogin(L.buf);L.uid=null;saveLocal();U.pos.tab=ROLE_TABS[u.role][0];toast('Welcome, '+u.name)}else L.err='Wrong PIN. Try again.'},()=>{L.err='Could not reach the server.'}).finally(()=>{L.buf='';L.busy=false;render()})}
   render();
 }
 function vStaff(){
@@ -2758,7 +2784,7 @@ document.addEventListener('click',e=>{
     case 'spin':doSpin();break;
     case 'copyref':{const t=el.dataset.t;try{navigator.clipboard.writeText(t).then(()=>toast('Copied'),()=>toast('Copy blocked — code: '+me().ref))}catch(_){toast('Code: '+me().ref)}break}
     case 'scratch-reveal':revealScratch(el.dataset.id);break;
-    case 'lock':S.staffId=null;save();render();break;
+    case 'lock':pushLogout();S.staffId=null;save();render();break;
     case 'lg-user':L.uid=el.dataset.v;L.buf='';L.err='';render();break;
     case 'lg-key':lgKey(el.dataset.v);break;
     case 'add-user':{const u={id:uid('u'),name:'New staff',role:'cashier'};setPin(u,'0000');S.users.push(u)}save();render();break;
@@ -2795,6 +2821,7 @@ document.addEventListener('touchend',e=>{const t=document.querySelector('.ticker
   migrate();
   if(location.hash==='#pos'||location.hash==='#public')S.mode=location.hash.slice(1);
   render();startPolling();introDone();
+  if(S.staffId&&pushTok())pushSetup(); // keeps this phone's alert sign-up current
 })();
 </script>
 

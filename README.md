@@ -71,6 +71,20 @@ Each device picks the customer app or the owner app on first open, and both read
 artifact's shared database, so customer orders ring on the owner's POS live. Everyone using it
 must be signed in to claude.ai and need edit access to place orders.
 
+**New-order alerts while the Admin app is closed:** the server sends a push notification through
+Firebase Cloud Messaging to every Cheesy Pizza Admin phone signed in at the outlet, with the
+`order_ring` sound. Set it up once:
+
+1. In the Firebase console, add both Android apps (`com.cheesypizza.app` and
+   `com.cheesypizza.admin`) to one project, download `google-services.json`, and save its contents
+   as the `GOOGLE_SERVICES_JSON` repository secret, so CI builds the apps with alerts.
+2. In Project settings > Service accounts, generate a private key and set its JSON as the server's
+   `FIREBASE_SERVICE_ACCOUNT` environment variable.
+
+**Free hosting:** `render.yaml` sets the server up on Render's free plan (New > Blueprint), with
+`MONGODB_URI` pointing at a free MongoDB Atlas M0 cluster. Then set the `CHEESY_SERVER_URL`
+repository variable to the Render address and rebuild the apps.
+
 ## What is stored where
 
 | Collection | Holds |

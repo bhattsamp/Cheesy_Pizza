@@ -32,4 +32,6 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- New-order alerts in the Admin app -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 </manifest>

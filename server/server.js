@@ -4,6 +4,7 @@ const path = require('path');
 const express = require('express');
 const { Store, COLLECTIONS } = require('./db');
 const { seedData } = require('./seed-data');
+const push = require('./push');
 
 const ROOT = path.join(__dirname, '..');
 const DEFAULT_URI = 'mongodb://localhost:27017/ChessyPizza';
@@ -32,11 +33,39 @@ function createApp(store) {
       const bad = Object.keys(body[part] || {}).filter(k => !COLLECTIONS.includes(k));
       if (bad.length) return res.status(400).json({ error: 'Unknown collection: ' + bad.join(', ') });
     }
+    // Online orders this save creates, to alert the outlet's Admin apps
+    const incoming = [].concat((body.upsert || {}).orders || []).filter(o => o && o.id && o.source === 'online' && o.status === 'placed');
+    const known = incoming.length && push.pushEnabled() ? new Set((await store.readCollection('orders', { _id: { $in: incoming.map(o => String(o.id)) } })).map(o => o.id)) : null;
+    let r;
     try {
-      res.json(await store.applyChanges(body));
+      r = await store.applyChanges(body);
     } catch (e) {
-      res.status(400).json({ error: e.message });
+      return res.status(400).json({ error: e.message });
     }
+    res.json(r);
+    if (known) {
+      const fresh = incoming.filter(o => !known.has(o.id)).map(o => ({ ...o, no: r.renumbered[o.id] || o.no }));
+      push.notifyNewOrders(fresh).catch(e => console.error('Push alert failed:', e.message));
+    }
+  });
+
+  /* ----- push alerts for the Admin app ----- */
+  app.get('/api/push/status', (req, res) => res.json({ enabled: push.pushEnabled() }));
+  // A phone signs up when staff log in, so the PIN is checked here
+  app.post('/api/push/register', async (req, res) => {
+    const { token, staffId, pin, outletId } = req.body || {};
+    if (!token || !outletId || !(await store.checkStaffPin(staffId, pin))) return res.status(403).json({ error: 'Not allowed' });
+    await push.saveToken(String(token), outletId, staffId);
+    res.json({ ok: true });
+  });
+  app.post('/api/push/refresh', async (req, res) => {
+    const { old, token, outletId } = req.body || {};
+    if (!old || !token) return res.status(400).json({ error: 'Missing token' });
+    res.json({ ok: await push.refreshToken(String(old), String(token), outletId) });
+  });
+  app.post('/api/push/unregister', async (req, res) => {
+    if ((req.body || {}).token) await push.removeToken(req.body.token);
+    res.json({ ok: true });
   });
 
   /* ----- PIN checks (PIN hashes never leave the server) ----- */
@@ -97,6 +126,9 @@ function createApp(store) {
 }
 
 if (require.main === module) {
+  try {
+    if (push.initPush()) console.log('Push alerts for the Admin app are on');
+  } catch (e) { console.error('Push alerts are off: FIREBASE_SERVICE_ACCOUNT is not a valid key:', e.message); }
   openStore().then(store => {
     const port = +process.env.PORT || 3000;
     createApp(store).listen(port, () => console.log(`Cheesy Pizza running at http://localhost:${port}  (database: ${store.uri})`));
