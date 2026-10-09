@@ -63,6 +63,12 @@ npm run sync              # offline app; or CHEESY_SERVER_URL=https://... npm ru
 npx cap open android      # or: npx cap open ios (on a Mac)
 ```
 
+**Shared claude.ai artifact (no server):** `node mobile/scripts/build-shared.js` builds
+`mobile/artifact/` for publishing as a claude.ai artifact with the `db` and `user` capabilities.
+Each device picks the customer app or the owner app on first open, and both read and write the
+artifact's shared database, so customer orders ring on the owner's POS live. Everyone using it
+must be signed in to claude.ai and need edit access to place orders.
+
 ## What is stored where
 
 | Collection | Holds |
