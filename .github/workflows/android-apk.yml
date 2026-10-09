@@ -3,9 +3,9 @@ name: Android APK
 on:
   push:
     branches: [main]
-    paths: ['mobile/**', 'index.html', 'img/**', 'server/seed-data.js', '.github/workflows/android-apk.yml']
+    paths: ['mobile/**', 'index.html', 'img/**', 'server/seed-data.js', '.github/workflows/android-*.yml']
   pull_request:
-    paths: ['mobile/**', 'index.html', 'img/**', 'server/seed-data.js', '.github/workflows/android-apk.yml']
+    paths: ['mobile/**', 'index.html', 'img/**', 'server/seed-data.js', '.github/workflows/android-*.yml']
   workflow_dispatch:
     inputs:
       server_url:
@@ -54,6 +54,16 @@ jobs:
       - name: Build debug APK
         working-directory: mobile/android
         run: ./gradlew assembleDebug -PversionCode=${{ github.run_number }} --no-daemon
+
+      # Checks the Play Store release build and its signing still work, with a throwaway key
+      - name: Check the Play Store bundle builds
+        if: github.event_name == 'pull_request'
+        working-directory: mobile/android
+        run: |
+          export UPLOAD_KEYSTORE_FILE="$RUNNER_TEMP/check.jks" UPLOAD_KEY_PASSWORD=checkonly
+          keytool -genkeypair -keystore "$UPLOAD_KEYSTORE_FILE" -storepass checkonly -keypass checkonly -alias upload -keyalg RSA -keysize 2048 -validity 1 -dname "CN=check" >/dev/null
+          ./gradlew bundleRelease --no-daemon
+          ls -la app/build/outputs/bundle/release/
 
       - uses: actions/upload-artifact@v4
         with:

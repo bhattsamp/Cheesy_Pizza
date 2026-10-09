@@ -867,6 +867,9 @@ const noteText=l=>[...(l.notes||[]),l.note].filter(Boolean).join(' · ');
 /* ===== DATA: saved in the server's database ===== */
 // Shared data lives on the server. This device only remembers its outlet,
 // site mode and who is signed in.
+// Where friends download the app, sent with referral codes. Switch to the Play Store page once it is live:
+// https://play.google.com/store/apps/details?id=com.cheesypizza.app
+const APP_LINK='https://github.com/bhattsamp/Cheesy_Pizza/releases/download/android-latest/cheesy-pizza.apk';
 const LKEY='cheesy_local_v1';
 const LOCAL_KEYS=['cur','mode','me','staffId'];
 const SYNCED=['sizes','outlets','menu','addons','offers','combos','extras','users','customers','orders'];
@@ -2627,7 +2630,7 @@ function renderAccount(){
   }
   if(tab==='rewards'){
     const can=c.spinDate!==today();const bs=badgesFor(c.phone);const codes=[...c.myCodes.filter(x=>!x.used&&!(x.until&&today()>x.until)),...liveCodes().filter(x=>!codeBlock(x,c.phone))];
-    const refTxt=`Order from Cheesy Pizza and get 50 Cheese Coins free! Use my code ${c.ref} when you sign up.`;
+    const refTxt=`Order from Cheesy Pizza and get 50 Cheese Coins free! Use my code ${c.ref} when you sign up.\n\nDownload the Cheesy Pizza app: ${APP_LINK}`;
     body=`<div class="rgrid">
       <div class="card panel" style="text-align:center"><h3 style="font-size:22px">Spin & win</h3><div class="small muted">One free spin every day</div>
         <div class="wheel-wrap"><span class="ptr"></span>${wheelSVG()}</div>
