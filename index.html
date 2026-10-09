@@ -1188,11 +1188,7 @@ function afterRender(){
     t.querySelectorAll('tbody tr').forEach(r=>[...r.children].forEach((c,i)=>{if(!c.hasAttribute('data-label'))c.setAttribute('data-label',hs[i]||'')}))});
   if(S.mode==='public')animatePub();
   if(typeof initScratch==='function')initScratch();
-  document.querySelectorAll('[data-qr]').forEach(el=>{
-    if(el.dataset.done)return;el.dataset.done=1;
-    if(window.QRCode){el.innerHTML='';try{new QRCode(el,{text:el.dataset.qr,width:180,height:180,correctLevel:QRCode.CorrectLevel.M})}catch(e){}}
-    else el.textContent='UPI: '+el.dataset.qr;
-  });
+  document.querySelectorAll('[data-qr]').forEach(el=>{if(!el.dataset.done)drawQr(el)});
   document.querySelectorAll('[data-route]').forEach(svg=>{
     const path=svg.querySelector('#route'),r=svg.querySelector('#rider');if(!path||!r)return;
     const f=+svg.dataset.route,len=path.getTotalLength(),p=path.getPointAtLength(len*f);r.setAttribute('transform',`translate(${p.x} ${p.y})`);
@@ -1523,7 +1519,7 @@ function slots(){
 }
 const liveCodes=()=>activeOffers(new Date().getDay()).filter(o=>o.type==='code');
 function openPubCart(){
-  const o=cur();const mm=me();if(mm){pubForm.phone=mm.phone;if(!pubForm.name)pubForm.name=mm.name;if(!pubForm.address&&mm.addr)pubForm.address=mm.addr}
+  const o=cur();if(!o.upi&&pubForm.pay==='upi')pubForm.pay='counter';const mm=me();if(mm){pubForm.phone=mm.phone;if(!pubForm.name)pubForm.name=mm.name;if(!pubForm.address&&mm.addr)pubForm.address=mm.addr}
   const coins=pubForm.phone.length===10?coinsOf(pubForm.phone):0;
   const b=computeBill(U.cart,null,{code:pubForm.code,coins:pubForm.useCoins?coins:0,phone:pubForm.phone});
   const wal=mm?walletOf(mm.phone):0;const wUse=pubForm.useWallet?Math.min(wal,b.total):0;const due=b.total-wUse;
@@ -1553,7 +1549,7 @@ function openPubCart(){
     <div class="field"><label for="pf-note">Instructions for the kitchen & delivery</label><textarea class="inp" id="pf-note" rows="2" maxlength="200" placeholder="e.g. make it extra crispy, less spicy for kids">${esc(pubForm.note||'')}</textarea><div class="codes">${ORDER_CHIPS.map(c=>`<button data-act="pf-chip" data-v="${esc(c)}" style="font-family:inherit">+ ${esc(c)}</button>`).join('')}</div></div>
     <div class="field"><label for="pf-when">When</label><select class="inp" id="pf-when"><option value="asap" ${pubForm.when==='asap'?'selected':''}>${isOpen()?`As soon as possible (~${PREP_MIN+(pubForm.type==='delivery'?RIDE_MIN:0)} min)`:'Next available time'}</option>${sl.map(t=>`<option ${pubForm.when===t?'selected':''}>${t}</option>`).join('')}</select></div>
     ${due===0?'<div class="savings">Fully paid from your Cheesy Wallet</div>':`<div class="grp-h">Payment · pay first to book</div>
-    <div class="paymodes">${[['upi','GPay / UPI'],['counter',pubForm.type==='delivery'?'Cash on delivery':'Pay at counter']].map(([k,n])=>`<button data-act="pf-pay" data-v="${k}" aria-pressed="${pubForm.pay===k}">${n}</button>`).join('')}</div>
+    <div class="paymodes">${[...(o.upi?[['upi','GPay / UPI']]:[]),['counter',pubForm.type==='delivery'?'Cash on delivery':'Pay at counter']].map(([k,n])=>`<button data-act="pf-pay" data-v="${k}" aria-pressed="${pubForm.pay===k}">${n}</button>`).join('')}</div>
     ${pubForm.pay==='upi'?`<div class="qr"><div data-qr="upi://pay?pa=${encodeURIComponent(o.upi)}&pn=${encodeURIComponent('Cheesy Pizza')}&am=${due}&cu=INR"></div><b class="num">${rs(due)} to ${esc(o.upi)}</b><span class="small">Scan with GPay, PhonePe or Paytm</span><a class="btn pri" href="upi://pay?pa=${encodeURIComponent(o.upi)}&pn=${encodeURIComponent('Cheesy Pizza')}&am=${due}&cu=INR&tn=${encodeURIComponent('Cheesy Pizza order')}">Pay ${rs(due)} with a UPI app on this phone</a></div>
     <div class="field"><label for="pf-utr">UPI reference number (UTR)</label><input class="inp num" id="pf-utr" inputmode="numeric" maxlength="20" value="${esc(pubForm.utr||'')}" placeholder="12 digits from your payment app"><span class="small muted">After paying, open the payment in GPay, PhonePe or Paytm and copy the 12-digit UPI Ref No / UTR. The outlet checks it and confirms.</span></div>`:'<div class="notice">The outlet will confirm your order before the kitchen starts.</div>'}`}
     <div id="pf-err" class="small" style="color:var(--bad)"></div>
@@ -2311,14 +2307,18 @@ function alertBox(o){const c=alertCfg(o);return `<div class="grp-h">New order al
     <div class="row"><label for="av-${o.id}" class="lbl">Volume</label><input type="range" min="0" max="100" step="5" class="grow" id="av-${o.id}" data-al="${o.id}" data-f="vol" value="${c.vol}"><span class="small num">${c.vol}%</span></div>
     <label class="row small" style="cursor:pointer"><span class="switch"><input type="checkbox" data-al="${o.id}" data-f="loop" ${c.loop?'checked':''}><span></span></span>Keep ringing until the order is accepted</label>
     <div class="row small"><label class="btn sm" style="cursor:pointer">${o.alertSound?'Change':'Upload'} my own sound<input type="file" accept="audio/*" data-alsnd="${o.id}" hidden></label>${o.alertSound?`<button class="btn sm bad" data-act="del-sound" data-o="${o.id}">Remove</button>`:'<span class="muted">MP3 or similar, up to 1 MB</span>'}</div>`}
-function vOutlets(){
+function vOutlets(){const own=staff()?.role==='owner';
   return `<div class="ph1"><h2>Outlets</h2><span class="muted small">Each outlet has its own order numbers, kitchen, counter, riders and day sale</span></div>
   <div class="grid">${S.outlets.map(o=>{const t=S.orders.filter(x=>x.outletId===o.id&&x.date===today()&&x.status!=='cancelled');return `<div class="card" style="padding:14px;display:flex;flex-direction:column;gap:8px">
     <div class="row"><span class="chip t num">Code ${esc(o.code)}</span>${o.id===S.cur?'<span class="chip ready">Current</span>':''}</div>
     <div class="field"><label for="on-${o.id}">Name</label><input class="inp" id="on-${o.id}" data-ou="${o.id}" data-f="name" value="${esc(o.name)}"></div>
     <div class="field"><label for="oa-${o.id}">Address</label><input class="inp" id="oa-${o.id}" data-ou="${o.id}" data-f="area" value="${esc(o.area)}"></div>
     <div class="row"><div class="field grow"><label for="op-${o.id}">Phone</label><input class="inp num" id="op-${o.id}" data-ou="${o.id}" data-f="phone" value="${esc(o.phone)}"></div>
-    <div class="field grow"><label for="ou-${o.id}">UPI ID</label><input class="inp" id="ou-${o.id}" data-ou="${o.id}" data-f="upi" value="${esc(o.upi)}"></div></div>
+    </div>
+    <div class="field"><label for="ou-${o.id}">UPI ID for this branch</label><input class="inp" id="ou-${o.id}" data-ou="${o.id}" data-f="upi" value="${esc(o.upi)}" placeholder="name@okaxis" autocapitalize="off" autocomplete="off" spellcheck="false" ${own?'':'readonly'}>
+      <span class="small muted" id="oue-${o.id}">${own?'Customers of this branch pay here. The QR below updates as you type.':'Only the owner can change the UPI ID.'}</span></div>
+    ${o.upi?`<div class="qr" id="oqr-${o.id}"><div data-qr="${esc(shopQr(o))}"></div><b>Cheesy Pizza · ${esc(o.name)}</b><span class="small num">${esc(o.upi)}</span></div>
+    <div class="row"><button class="btn sm" data-act="qr-save" data-o="${o.id}">⬇ Save / share QR</button><span class="small muted">Print it for the counter</span></div>`:'<div class="small" style="color:var(--bad)">No UPI ID yet, so customers of this branch can only pay cash.</div>'}
     <div class="field"><label for="otb-${o.id}">Dine-in tables</label><input class="inp num" type="number" min="0" id="otb-${o.id}" data-ou="${o.id}" data-f="tables" value="${o.tables||0}" style="max-width:120px"></div>
     <div class="grp-h">Delivery riders</div>
     <div class="row">${(o.riders||[]).map((r,i)=>`<span class="chip t">${esc(r.name)} · <span class="num">${fmtPhone(r.phone)}</span><button class="x" style="width:20px;height:20px;font-size:13px" data-act="del-rider" data-o="${o.id}" data-i="${i}" aria-label="Remove ${esc(r.name)}">×</button></span>`).join('')||'<span class="small muted">No riders yet</span>'}</div>
@@ -2347,6 +2347,26 @@ function askConfirm(title,text,yes,fn){
   <div class="mb"><p class="muted" style="margin:0">${esc(text)}</p><div class="row" style="justify-content:flex-end;gap:8px"><button class="btn" data-act="close">Cancel</button><button class="btn bad solid" data-act="ask-yes">${esc(yes)}</button></div></div>`,
   {onAct:act=>{if(act==='ask-yes'){closeModal();fn();return true}}});
 }
+function drawQr(el){el.dataset.done=1;
+  if(window.QRCode){el.innerHTML='';try{new QRCode(el,{text:el.dataset.qr,width:180,height:180,correctLevel:QRCode.CorrectLevel.M})}catch(e){}}
+  else el.textContent='UPI: '+el.dataset.qr}
+const UPI_RE=/^[a-z0-9][a-z0-9._-]{1,255}@[a-z][a-z0-9]{1,63}$/i;
+const shopQr=o=>`upi://pay?pa=${encodeURIComponent(o.upi)}&pn=${encodeURIComponent('Cheesy Pizza '+o.name)}&cu=INR`;
+/* Poster PNG of a branch's UPI QR: name on top, QR, UPI ID below. Shared on phones, downloaded on the web. */
+async function qrPoster(o){
+  const src=document.querySelector(`#oqr-${o.id} canvas`);if(!src)return toast('QR is still loading');
+  const W=600,H=820,c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');
+  x.fillStyle='#fff';x.fillRect(0,0,W,H);x.fillStyle='#0f2e36';x.textAlign='center';
+  x.font='bold 40px system-ui,sans-serif';x.fillText('Cheesy Pizza',W/2,80);
+  x.font='28px system-ui,sans-serif';x.fillText(o.name,W/2,125);
+  x.imageSmoothingEnabled=false;x.drawImage(src,90,170,420,420);
+  x.font='bold 26px system-ui,sans-serif';x.fillText('Scan & pay with any UPI app',W/2,650);
+  x.font='26px system-ui,sans-serif';x.fillText(o.upi,W/2,700);
+  x.font='20px system-ui,sans-serif';x.fillStyle='#5b7178';x.fillText('GPay · PhonePe · Paytm · BHIM',W/2,750);
+  const blob=await new Promise(r=>c.toBlob(r,'image/png'));const name=`cheesy-pizza-upi-${(o.code||o.id).toLowerCase()}.png`;
+  const file=new File([blob],name,{type:'image/png'});
+  if(navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file],title:'Cheesy Pizza UPI QR · '+o.name});return}catch(e){if(e.name==='AbortError')return}}
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000);toast('QR saved')}
 let tt;function toast(t){clearTimeout(tt);let el=document.querySelector('.toast');if(!el){el=document.createElement('div');el.className='toast';el.setAttribute('role','status');document.body.appendChild(el)}el.textContent=t;tt=setTimeout(()=>el.remove(),1800)}
 
 document.addEventListener('click',e=>{
@@ -2447,6 +2467,7 @@ document.addEventListener('click',e=>{
       let id=(lab.match(/\d+/)||[''])[0];if(!id||S.sizes.some(s=>s.id===id))id=uid('s');const label=/^\d+$/.test(lab)?lab+'"':lab;
       S.sizes.push({id,label,pcs});save();toast(label+' size added · now set prices');render();break}
     case 'del-size':{const id=el.dataset.id;S.sizes=S.sizes.filter(s=>s.id!==id);save();render();break}
+    case 'qr-save':{const o=S.outlets.find(x=>x.id===el.dataset.o);if(o)qrPoster(o);break}
     case 'use-outlet':S.cur=el.dataset.id;save();render();break;
     case 'add-outlet':{const code=String.fromCharCode(65+S.outlets.length);S.outlets.push({id:uid('o'),code,name:'Outlet '+code,area:'Set your address',phone:'',upi:'',riders:[]});save();render();break}
     case 'test-ring':{const o=S.outlets.find(x=>x.id===el.dataset.o);audioCtx();playTone(o);break}
@@ -2476,6 +2497,11 @@ document.addEventListener('input',e=>{
   if(t.id==='od-q'){U.ordersQ=t.value;render();refocus('od-q')}
   if(t.id==='cu-q'){U.custQ=t.value;render();refocus('cu-q')}
   if(t.id==='pub-q'){U.pubQ=t.value;render();refocus('pub-q')}
+  if(t.dataset.ou&&t.dataset.f==='upi'){const o=S.outlets.find(x=>x.id===t.dataset.ou),v=t.value.trim().toLowerCase(),hint=document.getElementById('oue-'+o.id);
+    if(staff()?.role!=='owner')return;
+    if(!UPI_RE.test(v)){if(hint)hint.innerHTML='<span style="color:var(--bad)">Enter a UPI ID like name@okaxis. Not saved yet.</span>';return}
+    const had=!!o.upi;o.upi=v;save();if(hint)hint.textContent='Saved. Customers of this branch now pay to '+v+'.';
+    if(!had)return render();const q=document.querySelector(`#oqr-${o.id}`);if(q){const d=q.querySelector('[data-qr]');d.dataset.qr=shopQr(o);drawQr(d);q.querySelector('.num').textContent=v}return}
   if(t.dataset.ou){const o=S.outlets.find(x=>x.id===t.dataset.ou);o[t.dataset.f]=t.value;save();document.getElementById('outletSel').innerHTML=S.outlets.map(o=>`<option value="${o.id}" ${o.id===S.cur?'selected':''}>${esc(o.name)}</option>`).join('')}
   if(t.dataset.desc){menuItem(t.dataset.desc).desc=t.value;save()}
 });
