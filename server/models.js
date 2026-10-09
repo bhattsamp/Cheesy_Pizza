@@ -21,6 +21,7 @@ const models = {
   Setting: mongoose.model('Setting', new Schema({ _id: String, value: Schema.Types.Mixed }, opts), 'settings'),
   Counter: mongoose.model('Counter', new Schema({ _id: String, n: Number }, opts), 'counters'),
   PushToken: mongoose.model('PushToken', new Schema({ _id: String, role: String, outletId: String, staffId: String, orders: [String], ts: Number }, { versionKey: false }), 'push_tokens'), // phones to alert: Admin apps by outlet, customer apps for offers and their orders
+  RiderLoc: mongoose.model('RiderLoc', new Schema({ _id: String, lat: Number, lng: Number, acc: Number, speed: Number, name: String, ts: Number }, { versionKey: false }), 'rider_locations'), // latest rider position per order out for delivery
   Image: mongoose.model('Image', new Schema({ _id: String, type: String, data: Buffer, ts: Number }, { versionKey: false }), 'images'), // uploaded menu photos
 
   // App data

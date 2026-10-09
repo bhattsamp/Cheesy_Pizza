@@ -121,5 +121,17 @@ async function notifyNewOffers(offers) {
   for (const of of offers) await sendTo(tokens, updateMsg('New offer: ' + (of.name || 'a treat for you'), offerText(of), { offer: String(of.id) }, 'offer-' + of.id));
 }
 
+// The owner's own message to every customer phone, with an optional picture
+async function notifyBroadcast(title, body, image) {
+  if (!messaging) return 0;
+  const tokens = (await PushToken.find({ role: 'customer' }).lean()).map(x => x._id);
+  if (!tokens.length) return 0;
+  const msg = updateMsg(title, body, { offer: 'broadcast' }, 'news-' + Date.now());
+  if (image) { msg.notification.imageUrl = image; msg.android.notification.imageUrl = image; }
+  await sendTo(tokens, msg);
+  return tokens.length;
+}
+const customerCount = () => PushToken.countDocuments({ role: 'customer' });
+
 module.exports = { initPush, setMessaging, pushEnabled, saveToken, refreshToken, removeToken, notifyNewOrders, orderText,
-  saveCustomerToken, notifyOrderUpdates, notifyNewOffers, offerText, STATUS_TEXT };
+  saveCustomerToken, notifyOrderUpdates, notifyNewOffers, notifyBroadcast, customerCount, offerText, STATUS_TEXT };

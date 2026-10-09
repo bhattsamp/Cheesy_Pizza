@@ -38,4 +38,8 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- New-order alerts in the Admin app -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Customers share their delivery spot; riders share live location while delivering -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.VIBRATE" />
 </manifest>
