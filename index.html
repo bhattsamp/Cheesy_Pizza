@@ -85,6 +85,8 @@ textarea.inp{resize:vertical}
 .ticker{background:var(--ink);color:var(--bg);overflow:hidden;white-space:nowrap;font-weight:600;font-size:13px}
 .ticker .tk{display:inline-flex;gap:36px;padding:8px 0;animation:tick 40s linear infinite;padding-left:100%}
 .ticker .tk span b{color:var(--cheese)}
+.ticker{cursor:default;touch-action:pan-y;-webkit-user-select:none;user-select:none}
+.ticker:hover .tk,.ticker.hold .tk{animation-play-state:paused}
 @keyframes tick{to{transform:translateX(-100%)}}
 .pub{max-width:1180px;margin:0 auto;padding-inline:16px;padding-block:0 120px}
 .hero{position:relative;display:grid;grid-template-columns:1.1fr 1fr;gap:28px;align-items:center;padding:36px 32px;margin-top:18px;border-radius:28px;overflow:hidden;
@@ -516,7 +518,6 @@ td.r,th.r{text-align:right}
 @keyframes sheet{from{transform:translateY(100%)}to{transform:none}}
 /* phone layout */
 @media (max-width:720px){
-  .pubmode .top .seg{display:none}
   .pubmode .top-in{flex-wrap:nowrap;gap:8px;padding:8px 12px}
   .pubmode .brand{gap:6px;min-width:0}.pubmode .brand b{font-size:17px}.pubmode .brand .pin{width:26px}
   .pubmode #outletSel{max-width:118px;font-size:13px;padding:6px 8px}
@@ -549,6 +550,38 @@ td.r,th.r{text-align:right}
   .hero3{border-radius:24px}
   .pubmode .cats{top:calc(env(safe-area-inset-top,0px) + 50px)}
   .pubmode .toast{bottom:calc(142px + env(safe-area-inset-bottom,0px))}
+}
+/* POS: left menu stays put while the page scrolls; phone layout */
+.tkjump{display:none}
+.moregrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.moregrid button{display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 6px;border:1px solid var(--line);border-radius:14px;background:var(--surface);font-weight:600;color:var(--ink);font-size:13px}
+.moregrid button svg{width:22px;height:22px;color:var(--teal)}
+.moregrid button[aria-current="page"]{background:var(--teal-soft);border-color:var(--teal);color:var(--teal)}
+@media (min-width:761px){
+  .side{position:sticky;top:var(--toph,61px);height:calc(100vh - var(--toph,61px));overflow-y:auto;align-self:start}
+}
+@media (max-width:760px){
+  /* phones: one header row with a short Customer | Owner switch */
+  .top-in{flex-wrap:nowrap!important;gap:6px!important;padding:8px 10px!important}
+  .brand{margin-right:auto}.brand b,.brand small{display:none!important}
+  .brand .pin{width:28px!important}
+  .seg{flex-wrap:nowrap}
+  .seg button{padding:6px 10px;font-size:0;white-space:nowrap}
+  #m-pub::after{content:"Customer";font-size:12px}
+  #m-pos::after{content:"Owner";font-size:12px}
+  .pubmode #outletSel{max-width:104px}
+  #acct .btn{white-space:nowrap;padding:6px 9px!important;font-size:12px!important}
+  #outletSel{font-size:12px!important;padding:6px 6px!important}
+  body:not(.pubmode) #acct .chip{display:none}
+  body:not(.pubmode) #acct .btn{padding:6px 9px;font-size:12px}
+  body:not(.pubmode) #outletSel{max-width:112px;font-size:12px;padding:6px 8px;margin-left:auto}
+  .mobnav{overflow:visible}
+  .mobnav button{min-width:0;white-space:nowrap;padding:4px 2px}
+  .mobnav button span:not(.cnt){max-width:100%;overflow:hidden;text-overflow:ellipsis}
+  .main{padding:12px;padding-bottom:150px}
+  .tkjump{display:flex;position:fixed;left:10px;right:10px;bottom:calc(64px + env(safe-area-inset-bottom,0px));z-index:24;align-items:center;justify-content:space-between;gap:10px;border:0;border-radius:16px;padding:12px 16px;background:var(--teal-deep);color:#fff;font-weight:700;box-shadow:0 10px 26px rgba(15,111,128,.35);animation:slideup .3s ease}
+  .ticket{scroll-margin-top:60px}
+  .tiles{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}.rv{opacity:1!important;transform:none!important}.ticker .tk{padding-left:16px;white-space:normal;flex-wrap:wrap}}
 /* ===== v6: order screen, kitchen colours, table hold ===== */
@@ -1032,6 +1065,7 @@ function render(){
   document.getElementById('m-pos').setAttribute('aria-pressed',S.mode==='pos');
   document.getElementById('outletSel').innerHTML=S.outlets.map(o=>`<option value="${o.id}" ${o.id===S.cur?'selected':''}>${esc(o.name)}</option>`).join('');
   document.body.classList.toggle('pubmode',S.mode==='public');
+  const th=document.querySelector('.top')?.offsetHeight;if(th)document.documentElement.style.setProperty('--toph',th+'px');
   const vk=S.mode+'|'+(S.mode==='public'?U.pubView+'|'+(U.accTab||''):'');U.enter=vk!==U.lastView;U.lastView=vk;
   app.innerHTML=S.mode==='public'?pubNav()+(U.pubView==='account'&&me()?renderAccount():U.pubView==='auth'&&!me()?renderAuth():U.pubView==='home'?renderHome():renderPublic()):renderPOS();renderAcct();
   renderBoard();renderRing();afterRender();
@@ -1109,13 +1143,21 @@ function matchFilter(m,dow){
   const q=U.pubQ.trim().toLowerCase();if(q&&!(m.name+' '+m.desc).toLowerCase().includes(q))return false;
   const f=U.pubF;if(f.jain&&!m.jain)return false;if(f.spicy&&!m.spicy)return false;if(f.offer&&!itemOfferTags(m,dow).length)return false;return true;
 }
+// Scrolling offers strip on the home and menu pages. It moves slowly and stops
+// while the mouse is over it or a finger is on it, so customers can read it.
+function offerTicker(){
+  const dow=new Date().getDay();
+  const tick=[...activeOffers(dow).map(x=>`<span><b>${x.type==='code'?'CODE '+esc(x.code):'TODAY'}</b> ${esc(x.name)}: ${esc(offerText(x))}</span>`),...S.combos.filter(c=>c.active).map(c=>`<span><b>COMBO</b> ${esc(c.name)} at ${rs(c.price)}</span>`),'<span><b>CHEESE COINS</b> 5% back on every order</span>','<span><b>PURE VEG</b> No mayonnaise products</span>'];
+  const secs=Math.max(45,Math.round(tick.join('').replace(/<[^>]+>/g,'').length*.32));
+  // the delay keeps its place when the page re-renders, instead of starting over
+  return `<div class="ticker${U.tickHold?' hold':''}" aria-label="Offers" title="Hold to pause"><div class="tk" style="animation-duration:${secs}s;animation-delay:-${(Date.now()/1000%secs).toFixed(1)}s">${tick.join('')}${tick.join('')}</div></div>`;
+}
 function renderPublic(){
   const o=cur();const open=isOpen();const dow=new Date().getDay();
   const live=S.offers.filter(x=>x.active);const liveToday=activeOffers(dow);
   const combos=S.combos.filter(c=>c.active);
   const cats=CATS.filter(([k])=>U.pubCat==='all'||U.pubCat===k);
   const cartN=U.cart.reduce((s,l)=>s+l.qty,0);const b=computeBill(U.cart);setTimeout(()=>{U.lastCartN=cartN},0);
-  const tick=[...liveToday.map(x=>`<span><b>${x.type==='code'?'CODE '+esc(x.code):'TODAY'}</b> ${esc(x.name)}: ${esc(offerText(x))}</span>`),...combos.map(c=>`<span><b>COMBO</b> ${esc(c.name)} at ${rs(c.price)}</span>`),'<span><b>CHEESE COINS</b> 5% back on every order</span>','<span><b>PURE VEG</b> No mayonnaise products</span>'];
   const best=liveToday.find(x=>x.type==='bogo')||liveToday.find(x=>x.type==='day')||liveToday.find(x=>x.type!=='code');
   const pizzasCount=S.menu.filter(m=>m.cat==='pizza'&&!m.off).length;
   const filtered=U.pubQ||U.pubF.jain||U.pubF.spicy||U.pubF.offer;let shown=0;
@@ -1129,7 +1171,7 @@ function renderPublic(){
       <div class="ft">${m.cat==='pizza'?`<div class="sizes">${S.sizes.filter(s=>+m.prices[s.id]).map(s=>`<span>${esc(s.label)} <b class="num">${rs(m.prices[s.id])}</b></span>`).join('')}</div>`:`<div class="price num">${rs(m.price)}</div>`}
       <button class="btn pri" data-act="pub-add" data-id="${m.id}">Add</button></div></div></article>`}).join('')}</div></section>`;
   }).join('');
-  return `<div class="ticker" aria-label="Offers"><div class="tk">${tick.join('')}${tick.join('')}</div></div>
+  return `${offerTicker()}
   <main class="pub">
   <section class="hero3">
     <svg class="drip" viewBox="0 0 1200 46" preserveAspectRatio="none" aria-hidden="true"><path d="${dripPath()}" fill="#f2b632"/></svg>
@@ -1186,7 +1228,7 @@ function renderHome(){
   const o=cur();const ph=o.phone||'7778043066';const open=isOpen();
   const addr=o.area&&o.area!=='Set your address'?o.area:'B/H Gopi Cinema, Maniyani Khad, Anand, Gujarat';
   const col=(price,label,list,note)=>`<div class="hm-col"><h3><span class="hm-slice" aria-hidden="true"></span>${label}</h3>${note?`<div class="hm-note">${note}</div>`:''}<span class="hm-badge num">${price}<small>Rs</small></span><ol class="${note?'':'plain'}">${list.map(x=>`<li>${x}</li>`).join('')}</ol></div>`;
-  return `<main class="pub hm">
+  return `${offerTicker()}<main class="pub hm">
   <section class="hm-card">
     <div class="hm-head">
       <div class="hm-logo"><svg viewBox="0 0 40 48" aria-hidden="true"><path d="M20 47C20 47 3 29 3 18a17 17 0 0 1 34 0c0 11-17 29-17 29z" fill="var(--teal)"/><circle cx="20" cy="18" r="10" fill="var(--surface)"/><text x="20" y="23" text-anchor="middle" font-family="Baloo Bhai 2, sans-serif" font-weight="800" font-size="14" fill="var(--teal)">C</text></svg><small>Really Cheesy…!<br>ચીઝી પિઝ્ઝા</small></div>
@@ -1464,11 +1506,17 @@ function renderPOS(){
   const k=mine.filter(o=>o.status==='placed'||o.status==='preparing').length;
   const c=mine.filter(o=>o.status==='ready'||o.status==='out').length;
   const nav=()=>allowed.map(([t,n])=>{const cnt=t==='kitchen'?k:t==='counter'?c:0;return `<button data-act="tab" data-v="${t}" ${U.pos.tab===t?'aria-current="page"':''}>${I[t]}<span>${n}</span>${cnt?`<span class="cnt num">${cnt}</span>`:''}</button>`}).join('');
+  // Phones show four tabs and a More button; the rest open in a sheet
+  const mobNav=()=>{if(allowed.length<=5)return nav();const four=allowed.slice(0,4),more=allowed.slice(4);
+    return four.map(([t,n])=>{const cnt=t==='kitchen'?k:t==='counter'?c:0;return `<button data-act="tab" data-v="${t}" ${U.pos.tab===t?'aria-current="page"':''}>${I[t]}<span>${n}</span>${cnt?`<span class="cnt num">${cnt}</span>`:''}</button>`}).join('')+
+      `<button data-act="pos-more" ${more.some(([t])=>t===U.pos.tab)?'aria-current="page"':''}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="5" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="19" cy="12" r="1.4"/></svg><span>${esc((more.find(([t])=>t===U.pos.tab)||[0,'More'])[1])}</span></button>`};
+  U.posMore=()=>showModal(`<div class="mh"><h3>All sections</h3><button class="x" data-act="close" aria-label="Close">×</button></div><div class="mb"><div class="moregrid">${allowed.map(([t,n])=>`<button data-act="tab" data-v="${t}" ${U.pos.tab===t?'aria-current="page"':''}>${I[t]}<span>${n}</span></button>`).join('')}</div>
+    <div class="row small muted"><span class="grow">Signed in as <b>${esc(su.name)}</b> · ${ROLES[su.role]}</span><button class="btn sm" data-act="lock">Lock screen</button></div></div>`);
   const views={new:vNew,kitchen:vKitchen,counter:vCounter,orders:vOrders,sales:vSales,offers:vOffers,cust:vCust,menu:vMenu,outlet:vOutlets,staff:vStaff};
   return `<div class="pos"><nav class="side" aria-label="POS sections">${nav()}
     <div style="margin-top:auto;padding:10px;display:flex;flex-direction:column;gap:6px" class="small muted"><span>Signed in as <b>${esc(su.name)}</b> · ${ROLES[su.role]}</span><button class="btn sm" data-act="lock">Lock screen</button>${su.role==='owner'?'<span>Example orders are loaded for testing.</span><button class="btn sm" data-act="reset">Reset demo data</button>':''}</div></nav>
   <section class="main">${U.pos.tab!=='kitchen'&&su.role!=='kitchen'?onlineBanner():''}${views[U.pos.tab]()}</section></div>
-  <nav class="mobnav" aria-label="POS sections">${nav()}</nav>`;
+  <nav class="mobnav" aria-label="POS sections">${mobNav()}</nav>`;
 }
 // Orders placed on the customer site wait here for the owner or cashier to accept
 function onlineBanner(){
@@ -1577,7 +1625,8 @@ function vNew(){
       <nav class="cats" style="position:static" aria-label="Categories"><button data-act="poscat" data-v="combo" aria-pressed="${P.cat==='combo'&&!P.q}">Combos</button>${CATS.map(([k,n])=>`<button data-act="poscat" data-v="${k}" aria-pressed="${P.cat===k&&!P.q}">${n}</button>`).join('')}</nav>
       <div class="tiles">${items.map(m=>`<button class="tile" data-act="${m.combo?'combo-add':'pos-add'}" data-id="${m.id}" data-t="pos" ${m.off?'disabled':''}>${m.tag?'<span class="tg" title="Offer applies"></span>':''}<b>${esc(m.name)}</b><span class="num">${m.label}${m.off?' · off':''}</span></button>`).join('')||'<div class="empty">No items</div>'}</div>
     </div>
-    <aside class="card ticket order">
+    ${P.cart.length?`<button class="tkjump" data-act="to-ticket"><b class="num">${P.cart.reduce((n,l)=>n+l.qty,0)} item${P.cart.reduce((n,l)=>n+l.qty,0)>1?'s':''} · ${rs(b.total)}</b><span>View order ↓</span></button>`:''}
+    <aside class="card ticket order" id="ticket">
       <div class="sec">
         <div class="types">${Object.entries(TYPES).map(([k,n])=>`<button data-act="pos-type" data-v="${k}" aria-pressed="${P.type===k}">${n}</button>`).join('')}</div>
         ${zom?`<div class="field"><label for="pos-zid">Zomato order ID</label><input class="inp num" id="pos-zid" value="${esc(P.zid)}" placeholder="e.g. 5123456789"></div>`:''}
@@ -2189,7 +2238,9 @@ document.addEventListener('click',e=>{
     case 'pf-place':placePublic();break;
     case 'pub-track-find':openTrackFind();break;
     case 'track':U.trackId=el.dataset.id;openTrack();break;
-    case 'tab':P.tab=el.dataset.v;U.confirmCancel=null;render();window.scrollTo(0,0);break;
+    case 'tab':P.tab=el.dataset.v;U.confirmCancel=null;closeModal();render();window.scrollTo(0,0);break;
+    case 'pos-more':U.posMore&&U.posMore();break;
+    case 'to-ticket':document.getElementById('ticket')?.scrollIntoView({behavior:'smooth',block:'start'});break;
     case 'poscat':P.cat=el.dataset.v;P.q='';render();break;
     case 'pos-add':openCustomizer(el.dataset.id,'pos');break;
     case 'pos-type':P.type=el.dataset.v;if(P.type!=='dine'){P.addTo=null;P.table=''}if(P.type==='zomato')P.pay='zomato';else if(P.pay==='zomato')P.pay='cash';render();break;
@@ -2622,6 +2673,10 @@ document.addEventListener('change',e=>{if(e.target.id==='au-bday'&&U.au)U.au.bda
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.target.id||'').startsWith('au-')&&U.au){e.preventDefault();authGo()}});
 document.addEventListener('keydown',e=>{if(S.mode==='pos'&&!staff()&&!mroot.innerHTML&&/^[0-9]$/.test(e.key))lgKey(e.key);else if(S.mode==='pos'&&!staff()&&e.key==='Backspace')lgKey('←')});
 
+// Touch on the offers strip pauses it until the finger lifts, then a moment longer
+let tickT;
+document.addEventListener('touchstart',e=>{const t=e.target.closest('.ticker');if(t){clearTimeout(tickT);U.tickHold=true;t.classList.add('hold')}},{passive:true});
+document.addEventListener('touchend',e=>{const t=document.querySelector('.ticker.hold');if(t){clearTimeout(tickT);tickT=setTimeout(()=>{U.tickHold=false;document.querySelectorAll('.ticker.hold').forEach(x=>x.classList.remove('hold'))},2500)}},{passive:true});
 (async function boot(){
   let loc={};try{loc=JSON.parse(localStorage.getItem(LKEY))||{}}catch(_){}
   let d;try{d=await api('/api/state')}catch(_){
