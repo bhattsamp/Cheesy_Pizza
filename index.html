@@ -717,13 +717,13 @@ td.r,th.r{text-align:right}
   </div>
 </div>
 <script>
-// Letters of the name rise one by one; the intro stays at least 2.2 s, then fades out
+// Letters of the name rise one by one; the intro stays about 4 s (3 to 5), then fades out
 // once the app has loaded (introDone), or after 8 s at most. A tap skips it.
 (function(){
   const el=document.getElementById('intro'),h=el.querySelector('h1'),t0=Date.now();let gone=false;
   [...'CHEESY PIZZA'].forEach((c,i)=>{const s=document.createElement('span');if(c===' ')s.className='sp';else s.textContent=c;s.style.animationDelay=(.9+i*.06)+'s';h.appendChild(s)});
   const hide=()=>{if(gone)return;gone=true;el.classList.add('out');setTimeout(()=>el.remove(),600)};
-  window.introDone=()=>setTimeout(hide,Math.max(0,2200-(Date.now()-t0)));
+  window.introDone=()=>setTimeout(hide,Math.max(0,4000-(Date.now()-t0)));
   el.addEventListener('click',()=>{if(Date.now()-t0>800)hide()});
   setTimeout(hide,8000);
 })();
