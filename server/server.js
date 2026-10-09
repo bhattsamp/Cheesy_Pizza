@@ -6,6 +6,7 @@ const { Store, COLLECTIONS } = require('./db');
 const { seedData } = require('./seed-data');
 const push = require('./push');
 const otp = require('./otp');
+const { RiderLoc, Staff } = require('./models');
 
 const ROOT = path.join(__dirname, '..');
 const DEFAULT_URI = 'mongodb://localhost:27017/ChessyPizza';
@@ -86,6 +87,20 @@ function createApp(store) {
     await push.saveCustomerToken(token, old, [].concat(orders || []).filter(x => typeof x === 'string').slice(0, 10));
     res.json({ ok: true });
   });
+  // Owner or manager sends their own notification to every customer phone; their PIN confirms it
+  app.get('/api/push/stats', async (req, res) => res.json({ enabled: push.pushEnabled(), customers: await push.customerCount() }));
+  app.post('/api/push/broadcast', async (req, res) => {
+    const { staffId, pin, title, body, image } = req.body || {};
+    if (!(await store.checkStaffPin(staffId, pin))) return res.status(403).json({ error: 'Wrong PIN' });
+    const who = await Staff.findById(String(staffId), { role: 1 }).lean();
+    if (!who || !['owner', 'manager'].includes(who.role)) return res.status(403).json({ error: 'Only the owner or a manager can send notifications' });
+    const t = String(title || '').trim().slice(0, 65), b = String(body || '').trim().slice(0, 240);
+    if (!t || !b) return res.status(400).json({ error: 'Write a title and a message' });
+    if (!push.pushEnabled()) return res.status(503).json({ error: 'Notifications are not set up on the server' });
+    const img = typeof image === 'string' && /^api\/images\/[\w.-]+$/.test(image) ? `${req.protocol}://${req.get('host')}/${image}`
+      : typeof image === 'string' && /^https:\/\/\S+$/.test(image) ? image : undefined;
+    res.json({ ok: true, sent: await push.notifyBroadcast(t, b, img) });
+  });
   app.post('/api/push/unregister', async (req, res) => {
     if ((req.body || {}).token) await push.removeToken(req.body.token);
     res.json({ ok: true });
@@ -101,6 +116,22 @@ function createApp(store) {
   app.post('/api/otp/verify', (req, res) => {
     const { email, code } = req.body || {};
     res.json({ ok: otp.checkCode(email, code) });
+  });
+
+  /* ----- live delivery tracking: riders send their position, customers read it ----- */
+  app.post('/api/rider/loc', async (req, res) => {
+    const { orders, lat, lng, acc, speed, name } = req.body || {};
+    const ids = [].concat(orders || []).filter(x => typeof x === 'string').slice(0, 10);
+    if (!ids.length || !Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) return res.status(400).json({ error: 'Send orders, lat and lng' });
+    // Only orders that are out for delivery right now
+    const out = await store.readCollection('orders', { _id: { $in: ids }, status: 'out' });
+    const set = { lat, lng, acc: Number(acc) || 0, speed: Number.isFinite(speed) ? speed : null, name: String(name || '').slice(0, 40), ts: Date.now() };
+    await Promise.all(out.map(o => RiderLoc.updateOne({ _id: String(o.id) }, { $set: set }, { upsert: true })));
+    res.json({ ok: true, tracking: out.length });
+  });
+  app.get('/api/track/:id', async (req, res) => {
+    const l = await RiderLoc.findById(String(req.params.id)).lean();
+    res.json(l && Date.now() - l.ts < 2 * 3600e3 ? { lat: l.lat, lng: l.lng, acc: l.acc, speed: l.speed, name: l.name, ts: l.ts } : {});
   });
 
   /* ----- PIN checks (PIN hashes never leave the server) ----- */

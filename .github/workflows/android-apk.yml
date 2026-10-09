@@ -47,7 +47,12 @@ jobs:
         run: |
           if [ -n "$GOOGLE_SERVICES_JSON" ]; then
             printf '%s' "$GOOGLE_SERVICES_JSON" > android/app/google-services.json
-            echo "Firebase set up: the Admin app can ring for new orders while closed"
+            echo "Firebase set up: both apps can get notifications while closed"
+          elif [ -f firebase/google-services.json ]; then
+            cp firebase/google-services.json android/app/google-services.json
+            echo "Firebase set up from firebase/google-services.json: both apps can get notifications while closed"
+          else
+            echo "::warning::No Firebase config (GOOGLE_SERVICES_JSON secret or mobile/firebase/google-services.json), so these apps are built without notifications"
           fi
 
       - name: Build the app and copy it into the Android project

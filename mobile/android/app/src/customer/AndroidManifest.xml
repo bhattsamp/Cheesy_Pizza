@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The customer app never shares location in the background (only riders in the Admin app do),
+     so it drops the background location service and its permissions. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" tools:node="remove" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" tools:node="remove" />
+    <application>
+        <service android:name="com.equimaps.capacitor_background_geolocation.BackgroundGeolocationService" tools:node="remove" />
+    </application>
+</manifest>
