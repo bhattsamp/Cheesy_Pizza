@@ -10,6 +10,8 @@ const config = {
   appId: 'com.cheesypizza.app',
   appName: 'Cheesy Pizza',
   webDir: 'www',
+  // Tells the page this is the customer app; scripts/admin-config.js sets CheesyApp/admin for the Admin app
+  appendUserAgent: 'CheesyApp/customer',
   android: { allowMixedContent: serverUrl.startsWith('http:') },
 };
 

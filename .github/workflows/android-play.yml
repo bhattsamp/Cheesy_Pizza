@@ -4,7 +4,7 @@ name: Play Store bundle
 # Actions > Play Store bundle > Run workflow. Needs two repository secrets:
 #   ANDROID_UPLOAD_KEYSTORE  the upload key, base64 encoded
 #   UPLOAD_KEY_PASSWORD      its password
-# The bundle is attached to the play-latest release for download.
+# The two bundles (customer app and Admin app) are attached to the play-latest release for download.
 
 on:
   workflow_dispatch:
@@ -61,6 +61,7 @@ jobs:
           fi
           npm run build
           npx cap sync android
+          node scripts/admin-config.js
 
       - name: Build signed bundle
         working-directory: mobile/android
@@ -76,8 +77,10 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: cheesy-pizza-play-bundle
-          path: mobile/android/app/build/outputs/bundle/release/app-release.aab
+          name: cheesy-pizza-play-bundles
+          path: |
+            mobile/android/app/build/outputs/bundle/customerRelease/app-customer-release.aab
+            mobile/android/app/build/outputs/bundle/adminRelease/app-admin-release.aab
           if-no-files-found: error
 
       - name: Attach the bundle to the play-latest release
@@ -85,11 +88,12 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          cp mobile/android/app/build/outputs/bundle/release/app-release.aab cheesy-pizza.aab
-          notes="Play Store bundle, version code $((100 + ${{ github.run_number }})) from ${{ github.ref_name }}. Upload cheesy-pizza.aab in Play Console > Release."
+          cp mobile/android/app/build/outputs/bundle/customerRelease/app-customer-release.aab cheesy-pizza.aab
+          cp mobile/android/app/build/outputs/bundle/adminRelease/app-admin-release.aab cheesy-pizza-admin.aab
+          notes="Play Store bundle, version code $((100 + ${{ github.run_number }})) from ${{ github.ref_name }}. cheesy-pizza.aab is the customer app (com.cheesypizza.app); cheesy-pizza-admin.aab is Cheesy Pizza Admin (com.cheesypizza.admin), a separate app in Play Console."
           if gh release view play-latest >/dev/null 2>&1; then
             gh release edit play-latest --title "Cheesy Pizza Play Store bundle" --notes "$notes" --prerelease
           else
             gh release create play-latest --target "$GITHUB_SHA" --title "Cheesy Pizza Play Store bundle" --notes "$notes" --prerelease
           fi
-          gh release upload play-latest cheesy-pizza.aab --clobber
+          gh release upload play-latest cheesy-pizza.aab cheesy-pizza-admin.aab --clobber

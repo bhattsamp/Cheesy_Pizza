@@ -5,7 +5,7 @@
   "description": "Android and iOS app for Cheesy Pizza: runs the site offline on the phone, or opens a Cheesy Pizza server",
   "scripts": {
     "build": "node scripts/build-offline.js",
-    "sync": "npm run build && cap sync",
+    "sync": "npm run build && cap sync && node scripts/admin-config.js",
     "open:android": "cap open android",
     "open:ios": "cap open ios"
   },
