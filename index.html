@@ -1467,19 +1467,46 @@ function renderPOS(){
 // Orders placed on the customer site wait here for the owner or cashier to accept
 function onlineBanner(){
   const pl=liveOrders().filter(o=>o.status==='placed').sort((a,b)=>a.ts-b.ts);if(!pl.length)return '';
-  return `<div class="online" role="region" aria-label="New online orders"><b>${pl.length} new online order${pl.length>1?'s':''} from the customer site</b>
+  return `<div class="online" role="region" aria-label="New online orders"><div class="row"><b class="grow">${pl.length} new online order${pl.length>1?'s':''} from the customer site</b>${ringTimer?'<button class="btn sm" data-act="mute-ring">Stop ringing</button>':''}</div>
     ${pl.map(o=>`<div class="on1"><b class="num">${o.no}</b><span class="small">${fmtTime(o.ts)} · ${esc(o.customer.name)} · <span class="num">${fmtPhone(o.customer.phone)}</span> · ${TYPES[o.type]}${o.scheduled?' · for '+esc(o.scheduled):''}</span>
       <span class="small muted grow">${o.items.map(l=>l.qty+'× '+esc(l.name)+(l.size?' '+sizeLabel(l.size):'')).join(', ')}</span><b class="num">${rs(o.total)}</b>${payTag(o)}
       <button class="btn sm ok" data-act="accept" data-id="${o.id}">Accept</button><button class="btn sm bad" data-act="reject" data-id="${o.id}">Reject</button></div>`).join('')}</div>`;
 }
 let seenPlaced=null;
-// Beep on POS screens when a new online order arrives
+// New online order alert: rings on POS screens with the outlet's ringtone, chosen by the
+// owner in Outlets (o.alert = {tone, vol, loop}; o.alertSound holds an uploaded sound).
+const TONES=[['chime','Pizza chime'],['bell','Shop bell'],['ring','Phone ring'],['siren','Siren'],['ding','Soft ding'],['custom','My own sound']];
+const alertCfg=o=>({tone:'chime',vol:80,loop:true,...(o&&o.alert||{})});
+let actx=null,ringTimer=null,ringUntil=0,ringAudio=null;
+function audioCtx(){if(!actx)try{actx=new (window.AudioContext||window.webkitAudioContext)()}catch(_){}if(actx&&actx.state==='suspended')actx.resume().catch(()=>{});return actx}
+// Phones only allow sound after a tap, so unlock audio on the first one (the PIN pad, usually)
+document.addEventListener('pointerdown',()=>audioCtx(),{once:true,capture:true});
+function playTone(o){
+  const c=alertCfg(o),vol=Math.max(0,Math.min(100,+c.vol||0))/100;if(!vol)return;
+  if(c.tone==='custom'&&o.alertSound){try{if(ringAudio)ringAudio.pause();ringAudio=new Audio(o.alertSound);ringAudio.volume=vol;ringAudio.play().catch(()=>{})}catch(_){}return}
+  const a=audioCtx();if(!a)return;const t0=a.currentTime+.02;
+  const note=(f,t,d,type='sine',g=.35,f2)=>{const os=a.createOscillator(),gn=a.createGain();os.type=type;os.frequency.setValueAtTime(f,t0+t);if(f2)os.frequency.linearRampToValueAtTime(f2,t0+t+d);
+    gn.gain.setValueAtTime(0,t0+t);gn.gain.linearRampToValueAtTime(g*vol,t0+t+.02);gn.gain.exponentialRampToValueAtTime(.001,t0+t+d);os.connect(gn);gn.connect(a.destination);os.start(t0+t);os.stop(t0+t+d+.05)};
+  ({chime:()=>[523,659,784,1047].forEach((f,i)=>note(f,i*.16,.5,'triangle')),
+    bell:()=>{[0,.7].forEach(t=>{note(880,t,1.1,'sine',.4);note(1320,t,.8,'sine',.15);note(660,t+.35,1,'sine',.35)})},
+    ring:()=>{for(let i=0;i<2;i++)for(let k=0;k<10;k++)note(k%2?480:440,i*.8+k*.05,.06,'square',.12)},
+    siren:()=>{note(600,0,.6,'sawtooth',.18,1200);note(1200,.6,.6,'sawtooth',.18,600)},
+    ding:()=>note(1047,0,1.2,'sine',.3)}[c.tone]||(()=>note(880,0,.3)))();
+  try{navigator.vibrate&&navigator.vibrate([300,150,300])}catch(_){}
+}
+const placedHere=()=>liveOrders().filter(o=>o.status==='placed');
+function stopRing(){const was=!!ringTimer;clearInterval(ringTimer);ringTimer=null;if(was&&S.mode==='pos'&&!mroot.innerHTML&&!isBusy())render();if(ringAudio){ringAudio.pause();ringAudio=null}}
+function startRing(){
+  const o=cur(),c=alertCfg(o);stopRing();playTone(o);if(!c.loop)return;
+  ringUntil=Date.now()+3*60e3;  // keeps ringing until the order is accepted or rejected, at most 3 minutes
+  ringTimer=setInterval(()=>{if(!placedHere().length||S.mode!=='pos'||!staff()||Date.now()>ringUntil){stopRing();return}playTone(cur())},4000);
+}
 function checkNewOnline(){
-  const ids=liveOrders().filter(o=>o.status==='placed').map(o=>o.id);
+  const ids=placedHere().map(o=>o.id);
   const fresh=seenPlaced?ids.filter(id=>!seenPlaced.has(id)):[];seenPlaced=new Set(ids);
+  if(!ids.length)stopRing();
   if(!fresh.length||S.mode!=='pos'||!staff())return;
-  toast('New online order');
-  try{const a=new (window.AudioContext||window.webkitAudioContext)();[0,.25].forEach(t=>{const o=a.createOscillator(),g=a.createGain();o.frequency.value=880;o.connect(g);g.connect(a.destination);g.gain.setValueAtTime(.2,a.currentTime+t);o.start(a.currentTime+t);o.stop(a.currentTime+t+.15)})}catch(_){}
+  toast('New online order');startRing();if(!mroot.innerHTML&&!isBusy())render();
 }
 function custInfo(ph){
   if(!ph||ph.length<10)return null;
@@ -1710,7 +1737,7 @@ function vKitchen(){
     ${o.status==='placed'?`<div class="row"><button class="btn ok grow" data-act="accept" data-id="${o.id}">Accept</button><button class="btn bad" data-act="reject" data-id="${o.id}">Reject</button></div>`:`<button class="btn ok" data-act="kready" data-id="${o.id}">Ready → counter</button>`}
   </div>`};
   return `<div class="ph1"><h2>Kitchen display</h2><span class="muted small">${esc(cur().name)} · tap an item when it is done · green turns red as the waiting time runs out</span></div>
-  ${pl.length?`<div class="kcol-h"><span class="chip placed num">${pl.length}</span><h3>New online orders</h3></div><div class="kds" style="margin-bottom:22px">${pl.map(card).join('')}</div>`:''}
+  ${pl.length?`<div class="kcol-h"><span class="chip placed num">${pl.length}</span><h3>New online orders</h3>${ringTimer?'<button class="btn sm" data-act="mute-ring">Stop ringing</button>':''}</div><div class="kds" style="margin-bottom:22px">${pl.map(card).join('')}</div>`:''}
   <div class="kcol-h"><span class="chip preparing num">${pr.length}</span><h3>Preparing</h3></div>
   <div class="kds">${pr.map(card).join('')||'<div class="empty card">No orders in the oven.</div>'}</div>`;
 }
@@ -2057,6 +2084,13 @@ function moveItem(id,dir){
   [S.menu[i],S.menu[j]]=[S.menu[j],S.menu[i]];numberMenu();save();
 }
 
+// Ringtone for new online orders. Only the owner sees and changes it.
+function alertBox(o){const c=alertCfg(o);return `<div class="grp-h">New order alert</div>
+    <div class="row"><div class="field grow"><label for="at-${o.id}">Ringtone</label><select class="inp" id="at-${o.id}" data-al="${o.id}" data-f="tone">${TONES.map(([k,n])=>`<option value="${k}" ${c.tone===k?'selected':''} ${k==='custom'&&!o.alertSound?'disabled':''}>${n}</option>`).join('')}</select></div>
+    <button class="btn" data-act="test-ring" data-o="${o.id}">▶ Test</button></div>
+    <div class="row"><label for="av-${o.id}" class="lbl">Volume</label><input type="range" min="0" max="100" step="5" class="grow" id="av-${o.id}" data-al="${o.id}" data-f="vol" value="${c.vol}"><span class="small num">${c.vol}%</span></div>
+    <label class="row small" style="cursor:pointer"><span class="switch"><input type="checkbox" data-al="${o.id}" data-f="loop" ${c.loop?'checked':''}><span></span></span>Keep ringing until the order is accepted</label>
+    <div class="row small"><label class="btn sm" style="cursor:pointer">${o.alertSound?'Change':'Upload'} my own sound<input type="file" accept="audio/*" data-alsnd="${o.id}" hidden></label>${o.alertSound?`<button class="btn sm bad" data-act="del-sound" data-o="${o.id}">Remove</button>`:'<span class="muted">MP3 or similar, up to 1 MB</span>'}</div>`}
 function vOutlets(){
   return `<div class="ph1"><h2>Outlets</h2><span class="muted small">Each outlet has its own order numbers, kitchen, counter, riders and day sale</span></div>
   <div class="grid">${S.outlets.map(o=>{const t=S.orders.filter(x=>x.outletId===o.id&&x.date===today()&&x.status!=='cancelled');return `<div class="card" style="padding:14px;display:flex;flex-direction:column;gap:8px">
@@ -2069,6 +2103,7 @@ function vOutlets(){
     <div class="grp-h">Delivery riders</div>
     <div class="row">${(o.riders||[]).map((r,i)=>`<span class="chip t">${esc(r.name)} · <span class="num">${fmtPhone(r.phone)}</span><button class="x" style="width:20px;height:20px;font-size:13px" data-act="del-rider" data-o="${o.id}" data-i="${i}" aria-label="Remove ${esc(r.name)}">×</button></span>`).join('')||'<span class="small muted">No riders yet</span>'}</div>
     <div class="row"><input class="inp grow" id="rn-${o.id}" placeholder="Rider name" style="width:auto" aria-label="Rider name"><input class="inp num grow" id="rp-${o.id}" placeholder="Mobile" inputmode="numeric" maxlength="10" style="width:auto" aria-label="Rider mobile"><button class="btn" data-act="add-rider" data-o="${o.id}">Add</button></div>
+    ${staff()?.role==='owner'?alertBox(o):''}
     <div class="small muted num">Today: ${t.length} orders · ${rs(t.reduce((a,b)=>a+b.total,0))}</div>
     ${o.id!==S.cur?`<button class="btn pri" data-act="use-outlet" data-id="${o.id}">Switch to this outlet</button>`:''}
   </div>`}).join('')}
@@ -2178,6 +2213,9 @@ document.addEventListener('click',e=>{
     case 'del-size':{const id=el.dataset.id;S.sizes=S.sizes.filter(s=>s.id!==id);save();render();break}
     case 'use-outlet':S.cur=el.dataset.id;save();render();break;
     case 'add-outlet':{const code=String.fromCharCode(65+S.outlets.length);S.outlets.push({id:uid('o'),code,name:'Outlet '+code,area:'Set your address',phone:'',upi:'',riders:[]});save();render();break}
+    case 'test-ring':{const o=S.outlets.find(x=>x.id===el.dataset.o);audioCtx();stopRing();playTone(o);break}
+    case 'mute-ring':stopRing();render();break;
+    case 'del-sound':{if(staff()?.role!=='owner')break;const o=S.outlets.find(x=>x.id===el.dataset.o);delete o.alertSound;o.alert={...alertCfg(o),tone:alertCfg(o).tone==='custom'?'chime':alertCfg(o).tone};save();render();break}
     case 'add-rider':{const o=S.outlets.find(x=>x.id===el.dataset.o);const n=document.getElementById('rn-'+o.id).value.trim(),p=document.getElementById('rp-'+o.id).value.replace(/\D/g,'');if(!n){toast('Enter the rider name');break}(o.riders=o.riders||[]).push({name:n,phone:p});save();render();break}
     case 'del-rider':{const o=S.outlets.find(x=>x.id===el.dataset.o);o.riders.splice(+el.dataset.i,1);save();render();break}
     case 'reset':api('/api/reset',{}).then(async d=>{applyState(d);if(d.demoPending&&(await api('/api/demo/claim',{})).ok)seedDemoOrders();S.staffId=S.users[0].id;migrate();U.pos.cart=[];U.cart=[];render();toast('Demo data reset')}).catch(()=>toast('Could not reach the server'));break;
@@ -2208,6 +2246,9 @@ document.addEventListener('change',e=>{
   if(mh.onChange&&mroot.contains(e.target)){mh.onChange(e);return}
   const t=e.target;
   if(t.id==='pc-coins'){U.pos.useCoins=t.checked;render()}
+  if(t.dataset.al&&staff()?.role==='owner'){const o=S.outlets.find(x=>x.id===t.dataset.al);const c=alertCfg(o);c[t.dataset.f]=t.type==='checkbox'?t.checked:t.dataset.f==='vol'?+t.value:t.value;o.alert=c;save();render();if(t.dataset.f!=='loop'){stopRing();playTone(o)}toast('Alert saved')}
+  if(t.dataset.alsnd&&t.files[0]&&staff()?.role==='owner'){const o=S.outlets.find(x=>x.id===t.dataset.alsnd),f=t.files[0];
+    if(f.size>1048576){toast('That sound is over 1 MB. Pick a shorter one.')}else{const r=new FileReader();r.onload=()=>{o.alertSound=r.result;o.alert={...alertCfg(o),tone:'custom'};save();render();stopRing();playTone(o);toast('Ringtone saved')};r.readAsDataURL(f)}}
   if(t.id==='outletSel'){S.cur=t.value;save();U.pos.cart=[];render();toast('Switched to '+cur().name)}
   if(t.id==='od-date'&&t.value){U.ordersDate=t.value===today()?null:t.value;render()}
   if(t.id==='sd-date'&&t.value){U.salesDate=t.value===today()?null:t.value;render()}

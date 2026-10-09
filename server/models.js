@@ -24,7 +24,7 @@ const models = {
 
   // App data
   Size: mongoose.model('Size', doc({ id: String }), 'sizes'),
-  Outlet: mongoose.model('Outlet', doc({ id: String, code: String }), 'outlets'),           // riders: [{name, phone}]
+  Outlet: mongoose.model('Outlet', doc({ id: String, code: String }), 'outlets'),           // riders: [{name, phone}], alert: {tone, vol, loop}, alertSound
   MenuItem: mongoose.model('MenuItem', doc({ id: String, cat: String }), 'menu_items'),     // prices: {size: price}
   Addon: mongoose.model('Addon', doc(), 'addons'),                                          // prices: {size: price}
   Offer: mongoose.model('Offer', doc({ id: String, type: String }), 'offers'),

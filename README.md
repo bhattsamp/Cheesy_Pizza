@@ -71,7 +71,7 @@ npx cap open android      # or: npx cap open ios (on a Mac)
 | `addons`, `sizes` | Add-ons with per-size prices, pizza sizes |
 | `categories`, `order_types`, `payment_modes` | Menu sections (with Gujarati names), order types, payment modes and their chart colours |
 | `offers`, `combos` | Day offers, BOGO, item deals, coupon codes, combos |
-| `outlets` | Outlets and their delivery riders |
+| `outlets` | Outlets, their delivery riders and the new-order ringtone the owner picks |
 | `staff` | POS staff and roles (PINs stored as scrypt hashes) |
 | `customers` | Accounts, wallet and coin history, personal coupons |
 | `orders` | Orders with their lines, payment and status times |
