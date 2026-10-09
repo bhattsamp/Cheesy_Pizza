@@ -26,9 +26,20 @@ android {
             keyAlias 'androiddebugkey'
             keyPassword 'android'
         }
+        // Play Store upload key. CI writes it from the ANDROID_UPLOAD_KEYSTORE secret and passes
+        // the password in UPLOAD_KEY_PASSWORD; it is never committed.
+        if (System.getenv('UPLOAD_KEYSTORE_FILE')) {
+            release {
+                storeFile file(System.getenv('UPLOAD_KEYSTORE_FILE'))
+                storePassword System.getenv('UPLOAD_KEY_PASSWORD')
+                keyAlias 'upload'
+                keyPassword System.getenv('UPLOAD_KEY_PASSWORD')
+            }
+        }
     }
     buildTypes {
         release {
+            if (System.getenv('UPLOAD_KEYSTORE_FILE')) signingConfig signingConfigs.release
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }

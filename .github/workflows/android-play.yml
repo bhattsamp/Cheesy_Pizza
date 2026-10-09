@@ -1,0 +1,95 @@
+name: Play Store bundle
+
+# Builds the signed .aab that is uploaded to Google Play Console. Run it from
+# Actions > Play Store bundle > Run workflow. Needs two repository secrets:
+#   ANDROID_UPLOAD_KEYSTORE  the upload key, base64 encoded
+#   UPLOAD_KEY_PASSWORD      its password
+# The bundle is attached to the play-latest release for download.
+
+on:
+  workflow_dispatch:
+    inputs:
+      server_url:
+        description: 'Cheesy Pizza server address the app opens. Blank uses the CHEESY_SERVER_URL repository variable, or builds the offline app.'
+        required: false
+        default: ''
+
+jobs:
+  bundle:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check the upload key is set
+        env:
+          KS: ${{ secrets.ANDROID_UPLOAD_KEYSTORE }}
+          PW: ${{ secrets.UPLOAD_KEY_PASSWORD }}
+        run: |
+          if [ -z "$KS" ] || [ -z "$PW" ]; then
+            echo "::error::Add the ANDROID_UPLOAD_KEYSTORE and UPLOAD_KEY_PASSWORD repository secrets (Settings > Secrets and variables > Actions) first."
+            exit 1
+          fi
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+
+      - name: Install Capacitor
+        run: npm ci
+
+      - name: Build the app and copy it into the Android project
+        env:
+          CHEESY_SERVER_URL: ${{ inputs.server_url || vars.CHEESY_SERVER_URL }}
+        run: |
+          if [ -z "$CHEESY_SERVER_URL" ]; then
+            echo "::warning::No server address set: this bundle is the offline app, so orders stay on each phone."
+          else
+            echo "App will open $CHEESY_SERVER_URL"
+          fi
+          npm run build
+          npx cap sync android
+
+      - name: Build signed bundle
+        working-directory: mobile/android
+        env:
+          KS: ${{ secrets.ANDROID_UPLOAD_KEYSTORE }}
+          UPLOAD_KEY_PASSWORD: ${{ secrets.UPLOAD_KEY_PASSWORD }}
+        run: |
+          export UPLOAD_KEYSTORE_FILE="$RUNNER_TEMP/upload.jks"
+          echo "$KS" | base64 -d > "$UPLOAD_KEYSTORE_FILE"
+          # Play needs each upload to have a higher version code than the last
+          ./gradlew bundleRelease -PversionCode=$((100 + ${{ github.run_number }})) --no-daemon
+          rm -f "$UPLOAD_KEYSTORE_FILE"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cheesy-pizza-play-bundle
+          path: mobile/android/app/build/outputs/bundle/release/app-release.aab
+          if-no-files-found: error
+
+      - name: Attach the bundle to the play-latest release
+        working-directory: .
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp mobile/android/app/build/outputs/bundle/release/app-release.aab cheesy-pizza.aab
+          notes="Play Store bundle, version code $((100 + ${{ github.run_number }})) from ${{ github.ref_name }}. Upload cheesy-pizza.aab in Play Console > Release."
+          if gh release view play-latest >/dev/null 2>&1; then
+            gh release edit play-latest --title "Cheesy Pizza Play Store bundle" --notes "$notes" --prerelease
+          else
+            gh release create play-latest --target "$GITHUB_SHA" --title "Cheesy Pizza Play Store bundle" --notes "$notes" --prerelease
+          fi
+          gh release upload play-latest cheesy-pizza.aab --clobber

@@ -3,19 +3,21 @@ name: Android APK
 on:
   push:
     branches: [main]
-    paths: ['mobile/**', '.github/workflows/android-apk.yml']
+    paths: ['mobile/**', 'index.html', 'img/**', 'server/seed-data.js', '.github/workflows/android-*.yml']
   pull_request:
-    paths: ['mobile/**', '.github/workflows/android-apk.yml']
+    paths: ['mobile/**', 'index.html', 'img/**', 'server/seed-data.js', '.github/workflows/android-*.yml']
   workflow_dispatch:
     inputs:
       server_url:
-        description: 'Cheesy Pizza server address the app opens (blank uses the CHEESY_SERVER_URL repository variable)'
+        description: 'Cheesy Pizza server address the app opens. Blank uses the CHEESY_SERVER_URL repository variable, or builds the offline app if that is not set either.'
         required: false
         default: ''
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     defaults:
       run:
         working-directory: mobile
@@ -37,23 +39,54 @@ jobs:
       - name: Install Capacitor
         run: npm ci
 
-      - name: Copy app config into the Android project
+      - name: Build the app and copy it into the Android project
         env:
           CHEESY_SERVER_URL: ${{ inputs.server_url || vars.CHEESY_SERVER_URL }}
         run: |
           if [ -z "$CHEESY_SERVER_URL" ]; then
-            echo "::warning::No server address set. The APK will open a page saying so. Set the CHEESY_SERVER_URL repository variable or the server_url input."
+            echo "No server address set: building the offline app (data stays on the phone)"
           else
             echo "App will open $CHEESY_SERVER_URL"
           fi
+          npm run build
           npx cap sync android
 
       - name: Build debug APK
         working-directory: mobile/android
         run: ./gradlew assembleDebug -PversionCode=${{ github.run_number }} --no-daemon
 
+      # Checks the Play Store release build and its signing still work, with a throwaway key
+      - name: Check the Play Store bundle builds
+        if: github.event_name == 'pull_request'
+        working-directory: mobile/android
+        run: |
+          export UPLOAD_KEYSTORE_FILE="$RUNNER_TEMP/check.jks" UPLOAD_KEY_PASSWORD=checkonly
+          keytool -genkeypair -keystore "$UPLOAD_KEYSTORE_FILE" -storepass checkonly -keypass checkonly -alias upload -keyalg RSA -keysize 2048 -validity 1 -dname "CN=check" >/dev/null
+          ./gradlew bundleRelease --no-daemon
+          ls -la app/build/outputs/bundle/release/
+
       - uses: actions/upload-artifact@v4
         with:
           name: cheesy-pizza-debug-apk
           path: mobile/android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
+
+      # Builds from main and manual runs are also published as a release, so the APK
+      # has a plain link a phone can download from without signing in to GitHub:
+      # https://github.com/<owner>/<repo>/releases/download/android-latest/cheesy-pizza.apk
+      - name: Publish APK to the android-latest release
+        if: github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SERVER_URL: ${{ inputs.server_url || vars.CHEESY_SERVER_URL }}
+        working-directory: .
+        run: |
+          cp mobile/android/app/build/outputs/apk/debug/app-debug.apk cheesy-pizza.apk
+          if [ -n "$SERVER_URL" ]; then mode="Opens $SERVER_URL"; else mode="Offline: runs on the phone, data stays on that phone"; fi
+          notes="Latest Cheesy Pizza Android app (build ${{ github.run_number }} from ${{ github.ref_name }}). $mode. Download cheesy-pizza.apk on the phone and open it to install."
+          if gh release view android-latest >/dev/null 2>&1; then
+            gh release edit android-latest --title "Cheesy Pizza Android app" --notes "$notes"
+          else
+            gh release create android-latest --target "$GITHUB_SHA" --title "Cheesy Pizza Android app" --notes "$notes"
+          fi
+          gh release upload android-latest cheesy-pizza.apk --clobber

@@ -2,9 +2,10 @@
   "name": "cheesy-pizza-mobile",
   "version": "1.0.0",
   "private": true,
-  "description": "Android and iOS app for Cheesy Pizza: a Capacitor shell that opens the Cheesy Pizza server",
+  "description": "Android and iOS app for Cheesy Pizza: runs the site offline on the phone, or opens a Cheesy Pizza server",
   "scripts": {
-    "sync": "cap sync",
+    "build": "node scripts/build-offline.js",
+    "sync": "npm run build && cap sync",
     "open:android": "cap open android",
     "open:ios": "cap open ios"
   },
