@@ -364,6 +364,19 @@ td.r,th.r{text-align:right}
 .codechip{align-self:flex-start;font-family:ui-monospace,"Courier New",monospace;font-weight:700;font-size:13px;border:1.5px dashed var(--ink);border-radius:6px;padding:0 8px;letter-spacing:.06em}
 .coupon.k-code .stub{background:#0b3a43}
 .viz{width:min(220px,62vw);height:auto;display:block;margin:0 auto}
+@media (max-width:600px){.modal .vizwrap .viz{width:min(190px,50vw)}}
+.pub .item .ph{cursor:zoom-in}
+.zoom{position:relative;width:min(300px,78vw);aspect-ratio:1;margin:0 auto;border-radius:50%;overflow:visible;touch-action:none;cursor:zoom-in;user-select:none;-webkit-user-select:none}
+.zoom>img,.zoom>svg{width:100%;height:100%;object-fit:cover;border-radius:50%;display:block;box-shadow:var(--shadow-lg);pointer-events:none;-webkit-user-drag:none}
+.zoom>.pz{position:absolute}
+.zoom .lens{position:absolute;display:none;border-radius:50%;overflow:hidden;border:4px solid #fff;box-shadow:0 10px 30px rgba(0,0,0,.35),0 0 0 2px var(--teal);background:var(--surface);pointer-events:none;z-index:3}
+.zoom .lens>*{position:absolute;left:0;top:0;transform-origin:0 0;max-width:none;border-radius:50%;box-shadow:none}
+.modal .vizwrap{position:sticky;top:58px;z-index:1;background:var(--surface);padding-bottom:4px}
+.viz .tp{transform-box:fill-box;transform-origin:center}
+.viz .tp.new{animation:topDrop .55s cubic-bezier(.3,1.4,.5,1) both}
+.viz.bump{animation:vizBump .6s .25s ease}
+@keyframes topDrop{from{opacity:0;transform:translateY(-70px) scale(1.8) rotate(-40deg)}70%{opacity:1}to{opacity:1;transform:none}}
+@keyframes vizBump{40%{transform:scale(1.04)}}
 .viz circle{transition:r .35s ease}
 .vizcap{text-align:center;font-weight:600;font-size:13px;color:var(--muted);margin-top:-6px}
 .tables{display:grid;grid-template-columns:repeat(auto-fill,minmax(46px,1fr));gap:6px}
@@ -1001,7 +1014,31 @@ function computeBill(items,dateStr,extra){
 }
 const coinsOf=ph=>Math.floor(S.customers[ph]?.coins||0);
 function dripPath(){let d='M0 0H1200V16',x=1200,i=0;while(x>0){const w=38+((i*37)%46),dep=18+((i*53)%26);d+=` C${x-w*.2} 16 ${x-w*.22} ${dep} ${x-w/2} ${dep} S${x-w*.8} 16 ${x-w} 16`;x-=w;i++}return d+' V0Z'}
-function pizzaViz(m,size,addons){
+// Each extra topping is drawn as its own pieces (onion rings, capsicum, corn...). Pieces the
+// customer just added drop onto the pizza; prev says how many of each were already shown.
+const TOP_SHAPES=[
+  [/onion/i,(x,y,k)=>`<circle cx="${x}" cy="${y}" r="4.6" fill="none" stroke="#a24f9e" stroke-width="1.8"/><circle cx="${x}" cy="${y}" r="2.4" fill="none" stroke="#c98bc6" stroke-width="1"/>`],
+  [/capsicum|bell|green pepper/i,(x,y,k)=>`<path d="M${x-5} ${y}a5 5 0 0 1 10 0" fill="none" stroke="#2f8f2f" stroke-width="2.4" stroke-linecap="round" transform="rotate(${k*53} ${x} ${y})"/>`],
+  [/tomato/i,(x,y)=>`<circle cx="${x}" cy="${y}" r="4.8" fill="#e0452f"/><circle cx="${x}" cy="${y}" r="2.6" fill="#f2735f"/>`],
+  [/corn/i,(x,y)=>`<circle cx="${x}" cy="${y}" r="2.2" fill="#f6c932"/><circle cx="${x+3.5}" cy="${y+1.5}" r="2" fill="#f2b632"/><circle cx="${x+1}" cy="${y+4}" r="2" fill="#f6c932"/>`],
+  [/jalap/i,(x,y)=>`<circle cx="${x}" cy="${y}" r="4.2" fill="#3c8d2e"/><circle cx="${x}" cy="${y}" r="2.5" fill="#cfe8a0"/><circle cx="${x}" cy="${y}" r="1" fill="#f4e7a1"/>`],
+  [/olive/i,(x,y)=>`<circle cx="${x}" cy="${y}" r="3.8" fill="none" stroke="#2b2622" stroke-width="2.2"/>`],
+  [/paneer|tofu/i,(x,y,k)=>`<rect x="${x-3.5}" y="${y-3.5}" width="7" height="7" rx="1.6" fill="#fffaf0" stroke="#e6d3a8" stroke-width=".8" transform="rotate(${k*31} ${x} ${y})"/>`],
+  [/mushroom/i,(x,y,k)=>`<g transform="rotate(${k*41} ${x} ${y})"><path d="M${x-5} ${y}a5 4 0 0 1 10 0z" fill="#c9a77c"/><rect x="${x-1.5}" y="${y}" width="3" height="4" fill="#e8d6b8"/></g>`],
+  [/paprika|chil|red pepper/i,(x,y,k)=>`<rect x="${x-5}" y="${y-1.2}" width="10" height="2.6" rx="1.3" fill="#d42b20" transform="rotate(${k*67} ${x} ${y})"/>`],
+  [/cheese/i,(x,y,k)=>`<ellipse cx="${x}" cy="${y}" rx="8" ry="5" fill="#fff4cc" opacity=".95" transform="rotate(${k*29} ${x} ${y})"/>`],
+];
+const hashStr=t=>[...t].reduce((h,c)=>(h*31+c.charCodeAt(0))>>>0,7);
+function topPieces(ex,r,prev){
+  const groups={};ex.forEach(e=>{const k=e.g+'|'+e.n;groups[k]=(groups[k]||0)+1});let out='',drop=0;
+  Object.entries(groups).forEach(([k,c])=>{const name=k.split('|')[1],h=hashStr(name),n=c*7,was=Math.min(prev?.[k]??n,n);
+    const shape=(TOP_SHAPES.find(([re])=>re.test(name))||[0,(x,y,i)=>`<rect x="${x-3}" y="${y-2}" width="6" height="4" rx="1.5" fill="${['#3f9b3a','#e0452f','#f4c542','#7a3a1a'][h%4]}" transform="rotate(${i*47} ${x} ${y})"/>`])[1];
+    for(let i=0;i<n;i++){const a=(h%360)*Math.PI/180+i*2.399,rr=(r-15)*Math.sqrt(((h>>3)+i*37)%97/97+.03);
+      const x=+(100+rr*Math.cos(a)).toFixed(1),y=+(100+rr*Math.sin(a)).toFixed(1),isNew=i>=was;
+      out+=`<g class="tp${isNew?' new':''}"${isNew?` style="animation-delay:${(drop++*.045).toFixed(2)}s"`:''}>${shape(x,y,i+h)}</g>`}});
+  return {out,drop};
+}
+function pizzaViz(m,size,addons,ex,prev){
   const idx=Math.max(0,S.sizes.findIndex(s=>s.id===size)),n=S.sizes.length;
   const r=Math.round(60+(n>1?idx/(n-1):1)*32);const burst=addons.includes('burst'),ch=addons.includes('cheese'),veg=addons.includes('veg');
   const pcs=(S.sizes.find(s=>s.id===size)||{}).pcs||6;
@@ -1009,14 +1046,15 @@ function pizzaViz(m,size,addons){
   if(ch)for(let i=0;i<14;i++){const a=i*2.1,rr=(r-14)*Math.sqrt(((i*41)%100)/100);chz+=`<ellipse cx="${(100+rr*Math.cos(a)).toFixed(1)}" cy="${(100+rr*Math.sin(a)).toFixed(1)}" rx="11" ry="7" fill="#fff4cc" opacity=".92" transform="rotate(${i*29} ${(100+rr*Math.cos(a)).toFixed(1)} ${(100+rr*Math.sin(a)).toFixed(1)})"/>`}
   if(veg)for(let i=0;i<22;i++){const a=i*2.4+1,rr=(r-14)*Math.sqrt(((i*37+11)%100)/100);dots+=`<rect x="${(97+rr*Math.cos(a)).toFixed(1)}" y="${(97+rr*Math.sin(a)).toFixed(1)}" width="7" height="5" rx="2" fill="${['#3f9b3a','#e0452f','#f4c542','#7a3a1a'][i%4]}" transform="rotate(${i*47} ${(100+rr*Math.cos(a)).toFixed(1)} ${(100+rr*Math.sin(a)).toFixed(1)})"/>`}
   for(let k=0;k<pcs;k++){const a=k*2*Math.PI/pcs;sl+=`<line x1="100" y1="100" x2="${(100+(r-6)*Math.cos(a)).toFixed(1)}" y2="${(100+(r-6)*Math.sin(a)).toFixed(1)}"/>`}
-  return `<svg viewBox="0 0 200 200" class="viz" role="img" aria-label="Pizza preview">
+  const tp=ex?topPieces(ex,r,prev):{out:'',drop:0};
+  return `<svg viewBox="0 0 200 200" class="viz${tp.drop?' bump':''}" role="img" aria-label="Pizza preview">
    <defs><clipPath id="pzc"><circle cx="100" cy="100" r="${r-9}"/></clipPath></defs>
    <circle cx="100" cy="100" r="98" fill="var(--surface2)"/><circle cx="100" cy="100" r="98" fill="none" stroke="var(--line)" stroke-width="2"/>
    ${burst?`<circle cx="100" cy="100" r="${r+5}" fill="#f7cf57" opacity=".55"/>`:''}
    <circle cx="100" cy="100" r="${r}" fill="${burst?'#e9a83a':'#d18b3c'}"/>
    ${burst?`<circle cx="100" cy="100" r="${r-4}" fill="none" stroke="#fff1b8" stroke-width="3" stroke-dasharray="3 5"/>`:''}
    ${m.img?`<image href="${IMG(m.img)}" x="${100-r*1.3}" y="${100-r*1.3}" width="${r*2.6}" height="${r*2.6}" clip-path="url(#pzc)" preserveAspectRatio="xMidYMid slice"/>`:`<circle cx="100" cy="100" r="${r-9}" fill="#f4cc6e"/><circle cx="100" cy="100" r="${r-12}" fill="#e3563f" opacity=".25"/>`}
-   <g clip-path="url(#pzc)">${chz}${dots}</g>
+   <g clip-path="url(#pzc)">${chz}${dots}${tp.out}</g>
    <g stroke="rgba(60,30,0,.35)" stroke-width="1.3">${sl}</g>
   </svg>`;
 }
@@ -1199,7 +1237,7 @@ function renderPublic(){
     const items=S.menu.filter(m=>m.cat===k&&!m.off&&matchFilter(m,dow));if(!items.length)return'';shown+=items.length;
     return `<section><div class="sec-h"><h2>${n}</h2><span class="gu">${GU[k]||''}</span>${k==='pizza'?'<span class="muted small">Tap Add to build yours: size, base, toppings</span>':''}</div>
     <div class="grid">${items.map(m=>{const tags=itemOfferTags(m,dow);return `<article class="card item">
-      <div class="ph">${thumb(m)}<div class="ribbon">${m.best?'<span>Best seller</span>':''}${tags.map(t=>`<span class="o">${esc(t)}</span>`).join('')}</div></div>
+      <div class="ph" data-act="pz-info" data-id="${m.id}" role="button" tabindex="0" aria-label="About ${esc(m.name)}">${thumb(m)}<div class="ribbon">${m.best?'<span>Best seller</span>':''}${tags.map(t=>`<span class="o">${esc(t)}</span>`).join('')}</div></div>
       <div class="bd"><h3><span class="veg" title="Veg"></span>${esc(m.name)} ${m.jain?'<span class="jain" title="Jain option">J</span>':''} ${m.spicy?'<span title="Spicy">'+'🌶'.repeat(m.spicy)+'</span>':''}</h3>
       <div class="desc">${esc(m.desc)}</div>
       <div class="ft">${m.cat==='pizza'?`<div class="sizes">${S.sizes.filter(s=>+m.prices[s.id]).map(s=>`<span>${esc(s.label)} <b class="num">${rs(m.prices[s.id])}</b></span>`).join('')}</div>`:`<div class="price num">${rs(m.price)}</div>`}
@@ -1306,6 +1344,29 @@ function renderHome(){
 
 /* ===== CUSTOMIZERS ===== */
 // Pizza builder, or the options box for sides. With `edit` set, changes that cart line instead of adding one.
+// Tapping a menu photo: the item's details, with a magnifier that follows a finger or the mouse
+function openInfo(id){
+  const m=menuItem(id);if(!m)return;const tags=itemOfferTags(m,new Date().getDay());const sizes=S.sizes.filter(s=>+m.prices?.[s.id]);
+  showModal(`<div class="mh"><h3>${esc(m.name)}</h3><button class="x" data-act="close" aria-label="Close">×</button></div>
+  <div class="mb">
+    <div class="zoom" data-zoom>${thumb(m)}</div>
+    <div class="small muted" style="text-align:center;margin-top:-8px">Touch and move on the ${m.cat==='pizza'?'pizza':'photo'} to zoom in</div>
+    <div class="row"><span class="chip ready"><span class="veg"></span> Pure veg</span>${m.jain?'<span class="chip t">Jain option</span>':''}${m.spicy?`<span class="chip r">${'🌶'.repeat(m.spicy)} Spicy</span>`:''}${m.best?'<span class="chip c">Best seller</span>':''}${tags.map(t=>`<span class="chip r">${esc(t)}</span>`).join('')}</div>
+    <p style="margin:0">${esc(m.desc||'')}</p>
+    ${sizes.length?`<div class="opts">${sizes.map(s=>`<div class="opt" style="cursor:default"><b>${esc(s.label)}</b>${s.pcs?`<span class="muted small">${s.pcs} slices</span>`:''}<span class="p num">${rs(m.prices[s.id])}</span></div>`).join('')}</div>`:`<div class="price num">${rs(m.price)}</div>`}
+    <button class="btn pri lg block" data-act="pub-add" data-id="${m.id}">${m.cat==='pizza'?'Build this pizza':'Add to order'}</button>
+  </div>`);
+}
+function zoomMove(el,e){
+  let lens=el.querySelector('.lens');const b=el.getBoundingClientRect(),Z=2.2,L=Math.min(150,b.width*.5);
+  if(!lens){lens=document.createElement('div');lens.className='lens';const c=el.firstElementChild.cloneNode(true);c.removeAttribute('loading');lens.appendChild(c);el.appendChild(lens)}
+  const x=Math.max(0,Math.min(b.width,e.clientX-b.left)),y=Math.max(0,Math.min(b.height,e.clientY-b.top)),up=e.pointerType==='touch'?L*.75:0;
+  Object.assign(lens.style,{width:L+'px',height:L+'px',left:(x-L/2)+'px',top:(y-L/2-up)+'px',display:'block'});
+  Object.assign(lens.firstElementChild.style,{width:b.width+'px',height:b.height+'px',transform:`translate(${L/2-x*Z}px,${L/2-y*Z}px) scale(${Z})`});
+}
+document.addEventListener('pointerdown',e=>{const z=e.target.closest('[data-zoom]');if(!z)return;z.setPointerCapture?.(e.pointerId);z.dataset.on='1';zoomMove(z,e)});
+document.addEventListener('pointermove',e=>{const z=e.target.closest('[data-zoom]');if(z&&(z.dataset.on||e.pointerType==='mouse'))zoomMove(z,e)});
+['pointerup','pointercancel','pointerleave'].forEach(t=>document.addEventListener(t,e=>{const z=e.target.closest?.('[data-zoom]');if(!z)return;if(t==='pointerup'&&e.pointerType==='mouse')return;delete z.dataset.on;const l=z.querySelector('.lens');if(l)l.style.display='none'},true));
 function openCustomizer(id,target,edit){
   const m=menuItem(id);if(!m){toast('This item is no longer on the menu');return}
   const cart=target==='pub'?U.cart:U.pos.cart;const old=edit!=null?cart[edit]:null;
@@ -1341,10 +1402,11 @@ function openCustomizer(id,target,edit){
     const legacy=Object.keys(S.addons).filter(a=>a!=='burst'&&st.addons.includes(a));
     const menus=extraMenus(m).map(g=>({g,items:[...g.items.filter(i=>+i.prices?.[st.size]),...st.ex.filter(e=>e.g===g.id&&e.c&&!g.items.some(i=>i.name===e.n)).filter((e,i,a)=>a.findIndex(x=>x.n===e.n)===i).map(e=>({name:e.n,custom:1}))]})).filter(x=>x.items.length);
     const cnt=(g,n)=>st.ex.filter(e=>e.g===g&&e.n===n).length;const nEx=st.ex.length;
-    let step=1;
+    let step=1;const prevShown=st.shown;st.shown={};st.ex.forEach(e=>{const k=e.g+'|'+e.n;st.shown[k]=(st.shown[k]||0)+7});
+    const vizHtml=pizzaViz(m,st.size,[...st.addons,...(st.tops.length?['veg']:[])],st.ex,prevShown);
     showModal(`<div class="mh"><h3>${esc(m.name)}</h3><button class="x" data-act="close" aria-label="Close">×</button></div>
     <div class="mb">
-      ${pizzaViz(m,st.size,[...st.addons,...(nEx||st.tops.length?['veg']:[]),...(st.ex.some(e=>/cheese/i.test(e.n))?['cheese']:[])])}<div class="vizcap num">${esc(sizeLabel(st.size))} · ${(S.sizes.find(x=>x.id===st.size)||{}).pcs||''} slices${st.addons.map(a=>' · '+S.addons[a].name).join('')}${nEx?' · '+nEx+' extra'+(nEx>1?'s':''):''}</div>
+      <div class="vizwrap">${vizHtml}</div><div class="vizcap num">${esc(sizeLabel(st.size))} · ${(S.sizes.find(x=>x.id===st.size)||{}).pcs||''} slices${st.addons.map(a=>' · '+S.addons[a].name).join('')}${nEx?' · '+nEx+' extra'+(nEx>1?'s':''):''}</div>
       <div class="muted small">${esc(m.desc)}</div>
       ${tags.length?`<div class="row">${tags.map(t=>`<span class="chip r">${esc(t)}</span>`).join('')}<span class="small muted">applied in cart</span></div>`:''}
       <div class="grp-h">${step++} · Size</div>
@@ -2264,6 +2326,7 @@ document.addEventListener('click',e=>{
     case 'rate':{const o=find(el.dataset.id);o.rating=+el.dataset.v;save();toast('Thanks for rating!');openTrack();break}
     case 'reorder':{const o=find(el.dataset.id);U.cart=o.items.map(l=>{if(l.combo||l.custom)return {...l};const m=menuItem(l.itemId);return m&&!m.off?Object.assign(mkLine(m,l.size,l.addons.filter(a=>S.addons[a]),l.qty,l.tops,(l.ex||[]).filter(e=>exPrice(e,l.size))),l.notes?{notes:l.notes}:{},l.note?{note:l.note}:{}):null}).filter(Boolean);pubForm.phone=o.customer.phone;pubForm.name=o.customer.name;if(o.address)pubForm.address=o.address;closeModal();render();openPubCart();break}
     case 'pub-add':openCustomizer(el.dataset.id,'pub');break;
+    case 'pz-info':openInfo(el.dataset.id);break;
     case 'combo-add':openCombo(el.dataset.id,el.dataset.t);break;
     case 'pub-cart':openPubCart();break;
     case 'pq':{const l=U.cart[+el.dataset.i];l.qty+= +el.dataset.v;if(l.qty<1)U.cart.splice(+el.dataset.i,1);render();openPubCart();break}
