@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
     inputs:
       server_url:
-        description: 'Cheesy Pizza server address the app opens. Blank uses the CHEESY_SERVER_URL repository variable, or builds the offline app if that is not set either.'
+        description: 'Cheesy Pizza server address the app opens. Blank uses the CHEESY_SERVER_URL repository variable, else the Render server https://cheesy-pizza.onrender.com. Type offline for the offline app.'
         required: false
         default: ''
 
@@ -52,8 +52,9 @@ jobs:
 
       - name: Build the app and copy it into the Android project
         env:
-          CHEESY_SERVER_URL: ${{ inputs.server_url || vars.CHEESY_SERVER_URL }}
+          CHEESY_SERVER_URL: ${{ inputs.server_url || vars.CHEESY_SERVER_URL || 'https://cheesy-pizza.onrender.com' }}
         run: |
+          if [ "$CHEESY_SERVER_URL" = offline ]; then export CHEESY_SERVER_URL=; fi
           if [ -z "$CHEESY_SERVER_URL" ]; then
             echo "No server address set: building the offline app (data stays on the phone)"
           else
@@ -103,9 +104,10 @@ jobs:
         if: github.event_name != 'pull_request'
         env:
           GH_TOKEN: ${{ github.token }}
-          SERVER_URL: ${{ inputs.server_url || vars.CHEESY_SERVER_URL }}
+          SERVER_URL: ${{ inputs.server_url || vars.CHEESY_SERVER_URL || 'https://cheesy-pizza.onrender.com' }}
         working-directory: .
         run: |
+          if [ "$SERVER_URL" = offline ]; then SERVER_URL=; fi
           if [ -n "$SERVER_URL" ]; then mode="Opens $SERVER_URL"; else mode="Offline: runs on the phone, data stays on that phone"; fi
           notes="Latest Cheesy Pizza Android app (build ${{ github.run_number }} from ${{ github.ref_name }}). $mode. cheesy-pizza.apk is the customer app (Cheesy Pizza); cheesy-pizza-admin.apk is the owner's POS app (Cheesy Pizza Admin). Download one on the phone and open it to install."
           if gh release view android-latest >/dev/null 2>&1; then

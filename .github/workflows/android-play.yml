@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
     inputs:
       server_url:
-        description: 'Cheesy Pizza server address the app opens. Blank uses the CHEESY_SERVER_URL repository variable, or builds the offline app.'
+        description: 'Cheesy Pizza server address the app opens. Blank uses the CHEESY_SERVER_URL repository variable, else the Render server https://cheesy-pizza.onrender.com. Type offline for the offline app.'
         required: false
         default: ''
 
@@ -63,8 +63,9 @@ jobs:
 
       - name: Build the app and copy it into the Android project
         env:
-          CHEESY_SERVER_URL: ${{ inputs.server_url || vars.CHEESY_SERVER_URL }}
+          CHEESY_SERVER_URL: ${{ inputs.server_url || vars.CHEESY_SERVER_URL || 'https://cheesy-pizza.onrender.com' }}
         run: |
+          if [ "$CHEESY_SERVER_URL" = offline ]; then export CHEESY_SERVER_URL=; fi
           if [ -z "$CHEESY_SERVER_URL" ]; then
             echo "::warning::No server address set: this bundle is the offline app, so orders stay on each phone."
           else
