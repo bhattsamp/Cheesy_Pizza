@@ -1519,7 +1519,7 @@ function slots(){
 }
 const liveCodes=()=>activeOffers(new Date().getDay()).filter(o=>o.type==='code');
 function openPubCart(){
-  const o=cur();if(!o.upi&&pubForm.pay==='upi')pubForm.pay='counter';const mm=me();if(mm){pubForm.phone=mm.phone;if(!pubForm.name)pubForm.name=mm.name;if(!pubForm.address&&mm.addr)pubForm.address=mm.addr}
+  const o=cur();const pm=payModes(o);if(!pm.includes(pubForm.pay))pubForm.pay=pm[0]||'counter';const mm=me();if(mm){pubForm.phone=mm.phone;if(!pubForm.name)pubForm.name=mm.name;if(!pubForm.address&&mm.addr)pubForm.address=mm.addr}
   const coins=pubForm.phone.length===10?coinsOf(pubForm.phone):0;
   const b=computeBill(U.cart,null,{code:pubForm.code,coins:pubForm.useCoins?coins:0,phone:pubForm.phone});
   const wal=mm?walletOf(mm.phone):0;const wUse=pubForm.useWallet?Math.min(wal,b.total):0;const due=b.total-wUse;
@@ -1549,29 +1549,43 @@ function openPubCart(){
     <div class="field"><label for="pf-note">Instructions for the kitchen & delivery</label><textarea class="inp" id="pf-note" rows="2" maxlength="200" placeholder="e.g. make it extra crispy, less spicy for kids">${esc(pubForm.note||'')}</textarea><div class="codes">${ORDER_CHIPS.map(c=>`<button data-act="pf-chip" data-v="${esc(c)}" style="font-family:inherit">+ ${esc(c)}</button>`).join('')}</div></div>
     <div class="field"><label for="pf-when">When</label><select class="inp" id="pf-when"><option value="asap" ${pubForm.when==='asap'?'selected':''}>${isOpen()?`As soon as possible (~${PREP_MIN+(pubForm.type==='delivery'?RIDE_MIN:0)} min)`:'Next available time'}</option>${sl.map(t=>`<option ${pubForm.when===t?'selected':''}>${t}</option>`).join('')}</select></div>
     ${due===0?'<div class="savings">Fully paid from your Cheesy Wallet</div>':`<div class="grp-h">Payment · pay first to book</div>
-    <div class="paymodes">${[...(o.upi?[['upi','GPay / UPI']]:[]),['counter',pubForm.type==='delivery'?'Cash on delivery':'Pay at counter']].map(([k,n])=>`<button data-act="pf-pay" data-v="${k}" aria-pressed="${pubForm.pay===k}">${n}</button>`).join('')}</div>
-    ${pubForm.pay==='upi'?`<div class="qr"><div data-qr="upi://pay?pa=${encodeURIComponent(o.upi)}&pn=${encodeURIComponent('Cheesy Pizza')}&am=${due}&cu=INR"></div><b class="num">${rs(due)} to ${esc(o.upi)}</b><span class="small">Scan with GPay, PhonePe or Paytm</span><a class="btn pri" href="upi://pay?pa=${encodeURIComponent(o.upi)}&pn=${encodeURIComponent('Cheesy Pizza')}&am=${due}&cu=INR&tn=${encodeURIComponent('Cheesy Pizza order')}">Pay ${rs(due)} with a UPI app on this phone</a></div>
+    <div class="paymodes">${[['upi','GPay / UPI'],['counter',pubForm.type==='delivery'?'Cash on delivery':'Pay at counter']].filter(([k])=>pm.includes(k)).map(([k,n])=>`<button data-act="pf-pay" data-v="${k}" aria-pressed="${pubForm.pay===k}">${n}</button>`).join('')}</div>
+    ${pubForm.pay==='upi'&&upiInApp()&&!pubForm.upiFallback?`<div class="notice">Tap Pay below. GPay, PhonePe, Paytm or any UPI app opens with ${rs(due)} to ${esc(o.upi)} filled in. <b>Your order is placed by itself as soon as the payment succeeds.</b></div>`
+    :pubForm.pay==='upi'?`${pubForm.upiFallback?'<div class="notice">Your UPI app did not confirm the payment. If money left your account, enter the UTR below and place the order. If not, tap Pay again or choose cash.</div>':''}<div class="qr"><div data-qr="${esc(upiLink(o,due))}"></div><b class="num">${rs(due)} to ${esc(o.upi)}</b><span class="small">Scan with GPay, PhonePe or Paytm</span>${upiInApp()?'<button class="btn pri" data-act="pf-place" data-retry="1">Pay again with a UPI app</button>':`<a class="btn pri" href="${esc(upiLink(o,due))}">Pay ${rs(due)} with a UPI app on this phone</a>`}</div>
     <div class="field"><label for="pf-utr">UPI reference number (UTR)</label><input class="inp num" id="pf-utr" inputmode="numeric" maxlength="20" value="${esc(pubForm.utr||'')}" placeholder="12 digits from your payment app"><span class="small muted">After paying, open the payment in GPay, PhonePe or Paytm and copy the 12-digit UPI Ref No / UTR. The outlet checks it and confirms.</span></div>`:'<div class="notice">The outlet will confirm your order before the kitchen starts.</div>'}`}
     <div id="pf-err" class="small" style="color:var(--bad)"></div>
-    <button class="btn pri lg block" data-act="pf-place">${due===0?'Place order':pubForm.pay==='upi'?'I have paid · Place order':'Place order'} · ${rs(b.total)}</button>
+    <button class="btn pri lg block" data-act="pf-place">${due===0?'Place order':pubForm.pay==='upi'&&upiInApp()&&!pubForm.upiFallback?'Pay '+rs(due)+' & place order':pubForm.pay==='upi'?'I have paid · Place order':'Place order · '+rs(b.total)}</button>
   </div>`,{onInput:e=>{const id=e.target.id;
       if(id==='pf-name')pubForm.name=e.target.value;
       if(id==='pf-phone'){const was=pubForm.phone.length===10;pubForm.phone=e.target.value.replace(/\D/g,'');const c=S.customers[pubForm.phone];if(pubForm.phone.length===10&&c&&!pubForm.name)pubForm.name=c.name;if((pubForm.phone.length===10)!==was)openPubCart()}
       if(id==='pf-utr'){pubForm.utr=e.target.value.replace(/\D/g,'').slice(0,12);e.target.value=pubForm.utr}if(id==='pf-addr')pubForm.address=e.target.value;if(id==='pf-note')pubForm.note=e.target.value},
     onChange:e=>{if(e.target.id==='pf-wallet'){pubForm.useWallet=e.target.checked;openPubCart()}if(e.target.id==='pf-coins'){pubForm.useCoins=e.target.checked;openPubCart()}if(e.target.id==='pf-when')pubForm.when=e.target.value}});
 }
-function placePublic(){
+function placePublic({paid,retry}={}){
   const err=document.getElementById('pf-err');
   if(!pubForm.name.trim())return err.textContent='Enter your name.';
   if(pubForm.phone.length!==10)return err.textContent='Enter a 10-digit mobile number.';
   if(pubForm.type==='delivery'&&!pubForm.address.trim())return err.textContent='Enter the delivery address.';
+  if(!payModes(cur()).includes(pubForm.pay)&&!paid)return err.textContent='This payment option is turned off. Choose another one.';
   const coins=coinsOf(pubForm.phone);const b=computeBill(U.cart,null,{code:pubForm.code,coins:pubForm.useCoins?coins:0,phone:pubForm.phone});const mm=me();const wUse=mm&&pubForm.useWallet?Math.min(walletOf(mm.phone),b.total):0;const due=b.total-wUse;
-  if(due>0&&pubForm.pay==='upi'&&(pubForm.utr||'').length!==12)return err.textContent='Pay with UPI first, then enter the 12-digit UPI reference number (UTR) from your payment app.';
+  if(!paid&&due>0&&pubForm.pay==='upi'&&upiInApp()&&(!pubForm.upiFallback||retry)){
+    // Pay first inside the app; the order is only placed once the UPI app reports success
+    if(U.paying)return;U.paying=true;err.textContent='';
+    const ref='CP'+Date.now().toString(36).toUpperCase();
+    return UPIPAY.pay({url:upiLink(cur(),due,ref)}).then(r=>{
+      const f=upiResult(r&&r.response);U.paying=false;
+      if(f.status==='success')return placePublic({paid:{utr:f.utr,ref,txn:f.txn,app:true}});
+      if(f.status==='failure'){err.textContent='Payment did not go through, so no order was placed. Try again or choose '+(pubForm.type==='delivery'?'cash on delivery.':'pay at counter.');return}
+      // Pending, cancelled or the app said nothing (some apps return nothing even after paying):
+      // let the customer give the UTR if money left their account; staff check it
+      pubForm.upiFallback=true;openPubCart();
+    }).catch(e=>{U.paying=false;err.textContent=e&&e.code==='NO_APP'?'No UPI app found on this phone. Install GPay, PhonePe or Paytm, or choose cash.':'Could not open a UPI app. Try again or choose cash.'})}
+  if(due>0&&pubForm.pay==='upi'&&!paid&&(pubForm.utr||'').length!==12)return err.textContent='Pay with UPI first, then enter the 12-digit UPI reference number (UTR) from your payment app.';
   const o=commitOrder(newOrder({outletId:S.cur,type:pubForm.type,address:pubForm.type==='delivery'?pubForm.address:'',customer:{name:pubForm.name.trim(),phone:pubForm.phone},items:U.cart.map(l=>({...l})),source:'online',status:'placed',geo:pubForm.type==='delivery'&&pubForm.geo?pubForm.geo:undefined,
     scheduled:pubForm.when!=='asap'?pubForm.when:'',note:(pubForm.note||'').trim(),extra:{code:b.codeOk?pubForm.code:'',coins:b.coinsUsed},
-    walletUsed:wUse,pay:{mode:due===0?'wallet':pubForm.pay==='upi'?'upi':'cash',given:0,change:0,...(due>0&&pubForm.pay==='upi'?{utr:pubForm.utr,check:'pending'}:{})},paid:due===0}));
+    walletUsed:wUse,pay:{mode:due===0?'wallet':pubForm.pay==='upi'?'upi':'cash',given:0,change:0,...(due>0&&pubForm.pay==='upi'?paid?{utr:paid.utr||'',ref:paid.ref,txn:paid.txn||'',check:'ok',app:true}:{utr:pubForm.utr,check:'pending'}:{})},paid:due===0||!!paid,...(paid?{paidAt:Date.now(),paidBy:'UPI app'}:{})}));
   if(wUse)walletAdd(o.customer.phone,-wUse,'Paid for '+o.no);if(mm){o.scratch={coins:5+Math.floor(Math.random()*26),done:false};if(pubForm.address&&!mm.addr)mm.addr=pubForm.address}
-  pubForm.useWallet=false;pubForm.note='';pubForm.geo=null;pubForm.utr='';confetti();U.cart=[];pubForm.code='';pubForm.useCoins=false;pubForm.when='asap';save();render();U.trackId=o.id;openTrack();cpushOrder(o.id);
+  pubForm.useWallet=false;pubForm.note='';pubForm.geo=null;pubForm.utr='';pubForm.upiFallback=false;confetti();U.cart=[];pubForm.code='';pubForm.useCoins=false;pubForm.when='asap';save();render();U.trackId=o.id;openTrack();cpushOrder(o.id);
 }
 
 /* ===== TRACKING ===== */
@@ -1932,6 +1946,7 @@ const fmtUtr=u=>String(u||'').replace(/(\d{4})(?=\d)/g,'$1 ');
 function payTag(o){
   // Customer paid by UPI QR: staff check the UTR in their UPI app, then confirm
   if(upiPending(o))return `<span class="upichk"><span class="chip amber paid-chip">UPI ${rs(o.total-(o.walletUsed||0))} to check · UTR <b class="num">${esc(fmtUtr(o.pay.utr))}</b></span><button class="btn sm ok" data-act="upi-ok" data-id="${o.id}">Received</button><button class="btn sm bad" data-act="upi-no" data-id="${o.id}">Not received</button></span>`;
+  if(o.paid&&o.pay&&o.pay.app)return `<span class="chip ready paid-chip">UPI paid in app${o.pay.utr?` · UTR <b class="num">${esc(fmtUtr(o.pay.utr))}</b>`:''}</span>`;
   return o.paid?'<span class="chip ready paid-chip">Payment done</span>':`<span class="chip r paid-chip">Baki ${rs(o.total)}</span>`}
 function vKitchen(){
   const list=liveOrders().filter(o=>o.status==='placed'||o.status==='preparing').sort((a,b)=>a.ts-b.ts);
@@ -2319,6 +2334,8 @@ function vOutlets(){const own=staff()?.role==='owner';
       <span class="small muted" id="oue-${o.id}">${own?'Customers of this branch pay here. The QR below updates as you type.':'Only the owner can change the UPI ID.'}</span></div>
     ${o.upi?`<div class="qr" id="oqr-${o.id}"><div data-qr="${esc(shopQr(o))}"></div><b>Cheesy Pizza · ${esc(o.name)}</b><span class="small num">${esc(o.upi)}</span></div>
     <div class="row"><button class="btn sm" data-act="qr-save" data-o="${o.id}">⬇ Save / share QR</button><span class="small muted">Print it for the counter</span></div>`:'<div class="small" style="color:var(--bad)">No UPI ID yet, so customers of this branch can only pay cash.</div>'}
+    <div class="grp-h">Payment options for online orders</div>
+    ${[['payUpi','GPay / UPI'+(o.upi?'':' (add a UPI ID first)')],['payCash','Cash on delivery / pay at counter']].map(([f,n])=>`<label class="row small" style="cursor:pointer"><span class="switch"><input type="checkbox" data-paysw="${o.id}" data-f="${f}" ${o[f]!==false?'checked':''} ${own?'':'disabled'}><span></span></span>${n}</label>`).join('')}
     <div class="field"><label for="otb-${o.id}">Dine-in tables</label><input class="inp num" type="number" min="0" id="otb-${o.id}" data-ou="${o.id}" data-f="tables" value="${o.tables||0}" style="max-width:120px"></div>
     <div class="grp-h">Delivery riders</div>
     <div class="row">${(o.riders||[]).map((r,i)=>`<span class="chip t">${esc(r.name)} · <span class="num">${fmtPhone(r.phone)}</span><button class="x" style="width:20px;height:20px;font-size:13px" data-act="del-rider" data-o="${o.id}" data-i="${i}" aria-label="Remove ${esc(r.name)}">×</button></span>`).join('')||'<span class="small muted">No riders yet</span>'}</div>
@@ -2350,6 +2367,13 @@ function askConfirm(title,text,yes,fn){
 function drawQr(el){el.dataset.done=1;
   if(window.QRCode){el.innerHTML='';try{new QRCode(el,{text:el.dataset.qr,width:180,height:180,correctLevel:QRCode.CorrectLevel.M})}catch(e){}}
   else el.textContent='UPI: '+el.dataset.qr}
+/* Payment options a branch takes for online orders; the owner turns each on or off in Outlets */
+const payModes=o=>[...(o.upi&&o.payUpi!==false?['upi']:[]),...(o.payCash!==false?['counter']:[])];
+const upiInApp=()=>!!UPIPAY;
+const upiLink=(o,amt,ref)=>`upi://pay?pa=${encodeURIComponent(o.upi)}&pn=${encodeURIComponent('Cheesy Pizza')}&am=${Number(amt).toFixed(2)}&cu=INR&tn=${encodeURIComponent('Cheesy Pizza order')}${ref?'&tr='+ref:''}`;
+/* What the UPI app hands back: "txnId=..&responseCode=00&Status=SUCCESS&ApprovalRefNo=123456789012" */
+function upiResult(txt){const f={};String(txt||'').split('&').forEach(kv=>{const i=kv.indexOf('=');if(i>0)f[kv.slice(0,i).trim().toLowerCase()]=(()=>{try{return decodeURIComponent(kv.slice(i+1).trim())}catch(e){return kv.slice(i+1).trim()}})()});
+  const st=(f.status||'').toLowerCase();return {status:st==='success'?'success':st==='failure'||st==='failed'?'failure':st==='submitted'||st==='pending'?'pending':'',utr:(f.approvalrefno||f.approvalref||'').replace(/\D/g,'').slice(0,12),txn:f.txnid||''}}
 const UPI_RE=/^[a-z0-9][a-z0-9._-]{1,255}@[a-z][a-z0-9]{1,63}$/i;
 const shopQr=o=>`upi://pay?pa=${encodeURIComponent(o.upi)}&pn=${encodeURIComponent('Cheesy Pizza '+o.name)}&cu=INR`;
 /* Poster PNG of a branch's UPI QR: name on top, QR, UPI ID below. Shared on phones, downloaded on the web. */
@@ -2418,8 +2442,8 @@ document.addEventListener('click',e=>{
     case 'bcast':BC.n=null;openBcast();break;
     case 'trip-share':RT.err='';riderStart();break;
     case 'trip-settings':if(BGEO)BGEO.openSettings().catch(()=>{});break;
-    case 'pf-pay':pubForm.pay=el.dataset.v;openPubCart();break;
-    case 'pf-place':placePublic();break;
+    case 'pf-pay':pubForm.pay=el.dataset.v;pubForm.upiFallback=false;openPubCart();break;
+    case 'pf-place':placePublic({retry:!!el.dataset.retry});break;
     case 'pub-track-find':openTrackFind();break;
     case 'track':U.trackId=el.dataset.id;openTrack();break;
     case 'tab':P.tab=el.dataset.v;U.confirmCancel=null;closeModal();render();window.scrollTo(0,0);break;
@@ -2506,6 +2530,11 @@ document.addEventListener('input',e=>{
   if(t.dataset.desc){menuItem(t.dataset.desc).desc=t.value;save()}
 });
 document.addEventListener('change',e=>{
+  if(e.target.dataset.paysw){const t=e.target,o=S.outlets.find(x=>x.id===t.dataset.paysw);if(!o)return;
+    if(staff()?.role!=='owner'){t.checked=o[t.dataset.f]!==false;return toast('Only the owner can change payment options')}
+    const prev=o[t.dataset.f];o[t.dataset.f]=t.checked;
+    if(!payModes(o).length){o[t.dataset.f]=prev;t.checked=true;return toast(o.upi?'Keep at least one payment option on':'Add a UPI ID before turning cash off')}
+    save();toast((t.checked?'Turned on: ':'Turned off: ')+(t.dataset.f==='payUpi'?'UPI':'cash')+' for '+o.name);return}
   if(mh.onChange&&mroot.contains(e.target)){mh.onChange(e);return}
   const t=e.target;
   if(t.id==='pc-coins'){U.pos.useCoins=t.checked;render()}
@@ -2577,6 +2606,7 @@ if(CPUSH){
 function cpushOrder(id){if(!CPUSH)return;const t=cTok();if(t)api('/api/push/customer',{token:t,orders:[id]}).catch(()=>{});else{cWait.push(id);cpushSetup()}}
 /* ===== Alerts and location: one sheet asks for both and shows what is on ===== */
 const CAP=window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform()?Capacitor.Plugins:null;
+const UPIPAY=CAP&&CAP.UpiPay||null;
 const GEO=CAP&&CAP.Geolocation,BGEO=CAP&&CAP.BackgroundGeolocation,PN=CAP&&CAP.PushNotifications;
 const PASK='cheesy_perm_ask';const permOn=v=>v==='granted';
 async function permState(){const st={n:'na',l:'na'};

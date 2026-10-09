@@ -32,7 +32,8 @@ const removeToken = token => PushToken.deleteOne({ _id: String(token) });
 
 function orderText(o) {
   const items = (o.items || []).map(l => `${l.qty}× ${l.name}`).join(', ');
-  const upi = o.pay && o.pay.check === 'pending' ? 'UPI to check, UTR ' + o.pay.utr : '';
+  const upi = o.pay && o.pay.check === 'pending' ? 'UPI to check, UTR ' + o.pay.utr
+    : o.pay && o.pay.app && o.paid ? 'UPI paid in app' + (o.pay.utr ? ', UTR ' + o.pay.utr : '') : '';
   return [o.total != null ? '₹' + o.total : '', upi, o.customer && o.customer.name, items].filter(Boolean).join(' · ');
 }
 

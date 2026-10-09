@@ -33,6 +33,14 @@
         </provider>
     </application>
 
+    <!-- UPI apps (GPay, PhonePe, Paytm...) the customer can pay with at checkout -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="upi" />
+        </intent>
+    </queries>
+
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
