@@ -1542,7 +1542,7 @@ function placePublic(){
     scheduled:pubForm.when!=='asap'?pubForm.when:'',note:(pubForm.note||'').trim(),extra:{code:b.codeOk?pubForm.code:'',coins:b.coinsUsed},
     walletUsed:wUse,pay:{mode:due===0?'wallet':pubForm.pay==='upi'?'upi':'cash',given:0,change:0},paid:due===0||pubForm.pay==='upi'}));
   if(wUse)walletAdd(o.customer.phone,-wUse,'Paid for '+o.no);if(mm){o.scratch={coins:5+Math.floor(Math.random()*26),done:false};if(pubForm.address&&!mm.addr)mm.addr=pubForm.address}
-  pubForm.useWallet=false;pubForm.note='';confetti();U.cart=[];pubForm.code='';pubForm.useCoins=false;pubForm.when='asap';save();render();U.trackId=o.id;openTrack();
+  pubForm.useWallet=false;pubForm.note='';confetti();U.cart=[];pubForm.code='';pubForm.useCoins=false;pubForm.when='asap';save();render();U.trackId=o.id;openTrack();cpushOrder(o.id);
 }
 
 /* ===== TRACKING ===== */
@@ -2482,6 +2482,26 @@ if(PUSH){
 }
 function pushLogin(pin){if(PUSH){pushPin=pin;pushSetup()}}
 function pushLogout(){const t=pushTok();if(!PUSH||!t)return;try{localStorage.removeItem(PKEY)}catch(_){}api('/api/push/unregister',{token:t}).catch(()=>{})}
+// Customer app: new offers and updates on the orders placed from this phone show in the notification bar
+const CPUSH=APP_ROLE==='customer'&&/CheesyPush/.test(navigator.userAgent)&&window.Capacitor&&Capacitor.Plugins&&Capacitor.Plugins.PushNotifications;
+const CKEY='cheesy_cpush_token';const cTok=()=>{try{return localStorage.getItem(CKEY)}catch(_){return null}};let cWait=[];
+async function cpushSetup(){
+  if(!CPUSH)return;try{if(!(await api('/api/push/status')).enabled)return}catch(_){return}
+  try{
+    let p=await CPUSH.checkPermissions();if(p.receive!=='granted'&&p.receive!=='denied')p=await CPUSH.requestPermissions();
+    if(p.receive!=='granted')return;
+    await CPUSH.createChannel({id:'updates',name:'Offers and order updates',description:'New offers, and where your order has got to',importance:4,visibility:1,vibration:true,lights:true,lightColor:'#1A93A8'});
+    await CPUSH.register();
+  }catch(e){console.error(e)}
+}
+if(CPUSH){
+  CPUSH.addListener('registration',async t=>{const old=cTok();const orders=cWait.splice(0);try{
+    await api('/api/push/customer',{token:t.value,old:old&&old!==t.value?old:undefined,orders});localStorage.setItem(CKEY,t.value)}catch(e){cWait.push(...orders);console.error(e)}});
+  CPUSH.addListener('pushNotificationReceived',()=>{refresh().then(()=>{if(!mroot.innerHTML&&!isBusy())render()}).catch(()=>{})});
+  CPUSH.addListener('pushNotificationActionPerformed',a=>{const d=(a.notification&&a.notification.data)||{};refresh().catch(()=>{}).then(()=>{
+    if(d.orderId&&S.orders.some(o=>o.id===d.orderId)){U.trackId=d.orderId;openTrack()}else if(d.offer){closeModal();U.pubView='menu';render();document.getElementById('offers')?.scrollIntoView()}})});
+}
+function cpushOrder(id){if(!CPUSH)return;const t=cTok();if(t)api('/api/push/customer',{token:t,orders:[id]}).catch(()=>{});else{cWait.push(id);cpushSetup()}}
 function pushOutlet(){const t=pushTok();if(PUSH&&t)api('/api/push/refresh',{old:t,token:t,outletId:S.cur}).catch(()=>{})}
 
 function startPolling(){setInterval(async()=>{
@@ -2851,6 +2871,7 @@ document.addEventListener('touchend',e=>{const t=document.querySelector('.ticker
   if(location.hash==='#pos'||location.hash==='#public')S.mode=location.hash.slice(1);
   render();startPolling();introDone();
   if(S.staffId&&pushTok())pushSetup(); // keeps this phone's alert sign-up current
+  cpushSetup();
 })();
 </script>
 
