@@ -5,6 +5,7 @@ const express = require('express');
 const { Store, COLLECTIONS } = require('./db');
 const { seedData } = require('./seed-data');
 const push = require('./push');
+const otp = require('./otp');
 
 const ROOT = path.join(__dirname, '..');
 const DEFAULT_URI = 'mongodb://localhost:27017/ChessyPizza';
@@ -20,6 +21,7 @@ async function openStore(uri = process.env.MONGODB_URI || DEFAULT_URI) {
 
 function createApp(store) {
   const app = express();
+  app.set('trust proxy', true); // Render's proxy passes the caller's IP, used to limit email codes
   app.use(express.json({ limit: '5mb' }));
 
   /* ----- whole app state ----- */
@@ -66,6 +68,18 @@ function createApp(store) {
   app.post('/api/push/unregister', async (req, res) => {
     if ((req.body || {}).token) await push.removeToken(req.body.token);
     res.json({ ok: true });
+  });
+
+  /* ----- email codes for customer sign-up ----- */
+  app.get('/api/otp/status', (req, res) => res.json({ enabled: otp.otpEnabled() }));
+  app.post('/api/otp/send', async (req, res) => {
+    const r = await otp.sendCode((req.body || {}).email, req.ip);
+    if (!r.ok) return res.status(r.status).json({ error: r.error });
+    res.json({ ok: true });
+  });
+  app.post('/api/otp/verify', (req, res) => {
+    const { email, code } = req.body || {};
+    res.json({ ok: otp.checkCode(email, code) });
   });
 
   /* ----- PIN checks (PIN hashes never leave the server) ----- */

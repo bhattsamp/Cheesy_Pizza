@@ -486,6 +486,8 @@ html:has(#modalRoot:not(:empty)),html:has(#boardRoot:not(:empty)),html:has(#choo
 @keyframes inPop{from{transform:scale(0)}to{transform:scale(1)}}
 .ax-more summary{cursor:pointer;color:var(--teal);font-weight:600;font-size:14px}.ax-more .row{margin-top:10px}
 .ax-err{text-align:center;animation:shake .35s}
+.ax-mail{display:flex;gap:8px}.ax-mail input{flex:1;min-width:0}.ax-mail .btn{white-space:nowrap}
+.ax-otp{font-size:22px;letter-spacing:.4em;text-align:center}
 .ax-go{border-radius:14px;padding:14px;font-size:17px}
 .ax-perks{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
 .ax-perks span{display:inline-flex;align-items:center;gap:6px;background:var(--cheese-soft);color:var(--cheese-ink);border-radius:999px;padding:4px 10px 4px 4px;font-size:12px;font-weight:600}
@@ -2298,6 +2300,12 @@ function showModal(html,handlers={}){
   if(prev){const el=document.getElementById(prev);if(el&&mroot.contains(el)){el.focus();if(el.setSelectionRange&&el.type!=='number'&&el.tagName!=='SELECT')try{el.setSelectionRange(el.value.length,el.value.length)}catch(e){}}}
 }
 function closeModal(){mroot.innerHTML='';mh={};U.trackId=null}
+// A yes/no check before signing out
+function askConfirm(title,text,yes,fn){
+  showModal(`<div class="mh"><h3>${esc(title)}</h3><button class="x" data-act="close" aria-label="Close">×</button></div>
+  <div class="mb"><p class="muted" style="margin:0">${esc(text)}</p><div class="row" style="justify-content:flex-end;gap:8px"><button class="btn" data-act="close">Cancel</button><button class="btn bad solid" data-act="ask-yes">${esc(yes)}</button></div></div>`,
+  {onAct:act=>{if(act==='ask-yes'){closeModal();fn();return true}}});
+}
 let tt;function toast(t){clearTimeout(tt);let el=document.querySelector('.toast');if(!el){el=document.createElement('div');el.className='toast';el.setAttribute('role','status');document.body.appendChild(el)}el.textContent=t;tt=setTimeout(()=>el.remove(),1800)}
 
 document.addEventListener('click',e=>{
@@ -2578,7 +2586,7 @@ function renderAcct(){
 
 /* ----- customer auth ----- */
 function openAuth(mode,next){
-  U.au={m:mode||'in',name:'',phone:'',pin:'',pin2:'',bday:'',ref:'',err:'',msg:'',next:next||''};
+  U.au={m:mode||'in',name:'',email:'',otp:'',sent:0,phone:'',pin:'',pin2:'',bday:'',ref:'',err:'',msg:'',next:next||''};otpStatus();
   if(next==='orders'||next==='wallet')U.au.msg=`Sign in to see your ${next==='orders'?'order history':'wallet'}.`;
   if(next==='cart')U.au.msg='Sign in to pay from your wallet and keep this order in your history.';
   closeModal();U.pubView='auth';render();window.scrollTo(0,0);
@@ -2586,7 +2594,7 @@ function openAuth(mode,next){
 // Customer sign in / sign up: mobile number and a 4-digit PIN in big boxes; extras folded away
 const pinBoxes=(id,v,label,auto)=>`<div class="field"><label for="au-${id}">${label}</label><div class="pinbox"><input id="au-${id}" type="password" inputmode="numeric" maxlength="4" value="${esc(v)}" autocomplete="${auto}">${[0,1,2,3].map(i=>`<i class="${i<v.length?'on':''}${i===v.length?' cur':''}"></i>`).join('')}</div></div>`;
 function renderAuth(){
-  const f=U.au||(U.au={m:'in',name:'',phone:'',pin:'',pin2:'',bday:'',ref:'',err:'',msg:'',next:''});const up=f.m==='up';
+  const f=U.au||(U.au={m:'in',name:'',email:'',otp:'',sent:0,phone:'',pin:'',pin2:'',bday:'',ref:'',err:'',msg:'',next:''});const up=f.m==='up';
   return `<main class="authx">
   <section class="ax-card card">
     <div class="ax-hero">
@@ -2598,7 +2606,9 @@ function renderAuth(){
     <div class="ax-body">
       <div class="ax-tabs" role="tablist"><button role="tab" data-act="au-mode" data-v="in" aria-selected="${!up}">Sign in</button><button role="tab" data-act="au-mode" data-v="up" aria-selected="${up}">New here? Join</button><i style="transform:translateX(${up?100:0}%)"></i></div>
       ${f.msg?`<div class="hint">${esc(f.msg)}</div>`:''}
-      ${up?`<div class="field"><label for="au-name">Your name</label><input class="inp ax-in" id="au-name" value="${esc(f.name)}" autocomplete="name" placeholder="e.g. Priya Shah"></div>`:''}
+      ${up?`<div class="field"><label for="au-name">Your name</label><input class="inp ax-in" id="au-name" value="${esc(f.name)}" autocomplete="name" placeholder="e.g. Priya Shah"></div>
+      <div class="field"><label for="au-email">Email</label><div class="ax-mail"><input class="inp ax-in" id="au-email" type="email" inputmode="email" value="${esc(f.email)}" autocomplete="email" placeholder="you@example.com">${OTP_ON?`<button class="btn" data-act="au-code"${f.busy?' disabled':''}>${f.busy?'Sending…':f.sent?'Resend code':'Send code'}</button>`:''}</div></div>
+      ${OTP_ON&&f.sent?`<div class="field"><label for="au-otp">6-digit code from your email</label><input class="inp ax-in num ax-otp" id="au-otp" inputmode="numeric" maxlength="6" value="${esc(f.otp)}" autocomplete="one-time-code" placeholder="••••••"><span class="small muted">Sent to ${esc(f.sentTo)}. Check your spam folder if it is not in your inbox.</span></div>`:''}`:''}
       <div class="field"><label for="au-phone">Mobile number</label><div class="ax-phone"><span>+91</span><input class="num" id="au-phone" inputmode="numeric" maxlength="10" value="${esc(f.phone)}" autocomplete="tel" placeholder="98250 11111"></div></div>
       <div class="ax-pins">${pinBoxes('pin',f.pin,up?'Choose a 4-digit PIN':'Your 4-digit PIN',up?'new-password':'current-password')}${up?pinBoxes('pin2',f.pin2,'Type it again','new-password'):''}</div>
       ${up?`<details class="ax-more"${f.bday||f.ref?' open':''}><summary>Add birthday or a friend's code (optional)</summary><div class="row"><div class="field grow"><label for="au-bday">Birthday · 25% off that week</label><input class="inp" id="au-bday" type="date" value="${esc(f.bday)}"></div><div class="field grow"><label for="au-ref">Friend's referral code</label><input class="inp" id="au-ref" value="${esc(f.ref)}" placeholder="e.g. CP11111" style="text-transform:uppercase"></div></div></details>`:''}
@@ -2610,9 +2620,23 @@ function renderAuth(){
     </div>
   </section></main>`;
 }
+// Sign-up asks for an email code when the server can send one
+const EMAIL_RE=/^[^\s@]+@[^\s@]+\.[^\s@]+$/;let OTP_ON=false,otpChecked=false;
+function otpStatus(){if(otpChecked)return;otpChecked=true;api('/api/otp/status').then(r=>{OTP_ON=!!r.enabled;if(OTP_ON&&U.au)render()}).catch(()=>{otpChecked=false})}
+async function auSend(){
+  const f=U.au;const em=f.email.trim().toLowerCase();f.err='';
+  if(!EMAIL_RE.test(em)){f.err='Enter a valid email address.';render();return}
+  f.busy=true;render();
+  try{await api('/api/otp/send',{email:em});f.sent=Date.now();f.sentTo=em;f.otp='';toast('Code sent to '+em)}catch(e){f.err=e.message||'Could not send the code. Try again.'}
+  f.busy=false;render();if(f.sent)document.getElementById('au-otp')?.focus();
+}
 async function authGo(){
   const f=U.au;f.err='';
+  const em=f.email.trim().toLowerCase();
   if(f.m==='up'&&!f.name.trim())f.err='Enter your name.';
+  else if(f.m==='up'&&!EMAIL_RE.test(em))f.err='Enter a valid email address.';
+  else if(f.m==='up'&&OTP_ON&&!f.sent)f.err='Tap Send code to get a code by email.';
+  else if(f.m==='up'&&OTP_ON&&f.otp.length!==6)f.err='Enter the 6-digit code from your email.';
   else if(f.phone.length!==10)f.err='Enter a 10-digit mobile number.';
   else if(f.pin.length!==4)f.err='PIN must be 4 digits.';
   else if(f.m==='up'&&f.pin!==f.pin2)f.err='The two PINs do not match.';
@@ -2625,7 +2649,11 @@ async function authGo(){
     S.me=f.phone;welcome='Welcome back, '+c.name.split(' ')[0]+'!';
   }else{
     if(c&&c.pin){f.err='This number already has an account. Tap Sign in.';render();return}
-    const n=ensureCust(f.phone,f.name.trim());n.name=f.name.trim();setPin(n,f.pin);n.bday=f.bday;n.joined=Date.now();
+    if(Object.values(S.customers).some(x=>x.pin&&x.email===em)){f.err='This email already has an account. Tap Sign in.';render();return}
+    if(OTP_ON){if(f.sentTo!==em){f.err='The code was sent to a different email. Tap Resend code.';render();return}
+      let ok=false;try{ok=(await api('/api/otp/verify',{email:em,code:f.otp})).ok}catch(_){f.err='Could not reach the server. Try again.';render();return}
+      if(!ok){f.err='That code is wrong or has expired. Check it, or tap Resend code.';render();return}}
+    const n=ensureCust(f.phone,f.name.trim());n.name=f.name.trim();n.email=em;n.emailVerified=OTP_ON;setPin(n,f.pin);n.bday=f.bday;n.joined=Date.now();
     coinAdd(f.phone,25,'Welcome bonus');
     const refBy=Object.values(S.customers).find(x=>x.ref===f.ref.trim().toUpperCase()&&x.phone!==f.phone);
     if(refBy){coinAdd(f.phone,50,'Referred by '+refBy.name);coinAdd(refBy.phone,50,'Referral: '+n.name+' joined');n.refBy=refBy.phone}
@@ -2680,7 +2708,7 @@ function renderAccount(){
   }
   if(tab==='profile'){
     body=`<div class="card panel" style="max-width:560px">
-      <div class="field"><label for="pr-name">Name</label><input class="inp" id="pr-name" value="${esc(c.name)}"></div>
+      <div class="field"><label for="pr-name">Name</label><input class="inp" id="pr-name" value="${esc(c.name)}"></div>${c.email?`<div class="field"><label>Email${c.emailVerified?' · verified':''}</label><input class="inp" value="${esc(c.email)}" disabled></div>`:''}
       <div class="row"><div class="field grow"><label>Mobile</label><input class="inp num" value="${fmtPhone(c.phone)}" disabled></div><div class="field grow"><label for="pr-bday">Birthday</label><input class="inp" id="pr-bday" type="date" value="${esc(c.bday||'')}"></div></div>
       <div class="field"><label for="pr-addr">Saved delivery address</label><textarea class="inp" id="pr-addr" rows="2">${esc(c.addr||'')}</textarea></div>
       <button class="btn pri" data-act="pr-save" style="align-self:flex-start">Save profile</button>
@@ -2762,6 +2790,7 @@ document.addEventListener('click',e=>{
     case 'auth':openAuth(el.dataset.v,el.dataset.next);break;
     case 'au-mode':U.au.m=el.dataset.v;U.au.err='';render();break;
     case 'au-go':authGo();break;
+    case 'au-code':if(U.au&&!U.au.busy)auSend();break;
     case 'pn':{const v=el.dataset.v;closeModal();
       if(v==='home'){U.pubView='home';render();window.scrollTo(0,0)}
       else if(v==='menu'||v==='offers'){U.pubView='menu';render();document.getElementById(v)?.scrollIntoView({behavior:'smooth'});if(v==='menu'&&!document.getElementById(v))window.scrollTo(0,0)}
@@ -2774,7 +2803,7 @@ document.addEventListener('click',e=>{
     case 'account':U.pubView='account';U.accTab=U.accTab||'orders';closeModal();render();window.scrollTo(0,0);break;
     case 'acc-back':U.pubView='menu';render();window.scrollTo(0,0);break;
     case 'acc-tab':U.accTab=el.dataset.v;U.spin.result=null;render();break;
-    case 'signout':S.me=null;save();U.pubView='menu';Object.assign(pubForm,{name:'',phone:'',address:'',useWallet:false});toast('Signed out');render();break;
+    case 'signout':askConfirm('Sign out?','You will need your mobile number and PIN to sign in again.','Sign out',()=>{S.me=null;save();U.pubView='menu';Object.assign(pubForm,{name:'',phone:'',address:'',useWallet:false});toast('Signed out');render()});break;
     case 'pr-save':{const c=me();c.name=document.getElementById('pr-name').value.trim()||c.name;c.bday=document.getElementById('pr-bday').value;c.addr=document.getElementById('pr-addr').value.trim();save();toast('Profile saved');render();break}
     case 'pr-pin':{const c=me();const o=document.getElementById('pr-old').value,n=document.getElementById('pr-new').value;if(!/^\d{4}$/.test(n)){toast('New PIN must be 4 digits');break}
       api('/api/auth/customer',{phone:c.phone,pin:o}).then(r=>{if(!r.ok){toast('Current PIN is wrong');return}setPin(c,n);save();toast('PIN updated');render()},()=>toast('Could not reach the server'));break}
@@ -2784,7 +2813,7 @@ document.addEventListener('click',e=>{
     case 'spin':doSpin();break;
     case 'copyref':{const t=el.dataset.t;try{navigator.clipboard.writeText(t).then(()=>toast('Copied'),()=>toast('Copy blocked — code: '+me().ref))}catch(_){toast('Code: '+me().ref)}break}
     case 'scratch-reveal':revealScratch(el.dataset.id);break;
-    case 'lock':pushLogout();S.staffId=null;save();render();break;
+    case 'lock':askConfirm('Log out?',APP_ROLE==='admin'?'This phone will stop ringing for new orders until someone logs in again.':'You will need your PIN to log in again.','Log out',()=>{pushLogout();S.staffId=null;save();render()});break;
     case 'lg-user':L.uid=el.dataset.v;L.buf='';L.err='';render();break;
     case 'lg-key':lgKey(el.dataset.v);break;
     case 'add-user':{const u={id:uid('u'),name:'New staff',role:'cashier'};setPin(u,'0000');S.users.push(u)}save();render();break;
@@ -2799,13 +2828,13 @@ document.addEventListener('change',e=>{
   else u[t.dataset.f]=t.value;
   save();if(t.dataset.f!=='name')render();
 });
-document.addEventListener('input',e=>{const id=e.target.id||'';if(!id.startsWith('au-')||!U.au||mroot.contains(e.target))return;const k=id.slice(3);U.au[k]=k==='phone'||k==='pin'||k==='pin2'?e.target.value.replace(/\D/g,''):e.target.value;
-  if(k==='phone'||k==='pin'||k==='pin2')e.target.value=U.au[k];
+document.addEventListener('input',e=>{const id=e.target.id||'';if(!id.startsWith('au-')||!U.au||mroot.contains(e.target))return;const k=id.slice(3);const dig=['phone','pin','pin2','otp'].includes(k);U.au[k]=dig?e.target.value.replace(/\D/g,''):e.target.value;
+  if(dig)e.target.value=U.au[k];
   if(k==='pin'||k==='pin2'){const v=U.au[k];e.target.parentNode.querySelectorAll('i').forEach((b,i)=>{b.className=(i<v.length?'on':'')+(i===v.length?' cur':'')})}
   if(k==='phone'&&U.au.phone.length===10&&!U.au.pin)document.getElementById('au-pin')?.focus();
   if(k==='pin'&&U.au.pin.length===4){if(U.au.m==='in'&&U.au.phone.length===10)authGo();else document.getElementById('au-pin2')?.focus()}});
 document.addEventListener('change',e=>{if(e.target.id==='au-bday'&&U.au)U.au.bday=e.target.value});
-document.addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.target.id||'').startsWith('au-')&&U.au){e.preventDefault();authGo()}});
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.target.id||'').startsWith('au-')&&U.au){e.preventDefault();if(e.target.id==='au-email'&&OTP_ON&&!U.au.sent)auSend();else authGo()}});
 document.addEventListener('keydown',e=>{if(S.mode==='pos'&&!staff()&&!mroot.innerHTML&&/^[0-9]$/.test(e.key))lgKey(e.key);else if(S.mode==='pos'&&!staff()&&e.key==='Backspace')lgKey('←')});
 
 // Touch on the offers strip pauses it until the finger lifts, then a moment longer
