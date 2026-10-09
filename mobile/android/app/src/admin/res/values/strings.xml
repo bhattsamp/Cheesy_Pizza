@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Cheesy Pizza Admin</string>
+    <string name="title_activity_main">Cheesy Pizza Admin</string>
+    <string name="package_name">com.cheesypizza.admin</string>
+    <string name="custom_url_scheme">com.cheesypizza.admin</string>
+</resources>

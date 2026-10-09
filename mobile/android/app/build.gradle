@@ -37,6 +37,18 @@ android {
             }
         }
     }
+    // Two apps from one project: Cheesy Pizza for customers and Cheesy Pizza Admin for the
+    // owner's POS. Each installs separately; src/admin/ holds the Admin name, icon and config.
+    flavorDimensions = ["app"]
+    productFlavors {
+        customer {
+            dimension "app"
+        }
+        admin {
+            dimension "app"
+            applicationId "com.cheesypizza.admin"
+        }
+    }
     buildTypes {
         release {
             if (System.getenv('UPLOAD_KEYSTORE_FILE')) signingConfig signingConfigs.release

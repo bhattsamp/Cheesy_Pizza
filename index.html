@@ -744,6 +744,7 @@ td.r,th.r{text-align:right}
 </style>
 <style>
 /* Opening animation: shown while the app starts, removed by introDone() */
+body.app-customer .seg,body.app-admin .seg,body.app-customer [data-act="mode"][data-v="pos"]{display:none}
 #intro{position:fixed;inset:0;z-index:200;display:grid;place-items:center;overflow:hidden;color:#fff;
   background:radial-gradient(120% 90% at 50% 38%,#1c8fa3 0,#0d4f5c 48%,#082a31 100%);transition:opacity .5s ease,visibility .5s}
 #intro.out{opacity:0;visibility:hidden}
@@ -870,6 +871,8 @@ const noteText=l=>[...(l.notes||[]),l.note].filter(Boolean).join(' · ');
 // Where friends download the app, sent with referral codes. Switch to the Play Store page once it is live:
 // https://play.google.com/store/apps/details?id=com.cheesypizza.app
 const APP_LINK='https://github.com/bhattsamp/Cheesy_Pizza/releases/download/android-latest/cheesy-pizza.apk';
+// The Android apps say which one they are: Cheesy Pizza (customer site only) or Cheesy Pizza Admin (POS only)
+const APP_ROLE=(/CheesyApp\/(customer|admin)/.exec(navigator.userAgent)||[])[1]||null;
 const LKEY='cheesy_local_v1';
 const LOCAL_KEYS=['cur','mode','me','staffId'];
 const SYNCED=['sizes','outlets','menu','addons','offers','combos','extras','users','customers','orders'];
@@ -1136,6 +1139,7 @@ const TABS=[['new','New order'],['kitchen','Kitchen'],['counter','Counter'],['or
 
 const app=document.getElementById('app');
 function render(){
+  if(APP_ROLE){S.mode=APP_ROLE==='admin'?'pos':'public';document.body.classList.add('app-'+APP_ROLE)}
   document.getElementById('m-pub').setAttribute('aria-pressed',S.mode==='public');
   document.getElementById('m-pos').setAttribute('aria-pressed',S.mode==='pos');
   document.getElementById('outletSel').innerHTML=S.outlets.map(o=>`<option value="${o.id}" ${o.id===S.cur?'selected':''}>${esc(o.name)}</option>`).join('');
@@ -2300,7 +2304,7 @@ document.addEventListener('click',e=>{
   const P=U.pos;const find=id=>S.orders.find(o=>o.id===id);
   switch(act){
     case 'scrim':case 'close':closeModal();render();break;
-    case 'mode':S.mode=el.dataset.v;U.board=false;save();closeModal();render();try{history.replaceState(null,'','#'+S.mode)}catch(_){}window.scrollTo(0,0);break;
+    case 'mode':if(APP_ROLE)break;S.mode=el.dataset.v;U.board=false;save();closeModal();render();try{history.replaceState(null,'','#'+S.mode)}catch(_){}window.scrollTo(0,0);break;
     case 'scroll':document.getElementById(el.dataset.v)?.scrollIntoView({behavior:'smooth'});break;
     case 'pubcat':U.pubCat=el.dataset.v;render();break;
     case 'pubf':U.pubF[el.dataset.v]=!U.pubF[el.dataset.v];render();break;

@@ -35,7 +35,9 @@ Demo logins: staff PINs Owner 1234, Cashier 1111, Kitchen 2222; customer 9825011
 
 ## Mobile app
 
-`mobile/` holds an Android and iOS app built with [Capacitor](https://capacitorjs.com). It works
+`mobile/` holds an Android and iOS app built with [Capacitor](https://capacitorjs.com). Android
+builds two apps from it: **Cheesy Pizza** (`com.cheesypizza.app`, the customer site only) and
+**Cheesy Pizza Admin** (`com.cheesypizza.admin`, the outlet POS only, with its own icon). Each works
 in one of two ways, chosen when it is built:
 
 - **Offline (default, no server needed):** the whole site runs inside the app, starting from the
@@ -50,8 +52,8 @@ in one of two ways, chosen when it is built:
 Leave `server_url` blank for the offline app, or paste a server address (a repository variable
 `CHEESY_SERVER_URL` under Settings > Secrets and variables > Actions > Variables sets it for every
 build). When it finishes, open
-https://github.com/bhattsamp/Cheesy_Pizza/releases/download/android-latest/cheesy-pizza.apk on the
-phone (every build from `main` updates it too) and install it, allowing installs from unknown
+https://github.com/bhattsamp/Cheesy_Pizza/releases/download/android-latest/cheesy-pizza.apk (or
+`cheesy-pizza-admin.apk` for the Admin app) on the phone (every build from `main` updates it too) and install it, allowing installs from unknown
 sources when asked. Each build installs over the previous one.
 
 **Build locally** (Node 22+, Android Studio or Xcode):
@@ -62,6 +64,12 @@ npm install
 npm run sync              # offline app; or CHEESY_SERVER_URL=https://... npm run sync
 npx cap open android      # or: npx cap open ios (on a Mac)
 ```
+
+**Shared claude.ai artifact (no server):** `node mobile/scripts/build-shared.js` builds
+`mobile/artifact/` for publishing as a claude.ai artifact with the `db` and `user` capabilities.
+Each device picks the customer app or the owner app on first open, and both read and write the
+artifact's shared database, so customer orders ring on the owner's POS live. Everyone using it
+must be signed in to claude.ai and need edit access to place orders.
 
 ## What is stored where
 
