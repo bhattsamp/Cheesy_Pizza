@@ -39,6 +39,17 @@ jobs:
       - name: Install Capacitor
         run: npm ci
 
+      # Firebase config for the Admin app's new-order alerts (both apps registered in the
+      # Firebase project). Without the GOOGLE_SERVICES_JSON secret the apps build without alerts.
+      - name: Add Firebase config
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: |
+          if [ -n "$GOOGLE_SERVICES_JSON" ]; then
+            printf '%s' "$GOOGLE_SERVICES_JSON" > android/app/google-services.json
+            echo "Firebase set up: the Admin app can ring for new orders while closed"
+          fi
+
       - name: Build the app and copy it into the Android project
         env:
           CHEESY_SERVER_URL: ${{ inputs.server_url || vars.CHEESY_SERVER_URL }}

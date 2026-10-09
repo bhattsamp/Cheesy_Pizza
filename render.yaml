@@ -1,0 +1,19 @@
+# One-click Render setup (Render > New > Blueprint, pick this repository).
+# Free plan; it sleeps after 15 minutes without visitors and wakes on the next request.
+services:
+  - type: web
+    name: cheesy-pizza
+    runtime: node
+    plan: free
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /api/version
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      # MongoDB Atlas connection string (free M0 cluster), e.g. mongodb+srv://user:pass@cluster.mongodb.net/CheesyPizza
+      - key: MONGODB_URI
+        sync: false
+      # Firebase service account key (JSON) for Admin app alerts; leave empty to keep them off
+      - key: FIREBASE_SERVICE_ACCOUNT
+        sync: false
