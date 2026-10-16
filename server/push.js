@@ -45,11 +45,11 @@ async function notifyNewOrders(orders) {
     if (!tokens.length) continue;
     const r = await messaging.sendEachForMulticast({
       tokens,
-      notification: { title: `New online order ${o.no || ''}`.trim(), body: orderText(o) },
+      notification: { title: `🔔 New online order ${o.no || ''}`.trim(), body: orderText(o) },
       data: { orderId: String(o.id) },
       android: {
         priority: 'high',
-        notification: { channelId: 'orders', sound: 'order_ring', visibility: 'public', defaultVibrateTimings: true, tag: String(o.id) },
+        notification: { channelId: 'orders', sound: 'order_ring', visibility: 'public', defaultVibrateTimings: true, tag: String(o.id), icon: 'ic_stat_pizza', color: '#1A93A8' },
       },
     });
     // Forget phones that uninstalled the app or were reset
@@ -74,11 +74,11 @@ async function saveCustomerToken(token, old, orders = []) {
 }
 
 const STATUS_TEXT = {
-  preparing: () => ['Order accepted', 'We are making your pizza now.'],
-  ready: o => o.type === 'delivery' ? ['Order packed', 'It leaves with the rider soon.'] : ['Ready to pick up', 'Your order is ready at the counter.'],
-  out: o => ['Out for delivery', (o.rider && o.rider.name ? o.rider.name + ' is' : 'Your rider is') + ' on the way.'],
-  done: o => o.type === 'delivery' ? ['Delivered', 'Enjoy your pizza!'] : ['Picked up', 'Enjoy your pizza!'],
-  cancelled: () => ['Order cancelled', 'Your order was cancelled. Call the outlet if this is a surprise.'],
+  preparing: () => ['👨‍🍳 Order accepted!', 'Your pizza is being freshly made in the oven. Sit tight!'],
+  ready: o => o.type === 'delivery' ? ['📦 Order packed', 'Your food is packed and leaves with our rider soon.'] : ['🍕 Ready for pickup!', 'Your order is hot and waiting at the counter.'],
+  out: o => ['🛵 Out for delivery', (o.rider && o.rider.name ? o.rider.name + ' is' : 'Your rider is') + ' on the way with your order. Tap to track it live.'],
+  done: o => o.type === 'delivery' ? ['🎉 Order delivered', 'Enjoy your pizza! Thanks for ordering from Cheesy Pizza.'] : ['🎉 Order picked up', 'Enjoy your pizza! Thanks for ordering from Cheesy Pizza.'],
+  cancelled: () => ['❌ Order cancelled', 'Your order was cancelled. Call the outlet if this is a surprise.'],
 };
 
 function offerText(of) {
@@ -99,7 +99,7 @@ async function sendTo(tokens, msg) {
 const updateMsg = (title, body, data, tag) => ({
   notification: { title, body },
   data,
-  android: { priority: 'high', notification: { channelId: 'updates', visibility: 'public', defaultSound: true, defaultVibrateTimings: true, tag } },
+  android: { priority: 'high', notification: { channelId: 'updates', visibility: 'public', defaultSound: true, defaultVibrateTimings: true, tag, icon: 'ic_stat_pizza', color: '#1A93A8' } },
 });
 
 // Tells the phones that placed each order where it has got to
@@ -122,7 +122,7 @@ async function notifyPayments(orders) {
     const ok = o.pay.check === 'ok';
     const amt = '₹' + ((o.total || 0) - (o.walletUsed || 0));
     const cust = (await PushToken.find({ role: 'customer', orders: String(o.id) }).lean()).map(x => x._id);
-    if (cust.length) await sendTo(cust, updateMsg(ok ? `Payment received ✓${o.no ? ' · ' + o.no : ''}` : `UPI payment not found${o.no ? ' · ' + o.no : ''}`,
+    if (cust.length) await sendTo(cust, updateMsg(ok ? `✅ Payment received${o.no ? ' · ' + o.no : ''}` : `⚠️ UPI payment not found${o.no ? ' · ' + o.no : ''}`,
       ok ? `We got your ${amt} UPI payment. Thank you!` : `We could not find your ${amt} UPI payment. Please pay cash, or call the outlet.`, { orderId: String(o.id) }, 'pay-' + o.id));
     const staff = (await PushToken.find({ outletId: String(o.outletId), role: { $ne: 'customer' } }).lean()).map(x => x._id);
     if (staff.length) await sendTo(staff, updateMsg(ok ? `UPI ${amt} received · ${o.no || ''}`.trim() : `UPI ${amt} not received · ${o.no || ''}`.trim(),
@@ -135,7 +135,7 @@ async function notifyNewOffers(offers) {
   if (!messaging || !offers.length) return;
   const tokens = (await PushToken.find({ role: 'customer' }).lean()).map(x => x._id);
   if (!tokens.length) return;
-  for (const of of offers) await sendTo(tokens, updateMsg('New offer: ' + (of.name || 'a treat for you'), offerText(of), { offer: String(of.id) }, 'offer-' + of.id));
+  for (const of of offers) await sendTo(tokens, updateMsg('🎁 New offer: ' + (of.name || 'a treat for you'), offerText(of), { offer: String(of.id) }, 'offer-' + of.id));
 }
 
 // The owner's own message to every customer phone, with an optional picture

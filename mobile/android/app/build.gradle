@@ -78,11 +78,14 @@ dependencies {
 
 apply from: 'capacitor.build.gradle'
 
-try {
-    def servicesJSON = file('google-services.json')
-    if (servicesJSON.text) {
-        apply plugin: 'com.google.gms.google-services'
+// scripts/firebase-config.js puts each app's Firebase config in src/customer or src/admin.
+// An app without one builds without notifications instead of failing the build.
+def firebaseApps = ['customer', 'admin'].findAll { file("src/$it/google-services.json").exists() } + (file('google-services.json').exists() ? ['all'] : [])
+if (firebaseApps) {
+    apply plugin: 'com.google.gms.google-services'
+    googleServices {
+        missingGoogleServicesStrategy = com.google.gms.googleservices.GoogleServicesPlugin.MissingGoogleServicesStrategy.WARN
     }
-} catch(Exception e) {
+} else {
     logger.info("google-services.json not found, google-services plugin not applied. Push Notifications won't work")
 }

@@ -7,7 +7,9 @@ const APP = path.join(__dirname, '..', 'android', 'app', 'src');
 const config = JSON.parse(fs.readFileSync(path.join(APP, 'main', 'assets', 'capacitor.config.json'), 'utf8'));
 config.appId = 'com.cheesypizza.admin';
 config.appName = 'Cheesy Pizza Admin';
-config.appendUserAgent = String(config.appendUserAgent || '').replace('CheesyApp/customer', 'CheesyApp/admin') || 'CheesyApp/admin';
+// CheesyPush only when the Admin app has its own Firebase config (scripts/firebase-config.js)
+const push = fs.existsSync(path.join(APP, 'admin', 'google-services.json'));
+config.appendUserAgent = 'CheesyApp/admin' + (push ? ' CheesyPush' : '');
 fs.mkdirSync(path.join(APP, 'admin', 'assets'), { recursive: true });
 fs.writeFileSync(path.join(APP, 'admin', 'assets', 'capacitor.config.json'), JSON.stringify(config, null, '\t') + '\n');
 console.log('Wrote the Admin app config');
