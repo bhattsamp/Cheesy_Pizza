@@ -1,0 +1,25 @@
+name: Keep server awake
+
+# Render's free plan puts the server to sleep after 15 minutes without visits, and the next
+# person to open the app sees Render's "waking up" screen for up to a minute. A small visit
+# every 10 minutes keeps it awake. Free: one always-on service fits in Render's 750 free hours
+# a month, and scheduled runs cost nothing on a public repository.
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Visit the server
+        env:
+          SERVER: ${{ vars.CHEESY_SERVER_URL || 'https://cheesy-pizza.onrender.com' }}
+        run: |
+          for i in 1 2 3; do
+            code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 90 "$SERVER/api/version") && [ "$code" = 200 ] && { echo "Server awake ($code)"; exit 0; }
+            echo "Try $i got ${code:-no answer}, retrying"; sleep 10
+          done
+          echo "::warning::Server did not answer"
