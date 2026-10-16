@@ -7,6 +7,25 @@
   "client": [
     {
       "client_info": {
+        "mobilesdk_app_id": "1:936728648973:android:7620920d14b54a34ba2444",
+        "android_client_info": {
+          "package_name": "com.cheesypizza.admin"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBzdTvrBdoxkRNOvPjQ2yc632bNstORewY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
         "mobilesdk_app_id": "1:936728648973:android:42ac18b5f5ccc164ba2444",
         "android_client_info": {
           "package_name": "com.cheesypizza.app"
