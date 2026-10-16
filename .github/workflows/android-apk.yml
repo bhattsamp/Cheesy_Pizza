@@ -39,18 +39,17 @@ jobs:
       - name: Install Capacitor
         run: npm ci
 
-      # Firebase config for the Admin app's new-order alerts (both apps registered in the
-      # Firebase project). Without the GOOGLE_SERVICES_JSON secret the apps build without alerts.
+      # Firebase config: the GOOGLE_SERVICES_JSON secret, else mobile/firebase/google-services.json.
+      # Each app (customer, Admin) gets notifications when it is registered in the Firebase project.
       - name: Add Firebase config
         env:
           GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
         run: |
           if [ -n "$GOOGLE_SERVICES_JSON" ]; then
-            printf '%s' "$GOOGLE_SERVICES_JSON" > android/app/google-services.json
-            echo "Firebase set up: both apps can get notifications while closed"
+            printf '%s' "$GOOGLE_SERVICES_JSON" > "$RUNNER_TEMP/google-services.json"
+            node scripts/firebase-config.js "$RUNNER_TEMP/google-services.json"
           elif [ -f firebase/google-services.json ]; then
-            cp firebase/google-services.json android/app/google-services.json
-            echo "Firebase set up from firebase/google-services.json: both apps can get notifications while closed"
+            node scripts/firebase-config.js
           else
             echo "::warning::No Firebase config (GOOGLE_SERVICES_JSON secret or mobile/firebase/google-services.json), so these apps are built without notifications"
           fi

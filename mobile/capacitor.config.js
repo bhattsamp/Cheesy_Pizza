@@ -14,9 +14,9 @@ const config = {
   appName: 'Cheesy Pizza',
   webDir: 'www',
   // Tells the page this is the customer app; scripts/admin-config.js sets CheesyApp/admin for the Admin app
-  // CheesyPush marks builds with Firebase set up (android/app/google-services.json), so the
-  // apps can get alerts while closed: new orders for the Admin app, offers and order updates for customers.
-  appendUserAgent: 'CheesyApp/customer' + (fs.existsSync(path.join(__dirname, 'android', 'app', 'google-services.json')) ? ' CheesyPush' : ''),
+  // CheesyPush marks builds with Firebase set up (android/app/src/customer/google-services.json, written by
+  // scripts/firebase-config.js), so the app can get offers and order updates while closed.
+  appendUserAgent: 'CheesyApp/customer' + (fs.existsSync(path.join(__dirname, 'android', 'app', 'src', 'customer', 'google-services.json')) ? ' CheesyPush' : ''),
   android: { allowMixedContent: serverUrl.startsWith('http:') },
   // Alerts also show in the notification bar while the app is open, like other apps
   plugins: { PushNotifications: { presentationOptions: ['alert', 'sound', 'badge'] } },

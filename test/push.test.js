@@ -10,8 +10,8 @@ test('offer alerts say what the offer gives', () => {
 });
 
 test('order updates read right for delivery and pickup', () => {
-  assert.deepEqual(STATUS_TEXT.done({ type: 'delivery' }), ['Delivered', 'Enjoy your pizza!']);
-  assert.deepEqual(STATUS_TEXT.ready({ type: 'takeaway' })[0], 'Ready to pick up');
-  assert.equal(STATUS_TEXT.out({ rider: { name: 'Ravi' } })[1], 'Ravi is on the way.');
+  assert.deepEqual(STATUS_TEXT.done({ type: 'delivery' }), ['🎉 Order delivered', 'Enjoy your pizza! Thanks for ordering from Cheesy Pizza.']);
+  assert.deepEqual(STATUS_TEXT.ready({ type: 'takeaway' })[0], '🍕 Ready for pickup!');
+  assert.equal(STATUS_TEXT.out({ rider: { name: 'Ravi' } })[1], 'Ravi is on the way with your order. Tap to track it live.');
   assert.equal(STATUS_TEXT.placed, undefined);
 });
