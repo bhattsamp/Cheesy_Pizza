@@ -87,8 +87,11 @@ function createApp(store) {
   app.post('/api/push/customer', async (req, res) => {
     const { token, old, orders } = req.body || {};
     if (!token || typeof token !== 'string' || token.length > 4096) return res.status(400).json({ error: 'Missing token' });
-    await push.saveCustomerToken(token, old, [].concat(orders || []).filter(x => typeof x === 'string').slice(0, 10));
+    const added = await push.saveCustomerToken(token, old, [].concat(orders || []).filter(x => typeof x === 'string').slice(0, 10));
     res.json({ ok: true });
+    // The app signs up for an order as it saves it, so give the save a few seconds to land
+    if (added.length && push.pushEnabled()) setTimeout(() => store.readCollection('orders', { _id: { $in: added } })
+      .then(list => push.notifyAppPaid(token, list)).catch(e => console.error('Push alert failed:', e.message)), 5000);
   });
   // Owner or manager sends their own notification to every customer phone; their PIN confirms it
   app.get('/api/push/stats', async (req, res) => res.json({ enabled: push.pushEnabled(), customers: await push.customerCount() }));

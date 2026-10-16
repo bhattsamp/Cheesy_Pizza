@@ -43,9 +43,10 @@ async function notifyNewOrders(orders) {
   for (const o of orders) {
     const tokens = (await PushToken.find({ outletId: String(o.outletId), role: { $ne: 'customer' } }).lean()).map(t => t._id);
     if (!tokens.length) continue;
+    const paid = o.pay && o.pay.app && o.paid ? ` · ✅ ₹${(o.total || 0) - (o.walletUsed || 0)} paid` : '';
     const r = await messaging.sendEachForMulticast({
       tokens,
-      notification: { title: `🔔 New online order ${o.no || ''}`.trim(), body: orderText(o) },
+      notification: { title: `🔔 New online order ${o.no || ''}`.trim() + paid, body: orderText(o) },
       data: { orderId: String(o.id) },
       android: {
         priority: 'high',
@@ -60,8 +61,11 @@ async function notifyNewOrders(orders) {
 
 /* ----- customer app: new offers and order updates ----- */
 
-// A customer phone signs up for offers, and for each order it places (no login needed)
+// A customer phone signs up for offers, and for each order it places (no login needed).
+// Resolves to the order ids this phone had not signed up for before.
 async function saveCustomerToken(token, old, orders = []) {
+  const had = await PushToken.findById(String(token)).lean();
+  const added = orders.map(String).filter(id => !(had && (had.orders || []).includes(id)));
   let keep = [];
   if (old && old !== token) {
     const prev = await PushToken.findById(String(old)).lean();
@@ -71,6 +75,19 @@ async function saveCustomerToken(token, old, orders = []) {
   const ids = [...keep, ...orders].map(String).slice(-30);
   await PushToken.updateOne({ _id: String(token) },
     { $set: { role: 'customer', ts: Date.now() }, $push: { orders: { $each: ids, $slice: -30 } } }, { upsert: true });
+  return added;
+}
+
+// An order paid inside the app is confirmed at once, so the phone that paid hears it as soon
+// as it signs up for that order (only within 15 minutes of paying, and only once per phone)
+async function notifyAppPaid(token, orders) {
+  if (!messaging) return;
+  for (const o of orders) {
+    if (!(o.pay && o.pay.app && o.paid) || Date.now() - (o.paidAt || 0) > 15 * 60 * 1000) continue;
+    const amt = '₹' + ((o.total || 0) - (o.walletUsed || 0));
+    await sendTo([token], updateMsg(`✅ Payment received${o.no ? ' · ' + o.no : ''}`,
+      `We got your ${amt} UPI payment. Your order is placed!`, { orderId: String(o.id) }, 'pay-' + o.id));
+  }
 }
 
 const STATUS_TEXT = {
@@ -151,4 +168,4 @@ async function notifyBroadcast(title, body, image) {
 const customerCount = () => PushToken.countDocuments({ role: 'customer' });
 
 module.exports = { initPush, setMessaging, pushEnabled, saveToken, refreshToken, removeToken, notifyNewOrders, orderText,
-  saveCustomerToken, notifyOrderUpdates, notifyPayments, notifyNewOffers, notifyBroadcast, customerCount, offerText, STATUS_TEXT };
+  saveCustomerToken, notifyAppPaid, notifyOrderUpdates, notifyPayments, notifyNewOffers, notifyBroadcast, customerCount, offerText, STATUS_TEXT };
