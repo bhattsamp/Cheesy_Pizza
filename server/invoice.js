@@ -19,11 +19,14 @@ function invoicePage(o, outlet, { sizes = [], addons = {} } = {}) {
   const qty = items.reduce((a, l) => a + (Number(l.qty) || 0), 0);
   const disc = (o.discounts || []).filter(d => d.amt);
   const total = Number(o.total) || 0;
-  const rate = outlet.gstin ? Number(outlet.gstRate) || 0 : 0;
-  // Prices include GST: taxable value = total / (1 + rate), split equally into SGST and CGST
-  const taxable = rate ? Math.round(total / (1 + rate / 100) * 100) / 100 : null;
-  const half = rate ? Math.round((total - taxable) / 2 * 100) / 100 : 0;
-  const roundOff = rate ? Math.round((total - taxable - 2 * half) * 100) / 100 : 0;
+  // GST as saved on the order when it was billed (older orders: the outlet's current setting).
+  // 'incl': prices include GST, so taxable value = total / (1 + rate). 'excl': GST was added on top.
+  const g = o.gst || (outlet.gstin && Number(outlet.gstRate) > 0 ? { rate: Number(outlet.gstRate), mode: outlet.gstMode === 'excl' ? 'excl' : 'incl' } : null);
+  const rate = g ? g.rate : 0;
+  const r2 = n => Math.round(n * 100) / 100;
+  const taxable = !rate ? null : g.mode === 'excl' && g.net != null ? r2(g.net) : g.mode === 'excl' ? r2(total - (g.tax != null ? g.tax : total - total / (1 + rate / 100))) : r2(total / (1 + rate / 100));
+  const half = rate ? r2((g.mode === 'excl' && g.tax != null ? g.tax : total - taxable) / 2) : 0;
+  const roundOff = rate ? r2(total - taxable - 2 * half) : 0;
   const itemTotal = o.subtotal != null ? o.subtotal : items.reduce((a, l) => a + l.unit * l.qty, 0);
   const sums = [
     ['Quantity', qty],

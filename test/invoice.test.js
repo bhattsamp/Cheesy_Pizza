@@ -28,3 +28,13 @@ test('invoice without GSTIN shows no tax lines', () => {
   assert.doesNotMatch(h, /SGST|TAX INVOICE|GSTIN/);
   assert.match(h, /7&quot;, Extra cheese/);
 });
+
+test('invoice for GST added on top shows tax over the net amount and the round off', () => {
+  // ₹153 of food + 5% GST = 160.65, billed ₹161
+  const ex = { ...o, items: [{ qty: 1, name: 'Pizza', unit: 153, addons: [] }], subtotal: 153, total: 161, gst: { rate: 5, mode: 'excl', tax: 7.65, net: 153 } };
+  const h = invoicePage(ex, { name: 'Main', gstin: '24AAAAA0000A1Z5', gstRate: 5 }, opts);
+  assert.match(h, /Sub Total<\/span><span>₹153</);
+  assert.match(h, /Round off Amount:<\/span><span>₹\+0.34/);
+  assert.match(h, /SGST \(2.5%\)<\/span><span>₹3.83/);
+  assert.match(h, /Total Payable Amount:<\/span><span>₹161/);
+});
