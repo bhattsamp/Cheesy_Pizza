@@ -1047,9 +1047,14 @@ function computeBill(items,dateStr,extra){
   const coinsMax=Math.floor(Math.max(0,subtotal-discount)*0.2);let coinsUsed=0;
   if(extra.coins>0){coinsUsed=Math.min(Math.floor(extra.coins),coinsMax);if(coinsUsed>0){disc.push({name:`Cheese Coins (${coinsUsed})`,amt:coinsUsed});discount+=coinsUsed}}
   const comboSave=items.filter(l=>l.combo).reduce((s,l)=>s+Math.max(0,(l.worth||0)-l.unit)*l.qty,0);
-  const total=Math.max(0,subtotal-discount);
-  return {subtotal,discounts:disc,discount,total,hint,saved:discount+comboSave,codeMsg,codeOk,coinsUsed,coinsMax,earn:Math.floor(total*COIN_RATE)};
+  const net=Math.max(0,subtotal-discount);
+  // GST (owner sets it per outlet): included in menu prices, or added on top of the bill
+  const g=gstOf(S.outlets.find(x=>x.id===(extra.outletId||S.cur)));let tax=0,total=net,gst=null;
+  if(g){tax=g.mode==='excl'?Math.round(net*g.rate)/100:Math.round((net-net/(1+g.rate/100))*100)/100;if(g.mode==='excl')total=Math.round(net+tax);gst={rate:g.rate,mode:g.mode,tax,net}}
+  return {subtotal,discounts:disc,discount,net,gst,total,hint,saved:discount+comboSave,codeMsg,codeOk,coinsUsed,coinsMax,earn:Math.floor(total*COIN_RATE)};
 }
+/* GST applies only once the outlet has a GSTIN and a rate; mode 'incl' = prices include GST, 'excl' = added on top */
+const gstOf=o=>o&&o.gstin&&+o.gstRate>0?{rate:+o.gstRate,mode:o.gstMode==='excl'?'excl':'incl'}:null;
 const coinsOf=ph=>Math.floor(S.customers[ph]?.coins||0);
 function dripPath(){let d='M0 0H1200V16',x=1200,i=0;while(x>0){const w=38+((i*37)%46),dep=18+((i*53)%26);d+=` C${x-w*.2} 16 ${x-w*.22} ${dep} ${x-w/2} ${dep} S${x-w*.8} 16 ${x-w} 16`;x-=w;i++}return d+' V0Z'}
 // Each extra topping is drawn as its own pieces (onion rings, capsicum, corn...). Pieces the
@@ -1121,7 +1126,7 @@ function commitOrder(o){
   const out=S.outlets.find(x=>x.id===o.outletId);
   const k=o.outletId+'|'+o.date;S.seq[k]=(S.seq[k]||0)+1;
   o.no=out.code+'-'+String(S.seq[k]).padStart(3,'0');
-  const b=computeBill(o.items,o.date,{...(o.extra||{}),phone:o.customer.phone});o.subtotal=b.subtotal;o.discounts=b.discounts;o.total=b.total;o.coinsUsed=b.coinsUsed;o.coinsEarned=(o.customer.phone||'').length===10?b.earn:0;
+  const b=computeBill(o.items,o.date,{...(o.extra||{}),phone:o.customer.phone,outletId:o.outletId});o.subtotal=b.subtotal;o.discounts=b.discounts;o.total=b.total;if(b.gst)o.gst=b.gst;else delete o.gst;o.coinsUsed=b.coinsUsed;o.coinsEarned=(o.customer.phone||'').length===10?b.earn:0;
   o.times=o.times||{};o.times.placed=o.times.placed||o.ts;if(o.status==='preparing')o.times.preparing=o.times.preparing||o.ts;
   S.orders.push(o);
   const ph=(o.customer.phone||'').replace(/\D/g,'');
@@ -1142,6 +1147,7 @@ const leftText=m=>m>=0?m+' min left':(-m)+' min late';
 const isActive=o=>['placed','preparing'].includes(o.status);
 const isNewCust=o=>{const ph=o.customer?.phone;if(!ph)return false;const first=S.orders.filter(x=>x.customer.phone===ph&&x.status!=='cancelled').sort((a,b)=>a.ts-b.ts)[0];return first&&first.id===o.id};
 const rs=n=>'₹'+Math.round(n).toLocaleString('en-IN');
+const rs2=n=>'₹'+(+n).toFixed(2).replace(/\.00$/,'');
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cur=()=>S.outlets.find(o=>o.id===S.cur)||S.outlets[0];
 const outletOf=o=>S.outlets.find(x=>x.id===o.outletId)||cur();
@@ -1509,6 +1515,7 @@ const pubForm={name:'',phone:'',type:'delivery',address:'',pay:'upi',code:'',use
 function billLines(b){
   return `<div class="bl"><span>Item total</span><span class="num">${rs(b.subtotal)}</span></div>
   ${(b.discounts||[]).map(d=>`<div class="bl disc"><span>${esc(d.name)}</span><span class="num">−${rs(d.amt)}</span></div>`).join('')}
+  ${b.gst&&b.gst.mode==='excl'?`<div class="bl"><span>GST ${b.gst.rate}%</span><span class="num">+${rs2(b.gst.tax)}</span></div>`:''}
   <div class="tot"><span>To pay</span><span class="num">${rs(b.total)}</span></div>`;
 }
 function slots(){
@@ -1631,7 +1638,7 @@ function openTrack(){
     `<ol class="tl">${steps.map(([k,n,ts])=>{const i=order.indexOf(k);const on=i<=idx;return `<li class="${on?'on':''} ${i===idx&&k!=='done'?'now':''}"><i>${on?'✓':''}</i><b>${n}</b><span class="small num">${on?fmtTime(ts):''}</span></li>`}).join('')}</ol>`}
     <div class="card" style="padding:12px 14px;display:flex;flex-direction:column;gap:4px">
       ${o.items.map(l=>`<div class="bl"><span>${l.qty} × ${esc(l.name)} <span class="muted small">${esc(addonText(l))}</span>${noteText(l)?`<span class="small cook"> · ${esc(noteText(l))}</span>`:''}</span><span class="num">${rs(l.unit*l.qty)}</span></div>`).join('')}${o.note?`<div class="small cook">Kitchen note: ${esc(o.note)}</div>`:''}
-      <div style="border-top:1px dashed var(--line);margin:6px 0"></div>${billLines({subtotal:o.subtotal,discounts:o.discounts,total:o.total})}
+      <div style="border-top:1px dashed var(--line);margin:6px 0"></div>${billLines({subtotal:o.subtotal,discounts:o.discounts,total:o.total,gst:o.gst})}
       <div class="small muted">${upiPending(o)?`UPI payment being checked by the outlet · UTR ${esc(fmtUtr(o.pay.utr))}`:o.pay&&o.pay.check==='failed'?'<b style="color:var(--bad)">We could not find your UPI payment. Please pay cash on '+(del?'delivery':'pickup')+' or call us.</b>':o.paid?'Paid by '+PAY[o.pay.mode]+(o.pay.check==='ok'?' · confirmed ✓':''):'Pay on '+(del?'delivery':'pickup')}${o.coinsEarned?` · <b style="color:var(--cheese-ink)">+${o.coinsEarned} Cheese Coins</b>`:''}</div>
     </div>
     ${o.status==='done'?(o.rating?`<div class="rate"><b>Thanks! You rated this order</b><div style="font-size:26px;color:var(--cheese)">${'★'.repeat(o.rating)}${'☆'.repeat(5-o.rating)}</div></div>`:`<div class="rate"><b>How was your pizza?</b><div class="stars">${[1,2,3,4,5].map(n=>`<button data-act="rate" data-id="${o.id}" data-v="${n}" aria-label="${n} star${n>1?'s':''}">★</button>`).join('')}</div></div>`):''}
@@ -1832,7 +1839,7 @@ const needPhone=()=>staff()?.role==='cashier'&&U.pos.type!=='zomato';
 function printText(txt){const r=document.getElementById('printRoot');r.innerHTML=`<pre>${esc(txt)}</pre>`;try{window.print()}catch(_){}}
 function recalcOrder(o){
   const before=(o.coinsEarned||0)-(o.coinsUsed||0);
-  const b=computeBill(o.items,o.date,{...(o.extra||{}),phone:o.customer.phone});
+  const b=computeBill(o.items,o.date,{...(o.extra||{}),phone:o.customer.phone,outletId:o.outletId});if(b.gst)o.gst=b.gst;else delete o.gst;
   Object.assign(o,{subtotal:b.subtotal,discounts:b.discounts,total:b.total,coinsUsed:b.coinsUsed,coinsEarned:(o.customer.phone||'').length===10?b.earn:0});
   const c=S.customers[o.customer.phone];if(c)c.coins=Math.max(0,(c.coins||0)+o.coinsEarned-o.coinsUsed-before);
 }
@@ -1905,13 +1912,14 @@ function pad(a,b,w=32){a=String(a);b=String(b);const sp=w-a.length-b.length;retu
 function center(s,w=32){s=String(s);return ' '.repeat(Math.max(0,Math.floor((w-s.length)/2)))+s}
 function billText(o){
   const out=outletOf(o);const L=[];const hr='-'.repeat(32);
-  L.push(center('CHEESY PIZZA'),center('Really Cheesy...!'),center(out.name),center('Ph: '+fmtPhone(out.phone)),center('PURE VEG'),hr);
+  L.push(center(out.legal||'CHEESY PIZZA'),center('Really Cheesy...!'),center(out.name),center('Ph: '+fmtPhone(out.phone)),...(out.gstin?[center('GSTIN: '+out.gstin)]:[]),...(out.fssai?[center('FSSAI: '+out.fssai)]:[]),center('PURE VEG'),hr);
   L.push(pad('Bill: '+o.no,TYPES[o.type]),pad(fmtDate(o.date),fmtTime(o.ts)));
   if(o.customer.name||o.customer.phone)L.push('Cust: '+(o.customer.name||'')+' '+(o.customer.phone||''));
   if(o.table)L.push('Table: '+o.table);if(o.address)L.push('Addr: '+o.address.slice(0,26));if(o.zomatoId)L.push('Zomato ID: '+o.zomatoId);
   L.push(hr,pad('Item','Amt'),hr);
   o.items.forEach(l=>{L.push(pad(l.qty+' x '+l.name.slice(0,20),String(l.unit*l.qty)));const a=addonText(l);if(a)L.push('   '+a.slice(0,29))});
   L.push(hr,pad('Item total','Rs '+o.subtotal));(o.discounts||[]).forEach(d=>L.push(pad(d.name.slice(0,22),'-'+d.amt)));
+  if(o.gst){const h=(o.gst.tax/2).toFixed(2);L.push(pad(`SGST ${o.gst.rate/2}%`+(o.gst.mode==='incl'?' (incl)':''),h),pad(`CGST ${o.gst.rate/2}%`+(o.gst.mode==='incl'?' (incl)':''),h));const ro=o.gst.mode==='excl'&&o.gst.net!=null?Math.round((o.total-o.gst.net-2*h)*100)/100:0;if(ro)L.push(pad('Round off',(ro>0?'+':'')+ro.toFixed(2)))}
   L.push(pad('TOTAL','Rs '+o.total),o.paid?pad('Paid by',PAY[o.pay.mode]):pad('Payment','BAKI '+(o.pay.mode==='due'?'(on account)':'(not paid)')));if(o.walletUsed&&o.pay.mode!=='wallet')L.push(pad('From wallet','Rs '+o.walletUsed));if(o.coinsEarned)L.push(pad('Cheese Coins earned','+'+o.coinsEarned));
   if(o.pay.mode==='cash'&&o.pay.given)L.push(pad('Given','Rs '+o.pay.given),pad('Return','Rs '+o.pay.change));
   if(o.status==='cancelled')L.push(hr,center('*** CANCELLED ***'));
@@ -2335,13 +2343,20 @@ function vOutlets(){const own=staff()?.role==='owner';
   <div class="grid">${S.outlets.map(o=>{const t=S.orders.filter(x=>x.outletId===o.id&&x.date===today()&&x.status!=='cancelled');return `<div class="card" style="padding:14px;display:flex;flex-direction:column;gap:8px">
     <div class="row"><span class="chip t num">Code ${esc(o.code)}</span>${o.id===S.cur?'<span class="chip ready">Current</span>':''}</div>
     <div class="field"><label for="on-${o.id}">Name</label><input class="inp" id="on-${o.id}" data-ou="${o.id}" data-f="name" value="${esc(o.name)}"></div>
-    <div class="field"><label for="oa-${o.id}">Address</label><input class="inp" id="oa-${o.id}" data-ou="${o.id}" data-f="area" value="${esc(o.area)}"></div>
+    <div class="field"><label for="oa-${o.id}">Full address (shown on bills)</label><input class="inp" id="oa-${o.id}" data-ou="${o.id}" data-f="area" value="${esc(o.area)}" ${own?'':'readonly'}></div>
     <div class="row"><div class="field grow"><label for="op-${o.id}">Phone</label><input class="inp num" id="op-${o.id}" data-ou="${o.id}" data-f="phone" value="${esc(o.phone)}"></div>
     </div>
     <div class="field"><label for="ou-${o.id}">UPI ID for this branch</label><input class="inp" id="ou-${o.id}" data-ou="${o.id}" data-f="upi" value="${esc(o.upi)}" placeholder="name@okaxis" autocapitalize="off" autocomplete="off" spellcheck="false" ${own?'':'readonly'}>
       <span class="small muted" id="oue-${o.id}">${own?'Customers of this branch pay here. The QR below updates as you type.':'Only the owner can change the UPI ID.'}</span></div>
     ${o.upi?`<div class="qr" id="oqr-${o.id}"><div data-qr="${esc(shopQr(o))}"></div><b>Cheesy Pizza · ${esc(o.name)}</b><span class="small num">${esc(o.upi)}</span></div>
     <div class="row"><button class="btn sm" data-act="qr-save" data-o="${o.id}">⬇ Save / share QR</button><span class="small muted">Print it for the counter</span></div>`:'<div class="small" style="color:var(--bad)">No UPI ID yet, so customers of this branch can only pay cash.</div>'}
+    <div class="grp-h">Bill & GST details</div>
+    <div class="field"><label for="olg-${o.id}">Company name on bill</label><input class="inp" id="olg-${o.id}" data-ou="${o.id}" data-f="legal" value="${esc(o.legal||'')}" placeholder="CHEESY PIZZA" ${own?'':'readonly'}></div>
+    <div class="row"><div class="field grow"><label for="ogs-${o.id}">GSTIN</label><input class="inp" id="ogs-${o.id}" data-ou="${o.id}" data-f="gstin" value="${esc(o.gstin||'')}" maxlength="15" autocapitalize="characters" placeholder="15 characters" ${own?'':'readonly'}></div>
+    <div class="field grow"><label for="ofs-${o.id}">FSSAI no.</label><input class="inp num" id="ofs-${o.id}" data-ou="${o.id}" data-f="fssai" value="${esc(o.fssai||'')}" inputmode="numeric" maxlength="14" ${own?'':'readonly'}></div></div>
+    <div class="row"><div class="field grow"><label for="ogr-${o.id}">GST rate</label><select class="inp" id="ogr-${o.id}" data-gst="${o.id}" data-f="gstRate" ${own?'':'disabled'}>${[0,5,12,18].map(r=>`<option value="${r}" ${(+o.gstRate||0)===r?'selected':''}>${r?r+'%':'No GST'}</option>`).join('')}</select></div>
+    <div class="field grow"><label for="ogm-${o.id}">Menu prices</label><select class="inp" id="ogm-${o.id}" data-gst="${o.id}" data-f="gstMode" ${own?'':'disabled'}><option value="incl" ${o.gstMode!=='excl'?'selected':''}>Include GST</option><option value="excl" ${o.gstMode==='excl'?'selected':''}>GST added on top</option></select></div></div>
+    <span class="small muted">${gstOf(o)?(o.gstMode==='excl'?`Bills add ${o.gstRate}% GST to the total.`:`Bills show ${o.gstRate}% GST inside the price; totals stay the same.`):'GST appears on bills once you enter a GSTIN and pick a rate.'}</span>
     <div class="grp-h">Payment options for online orders</div>
     ${[['payUpi','GPay / UPI'+(o.upi?'':' (add a UPI ID first)')],['payCash','Cash on delivery / pay at counter']].map(([f,n])=>`<label class="row small" style="cursor:pointer"><span class="switch"><input type="checkbox" data-paysw="${o.id}" data-f="${f}" ${o[f]!==false?'checked':''} ${own?'':'disabled'}><span></span></span>${n}</label>`).join('')}
     <div class="field"><label for="otb-${o.id}">Dine-in tables</label><input class="inp num" type="number" min="0" id="otb-${o.id}" data-ou="${o.id}" data-f="tables" value="${o.tables||0}" style="max-width:120px"></div>
@@ -2534,10 +2549,15 @@ document.addEventListener('input',e=>{
     if(!UPI_RE.test(v)){if(hint)hint.innerHTML='<span style="color:var(--bad)">Enter a UPI ID like name@okaxis. Not saved yet.</span>';return}
     const had=!!o.upi;o.upi=v;save();if(hint)hint.textContent='Saved. Customers of this branch now pay to '+v+'.';
     if(!had)return render();const q=document.querySelector(`#oqr-${o.id}`);if(q){const d=q.querySelector('[data-qr]');d.dataset.qr=shopQr(o);drawQr(d);q.querySelector('.num').textContent=v}return}
+  if(t.dataset.ou&&['legal','gstin','fssai','area'].includes(t.dataset.f)&&staff()?.role!=='owner')return;
+  if(t.dataset.ou&&t.dataset.f==='gstin'){t.value=t.value.toUpperCase().replace(/[^0-9A-Z]/g,'')}
   if(t.dataset.ou){const o=S.outlets.find(x=>x.id===t.dataset.ou);o[t.dataset.f]=t.value;save();document.getElementById('outletSel').innerHTML=S.outlets.map(o=>`<option value="${o.id}" ${o.id===S.cur?'selected':''}>${esc(o.name)}</option>`).join('')}
   if(t.dataset.desc){menuItem(t.dataset.desc).desc=t.value;save()}
 });
 document.addEventListener('change',e=>{
+  if(e.target.dataset.gst){const t=e.target,o=S.outlets.find(x=>x.id===t.dataset.gst);if(!o)return;
+    if(staff()?.role!=='owner')return toast('Only the owner can change GST settings');
+    o[t.dataset.f]=t.dataset.f==='gstRate'?+t.value:t.value;save();render();toast('GST setting saved for '+o.name);return}
   if(e.target.dataset.paysw){const t=e.target,o=S.outlets.find(x=>x.id===t.dataset.paysw);if(!o)return;
     if(staff()?.role!=='owner'){t.checked=o[t.dataset.f]!==false;return toast('Only the owner can change payment options')}
     const prev=o[t.dataset.f];o[t.dataset.f]=t.checked;
