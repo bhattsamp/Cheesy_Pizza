@@ -1927,12 +1927,20 @@ function kotText(o,round){
   o.items.filter(l=>!round||(l.round||1)===round).forEach(l=>{L.push(l.qty+' x '+l.name);if(l.combo)(l.picks||[]).forEach(p=>L.push('    - '+p));if(l.size)L.push('    Size: '+sizeLabel(l.size));l.addons.forEach(a=>L.push('    + '+(S.addons[a]?.name||a)));topsText(l.tops).forEach(t=>L.push('    + '+t));exText(l.ex).forEach(t=>L.push('    + '+t));if(noteText(l))wrapTxt(noteText(l),26).forEach((t,i)=>L.push((i?'       ':'    >> ')+t))});if(o.note){L.push('-'.repeat(32));wrapTxt('NOTE: '+o.note,32).forEach(t=>L.push(t))}
   L.push(hr);return L.join('\n');
 }
+/* WhatsApp messages for a bill: the invoice with its link, then a thank-you. They open WhatsApp
+   ready to send (free); WhatsApp only sends by itself through Meta's paid Business API. */
+const waDate=ts=>{const d=new Date(ts),p=n=>String(n).padStart(2,'0');return `${p(d.getDate())}/${p(d.getMonth()+1)}/${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`};
+const invoiceUrl=o=>/^https?:/.test(location.protocol)?location.origin+'/b/'+encodeURIComponent(o.id):'';
+function waInvoice(o){const out=outletOf(o),shop='CHEESY PIZZA '+String(out.name||'').toUpperCase(),url=invoiceUrl(o);
+  return `Dear ${(o.customer.name||'Customer').trim().toUpperCase()},\n\nThank you for your recent order at ${shop}!\nYour invoice is now available. 🪄\n\n💰 Amount : *Rs.${o.total}*\n📅 Date : ${waDate(o.ts)}${url?'\n🔗 View Invoice : '+url:''}\n\nHow was your experience with your order at *${shop}* today?`}
+const waThanks=()=>`Hey Pizza Lover! 🍕\n\nThanks for choosing Cheesy Pizza.\nWe're always striving to serve the perfect slice - let us know how we did!`;
+const waLink=(ph,txt)=>`https://wa.me/91${ph}?text=${encodeURIComponent(txt)}`;
 function openReceipt(o,kind){
   const txt=kind==='kot'?kotText(o):billText(o);const ph=o.customer.phone;
   showModal(`<div class="mh"><h3>${kind==='kot'?'KOT':'Bill'} · ${o.no}</h3><button class="x" data-act="close" aria-label="Close">×</button></div>
   <div class="mb"><div class="receipt">${esc(txt)}</div>
   <div class="row" style="justify-content:center">
-    ${kind!=='kot'&&ph?`<a class="btn pri" href="https://wa.me/91${ph}?text=${encodeURIComponent(txt)}" target="_blank" rel="noopener">Send E-bill on WhatsApp</a>`:''}
+    ${kind!=='kot'&&ph?`<a class="btn pri" href="${waLink(ph,waInvoice(o))}" target="_blank" rel="noopener" data-wa1>1 · Send invoice on WhatsApp</a><a class="btn" href="${waLink(ph,waThanks())}" target="_blank" rel="noopener" data-wa2>2 · Send thank-you</a>`:''}
     <button class="btn pri" data-act="print-txt" data-t="${esc(txt)}">Print</button>
     <button class="btn" data-act="copy" data-t="${esc(txt)}">Copy text</button>
   </div>
@@ -3109,6 +3117,8 @@ document.addEventListener('keydown',e=>{if(S.mode==='pos'&&!staff()&&!mroot.inne
 let tickT;
 document.addEventListener('touchstart',e=>{const t=e.target.closest('.ticker');if(t){clearTimeout(tickT);U.tickHold=true;t.classList.add('hold')}},{passive:true});
 document.addEventListener('touchend',e=>{const t=document.querySelector('.ticker.hold');if(t){clearTimeout(tickT);tickT=setTimeout(()=>{U.tickHold=false;document.querySelectorAll('.ticker.hold').forEach(x=>x.classList.remove('hold'))},2500)}},{passive:true});
+// After the invoice goes out, the thank-you button becomes the main one
+document.addEventListener('click',e=>{const a=e.target.closest('[data-wa1]');if(!a)return;const b=a.parentNode.querySelector('[data-wa2]');a.classList.remove('pri');a.textContent='✓ Invoice sent';if(b)b.classList.add('pri')});
 (async function boot(){
   let loc={};try{loc=JSON.parse(localStorage.getItem(LKEY))||{}}catch(_){}
   let d;try{d=await api('/api/state')}catch(_){

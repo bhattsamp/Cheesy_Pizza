@@ -5,6 +5,7 @@ const express = require('express');
 const { Store, COLLECTIONS } = require('./db');
 const { seedData } = require('./seed-data');
 const push = require('./push');
+const { invoicePage } = require('./invoice');
 const otp = require('./otp');
 const { RiderLoc, Staff } = require('./models');
 
@@ -183,6 +184,14 @@ function createApp(store) {
     const c = (await store.readCollection('customers', { _id: String(req.params.phone) }))[req.params.phone];
     if (!c) return res.status(404).json({ error: 'Not found' });
     res.json(c);
+  });
+
+  /* ----- invoice page for the WhatsApp "View Invoice" link ----- */
+  app.get('/b/:id', async (req, res) => {
+    const o = (await store.readCollection('orders', { _id: String(req.params.id).slice(0, 40) }))[0];
+    if (!o) return res.status(404).type('html').send('<p style="font:16px system-ui;text-align:center;margin-top:60px">Invoice not found</p>');
+    const [outlets, sizes, addons] = await Promise.all([store.readCollection('outlets'), store.readCollection('sizes'), store.readCollection('addons')]);
+    res.set('Cache-Control', 'no-store').type('html').send(invoicePage(o, outlets.find(x => x.id === o.outletId), { sizes, addons }));
   });
 
   /* ----- site ----- */
