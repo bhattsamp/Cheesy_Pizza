@@ -43,6 +43,7 @@ const svgFill = (svg, extra = '') => svg.replace('<svg ', `<svg preserveAspectRa
     await shot(page, `<div style="position:relative;width:1080px;height:1920px">${svgFill(make({ what: 'bg', admin }))}</div>`, 1080, 1920, `${res}/drawable-nodpi/loading_bg.png`);
     await shot(page, `<div style="text-align:center;width:900px;padding:10px 0">${word(admin)}</div>`, 900, admin ? 220 : 140, `${res}/drawable-nodpi/loading_title.png`, true);
   }
-  await shot(page, `<div style="position:relative;width:720px;height:720px">${svgFill(make({ what: 'fg', admin: false, scale: 1 }))}</div>`, 720, 720, `${RES}/main/res/drawable-nodpi/loading_slice.png`, true);
+  // One slice of the whole pizza; the loading screen turns eight of them into a pizza
+  await shot(page, `<svg viewBox="0 0 1024 1024" width="720" height="720">${require('./wedge.js')()}</svg>`, 720, 720, `${RES}/main/res/drawable-nodpi/loading_wedge.png`, true);
   await b.close();
 })();

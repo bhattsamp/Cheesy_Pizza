@@ -13,7 +13,7 @@ import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.animation.AccelerateDecelerateInterpolator;
+import android.view.animation.LinearInterpolator;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -61,22 +61,48 @@ public class MainActivity extends BridgeActivity {
         box.setGravity(Gravity.CENTER);
         root.addView(box, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
-        // The slice bobs and sways like it is waiting to be picked up
-        ImageView slice = new ImageView(this);
-        slice.setImageResource(R.drawable.loading_slice);
-        box.addView(slice, new LinearLayout.LayoutParams((int) (210 * dp), (int) (210 * dp)));
-        ObjectAnimator bob = ObjectAnimator.ofFloat(slice, View.TRANSLATION_Y, 0, -16 * dp);
-        bob.setDuration(700);
-        bob.setRepeatCount(ValueAnimator.INFINITE);
-        bob.setRepeatMode(ValueAnimator.REVERSE);
-        bob.setInterpolator(new AccelerateDecelerateInterpolator());
-        bob.start();
-        ObjectAnimator sway = ObjectAnimator.ofFloat(slice, View.ROTATION, -5, 5);
-        sway.setDuration(1400);
-        sway.setRepeatCount(ValueAnimator.INFINITE);
-        sway.setRepeatMode(ValueAnimator.REVERSE);
-        sway.setInterpolator(new AccelerateDecelerateInterpolator());
-        sway.start();
+        // A whole pizza of eight slices: one slice slides out and grows while the rest fade away,
+        // it bobs for a moment, then the pizza comes back together, until the app is ready
+        int size = (int) (230 * dp);
+        FrameLayout pizza = new FrameLayout(this);
+        pizza.setClipChildren(false);
+        box.setClipChildren(false);
+        root.setClipChildren(false);
+        box.addView(pizza, new LinearLayout.LayoutParams(size, size));
+        ImageView[] slices = new ImageView[8];
+        for (int i = 0; i < 8; i++) {
+            ImageView s = new ImageView(this);
+            s.setImageResource(R.drawable.loading_wedge);
+            s.setPivotX(size / 2f);
+            s.setPivotY(size / 2f);
+            s.setRotation(i * 45);
+            if (i % 2 == 1) s.setScaleX(-1); // mirrored so neighbouring toppings differ
+            pizza.addView(s, new FrameLayout.LayoutParams(size, size));
+            slices[i] = s;
+        }
+        ImageView hero = slices[0];
+        hero.bringToFront();
+        float lift = size * 0.459f * 0.6f; // from the pizza's centre to the middle of a slice
+        ValueAnimator show = ValueAnimator.ofFloat(0f, 1f);
+        show.setDuration(3600);
+        show.setRepeatCount(ValueAnimator.INFINITE);
+        show.setInterpolator(new LinearInterpolator());
+        show.addUpdateListener(an -> {
+            float p = (float) an.getAnimatedValue();
+            float e; // how far the slice is out: 0 = in the pizza, 1 = zoomed
+            if (p < 0.15f) e = 0;
+            else if (p < 0.5f) e = smooth((p - 0.15f) / 0.35f);
+            else if (p < 0.85f) e = 1;
+            else e = 1 - smooth((p - 0.85f) / 0.15f);
+            float k = 1 + 0.85f * e;
+            float bobY = p >= 0.5f && p < 0.85f ? (float) Math.sin((p - 0.5f) / 0.35f * Math.PI * 2) * 7 * dp : 0;
+            hero.setScaleX(k);
+            hero.setScaleY(k);
+            hero.setTranslationY(lift * k * e + bobY);
+            hero.setRotation(-10 * e);
+            for (int i = 1; i < 8; i++) slices[i].setAlpha(Math.max(0f, 1f - Math.min(1f, e * 1.8f - (i - 1) * 0.08f)));
+        });
+        show.start();
 
         ImageView title = new ImageView(this);
         title.setImageResource(R.drawable.loading_title);
@@ -131,6 +157,10 @@ public class MainActivity extends BridgeActivity {
         loading = root;
         shownAt = System.currentTimeMillis();
         handler.postDelayed(this::checkReady, 400);
+    }
+
+    private static float smooth(float t) {
+        return t * t * (3 - 2 * t);
     }
 
     // The app page has #intro (its own pizza loading animation) or #app; Render's page has neither
