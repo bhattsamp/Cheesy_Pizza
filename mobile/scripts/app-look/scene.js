@@ -3,12 +3,12 @@
 const rnd = (seed => () => (seed = (seed * 16807) % 2147483647) / 2147483647)(7);
 const f = n => n.toFixed(1);
 
-// White line doodles of pizza things, faint on the teal
+// White line doodles of pizza things (no mushrooms), faint on the teal
 const doodle = [
   // slice
   `<path d="M-40 -34 Q0 -52 40 -34 L0 46 Z"/><path d="M-34 -24 Q0 -40 34 -24"/><circle cx="-8" cy="-10" r="7"/><circle cx="10" cy="8" r="6"/>`,
-  // mushroom
-  `<path d="M-38 0 Q-38 -38 0 -38 Q38 -38 38 0 Z"/><path d="M-14 0 L-16 34 Q0 40 16 34 L14 0"/><circle cx="-14" cy="-18" r="5"/><circle cx="14" cy="-20" r="4"/>`,
+  // jalapeño
+  `<path d="M-30 -16 C-8 -24 22 -18 36 0 C46 14 46 30 38 40 C32 24 16 12 -8 8 C-24 6 -34 -4 -30 -16 Z"/><path d="M-30 -16 Q-42 -14 -42 -2 Q-38 6 -30 -2"/><path d="M-40 -8 Q-54 -18 -50 -36"/><path d="M-14 -8 Q12 -8 30 8"/>`,
   // leaf
   `<path d="M-40 20 Q-30 -36 34 -30 Q30 30 -40 20 Z"/><path d="M-40 20 Q0 0 30 -26"/>`,
   // tomato slice
