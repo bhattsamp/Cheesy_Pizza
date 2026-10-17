@@ -1199,8 +1199,24 @@ function render(){
   const th=document.querySelector('.top')?.offsetHeight;if(th)document.documentElement.style.setProperty('--toph',th+'px');
   const vk=S.mode+'|'+(S.mode==='public'?U.pubView+'|'+(U.accTab||''):'');U.enter=vk!==U.lastView;U.lastView=vk;
   app.innerHTML=S.mode==='public'?pubNav()+(U.pubView==='account'&&me()?renderAccount():U.pubView==='auth'&&!me()?renderAuth():U.pubView==='home'?renderHome():renderPublic()):renderPOS();renderAcct();
-  renderBoard();renderRing();afterRender();
+  renderBoard();renderRing();afterRender();navTrack();
 }
+// Android Back button (MainActivity calls cpBack): closes an open panel first, then goes back
+// one screen at a time to the home screen; there it answers 'home' and the app asks to close
+const NAV=[];
+const navNow=()=>S.mode==='public'?{m:'public',v:U.pubView,a:U.accTab||''}:{m:'pos',s:S.staffId||'',t:U.pos.tab};
+const navHome=()=>{if(S.mode==='public')return{m:'public',v:'home',a:U.accTab||''};const su=staff();return{m:'pos',s:S.staffId||'',t:su?ROLE_TABS[su.role][0]:U.pos.tab}};
+const navSame=(x,y)=>!!x&&!!y&&JSON.stringify(x)===JSON.stringify(y);
+function navTrack(){const n=navNow(),top=NAV[NAV.length-1];if(top&&(top.m!==n.m||top.s!==n.s))NAV.length=0;if(!navSame(top,n))NAV.push(n);if(NAV.length>40)NAV.splice(0,NAV.length-40)}
+function navGo(n){if(n.m==='public'){U.pubView=n.v;U.accTab=n.a}else U.pos.tab=n.t;NAV.length=Math.max(0,NAV.length-1);render();window.scrollTo(0,0)}
+window.cpBack=function(){
+  if(mroot.innerHTML){const x=mroot.querySelector('[data-act="close"]');if(x)x.click();else{closeModal();render()}return 'handled'}
+  NAV.pop();
+  while(NAV.length&&navSame(NAV[NAV.length-1],navNow()))NAV.pop();
+  if(NAV.length){navGo(NAV[NAV.length-1]);return 'handled'}
+  const h=navHome();if(!navSame(h,navNow())){navGo(h);return 'handled'}
+  navTrack();return 'home';
+};
 function afterRender(){
   // Tables marked .stk turn into one card per row on phones; each cell is labelled from its column
   document.querySelectorAll('table.stk').forEach(t=>{const hs=[...t.querySelectorAll('thead th')].map(h=>h.textContent.trim());

@@ -5,6 +5,7 @@ import android.animation.AnimatorListenerAdapter;
 import android.animation.ObjectAnimator;
 import android.animation.PropertyValuesHolder;
 import android.animation.ValueAnimator;
+import android.app.AlertDialog;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.os.Handler;
@@ -16,6 +17,7 @@ import android.view.animation.LinearInterpolator;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import androidx.activity.OnBackPressedCallback;
 import com.getcapacitor.BridgeActivity;
 
 public class MainActivity extends BridgeActivity {
@@ -35,6 +37,33 @@ public class MainActivity extends BridgeActivity {
         int bg = night ? 0xFF11242A : 0xFFFFFFFF;
         getWindow().getDecorView().setBackgroundColor(bg);
         showLoading(bg, night ? 0xFFE8F1F2 : 0xFF0F2E36);
+        // Back goes one screen back inside the app (the page's cpBack); on the home screen it
+        // asks before closing the app
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if (loading != null) { askToClose(); return; }
+                try {
+                    bridge.getWebView().evaluateJavascript("window.cpBack?window.cpBack():'none'", v -> {
+                        if ("\"handled\"".equals(v)) return;
+                        if ("\"none\"".equals(v) && bridge.getWebView().canGoBack()) { bridge.getWebView().goBack(); return; }
+                        askToClose();
+                    });
+                } catch (Exception e) {
+                    askToClose();
+                }
+            }
+        });
+    }
+
+    private void askToClose() {
+        if (isFinishing()) return;
+        new AlertDialog.Builder(this)
+            .setTitle("Close Cheesy Pizza?")
+            .setMessage("Do you want to close the app?")
+            .setPositiveButton("Close", (d, w) -> finish())
+            .setNegativeButton("Stay", null)
+            .show();
     }
 
     /*
