@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Behind the pizza while the app starts (the Admin app has its own, darker one) -->
+    <color name="splash_bg">#1A93A8</color>
+</resources>
