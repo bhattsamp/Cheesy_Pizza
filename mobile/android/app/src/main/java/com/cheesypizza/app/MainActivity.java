@@ -27,7 +27,7 @@ public class MainActivity extends BridgeActivity {
     private View loading;
     private final Handler handler = new Handler(Looper.getMainLooper());
     private long shownAt;
-    private static final long SHOW_MS = 3000; // the pizza-to-logo animation plays through once
+    private static final long SHOW_MS = 3700; // the pizza-to-logo animation plays through once
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -65,7 +65,7 @@ public class MainActivity extends BridgeActivity {
         root.addView(box, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
         // A whole pizza of eight slices: one slice slides out and grows while the rest fade
-        // away, then it turns into the Cheesy Pizza pin, which keeps gently pulsing
+        // away, then it turns into the Cheesy Pizza pin and its melted cheese slowly drips down
         int size = (int) (230 * dp);
         FrameLayout pizza = new FrameLayout(this);
         pizza.setClipChildren(false);
@@ -89,6 +89,17 @@ public class MainActivity extends BridgeActivity {
         logo.setImageResource(R.drawable.loading_logo);
         logo.setAlpha(0f);
         pizza.addView(logo, new FrameLayout.LayoutParams(size, size));
+        ImageView drips = new ImageView(this);
+        drips.setImageResource(R.drawable.loading_drips);
+        drips.setPivotX(size / 2f);
+        drips.setPivotY(size * 582f / 1024f); // where the drips hang from the cheese ring (logo.js DRIP_TOP)
+        drips.setScaleY(0f);
+        drips.setAlpha(0f);
+        pizza.addView(drips, new FrameLayout.LayoutParams(size, size));
+        ImageView drop = new ImageView(this);
+        drop.setImageResource(R.drawable.loading_drop);
+        drop.setAlpha(0f);
+        pizza.addView(drop, new FrameLayout.LayoutParams(size, size));
         float lift = size * 0.459f * 0.6f; // from the pizza's centre to the middle of a slice
         ValueAnimator show = ValueAnimator.ofFloat(0f, SHOW_MS);
         show.setDuration(SHOW_MS);
@@ -98,6 +109,7 @@ public class MainActivity extends BridgeActivity {
             float in = smooth(clamp(t / 300f));           // pizza appears
             float e = smooth(clamp((t - 700) / 1000f));   // slice slides out and grows, the rest fade
             float m = smooth(clamp((t - 1700) / 800f));   // slice turns into the pin
+            float d = clamp((t - 2400) / 1300f);          // cheese slowly drips down
             pizza.setScaleX(0.6f + 0.4f * in);
             pizza.setScaleY(0.6f + 0.4f * in);
             pizza.setAlpha(in);
@@ -111,17 +123,25 @@ public class MainActivity extends BridgeActivity {
             logo.setAlpha(m);
             logo.setScaleX(0.7f + 0.3f * m);
             logo.setScaleY(0.7f + 0.3f * m);
+            drips.setAlpha(Math.min(1f, d * 5));
+            drips.setScaleY(d * (2 - d));
         });
         show.addListener(new AnimatorListenerAdapter() {
             @Override
             public void onAnimationEnd(Animator an) {
-                ObjectAnimator pulse = ObjectAnimator.ofPropertyValuesHolder(logo,
-                    PropertyValuesHolder.ofFloat(View.SCALE_X, 1f, 1.06f),
-                    PropertyValuesHolder.ofFloat(View.SCALE_Y, 1f, 1.06f));
-                pulse.setDuration(700);
-                pulse.setRepeatCount(ValueAnimator.INFINITE);
-                pulse.setRepeatMode(ValueAnimator.REVERSE);
-                pulse.start();
+                // the longest drip stretches a little and lets a drop fall, again and again
+                ObjectAnimator stretch = ObjectAnimator.ofFloat(drips, View.SCALE_Y, 1f, 1.07f);
+                stretch.setDuration(900);
+                stretch.setRepeatCount(ValueAnimator.INFINITE);
+                stretch.setRepeatMode(ValueAnimator.REVERSE);
+                stretch.start();
+                ObjectAnimator fall = ObjectAnimator.ofPropertyValuesHolder(drop,
+                    PropertyValuesHolder.ofFloat(View.TRANSLATION_Y, 0f, size * 0.16f),
+                    PropertyValuesHolder.ofFloat(View.ALPHA, 1f, 1f, 0f));
+                fall.setDuration(1100);
+                fall.setInterpolator(new android.view.animation.AccelerateInterpolator());
+                fall.setRepeatCount(ValueAnimator.INFINITE);
+                fall.start();
             }
         });
         show.start();
@@ -151,7 +171,7 @@ public class MainActivity extends BridgeActivity {
             View dot = new View(this);
             GradientDrawable g = new GradientDrawable();
             g.setShape(GradientDrawable.OVAL);
-            g.setColor(0xFFFFFFFF);
+            g.setColor(admin ? 0xFFFFFFFF : 0xFF0E8A9B);
             dot.setBackground(g);
             LinearLayout.LayoutParams p = new LinearLayout.LayoutParams((int) (10 * dp), (int) (10 * dp));
             p.setMargins((int) (6 * dp), 0, (int) (6 * dp), 0);
@@ -169,7 +189,7 @@ public class MainActivity extends BridgeActivity {
 
         TextView wait = new TextView(this);
         wait.setText("Getting your app ready…");
-        wait.setTextColor(0xFFFFFFFF);
+        wait.setTextColor(admin ? 0xFFFFFFFF : 0xFF0B6E7C);
         wait.setAlpha(0.75f);
         wait.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
         wait.setPadding(0, (int) (14 * dp), 0, 0);
