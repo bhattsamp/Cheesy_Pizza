@@ -785,12 +785,12 @@ body.app-customer .seg,body.app-admin .seg,body.app-customer [data-act="mode"][d
 #intro .in-ring{position:relative;width:min(310px,84vw);aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;animation:inIn .5s ease-out both}
 #intro .in-ring::before{content:"";position:absolute;inset:0;background:url(img/intro-circle.png) center/contain no-repeat}
 #intro .in-plate{position:relative;width:50%;aspect-ratio:1}
-#intro .in-w,#intro .in-logo,#intro .in-drips,#intro .in-drop{position:absolute;inset:0;width:100%;height:100%}
-#intro .in-w{transform:rotate(var(--r)) scaleX(var(--f));animation:inGone 1.4s calc(1s + var(--d)) ease-in both}
-#intro .in-w.in-hero{z-index:2;animation:inHero 2.9s 1s cubic-bezier(.45,0,.55,1) both}
-#intro .in-logo{opacity:0;filter:drop-shadow(0 8px 10px rgba(6,66,76,.25));animation:inLogo 1.2s 2.7s ease-out both}
-#intro .in-drips{transform-origin:50% 56.8%;transform:scaleY(0);animation:inDrip 1.8s 3.9s cubic-bezier(.3,.6,.4,1) forwards,inSag .9s 5.7s ease-in-out infinite alternate}
-#intro .in-drop{opacity:0;animation:inDrop 1.1s 5.7s ease-in infinite}
+#intro .in-w,#intro .in-settle,#intro .in-spin,#intro .in-logo,#intro .in-drips,#intro .in-drop{position:absolute;inset:0;width:100%;height:100%}
+#intro .in-settle{filter:drop-shadow(0 6px 8px rgba(0,0,0,.25));animation:inSettle 1s 2.2s cubic-bezier(.55,0,.3,1) forwards,inGone .45s 3.05s ease-in forwards}
+#intro .in-spin{animation:inSpin 2.8s cubic-bezier(.15,.6,.25,1) both}
+#intro .in-logo{opacity:0;filter:drop-shadow(0 8px 10px rgba(6,66,76,.25));animation:inLogo .8s 2.55s cubic-bezier(.34,1.5,.6,1) both}
+#intro .in-drips{transform-origin:50% 56.8%;transform:scaleY(0);animation:inDrip 1.8s 3.5s cubic-bezier(.3,.6,.4,1) forwards,inSag .9s 5.3s ease-in-out infinite alternate}
+#intro .in-drop{opacity:0;animation:inDrop 1.1s 5.3s ease-in infinite}
 #intro h1{position:relative;font-family:"Baloo Bhai 2","Trebuchet MS",system-ui,sans-serif;font-weight:800;font-size:clamp(22px,6.4vw,32px);letter-spacing:.03em;line-height:1;margin:0;color:#1497A9;display:flex;gap:.02em}
 #intro h1 span{display:inline-block;text-shadow:0 2px 0 #0B6E7C;animation:inRise .55s cubic-bezier(.2,.9,.3,1.3) both}
 #intro h1 .in-pz{color:#F7A81B;text-shadow:0 2px 0 #C97F06}
@@ -808,8 +808,9 @@ body.app-customer .seg,body.app-admin .seg,body.app-customer [data-act="mode"][d
 #intro .in-cd{position:absolute;bottom:72%;width:var(--s);aspect-ratio:1;background:url(img/intro-cheese-drop.png) center/contain no-repeat;animation:inJump var(--t) var(--d) ease-out infinite alternate}
 @keyframes inIn{from{transform:scale(.6);opacity:0}to{transform:none;opacity:1}}
 @keyframes inGone{to{opacity:0}}
-@keyframes inHero{0%{transform:none;opacity:1}55%{transform:translateY(51%) scale(1.85) rotate(-10deg);opacity:1}100%{transform:translateY(51%) scale(2.1);opacity:0}}
-@keyframes inLogo{from{opacity:0;transform:scale(.7)}to{opacity:1;transform:none}}
+@keyframes inSpin{from{transform:scale(.55) rotate(-220deg);opacity:0}18%{opacity:1}to{transform:none;opacity:1}}
+@keyframes inSettle{to{transform:translateY(-11.7%) scale(.48)}}
+@keyframes inLogo{from{opacity:0;transform:translateY(6%) scale(.86)}35%{opacity:1}to{opacity:1;transform:none}}
 @keyframes inDrip{from{transform:scaleY(0)}to{transform:scaleY(1)}}
 @keyframes inSag{from{transform:scaleY(1)}to{transform:scaleY(1.07)}}
 @keyframes inDrop{0%{opacity:1;transform:none}70%{opacity:1}100%{opacity:0;transform:translateY(16%)}}
@@ -831,7 +832,7 @@ body.app-customer .seg,body.app-admin .seg,body.app-customer [data-act="mode"][d
     <div class="in-ring">
       <div class="in-plate">
         <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><g id="cp-wedge"><defs><radialGradient id="cpwch" cx="512" cy="512" r="470" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#FFE27A"/><stop offset=".7" stop-color="#FFC93C"/><stop offset="1" stop-color="#F5A623"/></radialGradient><radialGradient id="cpwcr" cx="512" cy="512" r="470" gradientUnits="userSpaceOnUse"><stop offset=".86" stop-color="#F4B55E"/><stop offset=".94" stop-color="#D9862F"/><stop offset="1" stop-color="#B8661F"/></radialGradient><radialGradient id="cpwpp" cx=".4" cy=".35" r=".7"><stop offset="0" stop-color="#F0603F"/><stop offset=".7" stop-color="#D2381F"/><stop offset="1" stop-color="#A82814"/></radialGradient></defs><path d="M512 505 L337.4 68.6 A470 470 0 0 1 686.6 68.6 Z" fill="url(#cpwcr)"/><path d="M512 505 L355.3 108.9 A426 426 0 0 1 668.7 108.9 Z" fill="url(#cpwch)"/><circle cx="494" cy="330" r="40" fill="url(#cpwpp)"/><circle cx="482" cy="320" r="7" fill="#8E1F0E" opacity=".5"/><circle cx="534" cy="175" r="46" fill="url(#cpwpp)"/><circle cx="522" cy="163" r="8" fill="#8E1F0E" opacity=".5"/><path d="M462 243 q30 -38 72 -26 q-18 40 -72 26 z" fill="#3FA15A"/><g fill="#5C7A2E"><circle cx="520" cy="395" r="4"/><circle cx="472" cy="205" r="4"/><circle cx="562" cy="265" r="4"/><circle cx="452" cy="125" r="4"/></g><path d="M363.1 74.0 A456 456 0 0 1 660.9 74.0" stroke="#FFD99A" stroke-width="7" stroke-linecap="round" fill="none" opacity=".7"/></g></defs></svg>
-        <svg class="in-w in-hero" viewBox="0 0 1024 1024" style="--r:0deg;--f:1;--d:0.00s"><use href="#cp-wedge"/></svg><svg class="in-w" viewBox="0 0 1024 1024" style="--r:45deg;--f:-1;--d:0.00s"><use href="#cp-wedge"/></svg><svg class="in-w" viewBox="0 0 1024 1024" style="--r:90deg;--f:1;--d:0.04s"><use href="#cp-wedge"/></svg><svg class="in-w" viewBox="0 0 1024 1024" style="--r:135deg;--f:-1;--d:0.08s"><use href="#cp-wedge"/></svg><svg class="in-w" viewBox="0 0 1024 1024" style="--r:180deg;--f:1;--d:0.12s"><use href="#cp-wedge"/></svg><svg class="in-w" viewBox="0 0 1024 1024" style="--r:225deg;--f:-1;--d:0.16s"><use href="#cp-wedge"/></svg><svg class="in-w" viewBox="0 0 1024 1024" style="--r:270deg;--f:1;--d:0.20s"><use href="#cp-wedge"/></svg><svg class="in-w" viewBox="0 0 1024 1024" style="--r:315deg;--f:-1;--d:0.24s"><use href="#cp-wedge"/></svg>
+        <div class="in-settle"><div class="in-spin"><svg class="in-w" viewBox="0 0 1024 1024" style="transform:rotate(0deg) scaleX(1)"><use href="#cp-wedge"/></svg><svg class="in-w" viewBox="0 0 1024 1024" style="transform:rotate(45deg) scaleX(-1)"><use href="#cp-wedge"/></svg><svg class="in-w" viewBox="0 0 1024 1024" style="transform:rotate(90deg) scaleX(1)"><use href="#cp-wedge"/></svg><svg class="in-w" viewBox="0 0 1024 1024" style="transform:rotate(135deg) scaleX(-1)"><use href="#cp-wedge"/></svg><svg class="in-w" viewBox="0 0 1024 1024" style="transform:rotate(180deg) scaleX(1)"><use href="#cp-wedge"/></svg><svg class="in-w" viewBox="0 0 1024 1024" style="transform:rotate(225deg) scaleX(-1)"><use href="#cp-wedge"/></svg><svg class="in-w" viewBox="0 0 1024 1024" style="transform:rotate(270deg) scaleX(1)"><use href="#cp-wedge"/></svg><svg class="in-w" viewBox="0 0 1024 1024" style="transform:rotate(315deg) scaleX(-1)"><use href="#cp-wedge"/></svg></div></div>
         <img class="in-logo" src="img/cheesy-pin.png" alt="" aria-hidden="true"><img class="in-drips" src="img/cheesy-drips.png" alt="" aria-hidden="true"><img class="in-drop" src="img/cheesy-drop.png" alt="" aria-hidden="true">
       </div>
       <h1 aria-label="Cheesy Pizza"></h1>

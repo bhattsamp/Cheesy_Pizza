@@ -40,7 +40,7 @@ public class MainActivity extends BridgeActivity {
     /*
      * Our own loading screen, shown until the Cheesy Pizza page itself is on screen. When the
      * free server has been asleep, Render shows its "waking up" page for a while first; this
-     * covers it with a teal screen: a pizza in a white circle turns into the logo while a cheese
+     * covers it with a teal screen: a pizza in a white circle settles into the logo while a cheese
      * wave rolls along the bottom. The Admin app has its own title (src/admin/res) and words.
      */
     private void showLoading(int bg, int fg) {
@@ -113,13 +113,17 @@ public class MainActivity extends BridgeActivity {
         inner.setClipChildren(false);
         ring.addView(inner, new FrameLayout.LayoutParams(C, C));
 
-        // A whole pizza of eight slices: one slice slides out and grows while the rest fade
-        // away, then it turns into the Cheesy Pizza pin and its melted cheese slowly drips down
+        // A whole pizza spins in, then shrinks and settles into the cheese ring of the Cheesy
+        // Pizza pin, which rises up around it; then its melted cheese slowly drips down
         int size = (int) (C * 0.5f);
         FrameLayout pizza = new FrameLayout(this);
         pizza.setClipChildren(false);
         inner.addView(pizza, new LinearLayout.LayoutParams(size, size));
-        ImageView[] slices = new ImageView[8];
+        FrameLayout whole = new FrameLayout(this);
+        whole.setPivotX(size / 2f);
+        whole.setPivotY(size / 2f);
+        whole.setAlpha(0f);
+        pizza.addView(whole, new FrameLayout.LayoutParams(size, size));
         for (int i = 0; i < 8; i++) {
             ImageView s = new ImageView(this);
             s.setImageResource(R.drawable.loading_wedge);
@@ -127,11 +131,8 @@ public class MainActivity extends BridgeActivity {
             s.setPivotY(size / 2f);
             s.setRotation(i * 45);
             if (i % 2 == 1) s.setScaleX(-1); // mirrored so neighbouring toppings differ
-            pizza.addView(s, new FrameLayout.LayoutParams(size, size));
-            slices[i] = s;
+            whole.addView(s, new FrameLayout.LayoutParams(size, size));
         }
-        ImageView hero = slices[0];
-        hero.bringToFront();
         ImageView logo = new ImageView(this);
         logo.setImageResource(R.drawable.loading_logo);
         logo.setAlpha(0f);
@@ -147,32 +148,32 @@ public class MainActivity extends BridgeActivity {
         drop.setImageResource(R.drawable.loading_drop);
         drop.setAlpha(0f);
         pizza.addView(drop, new FrameLayout.LayoutParams(size, size));
-        float lift = size * 0.459f * 0.6f; // from the pizza's centre to the middle of a slice
+        android.view.animation.OvershootInterpolator pop = new android.view.animation.OvershootInterpolator(1.6f);
         ValueAnimator show = ValueAnimator.ofFloat(0f, SHOW_MS);
         show.setDuration(SHOW_MS);
         show.setInterpolator(new LinearInterpolator());
         show.addUpdateListener(an -> {
             float t = (float) an.getAnimatedValue();
-            float in = smooth(clamp(t / 500f));           // pizza appears
-            float e = smooth(clamp((t - 1000) / 1600f));   // slice slides out and grows, the rest fade
-            float m = smooth(clamp((t - 2700) / 1200f));   // slice turns into the pin
-            float d = clamp((t - 3900) / 1800f);          // cheese slowly drips down
-            pizza.setScaleX(0.6f + 0.4f * in);
-            pizza.setScaleY(0.6f + 0.4f * in);
-            pizza.setAlpha(in);
+            float in = smooth(clamp(t / 500f));                  // circle appears
+            float sp = clamp(t / 2800f);
+            sp = 1 - (1 - sp) * (1 - sp) * (1 - sp);             // pizza spins in, slowing down
+            float q = smooth(clamp((t - 2200) / 1000f));         // pizza shrinks into the pin's cheese ring
+            float l = clamp((t - 2550) / 800f);                  // the pin rises up around it
+            float d = clamp((t - 3500) / 1800f);                 // cheese slowly drips down
             ring.setScaleX(0.8f + 0.2f * in);
             ring.setScaleY(0.8f + 0.2f * in);
             ring.setAlpha(in);
-            float k = (1 + 0.85f * e) * (1 + 0.15f * m);
-            hero.setScaleX(k);
-            hero.setScaleY(k);
-            hero.setTranslationY(lift * (1 + 0.85f * e) * e);
-            hero.setRotation(-10 * e * (1 - m));
-            hero.setAlpha(1 - m);
-            for (int i = 1; i < 8; i++) slices[i].setAlpha(Math.max(0f, 1f - Math.min(1f, e * 1.8f - (i - 1) * 0.08f)));
-            logo.setAlpha(m);
-            logo.setScaleX(0.7f + 0.3f * m);
-            logo.setScaleY(0.7f + 0.3f * m);
+            float k = (0.55f + 0.45f * sp) * (1 - 0.52f * q);   // the ring is 0.48 of the pizza's size
+            whole.setScaleX(k);
+            whole.setScaleY(k);
+            whole.setRotation(-220 * (1 - sp));
+            whole.setTranslationY(-0.117f * size * q);           // up to the ring's centre
+            whole.setAlpha(clamp(t / 500f) * (1 - clamp((t - 3050) / 450f)));
+            float lp = pop.getInterpolation(l);
+            logo.setAlpha(clamp(l / 0.35f));
+            logo.setScaleX(0.86f + 0.14f * lp);
+            logo.setScaleY(0.86f + 0.14f * lp);
+            logo.setTranslationY(0.06f * size * (1 - lp));
             drips.setAlpha(Math.min(1f, d * 5));
             drips.setScaleY(d * (2 - d));
         });
@@ -201,7 +202,7 @@ public class MainActivity extends BridgeActivity {
         title.setAdjustViewBounds(true);
         inner.addView(title, new LinearLayout.LayoutParams((int) (C * 0.74f), ViewGroup.LayoutParams.WRAP_CONTENT));
         title.setAlpha(0f);
-        title.animate().alpha(1f).setStartDelay(3300).setDuration(700).start(); // once the slice has become the logo
+        title.animate().alpha(1f).setStartDelay(3300).setDuration(700).start(); // once the pizza has become the logo
 
         // Three slices that fill up one after another, again and again
         LinearLayout row = new LinearLayout(this);
