@@ -777,26 +777,35 @@ html:has(#modalRoot:not(:empty)),html:has(#boardRoot:not(:empty)),html:has(#choo
 <style>
 /* Opening animation: shown while the app starts, removed by introDone() */
 body.app-customer .seg,body.app-admin .seg,body.app-customer [data-act="mode"][data-v="pos"]{display:none}
-#intro{position:fixed;inset:0;z-index:200;display:grid;place-items:center;overflow:hidden;color:#0F6E7C;
-  background:radial-gradient(120% 90% at 50% 38%,#fffdf8 0,#fff3dc 50%,#fbe6c2 100%);transition:opacity .5s ease,visibility .5s}
+#intro{position:fixed;inset:0;z-index:200;display:grid;place-items:center;overflow:hidden;color:#fff;
+  background:#0E7C88 url(img/intro-bg.jpg) center/cover;transition:opacity .5s ease,visibility .5s}
 #intro.out{opacity:0;visibility:hidden}
 #intro.out .in-stage{transform:scale(1.15);transition:transform .5s ease}
-#intro .in-stage{display:flex;flex-direction:column;align-items:center;gap:18px;text-align:center;padding:24px}
-#intro .in-plate{position:relative;width:min(230px,56vw);aspect-ratio:1;animation:inIn .3s ease-out both}
+#intro .in-stage{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;gap:16px;text-align:center;padding:24px 24px 22vh}
+#intro .in-ring{position:relative;width:min(310px,84vw);aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;animation:inIn .5s ease-out both}
+#intro .in-ring::before{content:"";position:absolute;inset:0;background:url(img/intro-circle.png) center/contain no-repeat}
+#intro .in-plate{position:relative;width:50%;aspect-ratio:1}
 #intro .in-w,#intro .in-logo,#intro .in-drips,#intro .in-drop{position:absolute;inset:0;width:100%;height:100%}
-/* Whole pizza, one slice slides out and grows while the rest fade, then it turns into the pin */
-#intro .in-w{transform:rotate(var(--r)) scaleX(var(--f));animation:inGone .9s calc(.7s + var(--d)) ease-in both}
-#intro .in-w.in-hero{z-index:2;animation:inHero 1.8s .7s cubic-bezier(.45,0,.55,1) both}
-#intro .in-logo{opacity:0;filter:drop-shadow(0 10px 14px rgba(6,66,76,.25));animation:inLogo .8s 1.7s ease-out both}
-#intro .in-drips{transform-origin:50% 56.8%;transform:scaleY(0);animation:inDrip 1.3s 2.4s cubic-bezier(.3,.6,.4,1) forwards,inSag .9s 3.7s ease-in-out infinite alternate}
-#intro .in-drop{opacity:0;animation:inDrop 1.1s 3.7s ease-in infinite}
-#intro h1{font-family:"Baloo Bhai 2","Trebuchet MS",system-ui,sans-serif;font-weight:800;font-size:clamp(34px,9vw,58px);letter-spacing:.04em;line-height:1;margin:0;color:#1497A9;display:flex;gap:.02em}
-#intro h1 .in-pz{color:#F7A81B;text-shadow:0 3px 0 #C97F06}#intro h1 span{text-shadow:0 3px 0 #0B6E7C}
-#intro h1 span{display:inline-block;animation:inRise .55s cubic-bezier(.2,.9,.3,1.3) both}
+#intro .in-w{transform:rotate(var(--r)) scaleX(var(--f));animation:inGone 1.4s calc(1s + var(--d)) ease-in both}
+#intro .in-w.in-hero{z-index:2;animation:inHero 2.9s 1s cubic-bezier(.45,0,.55,1) both}
+#intro .in-logo{opacity:0;filter:drop-shadow(0 8px 10px rgba(6,66,76,.25));animation:inLogo 1.2s 2.7s ease-out both}
+#intro .in-drips{transform-origin:50% 56.8%;transform:scaleY(0);animation:inDrip 1.8s 3.9s cubic-bezier(.3,.6,.4,1) forwards,inSag .9s 5.7s ease-in-out infinite alternate}
+#intro .in-drop{opacity:0;animation:inDrop 1.1s 5.7s ease-in infinite}
+#intro h1{position:relative;font-family:"Baloo Bhai 2","Trebuchet MS",system-ui,sans-serif;font-weight:800;font-size:clamp(22px,6.4vw,32px);letter-spacing:.03em;line-height:1;margin:0;color:#1497A9;display:flex;gap:.02em}
+#intro h1 span{display:inline-block;text-shadow:0 2px 0 #0B6E7C;animation:inRise .55s cubic-bezier(.2,.9,.3,1.3) both}
+#intro h1 .in-pz{color:#F7A81B;text-shadow:0 2px 0 #C97F06}
 #intro h1 .sp{width:.3em}
-#intro .in-tag{font-family:"Courgette","Brush Script MT",cursive;font-style:italic;font-size:20px;color:#0F8698;border-bottom:3px solid #F7A81B;border-radius:0 0 50% 50%/0 0 6px 6px;padding:0 6px 4px;animation:inFade .6s 2.6s both}
-#intro .in-bar{width:min(200px,50vw);height:6px;border-radius:3px;background:rgba(15,134,152,.15);overflow:hidden;animation:inFade .4s 1.2s both}
-#intro .in-bar i{display:block;height:100%;width:40%;border-radius:3px;background:linear-gradient(90deg,#f2b632,#ffe7a3,#f2b632);animation:inStretch 1.3s 1.2s ease-in-out infinite}
+#intro .in-tag{position:relative;font-family:"Courgette","Brush Script MT",cursive;font-style:italic;font-size:17px;color:#0F8698;border-bottom:3px solid #F7A81B;border-radius:0 0 50% 50%/0 0 6px 6px;padding:0 6px 3px;animation:inFade .7s 3.9s both}
+#intro .in-slices{display:flex;gap:20px;margin-top:10px}
+#intro .in-slices span{position:relative;width:42px;height:42px;background:url(img/intro-slice-line.png) center/contain no-repeat}
+#intro .in-slices span::after{content:"";position:absolute;inset:0;background:url(img/intro-slice.png) center/contain no-repeat;animation:var(--k) 2.4s linear infinite}
+#intro .in-msg{font-size:16px;font-weight:600;text-shadow:0 2px 6px rgba(0,0,0,.25)}
+#intro .in-sea{position:absolute;left:0;right:0;bottom:0;height:min(48vw,260px);z-index:1}
+#intro .in-wave{position:absolute;left:0;bottom:-10px;width:200%;height:100%;background:center/100% 100% no-repeat}
+#intro .in-wave.b{background-image:url(img/intro-wave-back.png);animation:inSlideL 9s linear infinite,inBob 2.3s ease-in-out infinite alternate}
+#intro .in-wave.f{background-image:url(img/intro-wave-front.png);animation:inSlideR 6.5s linear infinite,inBob 1.9s .4s ease-in-out infinite alternate}
+#intro .in-tops{position:absolute;inset:0;bottom:-8px;background:url(img/intro-toppings.png) center/100% 100% no-repeat;animation:inBob 2.1s .2s ease-in-out infinite alternate}
+#intro .in-cd{position:absolute;bottom:72%;width:var(--s);aspect-ratio:1;background:url(img/intro-cheese-drop.png) center/contain no-repeat;animation:inJump var(--t) var(--d) ease-out infinite alternate}
 @keyframes inIn{from{transform:scale(.6);opacity:0}to{transform:none;opacity:1}}
 @keyframes inGone{to{opacity:0}}
 @keyframes inHero{0%{transform:none;opacity:1}55%{transform:translateY(51%) scale(1.85) rotate(-10deg);opacity:1}100%{transform:translateY(51%) scale(2.1);opacity:0}}
@@ -804,33 +813,44 @@ body.app-customer .seg,body.app-admin .seg,body.app-customer [data-act="mode"][d
 @keyframes inDrip{from{transform:scaleY(0)}to{transform:scaleY(1)}}
 @keyframes inSag{from{transform:scaleY(1)}to{transform:scaleY(1.07)}}
 @keyframes inDrop{0%{opacity:1;transform:none}70%{opacity:1}100%{opacity:0;transform:translateY(16%)}}
-@keyframes inRise{from{transform:translateY(40px) scale(.6);opacity:0}to{transform:none;opacity:1}}
+@keyframes inRise{from{transform:translateY(30px) scale(.6);opacity:0}to{transform:none;opacity:1}}
 @keyframes inFade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-@keyframes inStretch{0%{transform:translateX(-110%)}100%{transform:translateX(260%)}}
+@keyframes inFill1{0%,6%{opacity:0;transform:scale(.6)}18%,86%{opacity:1;transform:none}96%,100%{opacity:0;transform:scale(.6)}}
+@keyframes inFill2{0%,28%{opacity:0;transform:scale(.6)}40%,86%{opacity:1;transform:none}96%,100%{opacity:0;transform:scale(.6)}}
+@keyframes inFill3{0%,50%{opacity:0;transform:scale(.6)}62%,86%{opacity:1;transform:none}96%,100%{opacity:0;transform:scale(.6)}}
+@keyframes inSlideL{from{translate:0}to{translate:-50%}}
+@keyframes inSlideR{from{translate:-50%}to{translate:0}}
+@keyframes inBob{from{transform:translateY(-5px)}to{transform:translateY(5px)}}
+@keyframes inJump{from{transform:none}to{transform:translateY(-22px)}}
 @media (prefers-reduced-motion:reduce){#intro *,#intro *::before{animation:none!important}}
 </style>
 <div id="intro" role="status" aria-label="Cheesy Pizza is loading">
+  <div class="in-sea" aria-hidden="true"><div class="in-wave b"></div><div class="in-wave f"></div><div class="in-tops"></div>
+    <i class="in-cd" style="left:10%;--s:26px;--t:.8s;--d:0s"></i><i class="in-cd" style="left:30%;bottom:80%;--s:16px;--t:.95s;--d:.3s"></i><i class="in-cd" style="left:86%;--s:22px;--t:1.1s;--d:.6s"></i></div>
   <div class="in-stage">
-    <div class="in-plate">
-      <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><g id="cp-wedge"><defs><radialGradient id="cpwch" cx="512" cy="512" r="470" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#FFE27A"/><stop offset=".7" stop-color="#FFC93C"/><stop offset="1" stop-color="#F5A623"/></radialGradient><radialGradient id="cpwcr" cx="512" cy="512" r="470" gradientUnits="userSpaceOnUse"><stop offset=".86" stop-color="#F4B55E"/><stop offset=".94" stop-color="#D9862F"/><stop offset="1" stop-color="#B8661F"/></radialGradient><radialGradient id="cpwpp" cx=".4" cy=".35" r=".7"><stop offset="0" stop-color="#F0603F"/><stop offset=".7" stop-color="#D2381F"/><stop offset="1" stop-color="#A82814"/></radialGradient></defs><path d="M512 505 L337.4 68.6 A470 470 0 0 1 686.6 68.6 Z" fill="url(#cpwcr)"/><path d="M512 505 L355.3 108.9 A426 426 0 0 1 668.7 108.9 Z" fill="url(#cpwch)"/><circle cx="494" cy="330" r="40" fill="url(#cpwpp)"/><circle cx="482" cy="320" r="7" fill="#8E1F0E" opacity=".5"/><circle cx="534" cy="175" r="46" fill="url(#cpwpp)"/><circle cx="522" cy="163" r="8" fill="#8E1F0E" opacity=".5"/><path d="M462 243 q30 -38 72 -26 q-18 40 -72 26 z" fill="#3FA15A"/><g fill="#5C7A2E"><circle cx="520" cy="395" r="4"/><circle cx="472" cy="205" r="4"/><circle cx="562" cy="265" r="4"/><circle cx="452" cy="125" r="4"/></g><path d="M363.1 74.0 A456 456 0 0 1 660.9 74.0" stroke="#FFD99A" stroke-width="7" stroke-linecap="round" fill="none" opacity=".7"/></g></defs></svg>
-      <svg class="in-w in-hero" viewBox="0 0 1024 1024" style="--r:0deg;--f:1;--d:0.00s"><use href="#cp-wedge"/></svg><svg class="in-w" viewBox="0 0 1024 1024" style="--r:45deg;--f:-1;--d:0.00s"><use href="#cp-wedge"/></svg><svg class="in-w" viewBox="0 0 1024 1024" style="--r:90deg;--f:1;--d:0.04s"><use href="#cp-wedge"/></svg><svg class="in-w" viewBox="0 0 1024 1024" style="--r:135deg;--f:-1;--d:0.08s"><use href="#cp-wedge"/></svg><svg class="in-w" viewBox="0 0 1024 1024" style="--r:180deg;--f:1;--d:0.12s"><use href="#cp-wedge"/></svg><svg class="in-w" viewBox="0 0 1024 1024" style="--r:225deg;--f:-1;--d:0.16s"><use href="#cp-wedge"/></svg><svg class="in-w" viewBox="0 0 1024 1024" style="--r:270deg;--f:1;--d:0.20s"><use href="#cp-wedge"/></svg><svg class="in-w" viewBox="0 0 1024 1024" style="--r:315deg;--f:-1;--d:0.24s"><use href="#cp-wedge"/></svg>
-      <img class="in-logo" src="img/cheesy-pin.png" alt="" aria-hidden="true"><img class="in-drips" src="img/cheesy-drips.png" alt="" aria-hidden="true"><img class="in-drop" src="img/cheesy-drop.png" alt="" aria-hidden="true">
+    <div class="in-ring">
+      <div class="in-plate">
+        <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><g id="cp-wedge"><defs><radialGradient id="cpwch" cx="512" cy="512" r="470" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#FFE27A"/><stop offset=".7" stop-color="#FFC93C"/><stop offset="1" stop-color="#F5A623"/></radialGradient><radialGradient id="cpwcr" cx="512" cy="512" r="470" gradientUnits="userSpaceOnUse"><stop offset=".86" stop-color="#F4B55E"/><stop offset=".94" stop-color="#D9862F"/><stop offset="1" stop-color="#B8661F"/></radialGradient><radialGradient id="cpwpp" cx=".4" cy=".35" r=".7"><stop offset="0" stop-color="#F0603F"/><stop offset=".7" stop-color="#D2381F"/><stop offset="1" stop-color="#A82814"/></radialGradient></defs><path d="M512 505 L337.4 68.6 A470 470 0 0 1 686.6 68.6 Z" fill="url(#cpwcr)"/><path d="M512 505 L355.3 108.9 A426 426 0 0 1 668.7 108.9 Z" fill="url(#cpwch)"/><circle cx="494" cy="330" r="40" fill="url(#cpwpp)"/><circle cx="482" cy="320" r="7" fill="#8E1F0E" opacity=".5"/><circle cx="534" cy="175" r="46" fill="url(#cpwpp)"/><circle cx="522" cy="163" r="8" fill="#8E1F0E" opacity=".5"/><path d="M462 243 q30 -38 72 -26 q-18 40 -72 26 z" fill="#3FA15A"/><g fill="#5C7A2E"><circle cx="520" cy="395" r="4"/><circle cx="472" cy="205" r="4"/><circle cx="562" cy="265" r="4"/><circle cx="452" cy="125" r="4"/></g><path d="M363.1 74.0 A456 456 0 0 1 660.9 74.0" stroke="#FFD99A" stroke-width="7" stroke-linecap="round" fill="none" opacity=".7"/></g></defs></svg>
+        <svg class="in-w in-hero" viewBox="0 0 1024 1024" style="--r:0deg;--f:1;--d:0.00s"><use href="#cp-wedge"/></svg><svg class="in-w" viewBox="0 0 1024 1024" style="--r:45deg;--f:-1;--d:0.00s"><use href="#cp-wedge"/></svg><svg class="in-w" viewBox="0 0 1024 1024" style="--r:90deg;--f:1;--d:0.04s"><use href="#cp-wedge"/></svg><svg class="in-w" viewBox="0 0 1024 1024" style="--r:135deg;--f:-1;--d:0.08s"><use href="#cp-wedge"/></svg><svg class="in-w" viewBox="0 0 1024 1024" style="--r:180deg;--f:1;--d:0.12s"><use href="#cp-wedge"/></svg><svg class="in-w" viewBox="0 0 1024 1024" style="--r:225deg;--f:-1;--d:0.16s"><use href="#cp-wedge"/></svg><svg class="in-w" viewBox="0 0 1024 1024" style="--r:270deg;--f:1;--d:0.20s"><use href="#cp-wedge"/></svg><svg class="in-w" viewBox="0 0 1024 1024" style="--r:315deg;--f:-1;--d:0.24s"><use href="#cp-wedge"/></svg>
+        <img class="in-logo" src="img/cheesy-pin.png" alt="" aria-hidden="true"><img class="in-drips" src="img/cheesy-drips.png" alt="" aria-hidden="true"><img class="in-drop" src="img/cheesy-drop.png" alt="" aria-hidden="true">
+      </div>
+      <h1 aria-label="Cheesy Pizza"></h1>
+      <div class="in-tag">Really Cheesy...!</div>
     </div>
-    <h1 aria-label="Cheesy Pizza"></h1>
-    <div class="in-tag">Really Cheesy...!</div>
-    <div class="in-bar"><i></i></div>
+    <div class="in-slices" aria-hidden="true"><span style="--k:inFill1"></span><span style="--k:inFill2"></span><span style="--k:inFill3"></span></div>
+    <div class="in-msg">Preparing Something Cheesy…</div>
   </div>
 </div>
 <script>
-// Letters of the name rise one by one; the intro stays about 4 s (3 to 5), then fades out
-// once the app has loaded (introDone), or after 8 s at most. A tap skips it.
+// Letters of the name rise one by one; the intro stays about 6 s, then fades out
+// once the app has loaded (introDone), or after 10 s at most. A tap skips it.
 (function(){
   const el=document.getElementById('intro'),h=el.querySelector('h1'),t0=Date.now();let gone=false;
-  [...'CHEESY PIZZA'].forEach((c,i)=>{const s=document.createElement('span');if(c===' ')s.className='sp';else s.textContent=c;if(i>6)s.classList.add('in-pz');s.style.animationDelay=(2+i*.05)+'s';h.appendChild(s)});
+  [...'CHEESY PIZZA'].forEach((c,i)=>{const s=document.createElement('span');if(c===' ')s.className='sp';else s.textContent=c;if(i>6)s.classList.add('in-pz');s.style.animationDelay=(3.3+i*.05)+'s';h.appendChild(s)});
   const hide=()=>{if(gone)return;gone=true;el.classList.add('out');setTimeout(()=>el.remove(),600)};
-  window.introDone=()=>setTimeout(hide,Math.max(0,4000-(Date.now()-t0)));
+  window.introDone=()=>setTimeout(hide,Math.max(0,6000-(Date.now()-t0)));
   el.addEventListener('click',()=>{if(Date.now()-t0>800)hide()});
-  setTimeout(hide,8000);
+  setTimeout(hide,10000);
 })();
 </script>
 

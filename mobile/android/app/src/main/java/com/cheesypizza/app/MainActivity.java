@@ -6,7 +6,6 @@ import android.animation.ObjectAnimator;
 import android.animation.PropertyValuesHolder;
 import android.animation.ValueAnimator;
 import android.content.res.Configuration;
-import android.graphics.drawable.GradientDrawable;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.os.Handler;
@@ -27,7 +26,7 @@ public class MainActivity extends BridgeActivity {
     private View loading;
     private final Handler handler = new Handler(Looper.getMainLooper());
     private long shownAt;
-    private static final long SHOW_MS = 3700; // the pizza-to-logo animation plays through once
+    private static final long SHOW_MS = 6000; // the pizza-to-logo animation plays through once
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -44,8 +43,8 @@ public class MainActivity extends BridgeActivity {
     /*
      * Our own loading screen, shown until the Cheesy Pizza page itself is on screen. When the
      * free server has been asleep, Render shows its "waking up" page for a while first; this
-     * covers it, so people see a bouncing pizza slice instead. The Admin app has its own
-     * darker pictures (src/admin/res) and words.
+     * covers it with a teal screen: a pizza in a white circle turns into the logo while a cheese
+     * wave rolls along the bottom. The Admin app has its own title (src/admin/res) and words.
      */
     private void showLoading(int bg, int fg) {
         float dp = getResources().getDisplayMetrics().density;
@@ -59,19 +58,70 @@ public class MainActivity extends BridgeActivity {
         back.setScaleType(ImageView.ScaleType.CENTER_CROP);
         root.addView(back, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
+        int W = getResources().getDisplayMetrics().widthPixels;
+        root.setClipChildren(false);
+
+        // A cheese wave along the bottom: two layers sliding opposite ways, toppings bobbing in
+        // it and drops of cheese jumping out
+        int waveH = (int) (W * 520f / 1080f);
+        ImageView waveBack = wave(R.drawable.loading_wave_back, W, waveH, root);
+        ImageView waveFront = wave(R.drawable.loading_wave_front, W, waveH, root);
+        slide(waveBack, 0, -W, 9000);
+        slide(waveFront, -W, 0, 6500);
+        bob(waveBack, 6 * dp, 2300, 0);
+        bob(waveFront, 4 * dp, 1900, 400);
+        ImageView tops = new ImageView(this);
+        tops.setImageResource(R.drawable.loading_toppings);
+        tops.setScaleType(ImageView.ScaleType.FIT_XY);
+        FrameLayout.LayoutParams tlp = new FrameLayout.LayoutParams(W, waveH, Gravity.BOTTOM);
+        tlp.bottomMargin = -(int) (7 * dp);
+        root.addView(tops, tlp);
+        bob(tops, 5 * dp, 2100, 200);
+        float[][] drops = {{0.10f, 26, 0}, {0.30f, 16, 1}, {0.86f, 22, 0}};
+        for (int i = 0; i < drops.length; i++) {
+            ImageView d = new ImageView(this);
+            d.setImageResource(R.drawable.loading_cheese_drop);
+            int s = (int) (drops[i][1] * dp);
+            FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(s, s, Gravity.BOTTOM | Gravity.START);
+            lp.leftMargin = (int) (W * drops[i][0]);
+            lp.bottomMargin = (int) (waveH * 0.72f + drops[i][2] * 26 * dp);
+            root.addView(d, lp);
+            ObjectAnimator jump = ObjectAnimator.ofFloat(d, View.TRANSLATION_Y, 0f, -22 * dp);
+            jump.setDuration(800 + i * 150L);
+            jump.setStartDelay(i * 300L);
+            jump.setInterpolator(new android.view.animation.DecelerateInterpolator());
+            jump.setRepeatCount(ValueAnimator.INFINITE);
+            jump.setRepeatMode(ValueAnimator.REVERSE);
+            jump.start();
+        }
+
         LinearLayout box = new LinearLayout(this);
         box.setOrientation(LinearLayout.VERTICAL);
         box.setGravity(Gravity.CENTER);
+        box.setClipChildren(false);
+        box.setPadding(0, 0, 0, (int) (waveH * 0.5f));
         root.addView(box, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+
+        // The white brush circle holding the pizza (which becomes the logo) and the name
+        int C = Math.min((int) (310 * dp), (int) (W * 0.84f));
+        FrameLayout ring = new FrameLayout(this);
+        ring.setClipChildren(false);
+        box.addView(ring, new LinearLayout.LayoutParams(C, C));
+        ImageView disc = new ImageView(this);
+        disc.setImageResource(R.drawable.loading_circle);
+        ring.addView(disc, new FrameLayout.LayoutParams(C, C));
+        LinearLayout inner = new LinearLayout(this);
+        inner.setOrientation(LinearLayout.VERTICAL);
+        inner.setGravity(Gravity.CENTER);
+        inner.setClipChildren(false);
+        ring.addView(inner, new FrameLayout.LayoutParams(C, C));
 
         // A whole pizza of eight slices: one slice slides out and grows while the rest fade
         // away, then it turns into the Cheesy Pizza pin and its melted cheese slowly drips down
-        int size = (int) (230 * dp);
+        int size = (int) (C * 0.5f);
         FrameLayout pizza = new FrameLayout(this);
         pizza.setClipChildren(false);
-        box.setClipChildren(false);
-        root.setClipChildren(false);
-        box.addView(pizza, new LinearLayout.LayoutParams(size, size));
+        inner.addView(pizza, new LinearLayout.LayoutParams(size, size));
         ImageView[] slices = new ImageView[8];
         for (int i = 0; i < 8; i++) {
             ImageView s = new ImageView(this);
@@ -106,13 +156,16 @@ public class MainActivity extends BridgeActivity {
         show.setInterpolator(new LinearInterpolator());
         show.addUpdateListener(an -> {
             float t = (float) an.getAnimatedValue();
-            float in = smooth(clamp(t / 300f));           // pizza appears
-            float e = smooth(clamp((t - 700) / 1000f));   // slice slides out and grows, the rest fade
-            float m = smooth(clamp((t - 1700) / 800f));   // slice turns into the pin
-            float d = clamp((t - 2400) / 1300f);          // cheese slowly drips down
+            float in = smooth(clamp(t / 500f));           // pizza appears
+            float e = smooth(clamp((t - 1000) / 1600f));   // slice slides out and grows, the rest fade
+            float m = smooth(clamp((t - 2700) / 1200f));   // slice turns into the pin
+            float d = clamp((t - 3900) / 1800f);          // cheese slowly drips down
             pizza.setScaleX(0.6f + 0.4f * in);
             pizza.setScaleY(0.6f + 0.4f * in);
             pizza.setAlpha(in);
+            ring.setScaleX(0.8f + 0.2f * in);
+            ring.setScaleY(0.8f + 0.2f * in);
+            ring.setAlpha(in);
             float k = (1 + 0.85f * e) * (1 + 0.15f * m);
             hero.setScaleX(k);
             hero.setScaleY(k);
@@ -149,49 +202,51 @@ public class MainActivity extends BridgeActivity {
         ImageView title = new ImageView(this);
         title.setImageResource(R.drawable.loading_title);
         title.setAdjustViewBounds(true);
-        LinearLayout.LayoutParams tp = new LinearLayout.LayoutParams((int) (280 * dp), ViewGroup.LayoutParams.WRAP_CONTENT);
-        tp.topMargin = (int) (12 * dp);
-        box.addView(title, tp);
+        inner.addView(title, new LinearLayout.LayoutParams((int) (C * 0.74f), ViewGroup.LayoutParams.WRAP_CONTENT));
+        title.setAlpha(0f);
+        title.animate().alpha(1f).setStartDelay(3300).setDuration(700).start(); // once the slice has become the logo
 
-        TextView note = new TextView(this);
-        note.setText(admin ? "Opening your shop counter…" : "Really Cheesy..!");
-        note.setTextColor(0xFFFFE27A);
-        note.setTypeface(Typeface.DEFAULT_BOLD);
-        note.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
-        note.setPadding(0, (int) (10 * dp), 0, 0);
-        if (admin) box.addView(note);
-
-        // Three dots that pulse one after another
-        LinearLayout dots = new LinearLayout(this);
-        dots.setGravity(Gravity.CENTER);
-        LinearLayout.LayoutParams dlp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        dlp.topMargin = (int) (26 * dp);
-        box.addView(dots, dlp);
+        // Three slices that fill up one after another, again and again
+        LinearLayout row = new LinearLayout(this);
+        row.setGravity(Gravity.CENTER);
+        LinearLayout.LayoutParams rlp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        rlp.topMargin = (int) (26 * dp);
+        box.addView(row, rlp);
+        ImageView[] full = new ImageView[3];
         for (int i = 0; i < 3; i++) {
-            View dot = new View(this);
-            GradientDrawable g = new GradientDrawable();
-            g.setShape(GradientDrawable.OVAL);
-            g.setColor(admin ? 0xFFFFFFFF : 0xFF0E8A9B);
-            dot.setBackground(g);
-            LinearLayout.LayoutParams p = new LinearLayout.LayoutParams((int) (10 * dp), (int) (10 * dp));
-            p.setMargins((int) (6 * dp), 0, (int) (6 * dp), 0);
-            dots.addView(dot, p);
-            ObjectAnimator pulse = ObjectAnimator.ofPropertyValuesHolder(dot,
-                PropertyValuesHolder.ofFloat(View.ALPHA, 0.3f, 1f),
-                PropertyValuesHolder.ofFloat(View.SCALE_X, 0.7f, 1.3f),
-                PropertyValuesHolder.ofFloat(View.SCALE_Y, 0.7f, 1.3f));
-            pulse.setDuration(450);
-            pulse.setStartDelay(i * 150L);
-            pulse.setRepeatCount(ValueAnimator.INFINITE);
-            pulse.setRepeatMode(ValueAnimator.REVERSE);
-            pulse.start();
+            FrameLayout slot = new FrameLayout(this);
+            ImageView line = new ImageView(this);
+            line.setImageResource(R.drawable.loading_slice_line);
+            slot.addView(line, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+            full[i] = new ImageView(this);
+            full[i].setImageResource(R.drawable.loading_slice_full);
+            full[i].setAlpha(0f);
+            slot.addView(full[i], new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+            LinearLayout.LayoutParams p = new LinearLayout.LayoutParams((int) (42 * dp), (int) (42 * dp));
+            p.setMargins((int) (10 * dp), 0, (int) (10 * dp), 0);
+            row.addView(slot, p);
         }
+        ValueAnimator fillUp = ValueAnimator.ofFloat(0f, 1f);
+        fillUp.setDuration(2400);
+        fillUp.setInterpolator(new LinearInterpolator());
+        fillUp.setRepeatCount(ValueAnimator.INFINITE);
+        fillUp.addUpdateListener(an -> {
+            float t = (float) an.getAnimatedValue();
+            for (int i = 0; i < 3; i++) {
+                float a = smooth(clamp((t - 0.06f - i * 0.22f) / 0.12f)) * (1 - clamp((t - 0.86f) / 0.1f));
+                full[i].setAlpha(a);
+                full[i].setScaleX(0.6f + 0.4f * a);
+                full[i].setScaleY(0.6f + 0.4f * a);
+            }
+        });
+        fillUp.start();
 
         TextView wait = new TextView(this);
-        wait.setText("Getting your app ready…");
-        wait.setTextColor(admin ? 0xFFFFFFFF : 0xFF0B6E7C);
-        wait.setAlpha(0.75f);
-        wait.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
+        wait.setText(admin ? "Opening your shop counter…" : "Preparing Something Cheesy…");
+        wait.setTextColor(0xFFFFFFFF);
+        wait.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        wait.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+        wait.setShadowLayer(6, 0, 2, 0x40000000);
         wait.setPadding(0, (int) (14 * dp), 0, 0);
         box.addView(wait);
 
@@ -199,6 +254,33 @@ public class MainActivity extends BridgeActivity {
         loading = root;
         shownAt = System.currentTimeMillis();
         handler.postDelayed(this::checkReady, 400);
+    }
+
+    private ImageView wave(int res, int w, int h, FrameLayout root) {
+        ImageView v = new ImageView(this);
+        v.setImageResource(res);
+        v.setScaleType(ImageView.ScaleType.FIT_XY);
+        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(w * 2, h, Gravity.BOTTOM | Gravity.START); // two waves wide, so it can slide forever
+        lp.bottomMargin = -(int) (8 * getResources().getDisplayMetrics().density); // room to bob without showing a gap
+        root.addView(v, lp);
+        return v;
+    }
+
+    private static void slide(View v, float from, float to, long ms) {
+        ObjectAnimator a = ObjectAnimator.ofFloat(v, View.TRANSLATION_X, from, to);
+        a.setDuration(ms);
+        a.setInterpolator(new LinearInterpolator());
+        a.setRepeatCount(ValueAnimator.INFINITE);
+        a.start();
+    }
+
+    private static void bob(View v, float amp, long ms, long delay) {
+        ObjectAnimator a = ObjectAnimator.ofFloat(v, View.TRANSLATION_Y, -amp, amp);
+        a.setDuration(ms);
+        a.setStartDelay(delay);
+        a.setRepeatCount(ValueAnimator.INFINITE);
+        a.setRepeatMode(ValueAnimator.REVERSE);
+        a.start();
     }
 
     private static float clamp(float t) {
