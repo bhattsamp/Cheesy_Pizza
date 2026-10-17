@@ -51,6 +51,8 @@ const box = (w, h, inner, extra = '') => `<div style="position:relative;width:${
     }
     // Pictures for the animated loading screen
     await shot(page, `<svg viewBox="0 0 1080 1920" width="1080" height="1920">${scene.bg(1080, 1920)}</svg>`, 1080, 1920, `${res}/drawable-nodpi/loading_bg.png`);
+    // The line under the slices, in the logo's script face
+    await shot(page, `<div style="width:900px;height:120px;display:flex;align-items:center;justify-content:center;font-family:'Courgette',cursive;font-size:66px;color:#fff;text-shadow:0 3px 10px rgba(0,0,0,.3)">${admin ? 'Opening your shop counter…' : 'Preparing Something Cheesy…'}</div>`, 900, 120, `${res}/drawable-nodpi/loading_msg.png`, true);
     await shot(page, `<div style="text-align:center;width:900px;padding:14px 0">${word(admin)}</div>`, 900, admin ? 230 : 230, `${res}/drawable-nodpi/loading_title.png`, true);
   }
   await shot(page, `<svg viewBox="0 0 1024 1024" width="720" height="720">${wedge()}</svg>`, 720, 720, `${RES}/main/res/drawable-nodpi/loading_wedge.png`, true);
