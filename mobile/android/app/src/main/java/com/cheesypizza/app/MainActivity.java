@@ -6,11 +6,9 @@ import android.animation.ObjectAnimator;
 import android.animation.PropertyValuesHolder;
 import android.animation.ValueAnimator;
 import android.content.res.Configuration;
-import android.graphics.Typeface;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,7 +16,6 @@ import android.view.animation.LinearInterpolator;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.TextView;
 import com.getcapacitor.BridgeActivity;
 
 public class MainActivity extends BridgeActivity {
@@ -241,14 +238,13 @@ public class MainActivity extends BridgeActivity {
         });
         fillUp.start();
 
-        TextView wait = new TextView(this);
-        wait.setText(admin ? "Opening your shop counter…" : "Preparing Something Cheesy…");
-        wait.setTextColor(0xFFFFFFFF);
-        wait.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
-        wait.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
-        wait.setShadowLayer(6, 0, 2, 0x40000000);
-        wait.setPadding(0, (int) (14 * dp), 0, 0);
-        box.addView(wait);
+        // "Preparing Something Cheesy…" (Admin: "Opening your shop counter…") in the logo's script face
+        ImageView wait = new ImageView(this);
+        wait.setImageResource(R.drawable.loading_msg);
+        wait.setAdjustViewBounds(true);
+        LinearLayout.LayoutParams wlp = new LinearLayout.LayoutParams((int) (270 * dp), ViewGroup.LayoutParams.WRAP_CONTENT);
+        wlp.topMargin = (int) (12 * dp);
+        box.addView(wait, wlp);
 
         ((ViewGroup) getWindow().getDecorView()).addView(root, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         loading = root;
