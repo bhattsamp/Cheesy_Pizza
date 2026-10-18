@@ -1185,9 +1185,10 @@ const I={
  menu:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2 21h20z"/><circle cx="11" cy="14" r="1.2"/><circle cx="14" cy="17" r="1.2"/></svg>',
  trips:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>',
 staff:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>',
+ review:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.3 6.4 20.2l1.1-6.2L3 9.6l6.2-.9z"/></svg>',
  outlet:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l2-5h14l2 5M4 9v11h16V9M3 9h18M9 20v-6h6v6"/></svg>',
 };
-const TABS=[['new','New order'],['kitchen','Kitchen'],['counter','Counter'],['orders','Orders'],['sales','Day sale'],['offers','Offers'],['cust','Customers'],['menu','Menu & sizes'],['outlet','Outlets'],['staff','Staff'],['trips','Deliveries']];
+const TABS=[['new','New order'],['kitchen','Kitchen'],['counter','Counter'],['orders','Orders'],['sales','Day sale'],['offers','Offers'],['cust','Customers'],['menu','Menu & sizes'],['outlet','Outlets'],['staff','Staff'],['review','Reviews'],['trips','Deliveries']];
 
 const app=document.getElementById('app');
 function render(){
@@ -1701,7 +1702,7 @@ function renderPOS(){
       `<button data-act="pos-more" ${more.some(([t])=>t===U.pos.tab)?'aria-current="page"':''}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="5" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="19" cy="12" r="1.4"/></svg><span>${esc((more.find(([t])=>t===U.pos.tab)||[0,'More'])[1])}</span></button>`};
   U.posMore=()=>showModal(`<div class="mh"><h3>All sections</h3><button class="x" data-act="close" aria-label="Close">×</button></div><div class="mb"><div class="moregrid">${allowed.map(([t,n])=>`<button data-act="tab" data-v="${t}" ${U.pos.tab===t?'aria-current="page"':''}>${I[t]}<span>${n}</span></button>`).join('')}</div>
     <div class="row small muted"><span class="grow">Signed in as <b>${esc(su.name)}</b> · ${ROLES[su.role]}</span>${CAP?'<button class="btn sm" data-act="perms">Alerts & location</button>':''}<button class="btn sm" data-act="lock">Lock screen</button></div></div>`);
-  const views={new:vNew,kitchen:vKitchen,counter:vCounter,orders:vOrders,sales:vSales,offers:vOffers,cust:vCust,menu:vMenu,outlet:vOutlets,staff:vStaff,trips:vTrips};
+  const views={new:vNew,kitchen:vKitchen,counter:vCounter,orders:vOrders,sales:vSales,offers:vOffers,cust:vCust,menu:vMenu,outlet:vOutlets,staff:vStaff,review:vReview,trips:vTrips};
   return `<div class="pos"><nav class="side" aria-label="POS sections">${nav()}
     <div style="margin-top:auto;padding:10px;display:flex;flex-direction:column;gap:6px" class="small muted"><span>Signed in as <b>${esc(su.name)}</b> · ${ROLES[su.role]}</span>${CAP?'<button class="btn sm" data-act="perms">Alerts & location</button>':''}<button class="btn sm" data-act="lock">Lock screen</button>${su.role==='owner'?'<span>Example orders are loaded for testing.</span><button class="btn sm" data-act="reset">Reset demo data</button>':''}</div></nav>
   <section class="main">${U.pos.tab!=='kitchen'&&U.pos.tab!=='trips'&&su.role!=='kitchen'&&su.role!=='rider'?onlineBanner():''}${views[U.pos.tab]()}</section></div>
@@ -1969,7 +1970,9 @@ function kotText(o,round){
 const waDate=ts=>{const d=new Date(ts),p=n=>String(n).padStart(2,'0');return `${p(d.getDate())}/${p(d.getMonth()+1)}/${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`};
 const invoiceUrl=o=>/^https?:/.test(location.protocol)?location.origin+'/b/'+encodeURIComponent(o.id):'';
 function waInvoice(o){const out=outletOf(o),shop='CHEESY PIZZA '+String(out.name||'').toUpperCase(),url=invoiceUrl(o);
-  return `Dear ${(o.customer.name||'Customer').trim().toUpperCase()},\n\nThank you for your recent order at ${shop}!\nYour invoice is now available. 🪄\n\n💰 Amount : *Rs.${o.total}*\n📅 Date : ${waDate(o.ts)}${url?'\n🔗 View Invoice : '+url:''}\n\nHow was your experience with your order at *${shop}* today?`}
+  return `Dear ${(o.customer.name||'Customer').trim().toUpperCase()},\n\nThank you for your recent order at ${shop}!\nYour invoice is now available. 🪄\n\n💰 Amount : *Rs.${o.total}*\n📅 Date : ${waDate(o.ts)}${url?'\n🔗 View Invoice : '+url:''}\n\nHow was your experience with your order at *${shop}* today?${reviewUrl(out)?'\n⭐ Please leave us a review : '+reviewUrl(out):''}`}
+// The branch's review link (Google or other), set by the owner in Reviews; only a web link is used
+const reviewUrl=out=>{const u=String(out?.review||'').trim();return /^https:\/\/\S+$/i.test(u)?u:''};
 const waThanks=()=>`Hey Pizza Lover! 🍕\n\nThanks for choosing Cheesy Pizza.\nWe're always striving to serve the perfect slice - let us know how we did!`;
 const waLink=(ph,txt)=>`https://wa.me/91${ph}?text=${encodeURIComponent(txt)}`;
 function openReceipt(o,kind){
@@ -2367,6 +2370,21 @@ function alertBox(o){const c=alertCfg(o);return `<div class="grp-h">New order al
     <div class="row"><label for="av-${o.id}" class="lbl">Volume</label><input type="range" min="0" max="100" step="5" class="grow" id="av-${o.id}" data-al="${o.id}" data-f="vol" value="${c.vol}"><span class="small num">${c.vol}%</span></div>
     <label class="row small" style="cursor:pointer"><span class="switch"><input type="checkbox" data-al="${o.id}" data-f="loop" ${c.loop?'checked':''}><span></span></span>Keep ringing until the order is accepted</label>
     <div class="row small"><label class="btn sm" style="cursor:pointer">${o.alertSound?'Change':'Upload'} my own sound<input type="file" accept="audio/*" data-alsnd="${o.id}" hidden></label>${o.alertSound?`<button class="btn sm bad" data-act="del-sound" data-o="${o.id}">Remove</button>`:'<span class="muted">MP3 or similar, up to 1 MB</span>'}</div>`}
+// Owner only: each branch's review link, added to the WhatsApp invoice message
+function vReview(){
+  const sample=o=>({id:'SAMPLE',outletId:o.id,customer:{name:'Customer',phone:''},total:450,ts:Date.now()});
+  return `<div class="ph1"><h2>Reviews</h2><span class="muted small">Only you (the owner) can see this. The link goes at the end of the WhatsApp invoice message.</span></div>
+  <div class="grid">${S.outlets.map(o=>{const ok=reviewUrl(o),bad=(o.review||'').trim()&&!ok;return `<div class="card" style="padding:14px;display:flex;flex-direction:column;gap:8px">
+    <div class="row"><b class="grow">${esc(o.name)}</b>${ok?'<span class="chip ready">Link on</span>':'<span class="chip">No link</span>'}</div>
+    <div class="field"><label for="orv-${o.id}">Review link for this branch</label><input class="inp" id="orv-${o.id}" data-ou="${o.id}" data-f="review" value="${esc(o.review||'')}" placeholder="https://g.page/r/…/review" inputmode="url" autocapitalize="off" autocomplete="off" spellcheck="false">
+      <span class="small ${bad?'':'muted'}" style="${bad?'color:var(--bad)':''}">${bad?'This doesn\'t look like a web link. It must start with https://':'Leave empty to send the invoice without a review link.'}</span></div>
+    ${ok?`<div class="row"><a class="btn sm" href="${esc(ok)}" target="_blank" rel="noopener">Open link to check</a><button class="btn sm" data-act="copy" data-t="${esc(ok)}">Copy link</button></div>`:''}
+    <div class="grp-h">WhatsApp invoice message</div>
+    <div class="receipt" style="white-space:pre-wrap;font-size:13px">${esc(waInvoice(sample(o)))}</div>
+  </div>`}).join('')}</div>
+  <div class="card" style="padding:14px;margin-top:14px"><b>Where to find your Google review link</b>
+    <p class="small muted" style="margin:6px 0 0">Open Google Maps or search your shop name on Google while signed in as the owner. On your Business Profile, tap <b>Ask for reviews</b> (or <b>Get more reviews</b>) and copy the link. Paste it above for each branch.</p></div>`;
+}
 function vOutlets(){const own=staff()?.role==='owner';
   return `<div class="ph1"><h2>Outlets</h2><span class="muted small">Each outlet has its own order numbers, kitchen, counter, riders and day sale</span></div>
   <div class="grid">${S.outlets.map(o=>{const t=S.orders.filter(x=>x.outletId===o.id&&x.date===today()&&x.status!=='cancelled');return `<div class="card" style="padding:14px;display:flex;flex-direction:column;gap:8px">
@@ -2578,11 +2596,13 @@ document.addEventListener('input',e=>{
     if(!UPI_RE.test(v)){if(hint)hint.innerHTML='<span style="color:var(--bad)">Enter a UPI ID like name@okaxis. Not saved yet.</span>';return}
     const had=!!o.upi;o.upi=v;save();if(hint)hint.textContent='Saved. Customers of this branch now pay to '+v+'.';
     if(!had)return render();const q=document.querySelector(`#oqr-${o.id}`);if(q){const d=q.querySelector('[data-qr]');d.dataset.qr=shopQr(o);drawQr(d);q.querySelector('.num').textContent=v}return}
-  if(t.dataset.ou&&['legal','gstin','fssai','area'].includes(t.dataset.f)&&staff()?.role!=='owner')return;
+  if(t.dataset.ou&&['legal','gstin','fssai','area','review'].includes(t.dataset.f)&&staff()?.role!=='owner')return;
   if(t.dataset.ou&&t.dataset.f==='gstin'){t.value=t.value.toUpperCase().replace(/[^0-9A-Z]/g,'')}
   if(t.dataset.ou){const o=S.outlets.find(x=>x.id===t.dataset.ou);o[t.dataset.f]=t.value;save();document.getElementById('outletSel').innerHTML=S.outlets.map(o=>`<option value="${o.id}" ${o.id===S.cur?'selected':''}>${esc(o.name)}</option>`).join('')}
   if(t.dataset.desc){menuItem(t.dataset.desc).desc=t.value;save()}
 });
+// Review link: refresh the status and message preview once the owner leaves the box
+document.addEventListener('change',e=>{if(e.target.dataset?.ou&&e.target.dataset.f==='review')render()});
 document.addEventListener('change',e=>{
   if(e.target.dataset.gst){const t=e.target,o=S.outlets.find(x=>x.id===t.dataset.gst);if(!o)return;
     if(staff()?.role!=='owner')return toast('Only the owner can change GST settings');
@@ -2821,7 +2841,7 @@ function startPolling(){setInterval(async()=>{
 
 /* ================= v4: accounts, wallet, staff login, fun ================= */
 const ROLES={owner:'Owner',manager:'Manager',cashier:'Cashier',kitchen:'Kitchen',rider:'Rider'};
-const ROLE_TABS={owner:TABS.map(t=>t[0]),manager:TABS.map(t=>t[0]).filter(k=>k!=='staff'),cashier:['new','counter','orders','cust'],kitchen:['kitchen','counter'],rider:['trips']};
+const ROLE_TABS={owner:TABS.map(t=>t[0]),manager:TABS.map(t=>t[0]).filter(k=>k!=='staff'&&k!=='review'),cashier:['new','counter','orders','cust'],kitchen:['kitchen','counter'],rider:['trips']};
 function ensureCust(ph,name){const c=S.customers[ph]||(S.customers[ph]={phone:ph,name:name||'',due:0,coins:0});
   c.wallet=c.wallet||0;c.tx=c.tx||[];c.myCodes=c.myCodes||[];c.ref=c.ref||('CP'+ph.slice(-5));if(name&&!c.name)c.name=name;return c}
 function migrate(){
