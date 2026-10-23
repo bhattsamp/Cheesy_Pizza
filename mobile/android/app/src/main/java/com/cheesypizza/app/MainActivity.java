@@ -13,6 +13,7 @@ import android.os.Looper;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.view.animation.LinearInterpolator;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
@@ -30,6 +31,7 @@ public class MainActivity extends BridgeActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         registerPlugin(UpiPayPlugin.class); // pay with a UPI app from checkout
+        registerPlugin(ThermalPrinterPlugin.class); // Admin app: bills and KOTs on a Bluetooth printer
         super.onCreate(savedInstanceState);
         // Android keeps the page clear of the status bar and navigation buttons; colour the
         // strips behind them like the app's header and menu bar (light or dark theme).
@@ -37,6 +39,8 @@ public class MainActivity extends BridgeActivity {
         int bg = night ? 0xFF11242A : 0xFFFFFFFF;
         getWindow().getDecorView().setBackgroundColor(bg);
         showLoading(bg, night ? 0xFFE8F1F2 : 0xFF0F2E36);
+        // The Admin app runs the counter: keep the screen on while it is open
+        if (getPackageName().endsWith(".admin")) getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         // Back goes one screen back inside the app (the page's cpBack); on the home screen it
         // asks before closing the app
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {

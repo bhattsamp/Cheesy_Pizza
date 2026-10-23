@@ -1866,7 +1866,38 @@ function vNew(){
 }
 // Cashiers must enter the customer's mobile, so every bill can be checked later
 const needPhone=()=>staff()?.role==='cashier'&&U.pos.type!=='zomato';
-function printText(txt){const r=document.getElementById('printRoot');r.innerHTML=`<pre>${esc(txt)}</pre>`;try{window.print()}catch(_){}}
+function printText(txt){if(btp())return btPrint(txt);const r=document.getElementById('printRoot');r.innerHTML=`<pre>${esc(txt)}</pre>`;try{window.print()}catch(_){}}
+/* Admin app: bills and KOTs go straight to the Bluetooth receipt printer paired with this phone
+   (chosen once, kept on this phone). The website and older apps use the browser's print box. */
+const BT_KEY='cheesy_printer';
+const btp=()=>APP_ROLE==='admin'&&window.Capacitor&&Capacitor.Plugins&&Capacitor.Plugins.ThermalPrinter||null;
+const btGet=()=>{try{return JSON.parse(localStorage.getItem(BT_KEY))||null}catch(_){return null}};
+const btSet=v=>{try{v?localStorage.setItem(BT_KEY,JSON.stringify(v)):localStorage.removeItem(BT_KEY)}catch(_){}};
+// Receipt printers only know plain letters: swap the few symbols the bills use
+const btAscii=t=>String(t).replace(/[·•]/g,'-').replace(/₹/g,'Rs ').replace(/×/g,'x').replace(/[‘’]/g,"'").replace(/[“”]/g,'"').replace(/[–—]/g,'-').replace(/[^\x0a\x20-\x7e]/g,'');
+const BT_ERR={BT_OFF:'Bluetooth is off. Turn it on and try again.',NO_BT:'This phone has no Bluetooth.',NO_PERMISSION:'Allow "Nearby devices" for Cheesy Pizza Admin in phone Settings, then try again.'};
+let btPending=null;
+async function btPrint(txt){
+  const p=btGet();if(!p)return btChoose(txt);
+  toast('Printing on '+p.name+'…');
+  try{await btp().print({address:p.address,text:btAscii(txt)});toast('Printed')}
+  catch(e){btPending=txt;showModal(`<div class="mh"><h3>Could not print</h3><button class="x" data-act="close" aria-label="Close">×</button></div>
+    <div class="mb"><p>${esc(BT_ERR[e&&e.code]||'Could not reach '+p.name+'. Check it is switched on, has paper and is near this phone.')}</p>
+    <div class="row"><button class="btn pri grow" data-act="bt-retry">Try again</button><button class="btn" data-act="bt-change">Change printer</button></div></div>`)}
+}
+async function btChoose(txt){
+  btPending=txt||null;let list=[];
+  try{list=(await btp().list()).devices||[]}
+  catch(e){return showModal(`<div class="mh"><h3>Printer</h3><button class="x" data-act="close" aria-label="Close">×</button></div><div class="mb"><p>${esc(BT_ERR[e&&e.code]||'Could not open Bluetooth.')}</p><button class="btn pri" data-act="bt-change">Try again</button></div>`)}
+  const cur=btGet(),auto=!cur||cur.autoKot!==false;
+  showModal(`<div class="mh"><h3>Choose your printer</h3><button class="x" data-act="close" aria-label="Close">×</button></div>
+  <div class="mb">${list.length?`<div class="col" style="display:grid;gap:8px">${list.map(d=>`<button class="btn ${cur&&cur.address===d.address?'pri':''}" data-act="bt-pick" data-a="${esc(d.address)}" data-n="${esc(d.name)}">🖨️ ${esc(d.name)}</button>`).join('')}</div>`
+    :'<p>No printer is paired with this phone yet.</p>'}
+    <label class="row small" style="gap:8px;margin-top:6px"><input type="checkbox" id="bt-auto" ${auto?'checked':''}> Print the KOT by itself when I accept an online order</label>
+    <p class="small muted" style="margin:0">Printer not in the list? Switch it on, open phone <b>Settings › Bluetooth</b>, pair it (PIN is usually 0000 or 1234), then come back and tap Refresh. Works with 58 mm and 80 mm Bluetooth receipt printers.</p>
+    <div class="row"><button class="btn" data-act="bt-change">Refresh</button>${cur?`<button class="btn" data-act="bt-test">Test print</button><button class="btn bad" data-act="bt-forget">Forget printer</button>`:''}</div></div>`);
+}
+const btTest=()=>[center('CHEESY PIZZA'),center('Printer test'),'-'.repeat(32),pad('Printer',btGet()?.name||''),pad('Time',fmtTime(Date.now())),'-'.repeat(32),center('All good!')].join('\n');
 function recalcOrder(o){
   const before=(o.coinsEarned||0)-(o.coinsUsed||0);
   const b=computeBill(o.items,o.date,{...(o.extra||{}),phone:o.customer.phone,outletId:o.outletId});if(b.gst)o.gst=b.gst;else delete o.gst;
@@ -1922,7 +1953,7 @@ function posGo(kind){
   }
   save();Object.assign(U.pos,JSON.parse(JSON.stringify(POS_BLANK)));render();
   if(kind==='kot'){const txt=kotText(o,run?round:null);printText(txt);toast((run?'New items for '+o.no:o.no)+' sent to kitchen')}
-  else{if(kind==='billprint')printText(billText(o));openDone(o)}
+  else{openDone(o);if(kind==='billprint')printText(billText(o))}
 }
 function openDone(o){
   showModal(`<div class="mh"><h3>Order ${o.paid?'billed':'saved'}</h3><button class="x" data-act="close" aria-label="Close">×</button></div>
@@ -1984,7 +2015,7 @@ function openReceipt(o,kind){
     <button class="btn pri" data-act="print-txt" data-t="${esc(txt)}">Print</button>
     <button class="btn" data-act="copy" data-t="${esc(txt)}">Copy text</button>
   </div>
-  <div class="small muted" style="text-align:center">Sized for a 58 mm thermal printer. Print opens the printer box of this device.</div></div>`);
+  <div class="small muted" style="text-align:center">${btp()?(btGet()?`Prints on <b>${esc(btGet().name)}</b> · <a href="#" data-act="bt-change">Change printer</a>`:'<a href="#" data-act="bt-change">Choose your Bluetooth printer</a>'):'Sized for a 58 mm thermal printer. Print opens the printer box of this device.'}</div></div>`);
 }
 
 // Orders of this outlet from the last 16 hours, so a shift running past midnight keeps its orders
@@ -2497,6 +2528,11 @@ document.addEventListener('click',e=>{
     case 'od-scope':U.ordersScope=el.dataset.v;render();break;
     case 'od-new':U.ordersNew=!U.ordersNew;render();break;
     case 'print-txt':printText(el.dataset.t);break;
+    case 'bt-change':e.preventDefault();btChoose(btPending);break;
+    case 'bt-retry':closeModal();if(btPending)btPrint(btPending);break;
+    case 'bt-pick':{const old=btGet(),a=document.getElementById('bt-auto');btSet({address:el.dataset.a,name:el.dataset.n,autoKot:a?a.checked:(old?old.autoKot!==false:true)});closeModal();const t=btPending;btPending=null;t?btPrint(t):toast(el.dataset.n+' saved as printer');break}
+    case 'bt-test':closeModal();btPrint(btTest());break;
+    case 'bt-forget':btSet(null);btPending=null;closeModal();toast('Printer removed');break;
     case 'rate':{const o=find(el.dataset.id);o.rating=+el.dataset.v;save();toast('Thanks for rating!');openTrack();break}
     case 'reorder':{const o=find(el.dataset.id);U.cart=o.items.map(l=>{if(l.combo||l.custom)return {...l};const m=menuItem(l.itemId);return m&&!m.off?Object.assign(mkLine(m,l.size,l.addons.filter(a=>S.addons[a]),l.qty,l.tops,(l.ex||[]).filter(e=>exPrice(e,l.size))),l.notes?{notes:l.notes}:{},l.note?{note:l.note}:{}):null}).filter(Boolean);pubForm.phone=o.customer.phone;pubForm.name=o.customer.name;if(o.address)pubForm.address=o.address;closeModal();render();openPubCart();break}
     case 'pub-add':openCustomizer(el.dataset.id,'pub');break;
@@ -2532,7 +2568,7 @@ document.addEventListener('click',e=>{
     case 'copy':{const t=el.dataset.t;try{navigator.clipboard.writeText(t).then(()=>toast('Copied'),selectReceipt)}catch(_){selectReceipt()}break}
     case 'ktap':{const id=el.dataset.id,now=Date.now();
       if(U.lastTap[id]&&now-U.lastTap[id]<400){const o=find(id);if(o.status==='preparing'){setStatus(o,'ready');toast(o.no+' ready → counter');render()}U.lastTap[id]=0}else U.lastTap[id]=now;break}
-    case 'accept':{const o=find(el.dataset.id);setStatus(o,'preparing');ringDone(o.id);toast(o.no+' accepted');render();break}
+    case 'accept':{const o=find(el.dataset.id);setStatus(o,'preparing');ringDone(o.id);toast(o.no+' accepted');render();if(btp()&&btGet()&&btGet().autoKot!==false)btPrint(kotText(o));break}
     case 'reject':{const o=find(el.dataset.id);refundOrder(o);{const c=S.customers[o.customer.phone];if(c)c.coins=Math.max(0,(c.coins||0)+(o.coinsUsed||0)-(o.coinsEarned||0))}setStatus(o,'cancelled');ringDone(o.id);toast(o.no+' rejected');render();break}
     case 'handover':case 'delivered':{const o=find(el.dataset.id);setStatus(o,'done');toast(o.no+' · '+doneLabel(o.type));render();break}
     case 'dispatch':{const o=find(el.dataset.id);const nm=document.getElementById('rs-'+o.id).value;o.rider=(cur().riders||[]).find(r=>r.name===nm);setStatus(o,'out');toast(o.no+' out with '+nm);render();break}
@@ -2603,6 +2639,8 @@ document.addEventListener('input',e=>{
 });
 // Review link: refresh the status and message preview once the owner leaves the box
 document.addEventListener('change',e=>{if(e.target.dataset?.ou&&e.target.dataset.f==='review')render()});
+// Printer box: the auto-KOT tick is kept straight away for the chosen printer
+document.addEventListener('change',e=>{if(e.target.id==='bt-auto'){const p=btGet();if(p){p.autoKot=e.target.checked;btSet(p)}}});
 document.addEventListener('change',e=>{
   if(e.target.dataset.gst){const t=e.target,o=S.outlets.find(x=>x.id===t.dataset.gst);if(!o)return;
     if(staff()?.role!=='owner')return toast('Only the owner can change GST settings');
