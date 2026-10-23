@@ -16,7 +16,7 @@ jobs:
     steps:
       - name: Visit the server
         env:
-          SERVER: ${{ vars.CHEESY_SERVER_URL || 'https://cheesy-pizza.onrender.com' }}
+          SERVER: ${{ vars.CHEESY_SERVER_URL || 'https://cheesypizza.online' }}
         run: |
           for i in 1 2 3; do
             code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 90 "$SERVER/api/version") && [ "$code" = 200 ] && { echo "Server awake ($code)"; exit 0; }
