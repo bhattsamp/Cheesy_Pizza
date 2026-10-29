@@ -1339,7 +1339,7 @@ body.drawer-open{overflow:hidden}
 .sfoot .ft-big{translate:calc((var(--p,.5) - .5) * -40%) 0}
 
 /* pinned scene: the pizza is built, baked and sent out as you scroll through the three steps */
-.bx{position:relative;height:480vh}
+.bx{position:relative;height:780vh}
 .bx-pin{position:sticky;top:var(--toph,64px);height:calc(100vh - var(--toph,64px));display:grid;align-items:center;overflow:hidden}
 .bx-in{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:clamp(24px,5vw,72px);align-items:center;width:100%}
 .bx-copy h2{font-size:clamp(34px,4.6vw,60px);line-height:1;margin:14px 0 26px}
@@ -1349,32 +1349,46 @@ body.drawer-open{overflow:hidden}
 .bx-steps li b{font-family:var(--display);font-style:italic;font-size:clamp(30px,3vw,42px);color:var(--teal);line-height:1;font-weight:500}
 .bx-steps li h3{font-size:clamp(22px,2.2vw,30px)}
 .bx-steps li p{margin:4px 0 0;color:var(--muted);max-height:0;overflow:hidden;transition:max-height .5s var(--ease)}
-.bx[data-step="0"] li[data-i="0"],.bx[data-step="1"] li[data-i="1"],.bx[data-step="2"] li[data-i="2"],.bx[data-step="3"] li[data-i="3"],.bx[data-step="4"] li[data-i="4"],.bx[data-step="5"] li[data-i="5"]{opacity:1;translate:12px 0}
-.bx[data-step="0"] li[data-i="0"] p,.bx[data-step="1"] li[data-i="1"] p,.bx[data-step="2"] li[data-i="2"] p,.bx[data-step="3"] li[data-i="3"] p,.bx[data-step="4"] li[data-i="4"] p,.bx[data-step="5"] li[data-i="5"] p{max-height:80px}
+.bx[data-step="0"] li[data-i="0"],.bx[data-step="1"] li[data-i="1"],.bx[data-step="2"] li[data-i="2"],.bx[data-step="3"] li[data-i="3"],.bx[data-step="4"] li[data-i="4"],.bx[data-step="5"] li[data-i="5"],.bx[data-step="6"] li[data-i="6"],.bx[data-step="7"] li[data-i="7"],.bx[data-step="8"] li[data-i="8"],.bx[data-step="9"] li[data-i="9"]{opacity:1;translate:12px 0}
+.bx[data-step="0"] li[data-i="0"] p,.bx[data-step="1"] li[data-i="1"] p,.bx[data-step="2"] li[data-i="2"] p,.bx[data-step="3"] li[data-i="3"] p,.bx[data-step="4"] li[data-i="4"] p,.bx[data-step="5"] li[data-i="5"] p,.bx[data-step="6"] li[data-i="6"] p,.bx[data-step="7"] li[data-i="7"] p,.bx[data-step="8"] li[data-i="8"] p,.bx[data-step="9"] li[data-i="9"] p{max-height:80px}
 .bx-bar{height:3px;border-radius:3px;background:var(--line);margin-top:22px;overflow:hidden}
 .bx-bar i{display:block;height:100%;background:var(--teal);transform-origin:left;scale:var(--p,0) 1}
 .bx-stage{position:relative;aspect-ratio:1;width:min(100%,560px);justify-self:center}
-.bx-plate{position:absolute;inset:4%;border-radius:50%;background:radial-gradient(circle at 50% 42%,#fff 0 58%,#e3f0f2 74%,#c9e2e7 100%);box-shadow:0 40px 60px rgba(15,46,54,.18)}
-.bx-pz{position:absolute;inset:8%;translate:calc(clamp(0,(var(--p,0) - .8) * 5,1) * 40%) calc(clamp(0,(var(--p,0) - .8) * 5,1) * -30%);scale:calc(1 - clamp(0,(var(--p,0) - .8) * 5,1) * .62);rotate:calc(var(--p,0) * 120deg)}
+.bx-plate{position:absolute;inset:4%;border-radius:50%;background:radial-gradient(circle at 50% 42%,#fff 0 58%,#e3f0f2 74%,#c9e2e7 100%);box-shadow:0 40px 60px rgba(15,46,54,.18);opacity:calc(1 - var(--sl,0));scale:calc(1 - var(--sl,0) * .3)}
+.bx-pz{position:absolute;inset:8%;z-index:2;translate:calc(var(--sl,0) * -40% + var(--d,0) * 70%) calc(var(--sl,0) * -40% - var(--d,0) * 6%);scale:calc(1 - var(--sl,0) * .64 - var(--d,0) * .1);rotate:calc(var(--q,0) * 120deg);filter:drop-shadow(0 calc(var(--sl,0) * 18px) calc(var(--sl,0) * 20px) rgba(0,0,0,.35))}
 .bx-pz>div{position:absolute;border-radius:50%}
 /* real build: photo layers that arrive one by one as the page scrolls */
 .bx-l{position:absolute;inset:0;width:100%;height:100%;display:block;user-select:none}
-.bx-dough{scale:calc(.4 + clamp(0,var(--p,0) * 9,1) * .6);opacity:clamp(0,var(--p,0) * 9,1)}
-.bx-sauce{scale:calc(.25 + clamp(0,(var(--p,0) - .15) * 9,1) * .75);opacity:clamp(0,(var(--p,0) - .15) * 12,1);rotate:calc(clamp(0,(var(--p,0) - .15) * 9,1) * 160deg)}
-.bx-cheese{opacity:clamp(0,(var(--p,0) - .31) * 9,1);scale:calc(1.25 - clamp(0,(var(--p,0) - .31) * 9,1) * .25);filter:drop-shadow(0 2px 2px rgba(80,40,0,.25))}
-.bx-toppings{-webkit-mask-image:conic-gradient(#000 calc(clamp(0,(var(--p,0) - .47) * 6.5,1) * 360deg),transparent 0);mask-image:conic-gradient(#000 calc(clamp(0,(var(--p,0) - .47) * 6.5,1) * 360deg),transparent 0);filter:saturate(.85) brightness(1.06)}
-.bx-baked{opacity:clamp(0,(var(--p,0) - .66) * 7,1);border-radius:50%}
-.bx-heat{position:absolute;inset:-6%;border-radius:50%;background:radial-gradient(circle,rgba(242,140,40,.45),transparent 65%);opacity:calc(clamp(0,(var(--p,0) - .63) * 6,1) - clamp(0,(var(--p,0) - .84) * 8,1));animation:heat 1.4s ease-in-out infinite alternate}
+.bx-dough{scale:calc(.4 + clamp(0,var(--q,0) * 9,1) * .6);opacity:clamp(0,var(--q,0) * 9,1)}
+.bx-sauce{scale:calc(.25 + clamp(0,(var(--q,0) - .15) * 9,1) * .75);opacity:clamp(0,(var(--q,0) - .15) * 12,1);rotate:calc(clamp(0,(var(--q,0) - .15) * 9,1) * 160deg)}
+.bx-cheese{opacity:clamp(0,(var(--q,0) - .31) * 9,1);scale:calc(1.25 - clamp(0,(var(--q,0) - .31) * 9,1) * .25);filter:drop-shadow(0 2px 2px rgba(80,40,0,.25))}
+.bx-toppings{-webkit-mask-image:conic-gradient(#000 calc(clamp(0,(var(--q,0) - .47) * 6.5,1) * 360deg),transparent 0);mask-image:conic-gradient(#000 calc(clamp(0,(var(--q,0) - .47) * 6.5,1) * 360deg),transparent 0);filter:saturate(.85) brightness(1.06)}
+.bx-baked{opacity:clamp(0,(var(--q,0) - .66) * 7,1);border-radius:50%}
+.bx-heat{position:absolute;inset:-6%;border-radius:50%;background:radial-gradient(circle,rgba(242,140,40,.45),transparent 65%);opacity:calc(clamp(0,(var(--q,0) - .63) * 6,1) - clamp(0,(var(--q,0) - .84) * 8,1) - var(--sl,0));animation:heat 1.4s ease-in-out infinite alternate}
 @keyframes heat{to{scale:1.08}}
-.bx-steam{position:absolute;left:44%;top:6%;width:12%;height:34%;opacity:calc(clamp(0,(var(--p,0) - .7) * 6,1) - clamp(0,(var(--p,0) - .86) * 8,1))}
+/* the garlic bread: a slate board slides in, then butter, herbs and the oven arrive as the page scrolls */
+.bx-gb{position:absolute;inset:20% 0 14%;z-index:1;translate:calc((1 - clamp(0,var(--g,0) * 7,1)) * 115% + var(--d,0) * 30%) calc(var(--d,0) * -30%);scale:calc(1 - var(--d,0) * .5);opacity:clamp(0,var(--g,0) * 7,1)}
+.bx-board{position:absolute;inset:0 0;border-radius:22px;background:linear-gradient(160deg,#4a4a48,#262624 60%,#1b1b1a);box-shadow:0 40px 60px rgba(0,0,0,.35),inset 0 2px 0 rgba(255,255,255,.12);rotate:-5deg}
+.bx-g{position:absolute;left:7%;top:50%;width:86%;height:auto;translate:0 -50%;rotate:-5deg;user-select:none;filter:drop-shadow(0 10px 10px rgba(0,0,0,.35))}
+.bx-g-butter{-webkit-mask-image:linear-gradient(100deg,#000 calc(clamp(0,(var(--g,0) - .18) * 4.5,1) * 112% - 12%),transparent calc(clamp(0,(var(--g,0) - .18) * 4.5,1) * 112%));mask-image:linear-gradient(100deg,#000 calc(clamp(0,(var(--g,0) - .18) * 4.5,1) * 112% - 12%),transparent calc(clamp(0,(var(--g,0) - .18) * 4.5,1) * 112%))}
+.bx-g-herb{opacity:clamp(0,(var(--g,0) - .44) * 6,1);scale:calc(1.06 - clamp(0,(var(--g,0) - .44) * 6,1) * .06)}
+.bx-g-baked{opacity:clamp(0,(var(--g,0) - .68) * 6,1)}
+.bx-heat2{position:absolute;inset:-10%;border-radius:50%;background:radial-gradient(circle,rgba(242,140,40,.5),transparent 62%);opacity:calc(clamp(0,(var(--g,0) - .62) * 6,1) - clamp(0,(var(--g,0) - .86) * 8,1));animation:heat 1.4s ease-in-out infinite alternate}
+.bx-lists{display:grid}
+.bx-list{grid-area:1/1;transition:opacity .5s,translate .6s var(--ease)}
+.bx-list.b{opacity:0;translate:0 40px;pointer-events:none}
+.bx[data-ph="1"] .bx-list.a{opacity:0;translate:0 -40px;pointer-events:none}
+.bx[data-ph="1"] .bx-list.b{opacity:1;translate:0 0;pointer-events:auto}
+.bx-sub{display:inline-block;font-family:"Courgette",cursive;font-size:clamp(22px,2vw,28px);color:var(--gold,#F2B632);rotate:-3deg;margin-bottom:6px}
+.bx-steam{position:absolute;left:44%;top:6%;width:12%;height:34%;z-index:3;opacity:calc(clamp(0,(var(--q,0) - .7) * 6,1) - var(--sl,0) + clamp(0,(var(--g,0) - .75) * 6,1) - var(--d,0) * 3)}
 .bx-steam i{position:absolute;bottom:0;left:var(--l);width:26px;height:110px;border-radius:50%;background:radial-gradient(closest-side,rgba(255,255,255,.95),transparent);filter:blur(6px);animation:hxSteam 3.6s ease-in infinite;animation-delay:var(--dl)}
-.bx-route{position:absolute;inset:0;opacity:clamp(0,(var(--p,0) - .78) * 6,1)}
+.bx-route{position:absolute;inset:0;z-index:3;opacity:clamp(0,var(--d,0) * 3,1)}
 .bx-route svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
-.bx-route path{stroke-dasharray:8 10;stroke-dashoffset:calc(var(--p,0) * -400)}
+.bx-route path{stroke-dasharray:8 10;stroke-dashoffset:calc(var(--d,0) * -400)}
 .bx-pin-ic{position:absolute;right:2%;top:8%;font-size:clamp(34px,4vw,52px);animation:pinB 1s ease-in-out infinite alternate}
 @keyframes pinB{to{translate:0 -10px}}
 @media (max-width:900px){
-  .bx{height:440vh}
+  .bx{height:720vh}
   .bx-steps li h3{font-size:19px}.bx-steps{gap:0}
   .bx-in{grid-template-columns:1fr;gap:12px}
   .bx-stage{order:-1;width:min(78vw,46vh)}
@@ -1385,7 +1399,8 @@ body.drawer-open{overflow:hidden}
 @media (prefers-reduced-motion:reduce){
   .home-bg i{animation:none}
   .bx{height:auto}.bx-pin{position:static;height:auto;padding:64px 0}
-  .bx{--p:.6}.bx-steps li{opacity:1;translate:none}.bx-steps li p{max-height:none}
+  .bx{--p:.6;--q:1;--sl:1;--g:1;--d:0}.bx-steps li{opacity:1;translate:none}.bx-steps li p{max-height:none}
+  .bx-list{grid-area:auto}.bx-list.b,.bx-list.a{opacity:1;translate:none}
   .home .rv:not(.in) .w>span{transform:none}
   .fw{opacity:1}
 }
@@ -1592,7 +1607,14 @@ html.lenis,html.lenis body{height:auto}
 .hg .sig-ft .from{color:rgba(255,255,255,.7)}.hg .sig-ft .from b{color:#fff;font-family:"Anton",Impact,sans-serif;font-weight:400;font-size:28px}
 .hg .sig-ft .btn.pri{background:#f2b632;border-color:#f2b632;color:#3a2800}
 .hg .sig-grid .sig:nth-child(even){margin-top:30px}
-@media (max-width:900px){.hg .sig-grid .sig{height:min(58vh,420px)}}
+.hg-try{position:absolute;right:clamp(16px,5vw,80px);top:clamp(70px,13vh,130px);z-index:3;width:clamp(110px,11vw,160px);aspect-ratio:1;border:0;border-radius:50%;background:#B2533A;color:#FFF8EC;cursor:pointer;display:grid;place-items:center;padding:0;box-shadow:0 12px 30px rgba(178,83,58,.35);rotate:-10deg;transition:scale .3s var(--ease)}
+.hg-try:hover{scale:1.08}
+.hg-try svg{position:absolute;inset:0;width:100%;height:100%;animation:spin 18s linear infinite}
+.hg-try text{font-family:"Anton",Impact,sans-serif;font-size:19px;fill:#F2B632;letter-spacing:1px}
+.hg-try b{font-family:"Courgette",cursive;font-weight:400;font-size:clamp(20px,1.9vw,28px);line-height:1;rotate:-8deg}
+@media (max-width:900px){.hg-try{top:6px;right:12px;width:84px}.hg-try b{font-size:18px}.hg .sx-h p{display:none}.hg .sig-grid{padding-top:44px}}
+@media (prefers-reduced-motion:reduce){.hg-try svg{animation:none}}
+@media (max-width:900px){.hg .sig-grid .sig{height:min(50vh,380px);width:min(70vw,290px)}}
 
 @media (prefers-reduced-motion:reduce){
   .hx-copy,.hx-stage,.hx-spin svg,.hx-card,.hx-badge,.hx-f>div{transform:none!important;opacity:1!important}
@@ -1648,6 +1670,36 @@ html.lenis,html.lenis body{height:auto}
 @media (max-width:720px){.gang-steps{grid-template-columns:1fr}.gang-fig{aspect-ratio:4/3}}
 
 /* ===== Visit: big name, address, open-now box, buttons and a drawn map with our menu as the places ===== */
+.hrs{background:#F2B632;color:#4a1f10;padding:clamp(64px,8vw,120px) 0;overflow:hidden;position:relative}
+.hrs-in{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:clamp(28px,5vw,72px);align-items:center}
+.hrs-kick{font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#B2533A;font-size:14px}
+.hrs-big{font-family:"Anton",Impact,sans-serif;font-weight:400;text-transform:uppercase;font-size:clamp(60px,7.6vw,128px);line-height:.88;margin:10px 0 26px;color:#B2533A;letter-spacing:.005em}
+.hrs-card{background:#B2533A;color:#FFF8EC;border-radius:24px;padding:12px 26px;box-shadow:0 10px 0 rgba(74,31,16,.22);max-width:540px;rotate:-1.5deg}
+.hrs-card ul{list-style:none;margin:0;padding:0}
+.hrs-card li{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:10px 0;border-top:1px dashed rgba(255,248,236,.32);font-family:"Anton",Impact,sans-serif;text-transform:uppercase;font-size:clamp(17px,1.7vw,23px);letter-spacing:.02em;opacity:.78}
+.hrs-card li:first-child{border-top:0}
+.hrs-card li b{font-weight:400;display:flex;align-items:center;gap:10px}
+.hrs-card li span{white-space:nowrap}
+.hrs-card li i{font-style:normal;color:#F2B632;margin:0 4px}
+.hrs-card li.on{opacity:1;color:#F2B632}.hrs-card li.on i{color:#FFF8EC}
+.hrs-hoy{font-family:"Courgette",cursive;text-transform:none;font-size:.9em;background:#F2B632;color:#B2533A;border-radius:10px;padding:2px 10px 4px;rotate:-6deg;display:inline-block;animation:pinB 1s ease-in-out infinite alternate}
+.hrs-script{font-family:"Courgette",cursive;font-size:clamp(26px,2.6vw,38px);color:#B2533A;margin:28px 0 0;rotate:-3deg}
+.hrs-art{position:relative;aspect-ratio:1;width:min(100%,580px);justify-self:center}
+.hrs-disc{position:absolute;inset:8%;border-radius:50%;background:#B2533A;display:grid;place-items:center;box-shadow:inset 0 0 0 16px rgba(255,248,236,.1),0 30px 60px rgba(74,31,16,.25)}
+.hrs-disc svg{position:absolute;inset:0;width:100%;height:100%;animation:spin 40s linear infinite}
+.hrs-disc text{font-family:"Anton",Impact,sans-serif;font-size:15px;fill:#F2B632;letter-spacing:1px}
+.hrs-num{display:flex;flex-direction:column;align-items:center;font-family:"Anton",Impact,sans-serif;font-weight:400;color:#FFF8EC;font-size:clamp(80px,10vw,150px);line-height:.85}
+.hrs-num small{font-family:"Courgette",cursive;font-size:.32em;color:#F2B632;line-height:1.2}
+.hrs-i{position:absolute;height:auto;user-select:none;filter:drop-shadow(0 18px 18px rgba(74,31,16,.35));translate:0 calc((var(--p,.5) - .5) * var(--m,-80px));animation:hrsBob var(--t,5s) ease-in-out infinite alternate}
+@keyframes hrsBob{from{transform:rotate(var(--r0,-4deg))}to{transform:translateY(-14px) rotate(var(--r1,5deg))}}
+.hi1{left:-6%;top:2%;width:34%;--m:-140px;--r0:-24deg;--r1:-12deg}
+.hi2{right:-2%;top:4%;width:21%;--m:-70px;--r0:6deg;--r1:12deg;--t:6s}
+.hi3{left:-2%;bottom:8%;width:50%;--m:110px;--r0:-14deg;--r1:-8deg;--t:5.5s}
+.hi4{right:6%;bottom:2%;width:17%;--m:160px;--t:4.5s}
+.hi5{left:46%;top:-6%;width:12%;--m:-190px;--t:4s}
+.hi6{right:30%;bottom:-3%;width:8%;--m:220px;--t:3.6s}
+@media (max-width:900px){.hrs-card{padding:8px 16px}.hrs-card li{font-size:15px;gap:8px}.hrs-hoy{font-size:13px;padding:1px 7px 3px}.hrs-in{grid-template-columns:1fr}.hrs-art{width:min(92vw,460px)}}
+@media (prefers-reduced-motion:reduce){.hrs-i,.hrs-disc svg,.hrs-hoy{animation:none}}
 .visit{background:#2B9FA8;color:#FFF8EC;padding:clamp(64px,8vw,110px) 0;overflow:hidden;position:relative}
 .visit::before{content:"ANAND";position:absolute;left:-2vw;bottom:-4vw;font-family:"Anton",Impact,sans-serif;font-size:clamp(140px,26vw,420px);line-height:.8;color:transparent;-webkit-text-stroke:2px rgba(255,248,236,.18);pointer-events:none}
 .visit-in{display:grid;grid-template-columns:minmax(0,.95fr) minmax(0,1.05fr);gap:clamp(28px,5vw,64px);align-items:center;position:relative}
@@ -1668,16 +1720,18 @@ html.lenis,html.lenis body{height:auto}
 .vi-btn:hover{transform:translateY(-3px) rotate(-1.5deg)}
 .vi-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px}
 .vi-chips span{padding:7px 14px;border-radius:999px;background:rgba(255,248,236,.14);font-weight:700;font-size:13.5px}
-.vi-map{position:relative}
-.vi-card{position:relative;border-radius:28px;overflow:hidden;border:12px solid rgba(255,248,236,.28);aspect-ratio:10/7;box-shadow:0 30px 60px rgba(4,40,48,.3)}
-.vi-card svg{position:absolute;inset:0;width:100%;height:100%}
+.vi-map{position:relative;display:block;color:inherit;text-decoration:none;cursor:pointer}
+.vi-map:hover .vi-card{transform:rotate(-1deg) scale(1.01)}
+.vi-map:focus-visible .vi-card{outline:4px solid #F2B632;outline-offset:4px}
+.vi-card{position:relative;border-radius:28px;overflow:hidden;border:12px solid rgba(255,248,236,.28);aspect-ratio:10/7;box-shadow:0 30px 60px rgba(4,40,48,.3);background:#FFF8EC;transition:transform .4s var(--ease)}
+.vi-gmap{position:absolute;inset:0;width:100%;height:100%;border:0;pointer-events:none;filter:sepia(.32) saturate(1.25) hue-rotate(-12deg) contrast(1.04)}
 .vi-lab{position:absolute;translate:-50% -50%;display:inline-flex;align-items:center;gap:6px;background:#2B9FA8;color:#FFF8EC;font-weight:800;font-size:clamp(11px,1.1vw,14px);letter-spacing:.06em;text-transform:uppercase;padding:5px 12px;border-radius:999px;white-space:nowrap;box-shadow:0 4px 0 rgba(8,42,49,.25)}
 .vi-lab::before{content:"";width:8px;height:8px;border-radius:50%;background:#F2B632}
-.vi-pin{position:absolute;left:53.75%;top:53%;width:13%;height:auto;translate:-50% -96%;filter:drop-shadow(0 8px 8px rgba(0,0,0,.3));animation:pinB 1s ease-in-out infinite alternate}
-.vi-here{position:absolute;left:31%;top:44%;rotate:-6deg;background:#F2B632;color:#3a2800;border-radius:12px;padding:6px 16px 8px;box-shadow:0 6px 0 rgba(8,42,49,.2);line-height:1}
+.vi-pin{position:absolute;left:50%;top:50%;width:13%;height:auto;translate:-50% -96%;filter:drop-shadow(0 8px 8px rgba(0,0,0,.3));animation:pinB 1s ease-in-out infinite alternate}
+.vi-here{position:absolute;left:27%;top:38%;rotate:-6deg;background:#F2B632;color:#3a2800;border-radius:12px;padding:6px 16px 8px;box-shadow:0 6px 0 rgba(8,42,49,.2);line-height:1}
 .vi-here b{display:block;font-family:"Courgette",cursive;font-size:clamp(22px,2.4vw,32px);font-weight:400}
 .vi-here small{font-weight:800;letter-spacing:.08em;text-transform:uppercase;font-size:11px}
-.vi-note{position:absolute;left:12px;bottom:8px;font-size:11px;color:#8a6d5a}
+.vi-note{position:absolute;left:12px;bottom:10px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#FFF8EC;background:#B2533A;padding:4px 10px;border-radius:999px}
 .vi-badge{position:absolute;right:-26px;bottom:-40px;width:clamp(110px,12vw,170px);height:auto;rotate:10deg;animation:logoBob 5.5s ease-in-out infinite alternate}
 @media (max-width:900px){.visit-in{grid-template-columns:1fr}.vi-badge{right:-8px;bottom:-30px}.vi-big{margin-bottom:18px}}
 
@@ -2265,42 +2319,18 @@ function leadBadge(x,dow){
 function heroPizza(){return '<img class="hx-real" src="img/hero-pizza.webp" alt="Veggie Paradise pizza from Cheesy Pizza" width="900" height="900" draggable="false">'}
 // The pizza's own ingredients float around it (img/ing). Each one can be grabbed and thrown; it springs back.
 const FLOATERS=[['tomato-slice',-8,58,15,140,26,6,-12,8],['olive',80,-4,9,180,34,7,-6,10,'m'],['capsicum',86,58,13,220,40,5.5,-8,6],['mushroom',58,-12,11,110,20,6.5,-10,10,'m'],
-  ['basil',-24,6,13,160,30,7.5,-8,4,'m'],['cheese',20,86,11,240,44,5,6,-4,'m'],['onion',112,24,13,170,32,6.5,-10,12,'m'],['corn',46,94,9,200,36,7.5,8,-6,'m'],['olive',2,-8,7,130,24,6,0,20,'m'],['tomato',104,86,12,190,38,7,-6,8,'m']];
+  ['basil',-24,6,13,160,30,7.5,-8,4,'m'],['cheese',20,86,11,240,44,5,6,-4,'m'],['onion',112,24,13,170,32,6.5,-10,12,'m'],['corn',46,94,9,200,36,7.5,8,-6,'m'],['olive',2,-8,7,130,24,6,0,20,'m'],['tomato-slice',104,86,12,190,38,7,-6,8,'m']];
 
-
-// The visit section's map: drawn, not a real map. Streets, a canal and blocks around the shop, with our
-// menu as the place labels and the pin on the shop. Same picture every time, so it is built once.
-let VISIT_MAP=null;
-function visitMap(){
-  if(VISIT_MAP)return VISIT_MAP;
-  let seed=11;const rnd=()=>(seed=(seed*1103515245+12345)>>>0)/4294967296,f=n=>n.toFixed(1);
-  const W=800,H=560,main=x=>352-x*.12+Math.sin(x/110)*14,canal=x=>178+Math.sin(x/150)*42+x*.05;
-  const sides=[[120,-20,90,600],[300,-20,330,600],[520,-20,470,600],[660,120,760,600],[0,250,240,230],[560,470,800,430],[240,560,330,352]];
-  const near=(x,y)=>Math.abs(y-main(x))<26||Math.abs(y-canal(x))<22||sides.some(([x1,y1,x2,y2])=>{const t=Math.max(0,Math.min(1,((x-x1)*(x2-x1)+(y-y1)*(y2-y1))/((x2-x1)**2+(y2-y1)**2)));return Math.hypot(x-(x1+t*(x2-x1)),y-(y1+t*(y2-y1)))<18});
-  let blocks='';
-  for(let y=14;y<H;y+=24)for(let x=10;x<W;x+=26){
-    const bx=x+rnd()*8,by=y+rnd()*8,w=10+rnd()*12,h=8+rnd()*10;
-    if(rnd()<.18||near(bx+w/2,by+h/2)||Math.hypot(bx-430,by-322)<46)continue;
-    blocks+=`<rect x="${f(bx)}" y="${f(by)}" width="${f(w)}" height="${f(h)}" transform="rotate(${f((rnd()-.5)*24)} ${f(bx+w/2)} ${f(by+h/2)})"/>`;
-  }
-  const path=fn=>{let d='';for(let x=-10;x<=W+10;x+=10)d+=(d?'L':'M')+x+' '+f(fn(x));return d};
-  return VISIT_MAP=`<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-    <rect width="${W}" height="${H}" fill="#FFF8EC"/>
-    <path d="${path(canal)}" fill="none" stroke="#2BA3B5" stroke-width="10" stroke-linecap="round"/><path d="${path(canal)}" fill="none" stroke="#9ED8E0" stroke-width="3"/>
-    <g fill="#FCE3A6" stroke="#B2533A" stroke-width="1.4">${blocks}</g>
-    <g fill="none" stroke="#B2533A" stroke-linecap="round">${sides.map(([a,b,c,d])=>`<path d="M${a} ${b}L${c} ${d}" stroke-width="3"/>`).join('')}</g>
-    <path d="${path(main)}" fill="none" stroke="#B2533A" stroke-width="9" stroke-linecap="round"/><path d="${path(main)}" fill="none" stroke="#F2B632" stroke-width="2.2" stroke-dasharray="10 9"/>
-    <ellipse cx="430" cy="${f(main(430)+6)}" rx="46" ry="15" fill="none" stroke="#E2432A" stroke-width="3" opacity=".55"/>
-  </svg>`;
-}
 
 function renderHome(){
-  const o=cur(),ph=o.phone||'7778043066',open=isOpen(),dow=new Date().getDay(),addr=shopAddr(o);
+  const o=cur(),ph=o.phone||'7778043066',open=isOpen(),dow=new Date().getDay(),addr=shopAddr(o),mapUrl='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent('Cheesy Pizza, '+addr);
   const pizzas=S.menu.filter(m=>m.cat==='pizza'&&!m.off);
   const lead=leadOffer(dow);const live=S.offers.filter(x=>x.active).sort((a,b)=>dayOK(b,dow)-dayOK(a,dow));
   const combos=S.combos.filter(c=>c.active);const best=S.menu.filter(m=>m.best&&!m.off);
   const feat=pizzas.find(m=>m.best&&m.img)||pizzas.find(m=>m.img)||pizzas[0];
-  const sig=[...pizzas.filter(m=>m.img),...pizzas.filter(m=>!m.img)].slice(0,6);
+  const sig=[...pizzas.filter(m=>m.img),...pizzas.filter(m=>!m.img)].slice(0,7);
+  // the gallery: the pizzas, then one of each side that has a photo (garlic bread, pockets, fries…)
+  const sides=S.menu.filter(m=>m.cat!=='pizza'&&!m.off&&m.img).filter((m,i,a)=>a.findIndex(x=>x.img===m.img)===i).slice(0,5),items=[...sig,...sides];
   const jain=pizzas.filter(m=>m.jain).length;const minPz=pizzas.length?Math.min(...pizzas.map(fromPrice)):0;
   const enter=U.enter&&!RM()?' enter':'';
   const name=m=>`${esc(m.name)}${m.jain?' <span class="jain" title="Jain option">J</span>':''}${m.spicy?' <span title="Spicy">'+'🌶'.repeat(m.spicy)+'</span>':''}`;
@@ -2308,7 +2338,9 @@ function renderHome(){
   const lb=lead?leadBadge(lead,dow):null;
   const floaters=FLOATERS.map(([k,x,y,w,z,d,t,r0,r1,m],i)=>`<div class="hx-f${m?' m-hide':''}" style="--x:${x}%;--y:${y}%;--w:${w}%;--z:${z}px;--d:${d};--k:${i};--t:${t}s;--r0:${r0}deg;--r1:${r1}deg;--dl:-${i*1.3}s"><div class="hx-grab" data-grab><img src="img/ing/${k}.webp" alt="" draggable="false"></div></div>`).join('');
   const steps=[['Fresh dough','Stretched by hand for every order, so the base stays soft.'],['Our tomato sauce','Spread from the middle out, edge to edge.'],['Real cheese','A proper blanket of it. Never a drop of mayonnaise.'],
-    ['Your toppings','Onion, capsicum, corn, olives, paneer… you pick them when you build it.'],['Baked live',`Into our hot oven, out golden in about ${PREP_MIN} minutes.`],['To your door','Boxed and on its way. Follow the rider live on the map.']];
+    ['Your toppings','Onion, capsicum, corn, olives, paneer… you pick them when you build it.'],['Baked live',`Into our hot oven, out golden in about ${PREP_MIN} minutes.`],
+    ['Soft dough sticks','The same fresh dough, rolled into soft sticks.'],['Garlic butter','Brushed on warm, end to end. Real butter, real garlic.'],['Herbs on top','Oregano, parsley and a pinch of chilli flakes.'],
+    ['Baked golden','Into the oven till the tops turn golden and crisp.'],['To your door','Boxed hot with your pizza. Follow the rider live on the map.']];
   const p1=fillWords('Cheesy Pizza is a pure veg pizza shop from Gujarat. Every base starts as fresh dough, stretched by hand and baked soft, then loaded with cheese the way the name promises.');
   const p2a=fillWords("We don't use mayonnaise in any product."),p2b=fillWords(`Not in the pockets, not in the dips, not anywhere.${jain?` ${jain} of our pizzas come in a Jain option, too.`:''}`);
   const craft=['Fresh dough','Hand stretched','Soft base','Live pizza','Pure veg','No mayonnaise'].map(t=>`<span><b>✦</b> ${t}</span>`).join('');
@@ -2337,9 +2369,10 @@ function renderHome(){
   </section>
   <div class="ribbons"><div class="rb a">${(t=>{const i=t.indexOf('>',t.indexOf('class="tk"'))+1,j=t.lastIndexOf('</div></div>'),x=t.slice(i,j);return t.slice(0,i)+x+x+t.slice(j)})(offerTicker())}</div><div class="rb b" aria-hidden="true"><div class="ticker"><div class="tk" style="animation-duration:60s">${craft}${craft}${craft}${craft}</div></div></div></div>
 
-  ${sig.length?`<section class="sx hg" id="signature" data-sx="hpin"><div class="hg-pin"><div class="hg-word" aria-hidden="true">Signature pizzas</div><div class="sx-in">
-    <div class="sx-h"><div><span class="kick">From the oven</span><h2>Signature <em>pizzas</em></h2></div><p>Pick a size, go cheese burst, pile on extra toppings. Tap a pizza to see it up close.</p></div></div>
-    <div class="hg-track"><div class="sig-grid">${sig.map((m,i)=>{const tags=itemOfferTags(m,dow);return `<article class="sig"><span class="sig-no">No. ${String(i+1).padStart(2,'0')}</span>${m.best||tags.length?`<div class="ribbon">${m.best?'<span>Best seller</span>':''}${tags.map(t=>`<span class="o">${esc(t)}</span>`).join('')}</div>`:''}
+  ${sig.length?`<section class="sx hg" id="signature" data-sx="hpin"><div class="hg-pin"><div class="hg-word" aria-hidden="true">Ekdum cheesy</div>
+    <button class="hg-try" data-act="pn" data-v="menu" aria-label="See the full menu"><svg viewBox="0 0 200 200" aria-hidden="true"><defs><path id="hgtp" d="M100 100m-78 0a78 78 0 1 1 156 0a78 78 0 1 1-156 0"/></defs><text><textPath href="#hgtp" textLength="488" lengthAdjust="spacing">AAVO, CHAKHO! · COME TASTE IT! ·</textPath></text></svg><b>Try<br>it!</b></button><div class="sx-in">
+    <div class="sx-h"><div><span class="kick">Pizzas, garlic bread &amp; more</span><h2>Ekdum <em>cheesy</em></h2></div><p>Our pizzas, then the sides: garlic bread, pockets and fries. Keep scrolling and they slide past. Tap any of them to see it up close.</p></div></div>
+    <div class="hg-track"><div class="sig-grid">${items.map((m,i)=>{const tags=itemOfferTags(m,dow);return `<article class="sig"><span class="sig-no">No. ${String(i+1).padStart(2,'0')}</span>${m.best||tags.length?`<div class="ribbon">${m.best?'<span>Best seller</span>':''}${tags.map(t=>`<span class="o">${esc(t)}</span>`).join('')}</div>`:''}
       <div class="sig-ph" data-act="pz-info" data-id="${m.id}" role="button" tabindex="0" aria-label="About ${esc(m.name)}">${thumb(m)}</div>
       <h3>${name(m)}</h3><p>${esc(m.desc)}</p>
       <div class="sig-ft"><span class="from">from<b class="num">${rs(fromPrice(m))}</b></span>${addBtn(m,'Add <span class="arr" aria-hidden="true">+</span>')}</div></article>`}).join('')}</div></div>
@@ -2365,11 +2398,12 @@ function renderHome(){
   </div></section>
 
   <section class="bx" id="how" data-sx="pin" data-step="0" aria-labelledby="bx-title"><div class="bx-pin"><div class="sx-in bx-in">
-    <div class="bx-copy"><span class="kick">How we make your pizza</span><h2 id="bx-title">From dough <em>to your door.</em></h2>
-      <ol class="bx-steps">${steps.map(([h,p],i)=>`<li data-i="${i}"><b>0${i+1}</b><div><h3>${h}</h3><p>${p}</p></div></li>`).join('')}</ol>
+    <div class="bx-copy"><span class="kick">How we make your order</span><h2 id="bx-title">From dough <em>to your door.</em></h2>
+      <div class="bx-lists">${[['a','First, your pizza',0],['b','Then, the garlic bread',5]].map(([c,t,k])=>`<div class="bx-list ${c}"><span class="bx-sub">${t}</span><ol class="bx-steps">${steps.slice(k,k+5).map(([h,p],i)=>`<li data-i="${k+i}"><b>0${i+1}</b><div><h3>${h}</h3><p>${p}</p></div></li>`).join('')}</ol></div>`).join('')}</div>
       <div class="bx-bar"><i></i></div></div>
     <div class="bx-stage" aria-hidden="true"><div class="bx-plate"></div><div class="bx-heat"></div>
       <div class="bx-pz">${['dough','sauce','cheese','toppings'].map(k=>`<img class="bx-l bx-${k}" src="img/build/${k}.webp" alt="" loading="lazy" width="900" height="900">`).join('')}<img class="bx-l bx-baked" src="img/hero-pizza.webp" alt="" loading="lazy" width="900" height="900"></div>
+      <div class="bx-gb"><div class="bx-board"></div><div class="bx-heat2"></div>${['raw','butter','herb','baked'].map(k=>`<img class="bx-g bx-g-${k}" src="img/build/gb-${k}.webp" alt="" loading="lazy" width="900" height="480">`).join('')}</div>
       <div class="bx-steam"><i style="--l:0px;--dl:0s"></i><i style="--l:34px;--dl:1.2s"></i><i style="--l:-30px;--dl:2.3s"></i></div>
       <div class="bx-route"><svg viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M50 50C66 46 78 30 90 16" fill="none" stroke="#0f7f91" stroke-width="1.6" vector-effect="non-scaling-stroke" stroke-linecap="round"/></svg><span class="bx-pin-ic">📍</span></div>
     </div>
@@ -2413,6 +2447,18 @@ function renderHome(){
     <p class="small muted" style="margin-top:12px">Please wait at least 20 minutes after booking.</p>
   </div></section>
 
+  <section class="hrs" id="hours" aria-labelledby="hrs-title"><div class="sx-in hrs-in">
+    <div class="hrs-copy">
+      <span class="hrs-kick">Pizza o'clock</span>
+      <h2 id="hrs-title" class="hrs-big">Open<br>every day</h2>
+      <div class="hrs-card"><ul>${['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'].map((d,i)=>`<li${i===(dow+6)%7?' class="on"':''}><b>${i===(dow+6)%7?'<span class="hrs-hoy">Aaje!</span>':''}${d}</b><span class="num">${esc(hrText(OPEN_H))} <i aria-label="to">→</i> ${esc(hrText(CLOSE_H))}</span></li>`).join('')}</ul></div>
+      <p class="hrs-script">${open?'The oven is on right now!':'Back at '+esc(hrText(OPEN_H))+', oven hot.'}</p>
+    </div>
+    <div class="hrs-art" data-sx aria-hidden="true"><div class="hrs-disc"><svg viewBox="0 0 200 200"><defs><path id="hrsp" d="M100 100m-86 0a86 86 0 1 1 172 0a86 86 0 1 1-172 0"/></defs><text><textPath href="#hrsp" textLength="536" lengthAdjust="spacing">FRESH DOUGH · HOT OVEN · COLD DRINKS · REALLY CHEESY ·</textPath></text></svg>
+      <b class="hrs-num"><span>${hr12(OPEN_H)}</span><small>to</small><span>${hr12(CLOSE_H)}</span></b></div>
+      ${[['slice-veggie',1],['cold-drink',2],['garlic-stick',3],['tomato-slice',4],['basil',5],['olive',6]].map(([k,n])=>`<img class="hrs-i hi${n}" src="img/ing/${k}.webp" alt="" loading="lazy" draggable="false">`).join('')}</div>
+  </div></section>
+
   <section class="visit" id="visit" aria-labelledby="visit-title"><div class="sx-in visit-in">
     <div class="vi-copy">
       <span class="vi-kick">Cheesy Pizza is at</span>
@@ -2420,16 +2466,17 @@ function renderHome(){
       <div class="vi-addr"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s-7-7.5-7-13a7 7 0 0 1 14 0c0 5.5-7 13-7 13z" fill="#F2B632"/><circle cx="12" cy="9" r="2.6" fill="#0f7f91"/></svg><p>${esc(addr.toUpperCase())}</p></div>
       <div class="vi-open"><small>Every day · ${esc(hrText(OPEN_H).toUpperCase())} to ${esc(hrText(CLOSE_H).toUpperCase())}</small>
         <b>${open?'Open now!':'Closed now'}</b><span>${open?'Till '+esc(hrText(CLOSE_H))+' tonight':'Opens at '+esc(hrText(OPEN_H))}</span></div>
-      <div class="vi-btns"><a class="vi-btn" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent('Cheesy Pizza, '+addr)}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s-7-7.5-7-13a7 7 0 0 1 14 0c0 5.5-7 13-7 13z" fill="currentColor"/></svg>Directions</a>
+      <div class="vi-btns"><a class="vi-btn" href="${mapUrl}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s-7-7.5-7-13a7 7 0 0 1 14 0c0 5.5-7 13-7 13z" fill="currentColor"/></svg>Directions</a>
         <a class="vi-btn ghost num" href="tel:+91${esc(ph)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.6 10.8a15 15 0 0 0 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1A17 17 0 0 1 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1z" fill="currentColor"/></svg>${esc(fmtPhone(ph))}</a></div>
       <div class="vi-chips">${['Pizza','Garlic bread','Cold drinks','Pure veg','No mayonnaise','UPI & cash'].map(t=>`<span>${t}</span>`).join('')}</div>
     </div>
-    <div class="vi-map"><div class="vi-card">${visitMap()}
-      ${[['Pizza',14,14],['Garlic bread',64,10],['Cold drinks',76,40],['French fries',12,72],['Paneer pockets',58,78],['Dips',86,66],['Gopi Cinema',38,28]].map(([t,x,y])=>`<span class="vi-lab" style="left:${x}%;top:${y}%">${t}</span>`).join('')}
+    <a class="vi-map" href="${mapUrl}" target="_blank" rel="noopener" aria-label="Open Cheesy Pizza in Google Maps"><div class="vi-card">
+      <iframe class="vi-gmap" src="https://maps.google.com/maps?q=${encodeURIComponent('Cheesy Pizza, '+addr)}&z=16&output=embed" title="Map to Cheesy Pizza" loading="lazy" tabindex="-1" aria-hidden="true" referrerpolicy="no-referrer-when-downgrade"></iframe>
+      ${[['Pizza',24,30],['Garlic bread',78,22],['Cold drinks',82,60],['French fries',18,72],['Paneer pockets',60,84],['Dips',88,40]].map(([t,x,y])=>`<span class="vi-lab" style="left:${x}%;top:${y}%">${t}</span>`).join('')}
       <div class="vi-here"><b>Ahiyā!</b><small>Cheesy Pizza</small></div>
       <img class="vi-pin" src="img/cheesy-pin.png" alt="" width="720" height="720">
-      <span class="vi-note">Drawn map · tap Directions for the real one</span></div>
-      <img class="vi-badge" src="img/logo-badge.png" alt="" width="804" height="824" loading="lazy"></div>
+      <span class="vi-note">Tap the map for directions ↗</span></div>
+      <img class="vi-badge" src="img/logo-badge.png" alt="" width="804" height="824" loading="lazy"></a>
   </div></section>
 
   <section class="sx dark cta-x"><div class="names" aria-hidden="true">${[0,1,2].map(r=>{const t=pizzas.filter((_,i)=>i%3===r).map(m=>`<span>${esc(m.name)}</span>`).join('');return `<div class="nr">${t}${t}${t}</div>`}).join('')}</div><span class="ring" aria-hidden="true"></span><span class="ring r2" aria-hidden="true"></span><div class="sx-in">
@@ -2455,7 +2502,7 @@ function siteFooter(){
     </div>
     <div class="vam" aria-label="Really cheesy!"><p class="vam-tr">Translation: so much cheese, yaar!</p>
       <div class="vam-row"><div class="vam-word" aria-hidden="true">${[...'¡CHEEESY!'].map((c,i)=>`<span style="--i:${i}">${c}</span>`).join('')}</div>
-        <div class="vam-food" aria-hidden="true"><i class="vam-str"></i>${[['slice-veggie',7],['garlic-stick',14],['tomato',5.5],['slice-veggie2',7],['basil',4.5],['garlic-stick',14],['tomato-slice',5.5],['slice-veggie',7],['olive',3.5],['garlic-stick',14],['tomato',5.5],['slice-veggie2',7]].map(([k,w],i)=>`<span class="vf" style="--w:${w};--i:${i}"><img src="img/ing/${k}.webp" alt="" draggable="false" loading="lazy"></span>`).join('')}</div></div>
+        <div class="vam-food" aria-hidden="true"><i class="vam-str"></i>${[['slice-veggie',7],['garlic-stick',14],['tomato-slice',5.5],['slice-veggie2',7],['basil',4.5],['garlic-stick',14],['tomato-slice',5.5],['slice-veggie',7],['olive',3.5],['garlic-stick',14],['tomato-slice',5.5],['slice-veggie2',7]].map(([k,w],i)=>`<span class="vf" style="--w:${w};--i:${i}"><img src="img/ing/${k}.webp" alt="" draggable="false" loading="lazy"></span>`).join('')}</div></div>
       <p class="vam-hint">Psst… touch the slices.</p></div>
     <div class="play"><div class="ft-big" data-sx aria-hidden="true">Really cheesy</div>${U.pubView==='home'?'<p class="play-hint" aria-hidden="true"><span class="m">Psst… grab the garlic bread</span><span class="t">Psst… tap the garlic bread</span></p>':''}</div>
     <div class="ft-bottom"><span>© ${new Date().getFullYear()} Cheesy Pizza · Pure veg</span><span lang="gu">ચીઝી પિઝ્ઝા</span></div>
@@ -2584,7 +2631,10 @@ function sxTick(){
     const r=el.getBoundingClientRect();if(r.bottom<-200||r.top>vh+200)return;
     let p;
     if(el.dataset.sx==='hpin'){if(!el.classList.contains('on'))return;const top=parseFloat(document.documentElement.style.getPropertyValue('--toph'))||64;p=(top-r.top)/Math.max(1,r.height-el.firstElementChild.clientHeight)}
-    else if(el.dataset.sx==='pin'){p=-r.top/Math.max(1,r.height-vh);const s=[.13,.29,.45,.63,.82].filter(x=>p>=x).length;if(el.dataset.step!==String(s))el.dataset.step=s}
+    else if(el.dataset.sx==='pin'){p=-r.top/Math.max(1,r.height-vh);const s=[.065,.145,.225,.315,.5,.58,.67,.76,.88].filter(x=>p>=x).length;if(el.dataset.step!==String(s))el.dataset.step=s;
+      // q: the pizza is built; sl: it slides aside; g: the garlic bread is built; d: both go out the door
+      const c=v=>Math.min(1,Math.max(0,v)).toFixed(4),ph=s>=5?'1':'0';if(el.dataset.ph!==ph)el.dataset.ph=ph;
+      el.style.setProperty('--q',c(p/.5));el.style.setProperty('--sl',c((p-.47)/.08));el.style.setProperty('--g',c((p-.52)/.36));el.style.setProperty('--d',c((p-.88)/.1))}
     else p=(vh-r.top)/(vh+r.height);
     el.style.setProperty('--p',Math.min(1,Math.max(0,p)).toFixed(4));
   });
@@ -2599,7 +2649,7 @@ function sxLayout(){
   const s=app.querySelector('.hg');if(!s)return;const pin=s.querySelector('.hg-pin'),g=s.querySelector('.sig-grid');
   s.classList.add('on');s.style.height='';
   const dist=Math.max(0,g.scrollWidth-innerWidth);
-  const gap=parseFloat(getComputedStyle(pin).rowGap)||0,need=[...pin.children].filter(c=>!c.classList.contains('hg-word')).reduce((t,c)=>t+c.offsetHeight+gap,0);
+  const gap=parseFloat(getComputedStyle(pin).rowGap)||0,need=[...pin.children].filter(c=>!c.classList.contains('hg-word')&&!c.classList.contains('hg-try')).reduce((t,c)=>t+c.offsetHeight+gap,0);
   if(RM()||dist<40||need>pin.clientHeight){s.classList.remove('on');return}
   s.style.setProperty('--dist',dist+'px');s.style.height=Math.round(pin.clientHeight+dist*1.15)+'px';
 }
@@ -2637,7 +2687,7 @@ document.documentElement.addEventListener('mouseleave',()=>{if(CUR.el)CUR.el.cla
 const PLAY={cv:null,ctx:null,eng:null,bodies:[],walls:null,raf:0,vis:false,io:null,w:0,h:0,d:1,spr:null,mc:null,push:null,load:null,filled:false,drag:false,down:null};
 // picture (img/ing), width on a 1100 px wide footer, outline: a round-cornered box (share of the height
 // used as corner radius), 'ball' or 'slice' (a triangle, tip up)
-const PLAY_KINDS={garlic:['garlic-stick',190,.42],slice:['slice-veggie',112,'slice'],slice2:['slice-veggie2',112,'slice'],tomato:['tomato',78,'ball'],
+const PLAY_KINDS={garlic:['garlic-stick',210,.45],slice:['slice-veggie',112,'slice'],slice2:['slice-veggie2',112,'slice'],tomato:['tomato-slice',74,'ball'],
   tslice:['tomato-slice',64,'ball'],cheese:['cheese',62,.12],basil:['basil',58,.3],olive:['olive',36,'ball']};
 const PLAY_DROP=['garlic','garlic','garlic','slice','slice2','tomato','tomato','tslice','cheese','basil'];
 function playSprites(){
