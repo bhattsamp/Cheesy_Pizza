@@ -1339,7 +1339,7 @@ body.drawer-open{overflow:hidden}
 .sfoot .ft-big{translate:calc((var(--p,.5) - .5) * -40%) 0}
 
 /* pinned scene: the pizza is built, baked and sent out as you scroll through the three steps */
-.bx{position:relative;height:320vh}
+.bx{position:relative;height:480vh}
 .bx-pin{position:sticky;top:var(--toph,64px);height:calc(100vh - var(--toph,64px));display:grid;align-items:center;overflow:hidden}
 .bx-in{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:clamp(24px,5vw,72px);align-items:center;width:100%}
 .bx-copy h2{font-size:clamp(34px,4.6vw,60px);line-height:1;margin:14px 0 26px}
@@ -1349,23 +1349,24 @@ body.drawer-open{overflow:hidden}
 .bx-steps li b{font-family:var(--display);font-style:italic;font-size:clamp(30px,3vw,42px);color:var(--teal);line-height:1;font-weight:500}
 .bx-steps li h3{font-size:clamp(22px,2.2vw,30px)}
 .bx-steps li p{margin:4px 0 0;color:var(--muted);max-height:0;overflow:hidden;transition:max-height .5s var(--ease)}
-.bx[data-step="0"] li[data-i="0"],.bx[data-step="1"] li[data-i="1"],.bx[data-step="2"] li[data-i="2"]{opacity:1;translate:12px 0}
-.bx[data-step="0"] li[data-i="0"] p,.bx[data-step="1"] li[data-i="1"] p,.bx[data-step="2"] li[data-i="2"] p{max-height:80px}
+.bx[data-step="0"] li[data-i="0"],.bx[data-step="1"] li[data-i="1"],.bx[data-step="2"] li[data-i="2"],.bx[data-step="3"] li[data-i="3"],.bx[data-step="4"] li[data-i="4"],.bx[data-step="5"] li[data-i="5"]{opacity:1;translate:12px 0}
+.bx[data-step="0"] li[data-i="0"] p,.bx[data-step="1"] li[data-i="1"] p,.bx[data-step="2"] li[data-i="2"] p,.bx[data-step="3"] li[data-i="3"] p,.bx[data-step="4"] li[data-i="4"] p,.bx[data-step="5"] li[data-i="5"] p{max-height:80px}
 .bx-bar{height:3px;border-radius:3px;background:var(--line);margin-top:22px;overflow:hidden}
 .bx-bar i{display:block;height:100%;background:var(--teal);transform-origin:left;scale:var(--p,0) 1}
 .bx-stage{position:relative;aspect-ratio:1;width:min(100%,560px);justify-self:center}
 .bx-plate{position:absolute;inset:4%;border-radius:50%;background:radial-gradient(circle at 50% 42%,#fff 0 58%,#e3f0f2 74%,#c9e2e7 100%);box-shadow:0 40px 60px rgba(15,46,54,.18)}
-.bx-pz{position:absolute;inset:11%;translate:calc(clamp(0,(var(--p,0) - .8) * 5,1) * 40%) calc(clamp(0,(var(--p,0) - .8) * 5,1) * -30%);scale:calc(1 - clamp(0,(var(--p,0) - .8) * 5,1) * .62);rotate:calc(var(--p,0) * 200deg)}
+.bx-pz{position:absolute;inset:8%;translate:calc(clamp(0,(var(--p,0) - .8) * 5,1) * 40%) calc(clamp(0,(var(--p,0) - .8) * 5,1) * -30%);scale:calc(1 - clamp(0,(var(--p,0) - .8) * 5,1) * .62);rotate:calc(var(--p,0) * 120deg)}
 .bx-pz>div{position:absolute;border-radius:50%}
-.bx-dough{inset:0;background:radial-gradient(circle,#F6D9A6 0 78%,#E7B26A 88%,#C98436 97%,#9E5A21 100%);scale:clamp(0,var(--p,0) * 8,1)}
-.bx-sauce{inset:9%;background:radial-gradient(circle,#D7432A 0 70%,#B92F18 100%);border-radius:48% 52% 50% 50%/52% 47% 53% 48%!important;scale:clamp(0,(var(--p,0) - .08) * 7,1)}
-.bx-cheese{inset:13%;background:radial-gradient(circle at 45% 40%,#FFF4CC 0,#FBD983 50%,#F3BC57 85%,#E79E39 100%);border-radius:47% 53% 49% 51%/51% 48% 52% 49%!important;scale:clamp(0,(var(--p,0) - .18) * 7,1)}
-.bx-bake{inset:13%;opacity:clamp(0,(var(--p,0) - .55) * 5,.85);background:radial-gradient(circle at 30% 35%,rgba(196,122,44,.55) 0 6%,transparent 7%),radial-gradient(circle at 62% 28%,rgba(196,122,44,.5) 0 5%,transparent 6%),radial-gradient(circle at 70% 64%,rgba(196,122,44,.55) 0 7%,transparent 8%),radial-gradient(circle at 38% 72%,rgba(196,122,44,.45) 0 5%,transparent 6%),radial-gradient(circle at 52% 50%,rgba(196,122,44,.35) 0 4%,transparent 5%)}
-.bx-top{position:absolute;left:var(--x);top:var(--y);width:var(--s);translate:-50% calc(-50% - (1 - clamp(0,(var(--p,0) - var(--t)) * 14,1)) * 340px);opacity:clamp(0,(var(--p,0) - var(--t)) * 14,1);rotate:var(--r)}
-.bx-top svg{display:block;width:100%;height:auto;filter:drop-shadow(0 3px 3px rgba(74,26,5,.35))}
-.bx-heat{position:absolute;inset:-6%;border-radius:50%;background:radial-gradient(circle,rgba(242,140,40,.45),transparent 65%);opacity:calc(clamp(0,(var(--p,0) - .5) * 6,1) - clamp(0,(var(--p,0) - .78) * 8,1));animation:heat 1.4s ease-in-out infinite alternate}
+/* real build: photo layers that arrive one by one as the page scrolls */
+.bx-l{position:absolute;inset:0;width:100%;height:100%;display:block;user-select:none}
+.bx-dough{scale:calc(.4 + clamp(0,var(--p,0) * 9,1) * .6);opacity:clamp(0,var(--p,0) * 9,1)}
+.bx-sauce{scale:calc(.25 + clamp(0,(var(--p,0) - .15) * 9,1) * .75);opacity:clamp(0,(var(--p,0) - .15) * 12,1);rotate:calc(clamp(0,(var(--p,0) - .15) * 9,1) * 160deg)}
+.bx-cheese{opacity:clamp(0,(var(--p,0) - .31) * 9,1);scale:calc(1.25 - clamp(0,(var(--p,0) - .31) * 9,1) * .25);filter:drop-shadow(0 2px 2px rgba(80,40,0,.25))}
+.bx-toppings{-webkit-mask-image:conic-gradient(#000 calc(clamp(0,(var(--p,0) - .47) * 6.5,1) * 360deg),transparent 0);mask-image:conic-gradient(#000 calc(clamp(0,(var(--p,0) - .47) * 6.5,1) * 360deg),transparent 0);filter:saturate(.85) brightness(1.06)}
+.bx-baked{opacity:clamp(0,(var(--p,0) - .66) * 7,1);border-radius:50%}
+.bx-heat{position:absolute;inset:-6%;border-radius:50%;background:radial-gradient(circle,rgba(242,140,40,.45),transparent 65%);opacity:calc(clamp(0,(var(--p,0) - .63) * 6,1) - clamp(0,(var(--p,0) - .84) * 8,1));animation:heat 1.4s ease-in-out infinite alternate}
 @keyframes heat{to{scale:1.08}}
-.bx-steam{position:absolute;left:44%;top:6%;width:12%;height:34%;opacity:calc(clamp(0,(var(--p,0) - .58) * 6,1) - clamp(0,(var(--p,0) - .8) * 8,1))}
+.bx-steam{position:absolute;left:44%;top:6%;width:12%;height:34%;opacity:calc(clamp(0,(var(--p,0) - .7) * 6,1) - clamp(0,(var(--p,0) - .86) * 8,1))}
 .bx-steam i{position:absolute;bottom:0;left:var(--l);width:26px;height:110px;border-radius:50%;background:radial-gradient(closest-side,rgba(255,255,255,.95),transparent);filter:blur(6px);animation:hxSteam 3.6s ease-in infinite;animation-delay:var(--dl)}
 .bx-route{position:absolute;inset:0;opacity:clamp(0,(var(--p,0) - .78) * 6,1)}
 .bx-route svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
@@ -1373,7 +1374,8 @@ body.drawer-open{overflow:hidden}
 .bx-pin-ic{position:absolute;right:2%;top:8%;font-size:clamp(34px,4vw,52px);animation:pinB 1s ease-in-out infinite alternate}
 @keyframes pinB{to{translate:0 -10px}}
 @media (max-width:900px){
-  .bx{height:300vh}
+  .bx{height:440vh}
+  .bx-steps li h3{font-size:19px}.bx-steps{gap:0}
   .bx-in{grid-template-columns:1fr;gap:12px}
   .bx-stage{order:-1;width:min(78vw,46vh)}
   .bx-copy h2{margin:8px 0 10px}
@@ -2194,10 +2196,9 @@ function leadBadge(x,dow){
 
 // The hero pizza is a real photo: our Veggie Paradise, seen from the top, on the plate that tilts and turns
 function heroPizza(){return '<img class="hx-real" src="img/hero-pizza.webp" alt="Veggie Paradise pizza from Cheesy Pizza" width="900" height="900" draggable="false">'}
-// Real food from the menu floating around the hero pizza. Each piece can be grabbed and thrown; it springs back.
-const FLOAT={garlic:'garlicbread',fries:'fries',pocket:'paneerpockets',masala:'masalabread',marg:'margherita',mex:'mexican',dbl:'doublecheese',kath:'kathiyavadi'};
-const FLOATERS=[['garlic',-6,60,30,140,26,6,-12,8],['fries',80,-6,19,180,34,7,-6,10,'m'],['pocket',86,58,22,220,40,5.5,-8,6],['marg',58,-14,15,110,20,6.5,-10,10,'m'],
-  ['mex',-26,6,20,160,30,7.5,-8,4,'m'],['dbl',118,26,15,170,32,6.5,-10,12,'m']];
+// The pizza's own ingredients float around it (img/ing). Each one can be grabbed and thrown; it springs back.
+const FLOATERS=[['tomato-slice',-8,58,15,140,26,6,-12,8],['olive',80,-4,9,180,34,7,-6,10,'m'],['capsicum',86,58,13,220,40,5.5,-8,6],['mushroom',58,-12,11,110,20,6.5,-10,10,'m'],
+  ['basil',-24,6,13,160,30,7.5,-8,4,'m'],['cheese',20,86,11,240,44,5,6,-4,'m'],['onion',112,24,13,170,32,6.5,-10,12,'m'],['corn',46,94,9,200,36,7.5,8,-6,'m'],['olive',2,-8,7,130,24,6,0,20,'m'],['tomato',104,86,12,190,38,7,-6,8,'m']];
 
 function renderHome(){
   const o=cur(),ph=o.phone||'7778043066',open=isOpen(),dow=new Date().getDay(),addr=shopAddr(o);
@@ -2211,20 +2212,12 @@ function renderHome(){
   const name=m=>`${esc(m.name)}${m.jain?' <span class="jain" title="Jain option">J</span>':''}${m.spicy?' <span title="Spicy">'+'🌶'.repeat(m.spicy)+'</span>':''}`;
   const addBtn=(m,label='Add',cls='btn pri')=>`<button class="${cls}" data-act="pub-add" data-id="${m.id}" aria-label="Add ${esc(m.name)} to cart">${label}</button>`;
   const lb=lead?leadBadge(lead,dow):null;
-  const floaters=FLOATERS.map(([k,x,y,w,z,d,t,r0,r1,m],i)=>`<div class="hx-f${m?' m-hide':''}" style="--x:${x}%;--y:${y}%;--w:${w}%;--z:${z}px;--d:${d};--k:${i};--t:${t}s;--r0:${r0}deg;--r1:${r1}deg;--dl:-${i*1.3}s"><div class="hx-grab" data-grab><img src="img/play/${FLOAT[k]}.webp" alt="" draggable="false"></div></div>`).join('');
-  const steps=[['Build it','Pick size, cheese burst base and toppings. See it on screen.'],['We bake it',`Fresh in our oven in about ${PREP_MIN} minutes.`],['Track it live','Follow the rider on the map right to your door.']];
+  const floaters=FLOATERS.map(([k,x,y,w,z,d,t,r0,r1,m],i)=>`<div class="hx-f${m?' m-hide':''}" style="--x:${x}%;--y:${y}%;--w:${w}%;--z:${z}px;--d:${d};--k:${i};--t:${t}s;--r0:${r0}deg;--r1:${r1}deg;--dl:-${i*1.3}s"><div class="hx-grab" data-grab><img src="img/ing/${k}.webp" alt="" draggable="false"></div></div>`).join('');
+  const steps=[['Fresh dough','Stretched by hand for every order, so the base stays soft.'],['Our tomato sauce','Spread from the middle out, edge to edge.'],['Real cheese','A proper blanket of it. Never a drop of mayonnaise.'],
+    ['Your toppings','Onion, capsicum, corn, olives, paneer… you pick them when you build it.'],['Baked live',`Into our hot oven, out golden in about ${PREP_MIN} minutes.`],['To your door','Boxed and on its way. Follow the rider live on the map.']];
   const p1=fillWords('Cheesy Pizza is a pure veg pizza shop from Gujarat. Every base starts as fresh dough, stretched by hand and baked soft, then loaded with cheese the way the name promises.');
   const p2a=fillWords("We don't use mayonnaise in any product."),p2b=fillWords(`Not in the pockets, not in the dips, not anywhere.${jain?` ${jain} of our pizzas come in a Jain option, too.`:''}`);
   const craft=['Fresh dough','Hand stretched','Soft base','Live pizza','Pure veg','No mayonnaise'].map(t=>`<span><b>✦</b> ${t}</span>`).join('');
-  // toppings that drop onto the pizza in the "how ordering works" scene
-  const TOPS={tom:'<svg viewBox="-30 -30 60 60"><circle r="27" fill="#E2432A"/><circle r="25" fill="none" stroke="#A9260F" stroke-width="3.5"/><g fill="#F8B79E">'+[0,1,2,3,4].map(k=>`<ellipse cy="-12" rx="4" ry="7" transform="rotate(${k*72})"/>`).join('')+'</g><circle r="5" fill="#FBCDB9"/></svg>',
-    oli:'<svg viewBox="-14 -14 28 28"><circle r="9.5" fill="none" stroke="#2A221F" stroke-width="6.5"/></svg>',
-    jal:'<svg viewBox="-20 -20 40 40"><circle r="15" fill="#A7C86B" opacity=".6"/><circle r="15" fill="none" stroke="#3E8E2E" stroke-width="7"/><circle cx="-4" cy="-2" r="2.2" fill="#EEF3CF"/><circle cx="4" cy="3" r="2.2" fill="#EEF3CF"/></svg>',
-    pep:'<svg viewBox="-26 -16 52 32"><path d="M-21 7Q0-16 21 7" fill="none" stroke="#F6C431" stroke-width="10" stroke-linecap="round"/></svg>',
-    red:'<svg viewBox="-26 -16 52 32"><path d="M-21 7Q0-16 21 7" fill="none" stroke="#D9341E" stroke-width="10" stroke-linecap="round"/></svg>',
-    bas:'<svg viewBox="-18 -28 36 56"><path d="M0-24C15-13 15 11 0 24C-15 11-15-13 0-24Z" fill="#3E9A3E"/><path d="M0-21V21" stroke="#1B5A22" stroke-width="1.4" opacity=".55"/></svg>'};
-  const drops=[['tom',32,30,15],['jal',62,26,10],['oli',48,46,6],['pep',70,52,14],['tom',66,72,15],['bas',40,64,9],['red',28,54,14],['jal',50,78,10],['oli',76,38,6],['tom',46,24,13],['oli',30,74,6],['bas',58,58,8],['pep',38,40,13],['jal',78,62,9]]
-    .map(([k,x,y,s],i)=>`<span class="bx-top" style="--x:${x}%;--y:${y}%;--s:${s}%;--t:${(.3+i*.016).toFixed(3)};--r:${(i*47)%360}deg">${TOPS[k]}</span>`).join('');
   return `<main class="home"><div class="home-bg" aria-hidden="true"><i class="b1"></i><i class="b2"></i><i class="b3"></i></div>
   <section class="hx hx2${enter}" aria-labelledby="hx-title">
     <div class="hx-pill"><span class="kick${open?'':' closed'}"><i></i>${open?'Oven is on · ordering open':'Closed now · opens at '+hrText(OPEN_H)} · Pure veg</span></div>
@@ -2278,11 +2271,11 @@ function renderHome(){
   </div></section>
 
   <section class="bx" id="how" data-sx="pin" data-step="0" aria-labelledby="bx-title"><div class="bx-pin"><div class="sx-in bx-in">
-    <div class="bx-copy"><span class="kick">How ordering works</span><h2 id="bx-title">${steps.map(([h])=>h.replace(' it',' it.')).slice(0,2).join(' ')} <em>${steps[2][0]}.</em></h2>
+    <div class="bx-copy"><span class="kick">How we make your pizza</span><h2 id="bx-title">From dough <em>to your door.</em></h2>
       <ol class="bx-steps">${steps.map(([h,p],i)=>`<li data-i="${i}"><b>0${i+1}</b><div><h3>${h}</h3><p>${p}</p></div></li>`).join('')}</ol>
       <div class="bx-bar"><i></i></div></div>
     <div class="bx-stage" aria-hidden="true"><div class="bx-plate"></div><div class="bx-heat"></div>
-      <div class="bx-pz"><div class="bx-dough"></div><div class="bx-sauce"></div><div class="bx-cheese"></div><div class="bx-bake"></div>${drops}</div>
+      <div class="bx-pz">${['dough','sauce','cheese','toppings'].map(k=>`<img class="bx-l bx-${k}" src="img/build/${k}.webp" alt="" loading="lazy" width="900" height="900">`).join('')}<img class="bx-l bx-baked" src="img/hero-pizza.webp" alt="" loading="lazy" width="900" height="900"></div>
       <div class="bx-steam"><i style="--l:0px;--dl:0s"></i><i style="--l:34px;--dl:1.2s"></i><i style="--l:-30px;--dl:2.3s"></i></div>
       <div class="bx-route"><svg viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M50 50C66 46 78 30 90 16" fill="none" stroke="#0f7f91" stroke-width="1.6" vector-effect="non-scaling-stroke" stroke-linecap="round"/></svg><span class="bx-pin-ic">📍</span></div>
     </div>
@@ -2340,7 +2333,7 @@ function siteFooter(){
       <div><h3>Explore</h3><ul>${l('menu','Menu')}${l('offers','Offers')}${l('story','Our story')}${l('track','Track order')}${c?l('account','My account'):l('signin','Sign in')}
         ${APP_ROLE?'':`<li><a href="${APP_LINK}" rel="noopener">Android app</a></li>`}<li><a href="${PRIVACY_URL}" target="_blank" rel="noopener">Privacy policy</a></li><li><button class="ft-link" data-act="mode" data-v="pos">Staff login</button></li></ul></div>
     </div>
-    <div class="play"><div class="ft-big" data-sx aria-hidden="true">Really cheesy</div>${U.pubView==='home'?'<p class="play-hint" aria-hidden="true"><span class="m">Psst… grab a pizza and throw it</span><span class="t">Psst… tap the pizzas</span></p>':''}</div>
+    <div class="play"><div class="ft-big" data-sx aria-hidden="true">Really cheesy</div>${U.pubView==='home'?'<p class="play-hint" aria-hidden="true"><span class="m">Psst… grab the garlic bread</span><span class="t">Psst… tap the garlic bread</span></p>':''}</div>
     <div class="ft-bottom"><span>© ${new Date().getFullYear()} Cheesy Pizza · Pure veg</span><span lang="gu">ચીઝી પિઝ્ઝા</span></div>
   </div></footer>`;
 }
@@ -2459,7 +2452,7 @@ function sxTick(){
     const r=el.getBoundingClientRect();if(r.bottom<-200||r.top>vh+200)return;
     let p;
     if(el.dataset.sx==='hpin'){if(!el.classList.contains('on'))return;const top=parseFloat(document.documentElement.style.getPropertyValue('--toph'))||64;p=(top-r.top)/Math.max(1,r.height-el.firstElementChild.clientHeight)}
-    else if(el.dataset.sx==='pin'){p=-r.top/Math.max(1,r.height-vh);const s=p<.5?0:p<.78?1:2;if(el.dataset.step!==String(s))el.dataset.step=s}
+    else if(el.dataset.sx==='pin'){p=-r.top/Math.max(1,r.height-vh);const s=[.13,.29,.45,.63,.82].filter(x=>p>=x).length;if(el.dataset.step!==String(s))el.dataset.step=s}
     else p=(vh-r.top)/(vh+r.height);
     el.style.setProperty('--p',Math.min(1,Math.max(0,p)).toFixed(4));
   });
@@ -2510,24 +2503,27 @@ document.documentElement.addEventListener('mouseleave',()=>{if(CUR.el)CUR.el.cla
    one. Touch: tap a piece to flip it, tap empty space to drop one; the page still scrolls. The canvas
    survives re-renders: it is moved into each new footer. */
 const PLAY={cv:null,ctx:null,eng:null,bodies:[],walls:null,raf:0,vis:false,io:null,w:0,h:0,d:1,spr:null,mc:null,push:null,load:null,filled:false,drag:false,down:null};
-// photo, width on a 1100 px wide footer, and how round its outline is (share of the height used as corner radius)
-const PLAY_KINDS={garlic:['garlicbread',170,.3],fries:['fries',96,.12],pocket:['paneerpockets',104,.3],masala:['masalabread',124,.2],
-  marg:['margherita',138,.48],mex:['mexican',138,.48],veg:['veggieparadise',142,.48],dbl:['doublecheese',134,.48],kath:['kathiyavadi',146,.45],five:['fivecheese',136,.45]};
-const PLAY_DROP=['garlic','garlic','fries','pocket','masala','marg','mex','veg','dbl','kath','five'];
+// picture (img/ing), width on a 1100 px wide footer, outline: a round-cornered box (share of the height
+// used as corner radius), 'ball' or 'slice' (a triangle, tip up)
+const PLAY_KINDS={garlic:['garlic-stick',190,.42],slice:['slice-veggie',112,'slice'],slice2:['slice-veggie2',112,'slice'],tomato:['tomato',78,'ball'],
+  tslice:['tomato-slice',64,'ball'],cheese:['cheese',62,.12],basil:['basil',58,.3],olive:['olive',36,'ball']};
+const PLAY_DROP=['garlic','garlic','garlic','slice','slice2','tomato','tomato','tslice','cheese','basil'];
 function playSprites(){
-  const o={};for(const [k,[f]] of Object.entries(PLAY_KINDS)){const i=new Image();i.decoding='async';i.src='img/play/'+f+'.webp';o[k]=i}return o;
+  const o={};for(const [k,[f]] of Object.entries(PLAY_KINDS)){const i=new Image();i.decoding='async';i.src='img/ing/'+f+'.webp';o[k]=i}return o;
 }
 function playSpawn(kind,x,y){
   const {Bodies,Composite,Body}=Matter,u=Math.max(.5,Math.min(1.15,PLAY.w/1100)),o={restitution:.3,friction:.5,frictionAir:.012,density:.0016};
-  const [,bw,rr]=PLAY_KINDS[kind],img=PLAY.spr[kind],ar=img.naturalWidth?img.naturalHeight/img.naturalWidth:.8,w=bw*u,h=w*ar;
-  const b=Bodies.rectangle(x,y,w*.94,h*.9,{...o,chamfer:{radius:Math.min(w,h)*rr}});
-  b.plugin.k=kind;b.plugin.w=w;b.plugin.h=h;Body.setAngle(b,Math.random()*6.28);Body.setAngularVelocity(b,(Math.random()-.5)*.2);
+  const [,bw,shape]=PLAY_KINDS[kind],img=PLAY.spr[kind],ar=img.naturalWidth?img.naturalHeight/img.naturalWidth:1,w=bw*u,h=w*ar;let b,dy=0;
+  if(shape==='ball')b=Bodies.circle(x,y,Math.min(w,h)/2*.94,o);
+  else if(shape==='slice'){b=Bodies.fromVertices(x,y,[[{x:0,y:-h/2},{x:w/2,y:h/2},{x:-w/2,y:h/2}]],o);dy=-h/6} // the body sits on the triangle's centre, a sixth of the way down
+  else b=Bodies.rectangle(x,y,w*.94,h*.88,{...o,chamfer:{radius:Math.min(w,h)*shape}});
+  b.plugin.k=kind;b.plugin.w=w;b.plugin.h=h;b.plugin.dy=dy;Body.setAngle(b,Math.random()*6.28);Body.setAngularVelocity(b,(Math.random()-.5)*.2);
   Composite.add(PLAY.eng.world,b);PLAY.bodies.push(b);
   if(PLAY.bodies.length>40)Composite.remove(PLAY.eng.world,PLAY.bodies.shift());
 }
 const playPick=()=>PLAY_DROP[Math.random()*PLAY_DROP.length|0];
 function playFill(){
-  const kinds=[...Array(6).fill('garlic'),'fries','fries','pocket','pocket','masala','marg','mex','veg','dbl','kath','five'].sort(()=>Math.random()-.5).slice(0,PLAY.w<600?10:17); // fewer on a phone, so the pile stays playful
+  const kinds=[...Array(7).fill('garlic'),'slice','slice','slice2','slice2','tomato','tomato','tomato','tslice','tslice','cheese','basil','olive','olive'].sort(()=>Math.random()-.5).slice(0,PLAY.w<600?11:20); // fewer on a phone, so the pile stays playful
   kinds.forEach((k,i)=>setTimeout(()=>{if(PLAY.eng)playSpawn(k,PLAY.w*(.08+Math.random()*.84),-80-Math.random()*120)},i*130));
 }
 function playSize(){
@@ -2573,7 +2569,7 @@ function playLoop(){
   Engine.update(PLAY.eng,1000/60);
   const x=PLAY.ctx,d=PLAY.d;x.setTransform(d,0,0,d,0,0);x.clearRect(0,0,PLAY.w,PLAY.h);
   PLAY.bodies.forEach(b=>{const s=PLAY.spr[b.plugin.k],w=b.plugin.w,h=b.plugin.h;if(!s.complete||!s.naturalWidth)return;
-    x.save();x.translate(b.position.x,b.position.y);x.rotate(b.angle);x.shadowColor='rgba(0,0,0,.4)';x.shadowBlur=14;x.shadowOffsetY=7;x.drawImage(s,-w/2,-h/2,w,h);x.restore()});
+    x.save();x.translate(b.position.x,b.position.y);x.rotate(b.angle);x.shadowColor='rgba(0,0,0,.4)';x.shadowBlur=14;x.shadowOffsetY=7;x.drawImage(s,-w/2,-h/2+b.plugin.dy,w,h);x.restore()});
   PLAY.raf=requestAnimationFrame(playLoop);
 }
 function playStart(){
