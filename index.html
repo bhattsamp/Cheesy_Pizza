@@ -1730,6 +1730,12 @@ html.lenis,html.lenis body{height:auto}
 .vi-map:hover .vi-card{transform:rotate(-1deg) scale(1.01)}
 .vi-map:focus-visible .vi-card{outline:4px solid #F2B632;outline-offset:4px}
 .vi-card{position:relative;border-radius:28px;overflow:hidden;border:12px solid rgba(255,248,236,.28);aspect-ratio:10/7;box-shadow:0 30px 60px rgba(4,40,48,.3);background:#FFF8EC;transition:transform .4s var(--ease)}
+.vi-sketch{position:absolute;inset:0;--r:clamp(0,(var(--p,0) - .3) * 3.2,1);clip-path:inset(0 0 0 calc(var(--r) * 100%))}
+.vi-sketch svg{position:absolute;inset:0;width:100%;height:100%}
+.vi-line{position:absolute;top:0;bottom:0;left:calc(clamp(0,(var(--p,0) - .3) * 3.2,1) * 100%);width:6px;margin-left:-3px;background:#F2B632;box-shadow:0 0 0 2px rgba(178,83,58,.35);opacity:calc(1 - clamp(0,(var(--p,0) - .58) * 12,1))}
+.vi-tg{position:absolute;top:12px;font-family:"Courgette",cursive;font-size:clamp(16px,1.6vw,20px);padding:2px 12px 4px;border-radius:10px;rotate:-5deg;z-index:2}
+.vi-tg1{right:12px;background:#B2533A;color:#FFF8EC;opacity:calc(1 - clamp(0,(var(--p,0) - .5) * 8,1))}
+.vi-tg2{left:12px;background:#F2B632;color:#3a2800;opacity:clamp(0,(var(--p,0) - .4) * 8,1)}
 .vi-gmap{position:absolute;inset:0;width:100%;height:100%;border:0;pointer-events:none;filter:sepia(.32) saturate(1.25) hue-rotate(-12deg) contrast(1.04)}
 .vi-lab{position:absolute;translate:-50% -50%;display:inline-flex;align-items:center;gap:6px;background:#2B9FA8;color:#FFF8EC;font-weight:800;font-size:clamp(11px,1.1vw,14px);letter-spacing:.06em;text-transform:uppercase;padding:5px 12px;border-radius:999px;white-space:nowrap;box-shadow:0 4px 0 rgba(8,42,49,.25)}
 .vi-lab::before{content:"";width:8px;height:8px;border-radius:50%;background:#F2B632}
@@ -1756,7 +1762,24 @@ html.lenis,html.lenis body{height:auto}
 @keyframes vfIdle{from{rotate:-3deg}to{rotate:3deg}}
 @keyframes vfHop{0%{translate:0 0;rotate:0deg}40%{translate:0 -60%;rotate:-18deg}70%{translate:0 -10%;rotate:10deg}100%{translate:0 0;rotate:0deg}}
 .vam-hint{margin:6px 0 0;text-align:left;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#F2B632;font-size:13px}
-@media (prefers-reduced-motion:reduce){.vf,.vf.hop,.vi-pin,.vi-addr svg,.vi-badge{animation:none}.vam-word span{translate:none;rotate:none}.g-ph{clip-path:none}.g-line{display:none}}
+@media (prefers-reduced-motion:reduce){.vi-sketch,.vi-line,.vi-tg{display:none}.vf,.vf.hop,.vi-pin,.vi-addr svg,.vi-badge{animation:none}.vam-word span{translate:none;rotate:none}.g-ph{clip-path:none}.g-line{display:none}}
+/* Phone polish */
+@media (max-width:900px){
+  .hx-logo{left:8px;top:calc(60px + 80vw);width:86px}
+  .hg.on .hg-track{transform:none}
+  .hg .sig-grid .sig:nth-child(odd),.hg .sig-grid .sig:nth-child(even){--tilt:0deg}
+  .hg .sx-h .kick{padding-right:92px}
+  .bx-pin{height:calc(100vh - var(--toph,64px) - 64px)}
+  .bx-stage{width:min(64vw,32vh)}
+  .bx-copy h2{font-size:38px;margin:4px 0 6px}
+  .bx-steps li{padding:6px 0}.bx-steps li b{font-size:24px}.bx-steps li h3{font-size:17px}.bx-steps li p{font-size:13px}
+  .bx-sub{font-size:19px;margin-bottom:2px}
+  .coins-x{flex-direction:column;align-items:flex-start;gap:12px}.coins-x .grow{width:100%}
+  .names{opacity:.08}
+  .vi-lab{font-size:10px;padding:4px 9px}.vi-lab:nth-of-type(4),.vi-lab:nth-of-type(5){display:none}
+  .vi-here{left:18%;top:30%}.vi-here b{font-size:20px}
+  .vi-badge{width:92px;right:-6px;bottom:-26px}
+}
 </style>
 <div id="intro" role="status" aria-label="Cheesy Pizza is loading">
   <div class="in-sea" aria-hidden="true"><div class="in-wave b"></div><div class="in-wave f"></div><div class="in-tops"></div>
@@ -2328,6 +2351,32 @@ const FLOATERS=[['tomato-slice',-8,58,15,140,26,6,-12,8],['olive',80,-4,9,180,34
   ['basil',-24,6,13,160,30,7.5,-8,4,'m'],['cheese',20,86,11,240,44,5,6,-4,'m'],['onion',112,24,13,170,32,6.5,-10,12,'m'],['corn',46,94,9,200,36,7.5,8,-6,'m'],['olive',2,-8,7,130,24,6,0,20,'m'],['tomato-slice',104,86,12,190,38,7,-6,8,'m']];
 
 
+// The visit section's drawn map: streets, a canal and blocks around the shop. It sits over the real Google
+// map and wipes away as the page scrolls, like the sketch over the photo in the gang section.
+let VISIT_MAP=null;
+function visitMap(){
+  if(VISIT_MAP)return VISIT_MAP;
+  let seed=11;const rnd=()=>(seed=(seed*1103515245+12345)>>>0)/4294967296,f=n=>n.toFixed(1);
+  const W=800,H=560,main=x=>352-x*.12+Math.sin(x/110)*14,canal=x=>178+Math.sin(x/150)*42+x*.05;
+  const sides=[[120,-20,90,600],[300,-20,330,600],[520,-20,470,600],[660,120,760,600],[0,250,240,230],[560,470,800,430],[240,560,330,352]];
+  const near=(x,y)=>Math.abs(y-main(x))<26||Math.abs(y-canal(x))<22||sides.some(([x1,y1,x2,y2])=>{const t=Math.max(0,Math.min(1,((x-x1)*(x2-x1)+(y-y1)*(y2-y1))/((x2-x1)**2+(y2-y1)**2)));return Math.hypot(x-(x1+t*(x2-x1)),y-(y1+t*(y2-y1)))<18});
+  let blocks='';
+  for(let y=14;y<H;y+=24)for(let x=10;x<W;x+=26){
+    const bx=x+rnd()*8,by=y+rnd()*8,w=10+rnd()*12,h=8+rnd()*10;
+    if(rnd()<.18||near(bx+w/2,by+h/2)||Math.hypot(bx-430,by-322)<46)continue;
+    blocks+=`<rect x="${f(bx)}" y="${f(by)}" width="${f(w)}" height="${f(h)}" transform="rotate(${f((rnd()-.5)*24)} ${f(bx+w/2)} ${f(by+h/2)})"/>`;
+  }
+  const path=fn=>{let d='';for(let x=-10;x<=W+10;x+=10)d+=(d?'L':'M')+x+' '+f(fn(x));return d};
+  return VISIT_MAP=`<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <rect width="${W}" height="${H}" fill="#FFF8EC"/>
+    <path d="${path(canal)}" fill="none" stroke="#2BA3B5" stroke-width="10" stroke-linecap="round"/><path d="${path(canal)}" fill="none" stroke="#9ED8E0" stroke-width="3"/>
+    <g fill="#FCE3A6" stroke="#B2533A" stroke-width="1.4">${blocks}</g>
+    <g fill="none" stroke="#B2533A" stroke-linecap="round">${sides.map(([a,b,c,d])=>`<path d="M${a} ${b}L${c} ${d}" stroke-width="3"/>`).join('')}</g>
+    <path d="${path(main)}" fill="none" stroke="#B2533A" stroke-width="9" stroke-linecap="round"/><path d="${path(main)}" fill="none" stroke="#F2B632" stroke-width="2.2" stroke-dasharray="10 9"/>
+    <ellipse cx="430" cy="${f(main(430)+6)}" rx="46" ry="15" fill="none" stroke="#E2432A" stroke-width="3" opacity=".55"/>
+  </svg>`;
+}
+
 function renderHome(){
   const o=cur(),ph=o.phone||'7778043066',open=isOpen(),dow=new Date().getDay(),addr=shopAddr(o),mapUrl='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent('Cheesy Pizza, '+addr);
   const pizzas=S.menu.filter(m=>m.cat==='pizza'&&!m.off);
@@ -2477,8 +2526,9 @@ function renderHome(){
         <a class="vi-btn ghost num" href="tel:+91${esc(ph)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.6 10.8a15 15 0 0 0 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1A17 17 0 0 1 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1z" fill="currentColor"/></svg>${esc(fmtPhone(ph))}</a></div>
       <div class="vi-chips">${['Pizza','Garlic bread','Cold drinks','Pure veg','No mayonnaise','UPI & cash'].map(t=>`<span>${t}</span>`).join('')}</div>
     </div>
-    <a class="vi-map" href="${mapUrl}" target="_blank" rel="noopener" aria-label="Open Cheesy Pizza in Google Maps"><div class="vi-card">
+    <a class="vi-map" data-sx href="${mapUrl}" target="_blank" rel="noopener" aria-label="Open Cheesy Pizza in Google Maps"><div class="vi-card">
       <iframe class="vi-gmap" src="https://maps.google.com/maps?q=${encodeURIComponent('Cheesy Pizza, '+addr)}&z=16&output=embed" title="Map to Cheesy Pizza" loading="lazy" tabindex="-1" aria-hidden="true" referrerpolicy="no-referrer-when-downgrade"></iframe>
+      <div class="vi-sketch" aria-hidden="true">${visitMap()}</div><span class="vi-line" aria-hidden="true"></span><span class="vi-tg vi-tg1" aria-hidden="true">drawn</span><span class="vi-tg vi-tg2" aria-hidden="true">real!</span>
       ${[['Pizza',24,30],['Garlic bread',78,22],['Cold drinks',82,60],['French fries',18,72],['Paneer pockets',60,84],['Dips',88,40]].map(([t,x,y])=>`<span class="vi-lab" style="left:${x}%;top:${y}%">${t}</span>`).join('')}
       <div class="vi-here"><b>Ahiyā!</b><small>Cheesy Pizza</small></div>
       <img class="vi-pin" src="img/cheesy-pin.png" alt="" width="720" height="720">
