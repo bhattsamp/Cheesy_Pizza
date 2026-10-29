@@ -1,9 +1,10 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html><html lang="en"><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><meta name="description" content="Cheesy Pizza, Anand: pure veg pizza on fresh, hand-stretched dough, with no mayonnaise in any product. Order online for delivery, takeaway or dine-in."><link rel="canonical" href="https://cheesypizza.online/"><meta name="theme-color" content="#1a93a8"><meta property="og:type" content="website"><meta property="og:site_name" content="Cheesy Pizza"><meta property="og:title" content="Cheesy Pizza · Serious cheese. Pure veg pizza in Anand."><meta property="og:description" content="Fresh dough, soft base, hand stretched, never any mayonnaise. Order online from Cheesy Pizza."><meta property="og:url" content="https://cheesypizza.online/"><meta property="og:image" content="https://cheesypizza.online/img/cheesyspecial.jpg"><meta name="twitter:card" content="summary">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"Restaurant","name":"Cheesy Pizza","url":"https://cheesypizza.online/","image":"https://cheesypizza.online/img/cheesyspecial.jpg","telephone":"+91-7778043066","servesCuisine":["Pizza","Vegetarian"],"address":{"@type":"PostalAddress","streetAddress":"B/H Gopi Cinema, Maniyani Khad","addressLocality":"Anand","addressRegion":"Gujarat","addressCountry":"IN"},"openingHoursSpecification":[{"@type":"OpeningHoursSpecification","dayOfWeek":["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],"opens":"12:00","closes":"22:00"}]}</script></head><body>
 <script>/* In the Android apps, let Android keep the page clear of the status bar and navigation buttons */if(/CheesyApp\//.test(navigator.userAgent))document.querySelectorAll('meta[name=viewport]').forEach(m=>m.content='width=device-width,initial-scale=1')</script>
-<title>Cheesy Pizza POS</title>
+<title>Cheesy Pizza · Pure Veg Pizza in Anand · Order Online</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+Bhai+2:wght@500;600;700;800&family=Hind+Vadodara:wght@400;500;600;700&family=Courgette&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Baloo+Bhai+2:wght@500;600;700;800&family=Fraunces:ital,opsz,wght@0,9..144,500..800;1,9..144,400..700&family=Hind+Vadodara:wght@400;500;600;700&family=Courgette&display=swap">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
 :root{
@@ -825,6 +826,809 @@ body.app-customer .seg,body.app-admin .seg,body.app-customer [data-act="mode"][d
 @keyframes inJump{from{transform:none}to{transform:translateY(-22px)}}
 @media (prefers-reduced-motion:reduce){#intro *,#intro *::before{animation:none!important}}
 </style>
+<style>
+/* ===== v8: cinematic customer site =====
+   Everything here is scoped to body.pubmode (the customer site), so the outlet POS keeps its look.
+   Colours are the shop's own light blue, white, teal and cheese yellow (the :root tokens);
+   the helpers below only name the deep teal used for the few dark bands. */
+body.pubmode{--char:#0b3a43;--char2:#0f4a55;--cream:#FFFFFF;--warm:#FFFFFF;--red:#0f7f91;--olive:#B8CF9D;--gold:#F2B632;
+  --display:"Fraunces",Georgia,"Times New Roman",serif;--ease:cubic-bezier(.2,.8,.2,1)}
+.pubmode h1,.pubmode h2,.pubmode h3,.pubmode h4{font-weight:700;letter-spacing:-.01em;font-variation-settings:"opsz" 96}
+.pubmode em,.pubmode .it{font-style:italic;font-weight:500}
+.pubmode :focus-visible{outline:2.5px solid var(--gold);outline-offset:3px;border-radius:6px}
+.skip{position:fixed;left:12px;top:-60px;z-index:300;background:var(--gold,#f2b632);color:#3a2800;font-weight:700;padding:10px 16px;border-radius:10px;text-decoration:none;transition:top .2s}
+.skip:focus{top:12px}
+#app:focus{outline:none}
+body.drawer-open{overflow:hidden}
+
+/* buttons */
+.pubmode .btn{border-radius:999px;padding:9px 18px;font-weight:700;letter-spacing:.01em}
+.pubmode .btn.sm{padding:5px 12px}
+.pubmode .btn.lg{padding:14px 26px;font-size:16px;border-radius:999px}
+.pubmode .btn.pri:hover,.pubmode .btn.chz:hover{filter:brightness(1.07);box-shadow:0 10px 24px rgba(15,127,145,.28)}
+.pubmode .btn.chz{background:var(--gold);border-color:var(--gold);color:#3a2800}
+.pubmode .btn.ghost{color:var(--warm);border-color:rgba(255,255,255,.4)}
+.pubmode .btn.ghost:hover{border-color:var(--warm);background:rgba(255,255,255,.06)}
+.btn.glow{position:relative;overflow:hidden;isolation:isolate}
+.btn.glow::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(105deg,transparent 30%,rgba(255,255,255,.35) 50%,transparent 70%);transform:translateX(-120%);transition:transform .7s var(--ease)}
+.btn.glow:hover::after{transform:translateX(120%)}
+.btn .arr{display:inline-block;transition:transform .25s var(--ease)}
+.btn:hover .arr{transform:translateX(4px)}
+
+/* header */
+.brand-pub,#pubLinks,#cartBtn,#menuBtn,.hdr-order{display:none}
+.pubmode .top{background:color-mix(in srgb,var(--char) 90%,transparent);border-bottom:1px solid rgba(255,255,255,.08);backdrop-filter:saturate(1.4) blur(14px);-webkit-backdrop-filter:saturate(1.4) blur(14px);color:var(--cream);transition:box-shadow .3s,background .3s}
+.pubmode.scrolled .top{box-shadow:0 10px 30px rgba(0,0,0,.28);background:color-mix(in srgb,var(--char) 96%,transparent)}
+.pubmode .top-in{max-width:1320px;gap:10px 14px;padding:10px 24px;flex-wrap:nowrap}
+.pubmode .top .brand,.pubmode .top .seg{display:none}
+.pubmode .brand-pub{display:flex;align-items:center;gap:10px;margin-right:auto;border:0;background:none;color:var(--cream);padding:2px;cursor:pointer;flex:none}
+.bp-mark{width:38px;height:38px;flex:none;transition:transform .6s var(--ease)}
+.brand-pub:hover .bp-mark{transform:rotate(-24deg)}
+.bp-word{display:flex;flex-direction:column;line-height:.9;text-align:left}
+.bp-word i{font-family:var(--display);font-style:italic;font-weight:600;font-size:25px;letter-spacing:-.01em}
+.bp-word b{font-size:10.5px;letter-spacing:.42em;color:var(--gold);font-weight:700;margin-top:3px}
+.pubmode #pubLinks{display:flex;gap:2px;margin:0 auto}
+#pubLinks button{border:0;background:none;color:rgba(255,255,255,.78);font-weight:600;font-size:15px;padding:8px 14px;border-radius:999px;position:relative;transition:color .2s}
+#pubLinks button::after{content:"";position:absolute;left:14px;right:14px;bottom:3px;height:2px;border-radius:2px;background:var(--gold);transform:scaleX(0);transform-origin:left;transition:transform .3s var(--ease)}
+#pubLinks button:hover,#pubLinks button[aria-current="page"]{color:var(--warm)}
+#pubLinks button:hover::after,#pubLinks button[aria-current="page"]::after{transform:scaleX(1)}
+.pubmode #outletSel{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.16);color:var(--cream);max-width:170px}
+.pubmode #outletSel option{color:#3a2800;background:#fff}
+.pubmode #acct .btn{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.18);color:var(--cream)}
+.pubmode #acct .btn.pri{background:transparent}
+.pubmode #cartBtn{display:grid;place-items:center;position:relative;width:44px;height:44px;border-radius:50%;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.06);color:var(--cream);flex:none;transition:background .2s,transform .2s}
+#cartBtn:hover{background:rgba(255,255,255,.14)}
+#cartBtn svg{width:21px;height:21px}
+.cartn{position:absolute;top:-4px;right:-4px;min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:var(--red);color:#fff;font-size:11.5px;font-weight:800;display:grid;place-items:center;border:2px solid var(--char)}
+.cartn:empty{display:none}
+#cartBtn.bump{animation:bump .5s}
+.pubmode .hdr-order{display:inline-flex;flex:none;background:var(--red);border-color:var(--red);color:#fff}
+.pubmode #menuBtn{border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.06);color:var(--cream);width:44px;height:44px;border-radius:50%;flex:none;place-items:center;padding:0}
+#menuBtn span{display:block;width:18px;height:2px;border-radius:2px;background:currentColor;margin:3px auto;transition:transform .3s var(--ease)}
+#pubLinks{order:1}.pubmode #outletSel{order:2}.pubmode #acct{order:3}#cartBtn{order:4}.hdr-order{order:5}#menuBtn{order:6}
+@media (max-width:1100px){.pubmode #pubLinks button{padding:8px 9px;font-size:14px}.pubmode #outletSel{display:none}}
+@media (max-width:900px){
+  .pubmode #pubLinks,.pubmode #acct{display:none}
+  .pubmode #menuBtn{display:grid}
+}
+@media (max-width:720px){
+  .pubmode .top-in{padding:8px 12px!important;gap:8px!important}
+  .bp-mark{width:32px;height:32px}.bp-word i{font-size:21px}.bp-word b{font-size:9px}
+  .pubmode .hdr-order{padding:9px 14px;font-size:14px}
+}
+@media (max-width:359px){.pubmode .hdr-order{display:none}}
+
+/* drawer (phones and tablets) */
+.drw-scrim{position:fixed;inset:0;z-index:58;background:rgba(6,20,24,.55);animation:fadein .25s ease both}
+.drawer{position:fixed;top:0;right:0;bottom:0;z-index:59;width:min(400px,100%);background:var(--char);color:var(--cream);display:flex;flex-direction:column;gap:22px;padding:calc(14px + env(safe-area-inset-top,0px)) 22px calc(22px + env(safe-area-inset-bottom,0px));overflow-y:auto;box-shadow:-30px 0 60px rgba(0,0,0,.4);animation:drwIn .4s var(--ease) both}
+@keyframes drwIn{from{transform:translateX(100%)}to{transform:none}}
+.drw-h{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.drw-x{width:44px;height:44px;border-radius:50%;border:1px solid rgba(255,255,255,.2);background:none;color:var(--cream);font-size:22px}
+.drw-nav{display:flex;flex-direction:column}
+.drw-nav button{border:0;border-bottom:1px solid rgba(255,255,255,.09);background:none;color:var(--cream);text-align:left;font-family:var(--display);font-size:27px;font-weight:600;padding:12px 2px;display:flex;justify-content:space-between;align-items:center;animation:rise .5s var(--ease) both;animation-delay:calc(var(--i,0)*40ms + 80ms)}
+.drw-nav button small{font-family:var(--body);font-size:13px;color:rgba(255,255,255,.55);font-weight:600}
+.drw-nav button[aria-current="page"]{color:var(--gold)}
+.drw-sec h3{font-family:var(--body);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.55);font-weight:700;margin-bottom:10px}
+.drw-outs{display:grid;gap:8px}
+.drw-outs button{display:flex;justify-content:space-between;align-items:center;gap:10px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.04);color:var(--cream);border-radius:14px;padding:12px 14px;text-align:left;font-weight:600}
+.drw-outs button[aria-pressed="true"]{border-color:var(--gold);background:rgba(242,182,50,.1)}
+.drw-outs small{color:rgba(255,255,255,.6);font-weight:500}
+.drw-row{display:flex;gap:8px;flex-wrap:wrap}
+.drw-row .btn{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.18);color:var(--cream)}
+.drw-foot{margin-top:auto;display:flex;gap:14px;flex-wrap:wrap;font-size:13px}
+.drw-foot a,.drw-foot button{color:rgba(255,255,255,.65);background:none;border:0;padding:4px 0;text-decoration:underline;text-underline-offset:3px;font-size:13px}
+
+/* mobile bottom tabs and cart bar, recoloured */
+@media (max-width:720px){
+  .pubnav{background:color-mix(in srgb,var(--char) 94%,transparent)!important;border-top-color:rgba(255,255,255,.08)!important;box-shadow:0 -10px 30px rgba(0,0,0,.25)!important}
+  .pubnav button{color:rgba(255,255,255,.6)!important}
+  .pubnav button[aria-current="page"]{color:var(--gold)!important}
+  .pubnav button[aria-current="page"]::after{background:var(--gold)!important}
+  .pubmode .cartbar{background:var(--red)!important;box-shadow:0 14px 34px rgba(15,127,145,.45)!important}
+  .pubmode .cartbar .btn.chz{background:var(--char);border-color:var(--char);color:var(--cream)}
+  .pubmode .cartbar .chip{background:rgba(255,255,255,.18);color:#fff}
+}
+@media (min-width:721px){.pubmode .pubnav{display:none}}
+.pubmode .cartbar{background:color-mix(in srgb,var(--char) 96%,transparent);color:var(--cream);border-top:0;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.pubmode .cartbar .muted{color:rgba(255,255,255,.7)}
+.pubmode .cartbar .btn.chz{background:var(--red);border-color:var(--red);color:#fff}
+.pubmode .cartbar .chip.ready{background:rgba(184,207,157,.18);color:var(--olive)}
+
+/* shared section scaffolding */
+.sx{position:relative;padding:clamp(64px,9vw,128px) 0}
+.sx-in{max-width:1240px;margin:0 auto;padding-inline:clamp(16px,4vw,32px)}
+.sx.dark{background:var(--char);color:var(--cream)}
+.sx.dark .muted{color:rgba(255,255,255,.66)}
+.kick{display:inline-flex;align-items:center;gap:10px;font-size:12.5px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--teal)}
+.kick::before{content:"";width:28px;height:1.5px;background:currentColor}
+.sx.dark .kick,.hx .kick{color:var(--gold)}
+.sx-h{display:flex;align-items:flex-end;justify-content:space-between;gap:20px 40px;flex-wrap:wrap;margin-bottom:clamp(28px,4vw,48px)}
+.sx-h h2{font-size:clamp(36px,5.6vw,72px);line-height:.98;margin-top:14px;max-width:16ch}
+.sx-h h2 em{color:var(--teal)}
+.sx.dark .sx-h h2 em{color:var(--gold)}
+.sx-h p{max-width:42ch;margin:0;color:var(--muted);font-size:16.5px}
+.pubmode .gu{color:var(--teal)}
+
+/* ===== HERO ===== */
+.hx{--mx:0;--my:0;--sp:0;position:relative;overflow:hidden;isolation:isolate;background:var(--char);color:var(--cream);min-height:min(900px,calc(100svh - var(--toph,64px)));display:grid;align-items:center}
+.hx::before{content:"";position:absolute;inset:0;z-index:-2;background:
+  radial-gradient(55% 60% at 74% 52%,rgba(255,138,61,.30),transparent 70%),
+  radial-gradient(40% 40% at 78% 60%,rgba(15,127,145,.20),transparent 70%),
+  radial-gradient(70% 90% at 0% 100%,rgba(242,182,50,.10),transparent 60%),
+  linear-gradient(180deg,#120D0B,#1B1310 60%,#3a2800)}
+.hx::after{content:"";position:absolute;inset:0;z-index:-1;opacity:.07;pointer-events:none;mix-blend-mode:overlay;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>")}
+.hx-in{max-width:1320px;width:100%;margin:0 auto;padding:clamp(28px,5vw,64px) clamp(16px,4vw,32px) clamp(40px,6vw,72px);display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.08fr);gap:clamp(16px,3vw,48px);align-items:center}
+.hx-copy{position:relative;z-index:2;transform:translateY(calc(var(--sp)*-60px));opacity:calc(1 - var(--sp)*1.1)}
+.hx-copy .kick i{width:8px;height:8px;border-radius:50%;background:#7BD88F;box-shadow:0 0 0 4px rgba(123,216,143,.18);flex:none}
+.hx-copy .kick.closed i{background:#F07A70;box-shadow:0 0 0 4px rgba(240,122,112,.18)}
+.hx-copy .kick::before{display:none}
+.hx h1{font-size:clamp(46px,7.4vw,112px);line-height:.92;letter-spacing:-.025em;margin:22px 0 0;font-weight:700}
+.hx h1 .ln{display:block;overflow:hidden;padding-bottom:.06em;margin-bottom:-.06em}
+.hx h1 .ln>span{display:block}
+.hx h1 em{color:var(--gold);font-weight:500;padding-right:.04em}
+.hx-sub{font-size:clamp(16px,1.35vw,19px);line-height:1.6;color:rgba(255,255,255,.74);max-width:44ch;margin:24px 0 0}
+.hx-cta{display:flex;gap:12px;flex-wrap:wrap;margin-top:32px}
+.hx-cta .btn.pri{background:var(--red);border-color:var(--red);color:#fff;box-shadow:0 12px 34px rgba(15,127,145,.35)}
+.hx-facts{display:flex;gap:clamp(18px,3vw,40px);flex-wrap:wrap;margin-top:44px;padding-top:24px;border-top:1px solid rgba(255,255,255,.12)}
+.hx-facts div{display:flex;flex-direction:column;gap:2px}
+.hx-facts b{font-family:var(--display);font-size:clamp(22px,2.2vw,30px);font-weight:600;line-height:1}
+.hx-facts span{font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.55);font-weight:600}
+/* the 3D stage: a tilted plane holding the pizza, with ingredients floating at different depths */
+.hx-stage{position:relative;aspect-ratio:1;width:100%;max-width:720px;justify-self:center;perspective:1500px;perspective-origin:50% 30%;transform:translateY(calc(var(--sp)*90px)) scale(calc(1 - var(--sp)*.08))}
+.hx-tilt{position:absolute;inset:0;transform-style:preserve-3d;transform:rotateX(calc(54deg - var(--my)*6deg)) rotateZ(calc(var(--mx)*-6deg));transition:transform .2s linear}
+.hx-glow{position:absolute;inset:4%;border-radius:50%;background:radial-gradient(circle,rgba(255,170,90,.38),transparent 62%);transform:translateZ(-70px);filter:blur(10px)}
+.hx-plate{position:absolute;inset:5%;border-radius:50%;transform:translateZ(-14px);background:radial-gradient(circle at 50% 42%,#0b3a43 0 56%,#0f4a55 70%,#120C0A 100%);box-shadow:0 0 0 2px rgba(255,255,255,.06),0 60px 80px rgba(0,0,0,.55)}
+.hx-pz{position:absolute;inset:8%;transform:translateZ(0)}
+.hx-spin{width:100%;height:100%;animation:hxSpin 140s linear infinite;will-change:transform}
+.hx-spin svg{width:100%;height:100%;display:block;overflow:visible;transform:rotate(calc(var(--sp)*70deg));transition:transform .2s linear}
+@keyframes hxSpin{to{transform:rotate(360deg)}}
+.hp-lift{animation:hpLift 4.5s ease-in-out infinite alternate}
+@keyframes hpLift{from{transform:translate(0,0)}to{transform:translate(4px,6px)}}
+.hx-f{position:absolute;left:var(--x);top:var(--y);width:var(--w);transform-style:preserve-3d;transform:translateZ(var(--z)) rotateX(-54deg)}
+.hx-f>div{transform:translate(calc(var(--mx)*var(--d)*1px),calc(var(--my)*var(--d)*1px));transition:transform .2s linear}
+.hx-f svg{display:block;width:100%;height:auto;animation:hxBob var(--t,6s) ease-in-out infinite alternate;animation-delay:var(--dl,0s);filter:drop-shadow(0 18px 18px rgba(0,0,0,.45))}
+@keyframes hxBob{from{transform:translateY(-6px) rotate(var(--r0,0deg))}to{transform:translateY(8px) rotate(var(--r1,8deg))}}
+.hx-steam{position:absolute;left:46%;top:18%;width:8%;height:30%;transform:translateZ(80px) rotateX(-54deg);pointer-events:none}
+.hx-steam i{position:absolute;bottom:0;left:var(--l);width:28px;height:110px;border-radius:50%;background:radial-gradient(closest-side,rgba(255,250,243,.28),transparent);filter:blur(8px);animation:hxSteam 5s ease-in infinite;animation-delay:var(--dl)}
+@keyframes hxSteam{0%{opacity:0;transform:translateY(20px) scaleY(.6)}30%{opacity:1}100%{opacity:0;transform:translateY(-110px) scaleY(1.3) translateX(14px)}}
+.hx-card{position:absolute;right:2%;bottom:6%;z-index:3;display:flex;align-items:center;gap:12px;background:rgba(36,24,21,.82);border:1px solid rgba(255,255,255,.12);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-radius:20px;padding:10px 12px 10px 10px;box-shadow:0 20px 50px rgba(0,0,0,.45);max-width:min(330px,80%);transform:translate(calc(var(--mx)*-10px),calc(var(--my)*-8px))}
+.hx-card img{width:64px;height:64px;border-radius:14px;object-fit:cover;flex:none}
+.hx-card small{display:block;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);font-weight:700}
+.hx-card b{display:block;font-family:var(--display);font-size:19px;font-weight:600;line-height:1.15}
+.hx-card span{font-size:13px;color:rgba(255,255,255,.7)}
+.hx-card .btn{margin-left:auto;padding:8px 14px;font-size:14px}
+.hx-badge{position:absolute;left:3%;top:8%;z-index:3;width:clamp(96px,11vw,128px);aspect-ratio:1;border-radius:50%;display:grid;place-items:center;text-align:center;background:var(--gold);color:#3a2800;box-shadow:0 18px 40px rgba(0,0,0,.4);transform:rotate(-10deg) translate(calc(var(--mx)*12px),calc(var(--my)*10px))}
+.hx-badge b{font-family:var(--display);font-size:clamp(22px,2.6vw,30px);line-height:.95;font-weight:700;display:block}
+.hx-badge small{font-size:10.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+.hx-scroll{position:absolute;left:50%;bottom:18px;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:6px;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.5);border:0;background:none;opacity:calc(1 - var(--sp)*3)}
+.hx-scroll i{width:1.5px;height:34px;background:linear-gradient(var(--gold),transparent);animation:hxCue 1.8s ease-in-out infinite}
+@keyframes hxCue{0%{transform:scaleY(0);transform-origin:top}50%{transform:scaleY(1);transform-origin:top}51%{transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
+/* entrance: only when the page is opened, not when it re-renders */
+.hx.enter h1 .ln>span{animation:hxUp 1s var(--ease) both;animation-delay:calc(var(--i)*110ms + 150ms)}
+.hx.enter .hx-copy .kick,.hx.enter .hx-sub,.hx.enter .hx-cta,.hx.enter .hx-facts{animation:rise .9s var(--ease) both}
+.hx.enter .hx-copy .kick{animation-delay:.05s}.hx.enter .hx-sub{animation-delay:.5s}.hx.enter .hx-cta{animation-delay:.62s}.hx.enter .hx-facts{animation-delay:.76s}
+.hx.enter .hx-pz{animation:hxPz 1.6s var(--ease) both .1s}
+.hx.enter .hx-plate,.hx.enter .hx-glow{animation:fadein 1.2s ease both}
+.hx.enter .hx-f>div{animation:hxPop .9s cubic-bezier(.3,1.4,.5,1) both;animation-delay:calc(var(--k,0)*90ms + .8s)}
+.hx.enter .hx-card,.hx.enter .hx-badge{animation:fadein .8s ease both 1.2s}
+@keyframes hxUp{from{transform:translateY(105%)}to{transform:none}}
+@keyframes hxPz{from{opacity:0;transform:translateZ(-260px) rotate(-70deg) scale(.7)}to{opacity:1;transform:none}}
+@keyframes hxPop{from{opacity:0;scale:.3}to{opacity:1;scale:1}}
+@media (max-width:900px){
+  .hx{min-height:0}
+  .hx-in{grid-template-columns:1fr;padding-top:36px;gap:0}
+  .hx-copy{opacity:1;transform:none}
+  .hx-stage{max-width:560px;width:min(100%,560px);margin-top:clamp(48px,12vw,72px)}
+  .hx-facts{margin-top:30px}
+  .hx-scroll{display:none}
+}
+@media (max-width:520px){
+  .hx h1{font-size:clamp(42px,12.4vw,60px)}
+  .hx-cta .btn{flex:1 1 auto}
+  .hx-card{left:50%;right:auto;bottom:0;transform:translateX(-50%);width:max-content;max-width:94%}
+  .hx-card img{width:52px;height:52px}.hx-card b{font-size:17px}
+  .hx-badge{left:0;top:4%}
+  .hx-f.m-hide{display:none}
+}
+
+/* ticker band below the hero */
+.pubmode .ticker{background:var(--gold);color:#3a2800;font-size:13.5px;letter-spacing:.02em}
+.pubmode .ticker .tk{gap:44px;padding:11px 0}
+.pubmode .ticker .tk span b{color:var(--teal-deep);letter-spacing:.08em}
+.pubmode .ticker .tk span::after{content:"✦";margin-left:44px;color:rgba(23,17,15,.4)}
+
+/* ===== signature pizzas ===== */
+.sig-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(16px,2vw,28px)}
+.sig{position:relative;display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line);border-radius:28px;padding:22px 22px 20px;overflow:hidden;isolation:isolate;transition:transform .5s var(--ease),box-shadow .5s var(--ease)}
+.sig::before{content:"";position:absolute;inset:0 0 auto;height:62%;z-index:-1;background:radial-gradient(70% 80% at 50% 70%,color-mix(in srgb,var(--gold) 26%,transparent),transparent 70%)}
+.sig-ph{position:relative;width:78%;aspect-ratio:1;margin:6px auto 18px;border-radius:50%;cursor:zoom-in}
+.sig-ph img,.sig-ph .pzart{position:absolute;inset:0;width:100%;height:100%;border-radius:50%;object-fit:cover;box-shadow:0 26px 40px -12px rgba(15,46,54,.45),0 0 0 6px var(--surface);transition:transform .8s var(--ease)}
+.sig-ph .pzart{box-shadow:none}
+.sig-no{position:absolute;left:22px;top:18px;font-family:var(--display);font-style:italic;font-size:15px;color:var(--muted)}
+.sig .ribbon{left:auto;right:16px;top:16px}
+.sig h3{font-size:clamp(23px,2vw,28px);line-height:1.1}
+.sig p{margin:8px 0 0;color:var(--muted);font-size:14.5px;line-height:1.55;flex:1}
+.sig-ft{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:18px;padding-top:16px;border-top:1px dashed var(--line)}
+.sig-ft .from{font-size:12px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;font-weight:600}
+.sig-ft .from b{display:block;font-family:var(--display);font-size:24px;color:var(--ink);letter-spacing:0;text-transform:none;font-weight:700;line-height:1.05}
+@media (hover:hover){.sig:hover{transform:translateY(-8px);box-shadow:var(--shadow-lg)}.sig:hover .sig-ph img,.sig:hover .sig-ph .pzart{transform:rotate(18deg) scale(1.06)}}
+@media (max-width:960px){.sig-grid{grid-auto-flow:column;grid-template-columns:none;grid-auto-columns:min(78vw,340px);overflow-x:auto;scroll-snap-type:x mandatory;padding:4px 16px 18px;margin:0 -16px;scrollbar-width:none}.sig{scroll-snap-align:center}}
+.hint-swipe{display:none;font-size:13px;color:var(--muted);margin-top:4px}
+@media (max-width:960px){.hint-swipe{display:block}}
+
+/* ===== story ===== */
+.story{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:clamp(32px,6vw,96px);align-items:center}
+.st-art{position:relative;padding:0 8% 12% 0}
+.st-main{position:relative;aspect-ratio:4/5;border-radius:999px 999px 32px 32px;overflow:hidden;box-shadow:var(--shadow-lg)}
+.st-main img{width:100%;height:100%;object-fit:cover;transform:scale(1.15);transition:transform 1.6s var(--ease)}
+.st-main.in img,.st-main:not(.rv) img{transform:scale(1.02)}
+.st-sub{position:absolute;right:0;bottom:0;width:46%;aspect-ratio:1;border-radius:28px;overflow:hidden;border:8px solid var(--bg);box-shadow:var(--shadow-lg)}
+.st-sub img{width:100%;height:100%;object-fit:cover}
+.st-seal{position:absolute;left:-4%;top:6%;width:clamp(110px,12vw,150px);aspect-ratio:1;border-radius:50%;background:var(--char);color:var(--cream);display:grid;place-items:center;box-shadow:var(--shadow-lg)}
+.st-seal svg{position:absolute;inset:0;width:100%;height:100%;animation:hxSpin 30s linear infinite}
+.st-seal b{font-family:var(--display);font-style:italic;font-size:clamp(20px,2vw,26px);font-weight:600;color:var(--gold)}
+.st-copy h2{font-size:clamp(38px,5.2vw,68px);line-height:1;margin-top:16px}
+.st-copy h2 em{color:var(--teal)}
+.st-copy p{font-size:17px;line-height:1.7;color:var(--muted);margin:22px 0 0;max-width:52ch}
+.st-copy p strong{color:var(--ink)}
+.craft{list-style:none;padding:0;margin:30px 0 0;display:grid;grid-template-columns:1fr 1fr;gap:0 28px}
+.craft li{display:flex;gap:12px;align-items:baseline;padding:14px 0;border-top:1px solid var(--line);font-weight:600}
+.craft li span{font-family:var(--display);font-style:italic;color:var(--teal);font-size:15px;min-width:26px}
+.st-stats{display:flex;gap:clamp(20px,4vw,48px);flex-wrap:wrap;margin-top:34px}
+.st-stats b{display:block;font-family:var(--display);font-size:clamp(30px,3.4vw,44px);font-weight:600;line-height:1}
+.st-stats span{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(14px,2vw,24px);margin-top:clamp(56px,8vw,104px)}
+.steps>div{position:relative;padding:26px 24px 24px;border-radius:24px;background:var(--surface);border:1px solid var(--line)}
+.steps b{font-family:var(--display);font-style:italic;font-weight:500;font-size:54px;line-height:1;color:var(--teal);display:block;margin-bottom:14px}
+.steps h3{font-size:24px}.steps p{margin:6px 0 0;color:var(--muted);font-size:14.5px}
+@media (max-width:900px){.story{grid-template-columns:1fr}.st-art{max-width:520px;width:100%;margin:0 auto}.steps{grid-template-columns:1fr}.craft{grid-template-columns:1fr}}
+.clipr.rv{opacity:1;transform:none;clip-path:inset(22% 8% 0 8% round 999px 999px 32px 32px);transition:clip-path 1.3s var(--ease)}
+.clipr.rv.in{clip-path:inset(0 0 0 0 round 999px 999px 32px 32px)}
+
+/* ===== offers (dark) ===== */
+.offers-band .hscroll{grid-auto-columns:minmax(290px,340px);gap:16px;padding-bottom:12px;scrollbar-width:none}
+.pubmode .coupon{border-radius:22px;min-height:132px;border-color:var(--line)}
+.offers-band .coupon{background:var(--char2);border-color:rgba(255,255,255,.1);color:var(--cream)}
+.offers-band .coupon .ct span{color:rgba(255,255,255,.68)}
+.offers-band .codechip{border-color:var(--gold);color:var(--gold)}
+.offers-band .coupon .ct .chip.ready{background:rgba(184,207,157,.16);color:var(--olive)}
+.offers-band .coupon .ct .chip.t{background:rgba(255,255,255,.08);color:rgba(255,255,255,.82)}
+.offers-band .coupon .ct .chip.c{background:rgba(242,182,50,.16);color:var(--gold)}
+.pubmode .coupon .stub{font-family:var(--display);font-weight:700;border-right-style:dashed}
+.pubmode .coupon.k-bogo .stub{background:var(--bad)}
+.pubmode .coupon.k-item .stub{background:var(--gold);color:#3a2800}
+.pubmode .coupon.k-code .stub{background:#0b3a43;color:var(--gold)}
+.pubmode .coupon.k-combo .stub{background:var(--plum)}
+.pubmode .coupon .ct b{font-family:var(--display);font-weight:600;font-size:19px}
+.combo-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,330px),1fr));gap:16px;margin-top:clamp(40px,5vw,64px)}
+.cmb{position:relative;border-radius:28px;padding:24px;background:linear-gradient(160deg,#0f4a55,#0b3a43);border:1px solid rgba(255,255,255,.1);display:flex;flex-direction:column;gap:12px;overflow:hidden;transition:transform .45s var(--ease),border-color .3s}
+.cmb:hover{transform:translateY(-6px);border-color:rgba(242,182,50,.45)}
+.cmb .stack{margin-bottom:6px}
+.cmb .stack img,.cmb .stack .pzs{width:64px;height:64px;border-color:#0f4a55}
+.cmb h3{font-size:26px}
+.cmb p{margin:0;color:rgba(255,255,255,.66);font-size:14.5px;flex:1}
+.cmb-ft{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.cmb-ft .price{font-family:var(--display);font-size:32px;color:var(--gold);font-weight:700}
+.cmb-ft s{color:rgba(255,255,255,.45)}
+.cmb-ft .btn{margin-left:auto}
+.cmb .save{position:absolute;right:18px;top:18px;background:rgba(184,207,157,.14);color:var(--olive);border-radius:999px;padding:3px 10px;font-size:12px;font-weight:700}
+.coins-x{margin-top:clamp(40px,5vw,64px);border-radius:28px;padding:clamp(20px,3vw,32px);display:flex;gap:20px;align-items:center;flex-wrap:wrap;background:linear-gradient(110deg,rgba(242,182,50,.16),rgba(242,182,50,.03) 60%);border:1px solid rgba(242,182,50,.25)}
+.coins-x h3{font-size:clamp(24px,2.6vw,32px)}
+.coins-x .coin{width:64px;height:64px;font-size:26px;animation:pop 3s ease-in-out infinite}
+.coins-x .btn{background:transparent;border-color:rgba(255,255,255,.3);color:var(--cream)}
+
+/* ===== favourites and categories ===== */
+.fav{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:14px}
+.fav-i{display:grid;grid-template-columns:84px 1fr auto;gap:14px;align-items:center;padding:12px;border-radius:22px;background:var(--surface);border:1px solid var(--line);transition:transform .35s var(--ease),box-shadow .35s}
+.fav-i:hover{transform:translateY(-4px);box-shadow:var(--shadow)}
+.fav-i .ph{position:relative;width:84px;height:84px;border-radius:16px;overflow:hidden;background:var(--surface2);cursor:zoom-in}
+.fav-i .ph img{width:100%;height:100%;object-fit:cover}
+.fav-i h3{font-size:19px;line-height:1.15}
+.fav-i .price{font-size:17px;color:var(--teal);font-family:var(--display)}
+.cats-x{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(46%,190px),1fr));gap:14px}
+.cat-t{position:relative;overflow:hidden;border-radius:24px;border:0;padding:0;aspect-ratio:4/5;background:var(--char2);color:var(--cream);text-align:left;cursor:pointer;isolation:isolate}
+.cat-t img,.cat-t .pzart,.cat-t .pz{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:-2;transition:transform .9s var(--ease)}
+.cat-t .pzart,.cat-t .pz{inset:12%;width:76%;height:66%}
+.cat-t::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,transparent 35%,rgba(6,20,24,.9))}
+.cat-t .cl{position:absolute;left:18px;right:18px;bottom:16px;display:flex;justify-content:space-between;align-items:flex-end;gap:8px}
+.cat-t b{font-family:var(--display);font-size:clamp(20px,2vw,26px);font-weight:600;line-height:1.05}
+.cat-t small{font-size:12px;color:rgba(255,255,255,.7);white-space:nowrap}
+.cat-t .gu{display:block;font-size:13px;color:var(--gold);font-weight:600}
+.cat-t:hover img,.cat-t:hover .pzart{transform:scale(1.07)}
+
+/* ===== counter classics (the shop poster's list) ===== */
+.counter-x{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:14px}
+.cx{border-radius:24px;padding:22px;background:var(--surface);border:1px solid var(--line)}
+.cx h3{font-size:21px;display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.cx h3 b{font-size:28px;color:var(--teal);font-weight:700}
+.cx h3 b small{font-size:13px;font-family:var(--body);color:var(--muted);margin-left:2px}
+.cx p{margin:6px 0 0;color:var(--muted);font-size:14px}
+.cx ul{list-style:none;padding:0;margin:12px 0 0;display:flex;flex-wrap:wrap;gap:6px}
+.cx li{border:1px solid var(--line);border-radius:999px;padding:3px 11px;font-size:13px;font-weight:600}
+.cx.bev li{display:flex;gap:8px}
+.phone-steps{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px;align-items:center;font-weight:600;color:var(--muted);font-size:14px}
+.phone-steps span{background:var(--surface2);border-radius:999px;padding:6px 14px;color:var(--ink)}
+
+/* ===== final CTA ===== */
+.cta-x{text-align:center;overflow:hidden}
+.cta-x h2{font-size:clamp(52px,10vw,150px);line-height:.88;letter-spacing:-.035em}
+.cta-x h2 em{color:var(--gold)}
+.cta-x p{max-width:52ch;margin:24px auto 0;color:rgba(255,255,255,.7);font-size:17px}
+.cta-x .hx-cta{justify-content:center}
+.cta-x .btn.pri{background:var(--red);border-color:var(--red);color:#fff}
+.cta-x .ring{position:absolute;left:50%;top:50%;width:min(1100px,150vw);aspect-ratio:1;border-radius:50%;transform:translate(-50%,-50%);border:1px solid rgba(255,255,255,.06);z-index:0;pointer-events:none}
+.cta-x .ring.r2{width:min(760px,110vw)}
+.cta-x .sx-in{position:relative;z-index:1}
+.avail{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:34px}
+.avail span{border:1px solid rgba(255,255,255,.16);border-radius:999px;padding:6px 14px;font-size:13px;color:rgba(255,255,255,.8);font-weight:600}
+
+/* ===== footer ===== */
+.sfoot{background:#082a31;color:var(--cream);padding:clamp(56px,7vw,88px) 0 calc(28px + env(safe-area-inset-bottom,0px))}
+.ft-grid{display:grid;grid-template-columns:1.3fr 1fr 1fr 1fr;gap:clamp(24px,4vw,56px)}
+.sfoot h3{font-family:var(--body);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.5);font-weight:700;margin-bottom:14px}
+.sfoot p,.sfoot li{color:rgba(255,255,255,.72);font-size:14.5px;line-height:1.65}
+.sfoot ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}
+.sfoot a,.ft-link{color:var(--cream);text-decoration:none;background:none;border:0;padding:3px 0;font:inherit;text-align:left;cursor:pointer;opacity:.85;transition:opacity .2s,color .2s}
+.sfoot a:hover,.ft-link:hover{opacity:1;color:var(--gold)}
+.ft-brand .bp-word i{font-size:40px}.ft-brand .bp-word b{font-size:12px}
+.ft-brand p{max-width:34ch;margin-top:14px}
+.ft-out{padding:12px 0;border-top:1px solid rgba(255,255,255,.08)}
+.ft-out b{display:block;color:var(--cream)}
+.ft-out .btn{margin-top:8px;color:var(--cream);border-color:rgba(255,255,255,.25);background:transparent}
+.ft-bottom{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-top:clamp(40px,5vw,64px);padding-top:22px;border-top:1px solid rgba(255,255,255,.08);font-size:13px;color:rgba(255,255,255,.5)}
+.ft-big{font-family:var(--display);font-style:italic;font-weight:600;font-size:clamp(64px,17vw,250px);line-height:.8;letter-spacing:-.04em;color:transparent;-webkit-text-stroke:1px rgba(255,255,255,.12);text-align:center;margin-top:clamp(40px,6vw,72px);user-select:none;white-space:nowrap;overflow:hidden}
+@media (max-width:900px){.ft-grid{grid-template-columns:1fr 1fr}.ft-brand{grid-column:1/-1}}
+@media (max-width:520px){.ft-grid{grid-template-columns:1fr}}
+@media (max-width:720px){.pubmode .sfoot{padding-bottom:calc(96px + env(safe-area-inset-bottom,0px))}}
+
+/* ===== menu page ===== */
+.mhead{background:var(--char);color:var(--cream);position:relative;overflow:hidden;isolation:isolate}
+.mhead::before{content:"";position:absolute;inset:0;z-index:-1;background:radial-gradient(50% 120% at 90% 0,rgba(60,186,208,.35),transparent 70%),radial-gradient(40% 90% at 0 100%,rgba(242,182,50,.14),transparent 70%)}
+.mhead .sx-in{padding-top:clamp(40px,6vw,80px);padding-bottom:clamp(36px,5vw,64px);display:flex;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap}
+.mhead h1{font-size:clamp(52px,9vw,128px);line-height:.88;letter-spacing:-.03em;margin-top:14px}
+.mhead h1 em{color:var(--gold)}
+.mhead p{margin:16px 0 0;color:rgba(255,255,255,.7);max-width:46ch;font-size:16.5px}
+.mhead .pz-spin{width:clamp(150px,19vw,250px);aspect-ratio:1;margin-left:auto;animation:hxSpin 120s linear infinite;flex:none;filter:drop-shadow(0 30px 40px rgba(0,0,0,.55))}
+.mhead .pz-spin svg{width:100%;height:100%;display:block}
+.mhead .hx-badge{flex:none}
+.pubmode main.pub{max-width:1240px;padding-inline:clamp(16px,4vw,32px)}
+.pubmode .pub .sec-h{margin:clamp(40px,5vw,64px) 0 18px;align-items:baseline}
+.pubmode .pub .sec-h h2{font-size:clamp(32px,4vw,48px);font-weight:700}
+.pubmode .outlet-bar{border-radius:20px;margin-top:24px}
+.pubmode .coins-band{border-radius:24px;background:linear-gradient(120deg,var(--cheese-soft),var(--surface) 80%)}
+.pubmode .filters .inp{border-radius:999px;padding:10px 18px;max-width:300px;background:var(--surface)}
+.pubmode .filters button{padding:8px 14px}
+.pubmode .filters button[aria-pressed="true"]{border-color:var(--ink);background:var(--ink);color:var(--bg)}
+.pubmode .cats{top:var(--toph,64px);padding-block:12px;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.pubmode .cats button{padding:9px 18px;font-weight:700;transition:background .2s,color .2s}
+.pubmode .pub .grid{grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:20px}
+.pubmode .pub .item{border-radius:24px;border-color:var(--line);background:var(--surface);box-shadow:none}
+.pubmode .pub .item .ph{aspect-ratio:5/4;background:radial-gradient(circle at 50% 55%,var(--surface) 0 38%,var(--surface2) 78%)}
+.pubmode .pub .item .ph img{transition:transform .9s var(--ease)}
+.pubmode .pub .item h3{font-size:21px;font-weight:600}
+.pubmode .pub .item .bd{padding:16px 18px 18px;gap:8px}
+.pubmode .pub .item .desc{font-size:14px;line-height:1.5}
+.pubmode .sizes span{border-radius:999px;padding:2px 10px;background:var(--surface2);border-color:transparent}
+.pubmode .sizes span b{font-family:var(--display);font-weight:700}
+.pubmode .price{font-weight:700}
+.pubmode .ribbon span{border-radius:999px;background:var(--char);color:var(--gold);letter-spacing:.08em;padding:3px 10px;box-shadow:none}
+.pubmode .ribbon span.o{background:var(--red);color:#fff}
+@media (hover:hover){.pubmode .pub .item:hover{transform:translateY(-6px);box-shadow:var(--shadow-lg)}.pubmode .pub .item:hover .ph img{transform:scale(1.08) rotate(2deg)}}
+.pubmode .combo-card{border-radius:24px}
+.pubmode .pub .how{display:none}
+@media (max-width:720px){
+  .pubmode .pub .item{flex-direction:row}
+  .pubmode .pub .item .ph{aspect-ratio:auto}
+  .pubmode .pub .item h3{font-size:18px}
+  .mhead .pz-spin{display:none}
+}
+
+/* ===== modals, account and sign-in, recoloured ===== */
+.pubmode .scrim{background:rgba(6,20,24,.62);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+.pubmode .modal{border-radius:28px}
+.pubmode .modal .mh h3{font-weight:700;font-size:26px}
+.pubmode .modal:focus{outline:none}
+.pubmode .opt,.pubmode .paymodes button,.pubmode .types button,.pubmode .vt button{border-radius:14px}
+.pubmode .qty{border-radius:999px}
+.pubmode .qty button{width:34px;height:34px}
+.pubmode .tot{font-weight:700}
+.pubmode .inp{border-radius:12px}
+/* Header, hero and phone tabs in the shop's light blue and white */
+.pubmode .top{background:color-mix(in srgb,var(--surface) 92%,transparent);color:var(--ink);border-bottom:1px solid var(--line)}
+.pubmode.scrolled .top{background:color-mix(in srgb,var(--surface) 97%,transparent);box-shadow:0 8px 24px rgba(15,46,54,.08)}
+.pubmode .brand-pub{color:var(--teal-deep)}
+.pubmode .bp-word b{color:var(--teal)}
+#pubLinks button{color:var(--muted)}
+#pubLinks button:hover,#pubLinks button[aria-current="page"]{color:var(--teal-deep)}
+#pubLinks button::after{background:var(--teal)}
+.pubmode #outletSel,.pubmode #acct .btn,.pubmode #cartBtn,.pubmode #menuBtn{background:var(--surface2);border-color:var(--line);color:var(--ink)}
+.pubmode #acct .btn.pri{background:var(--teal);border-color:var(--teal);color:var(--teal-ink)}
+#cartBtn:hover{background:var(--teal-soft)}
+.cartn{background:var(--bad);border-color:var(--surface)}
+.pubmode .hdr-order{background:var(--teal-deep);border-color:var(--teal-deep);color:#fff}
+.hx{background:var(--bg);color:var(--ink)}
+.hx::before{background:radial-gradient(50% 55% at 72% 50%,rgba(242,182,50,.30),transparent 70%),radial-gradient(70% 80% at 80% 30%,color-mix(in srgb,var(--teal) 24%,transparent),transparent 70%),linear-gradient(180deg,var(--teal-soft),var(--bg) 75%)}
+.hx::after{display:none}
+.hx .kick,.hx-copy .kick{color:var(--teal-deep)}
+.hx h1 em{color:var(--teal)}
+.hx-sub{color:var(--muted)}
+.hx-facts{border-top-color:var(--line)}.hx-facts span{color:var(--muted)}
+.hx .btn.ghost{color:var(--ink);border-color:var(--line);background:var(--surface)}
+.hx .btn.ghost:hover{border-color:var(--teal)}
+.hx-cta .btn.pri{background:var(--teal-deep);border-color:var(--teal-deep)}
+.hx-glow{background:radial-gradient(circle,rgba(242,182,50,.4),transparent 62%)}
+.hx-plate{background:radial-gradient(circle at 50% 42%,#ffffff 0 58%,#e3f0f2 74%,#c9e2e7 100%);box-shadow:0 0 0 1px rgba(15,46,54,.06),0 50px 70px rgba(15,46,54,.22)}
+.hx-f svg{filter:drop-shadow(0 14px 14px rgba(15,46,54,.22))}
+.hx-steam{display:none}
+.hx-card{background:color-mix(in srgb,var(--surface) 92%,transparent);border-color:var(--line);color:var(--ink);box-shadow:var(--shadow-lg)}
+.hx-card span{color:var(--muted)}.hx-card small{color:var(--teal-deep)}
+.hx-scroll{color:var(--muted)}.hx-scroll i{background:linear-gradient(var(--teal),transparent)}
+@media (max-width:720px){
+  .pubnav{background:color-mix(in srgb,var(--surface) 94%,transparent)!important;border-top-color:var(--line)!important;box-shadow:0 -8px 24px rgba(15,46,54,.08)!important}
+  .pubnav button{color:var(--muted)!important}
+  .pubnav button[aria-current="page"]{color:var(--teal)!important}
+  .pubnav button[aria-current="page"]::after{background:var(--teal)!important}
+  .pubmode .cartbar{background:var(--teal-deep)!important}
+}
+
+/* ===== Home page only: background effects and scroll scenes =====
+   JS sets --p (0→1 as a section passes through the screen) on [data-sx] elements, --sp on the hero
+   and --sy (page scroll) on the background layer; the rules below turn those into motion.
+   Individual translate/rotate/scale properties are used so they never fight hover transforms. */
+.home{position:relative;isolation:isolate}
+.home-bg{position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220' fill='none' stroke='%231a93a8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' opacity='.09'><path d='M30 40l36-12-8 40z'/><circle cx='46' cy='38' r='3'/><circle cx='54' cy='50' r='2.5'/><path d='M150 30c14 8 14 28 0 38c-14-10-14-30 0-38z'/><path d='M150 34v30'/><circle cx='70' cy='160' r='14'/><circle cx='70' cy='160' r='5'/><path d='M160 150q14-14 28 0'/><circle cx='120' cy='110' r='6'/></svg>");
+  background-size:220px 220px;background-position:0 calc(var(--sy,0) * -0.12px)}
+.home-bg i{position:absolute;border-radius:50%;filter:blur(70px);opacity:.55;animation:blob 26s ease-in-out infinite alternate}
+.home-bg .b1{width:46vw;height:46vw;left:-12vw;top:20vh;background:color-mix(in srgb,var(--teal) 30%,transparent)}
+.home-bg .b2{width:38vw;height:38vw;right:-10vw;top:50vh;background:rgba(242,182,50,.32);animation-duration:32s;animation-delay:-9s}
+.home-bg .b3{width:30vw;height:30vw;left:35vw;bottom:-12vh;background:color-mix(in srgb,var(--teal) 18%,transparent);animation-duration:38s;animation-delay:-18s}
+@keyframes blob{0%{translate:0 0;scale:1}50%{translate:6vw -8vh;scale:1.15}100%{translate:-5vw 6vh;scale:.92}}
+
+/* hero: giant brand word behind the pizza, letters drift apart on scroll */
+.hx-word{position:absolute;left:0;right:0;top:54%;translate:0 -50%;z-index:0;display:flex;justify-content:center;pointer-events:none;font-family:var(--display);font-weight:800;font-size:clamp(120px,27vw,430px);line-height:.8;letter-spacing:-.04em;color:transparent;-webkit-text-stroke:2px color-mix(in srgb,var(--teal) 34%,transparent)}
+.hx-word span{display:inline-block;translate:0 calc(var(--sp,0) * var(--k) * 1px);rotate:calc(var(--sp,0) * var(--r) * 1deg)}
+.hx-word span:nth-child(odd){color:color-mix(in srgb,var(--teal) 11%,transparent)}
+.hx.enter .hx-word span{animation:wordIn 1.2s var(--ease) both;animation-delay:calc(var(--j) * 70ms + .2s)}
+@keyframes wordIn{from{opacity:0;transform:translateY(40%) scale(.8)}to{opacity:1;transform:none}}
+.hx-in{position:relative;z-index:1}
+@media (max-width:900px){.hx-word{top:auto;bottom:24%;translate:none}}
+
+/* crossing marquee ribbons: they drift on their own and slide further with the scroll */
+.ribbons{position:relative;height:clamp(150px,16vw,210px);overflow:hidden;margin:-30px 0;z-index:2;pointer-events:none}
+.rb{position:absolute;left:-10%;right:-10%;top:50%;pointer-events:auto}
+.rb.a{rotate:-3.5deg;translate:0 -70%}
+.rb.b{rotate:3deg;translate:0 -10%}
+.rb.a .ticker{box-shadow:0 12px 30px rgba(15,46,54,.16)}
+.rb.b .ticker{background:var(--teal-deep);color:#fff;box-shadow:0 12px 30px rgba(15,46,54,.2)}
+.rb .ticker .tk{translate:var(--mq,0) 0;animation-name:tickQ;padding:16px 0;padding-left:0;font-size:clamp(14px,1.4vw,18px);font-weight:700;text-transform:uppercase;letter-spacing:.08em}
+.rb.b .tk{animation-direction:reverse}
+.rb.b .tk span::after{color:rgba(255,255,255,.5)!important}
+.rb.b .tk b{color:var(--gold)!important}
+
+/* moving wavy edges on the deep teal bands */
+.home .offers-band,.home .cta-x{overflow-x:clip;overflow-y:visible}
+.home .offers-band::before,.home .offers-band::after,.home .cta-x::before{content:"";position:absolute;left:0;right:0;height:34px;background:var(--char);
+  -webkit-mask:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='34'><path d='M0 34V17C27 3 53 3 80 17S133 31 160 17V34z'/></svg>") 0 0/160px 34px repeat-x;
+  mask:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='34'><path d='M0 34V17C27 3 53 3 80 17S133 31 160 17V34z'/></svg>") 0 0/160px 34px repeat-x;animation:wave 9s linear infinite}
+.home .offers-band::before,.home .cta-x::before{top:-33px}
+.home .offers-band::after{bottom:-33px;rotate:180deg;animation-direction:reverse}
+@keyframes tickQ{to{transform:translateX(-25%)}}
+@keyframes wave{to{-webkit-mask-position:160px 0;mask-position:160px 0}}
+
+/* headings: words slide up out of a mask when the section arrives */
+.home .w{display:inline-block;overflow:hidden;vertical-align:top;padding-bottom:.1em;margin-bottom:-.1em}
+.home .w>span{display:inline-block;transition:transform 1s var(--ease);transition-delay:calc(var(--i) * 70ms)}
+.home .rv:not(.in) .w>span,.home h2.rv:not(.in) .w>span{transform:translateY(110%)}
+
+/* story: paragraphs fill in word by word, photos drift at different speeds */
+.fw{opacity:clamp(.18,calc(var(--p,1) * var(--n) * 1.7 - var(--i)),1);transition:opacity .2s}
+.home .st-art .st-main{translate:0 calc((var(--p,.5) - .5) * -50px)}
+.home .st-art .st-sub{translate:0 calc((var(--p,.5) - .5) * -140px)}
+.home .st-art .st-seal{rotate:calc(var(--p,.5) * 220deg)}
+.home .st-seal svg{animation:none}
+
+/* signature cards fan in, then settle */
+.sig-grid .sig{translate:0 calc((1 - min(1,var(--p,1) * 2.2)) * var(--ty,0px));rotate:calc((1 - min(1,var(--p,1) * 2.2)) * var(--rt,0deg))}
+.sig-grid .sig:nth-child(3n+1){--rt:-7deg;--ty:60px}.sig-grid .sig:nth-child(3n+2){--ty:110px}.sig-grid .sig:nth-child(3n){--rt:7deg;--ty:60px}
+@media (max-width:960px){.sig-grid .sig{--rt:0deg!important;--ty:0px!important}}
+.cat-t.rv{rotate:5deg;transition:opacity .6s ease var(--d,0ms),transform .7s var(--ease) var(--d,0ms),rotate .9s var(--ease) var(--d,0ms)}
+.cat-t.rv.in{rotate:0deg}
+.home .cmb.rv{rotate:-3deg;transition:opacity .6s ease var(--d,0ms),transform .7s var(--ease) var(--d,0ms),rotate .9s var(--ease) var(--d,0ms)}
+.home .cmb.rv.in{rotate:0deg}
+.sfoot .ft-big{translate:calc((var(--p,.5) - .5) * -40%) 0}
+
+/* pinned scene: the pizza is built, baked and sent out as you scroll through the three steps */
+.bx{position:relative;height:320vh}
+.bx-pin{position:sticky;top:var(--toph,64px);height:calc(100vh - var(--toph,64px));display:grid;align-items:center;overflow:hidden}
+.bx-in{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:clamp(24px,5vw,72px);align-items:center;width:100%}
+.bx-copy h2{font-size:clamp(34px,4.6vw,60px);line-height:1;margin:14px 0 26px}
+.bx-copy h2 em{color:var(--teal)}
+.bx-steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.bx-steps li{display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:baseline;padding:14px 0;border-top:1px solid var(--line);opacity:.35;transition:opacity .4s,translate .5s var(--ease);translate:0 0}
+.bx-steps li b{font-family:var(--display);font-style:italic;font-size:clamp(30px,3vw,42px);color:var(--teal);line-height:1;font-weight:500}
+.bx-steps li h3{font-size:clamp(22px,2.2vw,30px)}
+.bx-steps li p{margin:4px 0 0;color:var(--muted);max-height:0;overflow:hidden;transition:max-height .5s var(--ease)}
+.bx[data-step="0"] li[data-i="0"],.bx[data-step="1"] li[data-i="1"],.bx[data-step="2"] li[data-i="2"]{opacity:1;translate:12px 0}
+.bx[data-step="0"] li[data-i="0"] p,.bx[data-step="1"] li[data-i="1"] p,.bx[data-step="2"] li[data-i="2"] p{max-height:80px}
+.bx-bar{height:3px;border-radius:3px;background:var(--line);margin-top:22px;overflow:hidden}
+.bx-bar i{display:block;height:100%;background:var(--teal);transform-origin:left;scale:var(--p,0) 1}
+.bx-stage{position:relative;aspect-ratio:1;width:min(100%,560px);justify-self:center}
+.bx-plate{position:absolute;inset:4%;border-radius:50%;background:radial-gradient(circle at 50% 42%,#fff 0 58%,#e3f0f2 74%,#c9e2e7 100%);box-shadow:0 40px 60px rgba(15,46,54,.18)}
+.bx-pz{position:absolute;inset:11%;translate:calc(clamp(0,(var(--p,0) - .8) * 5,1) * 40%) calc(clamp(0,(var(--p,0) - .8) * 5,1) * -30%);scale:calc(1 - clamp(0,(var(--p,0) - .8) * 5,1) * .62);rotate:calc(var(--p,0) * 200deg)}
+.bx-pz>div{position:absolute;border-radius:50%}
+.bx-dough{inset:0;background:radial-gradient(circle,#F6D9A6 0 78%,#E7B26A 88%,#C98436 97%,#9E5A21 100%);scale:clamp(0,var(--p,0) * 8,1)}
+.bx-sauce{inset:9%;background:radial-gradient(circle,#D7432A 0 70%,#B92F18 100%);border-radius:48% 52% 50% 50%/52% 47% 53% 48%!important;scale:clamp(0,(var(--p,0) - .08) * 7,1)}
+.bx-cheese{inset:13%;background:radial-gradient(circle at 45% 40%,#FFF4CC 0,#FBD983 50%,#F3BC57 85%,#E79E39 100%);border-radius:47% 53% 49% 51%/51% 48% 52% 49%!important;scale:clamp(0,(var(--p,0) - .18) * 7,1)}
+.bx-bake{inset:13%;opacity:clamp(0,(var(--p,0) - .55) * 5,.85);background:radial-gradient(circle at 30% 35%,rgba(196,122,44,.55) 0 6%,transparent 7%),radial-gradient(circle at 62% 28%,rgba(196,122,44,.5) 0 5%,transparent 6%),radial-gradient(circle at 70% 64%,rgba(196,122,44,.55) 0 7%,transparent 8%),radial-gradient(circle at 38% 72%,rgba(196,122,44,.45) 0 5%,transparent 6%),radial-gradient(circle at 52% 50%,rgba(196,122,44,.35) 0 4%,transparent 5%)}
+.bx-top{position:absolute;left:var(--x);top:var(--y);width:var(--s);translate:-50% calc(-50% - (1 - clamp(0,(var(--p,0) - var(--t)) * 14,1)) * 340px);opacity:clamp(0,(var(--p,0) - var(--t)) * 14,1);rotate:var(--r)}
+.bx-top svg{display:block;width:100%;height:auto;filter:drop-shadow(0 3px 3px rgba(74,26,5,.35))}
+.bx-heat{position:absolute;inset:-6%;border-radius:50%;background:radial-gradient(circle,rgba(242,140,40,.45),transparent 65%);opacity:calc(clamp(0,(var(--p,0) - .5) * 6,1) - clamp(0,(var(--p,0) - .78) * 8,1));animation:heat 1.4s ease-in-out infinite alternate}
+@keyframes heat{to{scale:1.08}}
+.bx-steam{position:absolute;left:44%;top:6%;width:12%;height:34%;opacity:calc(clamp(0,(var(--p,0) - .58) * 6,1) - clamp(0,(var(--p,0) - .8) * 8,1))}
+.bx-steam i{position:absolute;bottom:0;left:var(--l);width:26px;height:110px;border-radius:50%;background:radial-gradient(closest-side,rgba(255,255,255,.95),transparent);filter:blur(6px);animation:hxSteam 3.6s ease-in infinite;animation-delay:var(--dl)}
+.bx-route{position:absolute;inset:0;opacity:clamp(0,(var(--p,0) - .78) * 6,1)}
+.bx-route svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.bx-route path{stroke-dasharray:8 10;stroke-dashoffset:calc(var(--p,0) * -400)}
+.bx-pin-ic{position:absolute;right:2%;top:8%;font-size:clamp(34px,4vw,52px);animation:pinB 1s ease-in-out infinite alternate}
+@keyframes pinB{to{translate:0 -10px}}
+@media (max-width:900px){
+  .bx{height:300vh}
+  .bx-in{grid-template-columns:1fr;gap:12px}
+  .bx-stage{order:-1;width:min(78vw,46vh)}
+  .bx-copy h2{margin:8px 0 10px}
+  .bx-steps li{padding:8px 0}
+  .bx-steps li p{font-size:14px}
+}
+@media (prefers-reduced-motion:reduce){
+  .home-bg i{animation:none}
+  .bx{height:auto}.bx-pin{position:static;height:auto;padding:64px 0}
+  .bx{--p:.6}.bx-steps li{opacity:1;translate:none}.bx-steps li p{max-height:none}
+  .home .rv:not(.in) .w>span{transform:none}
+  .fw{opacity:1}
+}
+
+/* ===== Home page, part 2: smooth scroll, horizontal gallery, colour scenes, names wall, cursor ===== */
+html.lenis,html.lenis body{height:auto}
+.lenis.lenis-smooth{scroll-behavior:auto!important}
+.lenis.lenis-stopped{overflow:hidden}
+
+/* Signature pizzas: the section pins and the cards slide sideways as you scroll down */
+.hg{padding:0}
+.hg-pin{position:relative;display:flex;flex-direction:column;justify-content:center;gap:clamp(14px,2.6vh,30px);padding:clamp(64px,9vw,128px) 0;overflow:hidden}
+.hg.on .hg-pin{position:sticky;top:var(--toph,64px);height:calc(100vh - var(--toph,64px));padding:0}
+.hg .sx-h{margin-bottom:0;position:relative;z-index:1}
+.hg-track{position:relative;z-index:1}
+.hg .sig-grid{display:flex;grid-template-columns:none;width:max-content;max-width:none;gap:clamp(16px,2vw,28px);padding:12px clamp(16px,4vw,32px) 30px;margin:0;overflow:visible}
+.hg.on .sig-grid{translate:calc(var(--p,0) * var(--dist,0px) * -1) 0}
+.hg:not(.on) .hg-track{overflow-x:auto;scrollbar-width:none;scroll-snap-type:x mandatory}
+.hg:not(.on) .sig{scroll-snap-align:center}
+.hg .sig-grid .sig{width:clamp(270px,25vw,350px);flex:none;translate:none;rotate:var(--tilt,0deg);transition:rotate .5s var(--ease),transform .5s var(--ease),box-shadow .5s var(--ease)}
+.hg .sig-grid .sig:nth-child(odd){--tilt:-2.5deg}
+.hg .sig-grid .sig:nth-child(even){--tilt:2deg;margin-top:22px}
+.hg .sig-grid .sig:hover{rotate:0deg}
+.hg .sig{padding:16px 18px 16px}
+.hg .sig-ph{width:50%;margin:4px auto 10px}
+.hg .sig h3{font-size:clamp(20px,1.7vw,24px)}
+.hg .sig-ft{margin-top:12px;padding-top:12px}
+.hg .sig p{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;flex:none}
+.hg .sig-no{z-index:2;font-size:clamp(24px,2.2vw,34px);font-style:italic;color:var(--teal);top:10px;font-weight:600}
+.hg-word{position:absolute;left:0;top:56%;z-index:0;white-space:nowrap;pointer-events:none;font-family:var(--display);font-weight:800;font-style:italic;font-size:clamp(110px,21vw,330px);line-height:.8;letter-spacing:-.03em;color:transparent;-webkit-text-stroke:2px color-mix(in srgb,var(--teal) 22%,transparent);translate:calc(var(--p,0) * 40vw - 20vw) -50%}
+.hg-foot{display:flex;align-items:center;gap:20px;flex-wrap:wrap;position:relative;z-index:1}
+.hg-prog{flex:1;max-width:340px;height:3px;border-radius:3px;background:var(--line);overflow:hidden}
+.hg-prog i{display:block;height:100%;background:var(--teal);transform-origin:left;scale:var(--p,0) 1}
+.hg:not(.on) .hg-prog{display:none}
+.hg.on .hint-swipe{display:none}
+
+/* Bold colour scenes in the shop palette, with moving wavy tops */
+.home .bx{background:var(--teal-deep);color:#fff;--wc:var(--teal-deep)}
+.home .bx .kick{color:var(--gold)}
+.home .bx-copy h2 em{color:var(--gold)}
+.home .bx-steps li{border-top-color:rgba(255,255,255,.18)}
+.home .bx-steps li b{color:var(--gold)}
+.home .bx-steps li p{color:rgba(255,255,255,.78)}
+.home .bx-bar{background:rgba(255,255,255,.2)}.home .bx-bar i{background:var(--gold)}
+.home .bx-plate{box-shadow:0 40px 70px rgba(0,0,0,.3)}
+.home .bx-route path{stroke:#fff}
+.home #counter{background:var(--cheese);color:#3a2800;--wc:var(--cheese)}
+.home #counter .kick,.home #counter .sx-h p,.home #counter .small,.home #counter .phone-steps{color:#5a3d00}
+.home #counter .sx-h h2 em{color:var(--teal-deep)}
+.home #counter .phone-steps span{background:rgba(255,255,255,.6)}
+.home #counter .cx{border-color:transparent;box-shadow:0 10px 30px rgba(90,61,0,.15)}
+.home .bx::before,.home #counter::before{content:"";position:absolute;left:0;right:0;top:-33px;height:34px;z-index:2;background:var(--wc);
+  -webkit-mask:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='34'><path d='M0 34V17C27 3 53 3 80 17S133 31 160 17V34z'/></svg>") 0 0/160px 34px repeat-x;
+  mask:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='34'><path d='M0 34V17C27 3 53 3 80 17S133 31 160 17V34z'/></svg>") 0 0/160px 34px repeat-x;animation:wave 9s linear infinite}
+.home #counter{position:relative}
+
+/* Names wall: the pizza names slide past in rows behind "Hungry yet?" */
+.names{position:absolute;inset:0;z-index:0;display:flex;flex-direction:column;justify-content:center;gap:clamp(8px,2vw,24px);pointer-events:none;opacity:.2}
+.nr{display:flex;gap:clamp(24px,3vw,48px);white-space:nowrap;width:max-content;font-family:var(--display);font-weight:800;font-size:clamp(44px,7.5vw,118px);line-height:1;letter-spacing:-.02em;color:#fff;translate:var(--mq,0) 0}
+.nr:nth-child(1){rotate:-4deg}
+.nr:nth-child(2){rotate:2deg;font-style:italic;color:transparent;-webkit-text-stroke:1.5px #fff}
+.nr:nth-child(3){rotate:-2deg;color:var(--gold)}
+.nr span::after{content:"✦";margin-left:clamp(24px,3vw,48px);font-size:.4em;vertical-align:middle;-webkit-text-stroke:0;color:var(--gold)}
+
+/* Handwritten tagline that writes itself in */
+.st-copy{position:relative}
+.script{position:absolute;right:0;top:-34px;font-family:"Courgette","Brush Script MT",cursive;font-size:clamp(26px,3vw,42px);color:var(--teal);rotate:-7deg;white-space:nowrap;pointer-events:none;clip-path:inset(-20% 0 -20% 0)}
+.script.rv{opacity:1;transform:none;clip-path:inset(-20% 100% -20% 0);transition:clip-path 1.6s var(--ease) .35s}
+.script.rv.in{clip-path:inset(-20% 0 -20% 0)}
+@media (max-width:900px){.script{top:-42px;right:4px}}
+
+/* The cursor ring (home page, mouse only) */
+#cursor{position:fixed;left:0;top:0;z-index:250;width:0;height:0;pointer-events:none;transition:opacity .3s}
+#cursor.off{opacity:0}
+#cursor span{position:absolute;left:-17px;top:-17px;width:34px;height:34px;border-radius:50%;border:2px solid var(--teal);display:grid;place-items:center;font:800 0px/1 var(--body);color:#fff;letter-spacing:.04em;text-transform:uppercase;transition:left .35s var(--ease),top .35s var(--ease),width .35s var(--ease),height .35s var(--ease),background .3s,font-size .2s}
+#cursor.big span{left:-28px;top:-28px;width:56px;height:56px;background:color-mix(in srgb,var(--teal) 14%,transparent)}
+#cursor.lab span{left:-38px;top:-38px;width:76px;height:76px;background:var(--teal);font-size:13px}
+
+/* Web loading screen: colour stripes that lift away to reveal the page */
+#intro.web{background:transparent}
+#intro.web .in-sea{display:none}
+#intro .stripes{position:absolute;inset:0;display:flex;z-index:0}
+#intro .stripes i{flex:1;background:var(--c);transition:translate .9s cubic-bezier(.7,0,.2,1);transition-delay:calc(var(--k) * 70ms)}
+#intro.web h1{color:#fff}#intro.web h1 span{text-shadow:0 3px 0 rgba(0,0,0,.18)}#intro.web h1 .in-pz{color:#f2b632;text-shadow:0 3px 0 rgba(0,0,0,.18)}
+#intro.web .in-tag{color:#fff;border-color:#f2b632}
+#intro.web .in-msg{display:block;background:#f2b632;color:#3a2800;border-radius:999px;padding:8px 20px;font-size:18px;text-shadow:none;box-shadow:0 10px 24px rgba(0,0,0,.2)}
+#intro .in-bar{display:block;width:min(240px,60vw);height:4px;border-radius:4px;background:rgba(255,255,255,.3);overflow:hidden;margin:4px auto 0}
+#intro .in-bar b{display:block;height:100%;width:100%;background:#fff;transform-origin:left;animation:inBar 1.5s cubic-bezier(.4,0,.2,1) both}
+@keyframes inBar{from{scale:0 1}to{scale:1 1}}
+#intro.web.out{opacity:1;visibility:visible;pointer-events:none}
+#intro.web.out .in-stage{opacity:0;transform:scale(.92);transition:opacity .35s,transform .35s}
+#intro.web.out .stripes i{translate:0 -101%}
+@media (prefers-reduced-motion:reduce){
+  .hg-word,.names{display:none}
+  #cursor{display:none}
+  .script.rv{clip-path:none}
+}
+
+/* Footer play zone: pieces fall onto the big "Really cheesy" and can be pushed, thrown and tapped */
+.play{position:relative;height:clamp(300px,34vw,460px);margin-top:clamp(28px,4vw,48px);display:grid;place-items:center;overflow:hidden;border-radius:28px;background:radial-gradient(80% 90% at 50% 100%,rgba(26,147,168,.22),transparent 70%)}
+.play .ft-big{margin:0;color:#1a93a8;-webkit-text-stroke:0;opacity:.95;pointer-events:none}
+.play-cv{position:absolute;inset:0;width:100%;height:100%;touch-action:pan-y;cursor:grab;z-index:1}
+.play-cv:active{cursor:grabbing}
+.play-hint{position:absolute;right:clamp(14px,3vw,32px);top:clamp(12px,2vw,22px);margin:0;z-index:2;pointer-events:none;font-family:"Courgette","Brush Script MT",cursive;font-size:clamp(16px,1.6vw,21px);color:var(--gold);rotate:-4deg}
+.play-hint .t{display:none}
+@media (hover:none){.play-hint .m{display:none}.play-hint .t{display:inline}}
+
+/* ===== Home page, part 3: louder look =====
+   Hero: a giant word across the screen with the pizza in front of it, text pinned to the corners.
+   Headings: heavy condensed capitals (Anton) with the italic words turned into handwriting (Courgette).
+   Sections: solid colour blocks in the shop's teal, deep teal and cheese yellow. */
+.hx2{position:relative;display:block;min-height:max(640px,calc(100svh - var(--toph,64px)));padding:0;background:#0f7f91;color:#fff}
+.hx2::before{background:radial-gradient(55% 60% at 50% 50%,rgba(60,186,208,.75),transparent 72%),radial-gradient(35% 35% at 50% 58%,rgba(242,182,50,.35),transparent 70%),linear-gradient(180deg,#0f7f91,#0c6e7e)}
+.hx2::after{display:block;opacity:.12;mix-blend-mode:soft-light}
+.hx-pill{position:absolute;left:50%;top:clamp(14px,2.4vw,28px);translate:-50% 0;z-index:4;white-space:nowrap}
+.hx2 .hx-pill .kick{background:#f2b632;color:#3a2800;padding:9px 18px;border-radius:999px;font-size:12px;letter-spacing:.14em;box-shadow:0 10px 24px rgba(0,0,0,.18)}
+.hx2 .hx-pill .kick i{background:#1f8a4c;box-shadow:0 0 0 4px rgba(31,138,76,.2)}
+.hx2 .hx-pill .kick.closed i{background:#d23f35;box-shadow:0 0 0 4px rgba(210,63,53,.2)}
+.hx-giant{position:absolute;left:0;right:0;top:39%;translate:0 -50%;z-index:1;display:flex;justify-content:center;pointer-events:none;font-family:"Anton",Impact,"Arial Narrow Bold",sans-serif;font-size:clamp(130px,30.5vw,600px);line-height:.82;color:#fff;text-transform:uppercase;letter-spacing:.005em;text-shadow:0 18px 40px rgba(6,40,48,.25)}
+.hx-giant span{display:inline-block;translate:calc(var(--mx) * var(--b) * 3px) calc(var(--sp) * var(--k) * 1px + var(--my) * var(--b) * 2px);rotate:calc(var(--sp) * var(--r) * 1deg)}
+.hx-giant b{display:inline-block;font-weight:400;rotate:calc(var(--b) * .7deg)}
+.hx2.enter .hx-giant b{animation:giantIn 1.15s cubic-bezier(.3,1.55,.5,1) both;animation-delay:calc(var(--j) * 85ms + .1s)}
+@keyframes giantIn{from{opacity:0;transform:translateY(-80%) rotate(calc(var(--b) * 5deg)) scale(.55)}to{opacity:1;transform:none}}
+.hx2 .hx-stage{position:absolute;left:50%;top:50%;translate:-50% -44%;z-index:2;width:min(68vh,46vw);max-width:none;margin:0}
+.hx2 .hx-plate{background:radial-gradient(circle at 50% 42%,#fff 0 58%,#e8f4f6 74%,#cfe6ea 100%);box-shadow:0 60px 80px rgba(4,40,48,.45)}
+.hx2 .hx-glow{background:radial-gradient(circle,rgba(242,182,50,.55),transparent 62%)}
+.hx2 .hx-f{width:calc(var(--w) * 1.3)}
+.hx2 .hx-f svg{filter:drop-shadow(0 22px 20px rgba(4,40,48,.4))}
+.hx2 .hx-steam{display:block}
+.hx2 .hx-badge{left:auto;right:clamp(16px,7vw,130px);top:clamp(80px,14vh,150px);transform:rotate(-12deg) translate(calc(var(--mx) * 12px),calc(var(--my) * 10px));z-index:4;width:clamp(100px,10vw,140px)}
+.hx2 .hx-bl{position:absolute;left:clamp(16px,3vw,44px);bottom:clamp(22px,3.4vw,44px);z-index:3;max-width:min(460px,33vw);transform:translateY(calc(var(--sp) * -40px));opacity:calc(1 - var(--sp) * 1.3)}
+.hx2 h1{margin:0;text-shadow:0 4px 18px rgba(4,40,48,.45);font-family:"Anton",Impact,sans-serif;font-weight:400;text-transform:uppercase;font-size:clamp(36px,3.5vw,60px);line-height:.98;letter-spacing:.01em;color:#fff}
+.hx2 h1 .ln{display:inline-block;overflow:hidden;vertical-align:bottom;margin-right:.22em;padding-bottom:.1em;margin-bottom:-.1em}
+.hx2 h1 em{font-family:"Courgette","Brush Script MT",cursive;text-transform:none;font-style:normal;font-weight:400;color:#FFE38F;font-size:1.02em;padding:0 .04em}
+.hx2 .hx-sub{color:rgba(255,255,255,.9);font-size:15.5px;line-height:1.55;margin:14px 0 0}
+.hx2 .hx-cta{margin-top:20px}
+.hx2 .hx-cta .btn.pri{background:#f2b632;border-color:#f2b632;color:#3a2800;box-shadow:0 14px 30px rgba(4,40,48,.3)}
+.hx2 .btn.ghost{color:#fff;border-color:rgba(255,255,255,.65);background:rgba(255,255,255,.06)}
+.hx2 .btn.ghost:hover{border-color:#fff;background:rgba(255,255,255,.14)}
+.hx2 .hx-br{position:absolute;right:clamp(16px,3vw,44px);bottom:clamp(22px,3.4vw,44px);z-index:3;display:flex;flex-direction:column;align-items:flex-end;gap:16px;opacity:calc(1 - var(--sp) * 1.3)}
+.hx2 .hx-facts{margin:0;padding:0;border:0;gap:clamp(16px,2vw,28px)}
+.hx2 .hx-facts b{font-family:"Anton",Impact,sans-serif;font-weight:400;font-size:clamp(26px,2.3vw,36px);color:#fff;letter-spacing:.01em}
+.hx2 .hx-facts span{color:rgba(255,255,255,.78)}
+.hx2 .hx-card{position:static;transform:none;background:#fff;border-color:transparent;color:var(--ink);box-shadow:0 18px 40px rgba(4,40,48,.3)}
+.hx2 .hx-card small{color:var(--teal-deep)}.hx2 .hx-card span{color:var(--muted)}
+.hx2 .hx-scroll{color:rgba(255,255,255,.85);z-index:3}.hx2 .hx-scroll i{background:linear-gradient(#fff,transparent)}
+.hx2.enter .hx-bl,.hx2.enter .hx-br,.hx2.enter .hx-pill{animation:rise .9s var(--ease) both .75s}
+.hx2.enter .hx-pill{animation-delay:.05s}
+@media (max-width:1100px){.hx2 .hx-bl{max-width:40vw}.hx2 .hx-card{display:none}}
+@media (max-width:900px){
+  .hx2{min-height:0;display:flex;flex-direction:column;align-items:stretch;padding:66px 16px 40px;overflow:hidden}
+  .hx2 .hx-pill{left:50%;top:16px}
+  .hx-giant{position:relative;top:auto;translate:none;font-size:31.5vw;margin:8px -16px 0}
+  .hx2 .hx-stage{position:relative;left:auto;top:auto;translate:none;width:min(88vw,470px);margin:-22vw auto 0}
+  .hx2 .hx-badge{right:10px;top:34vw;width:96px}
+  .hx2 .hx-bl,.hx2 .hx-br{position:static;max-width:none;width:100%;opacity:1;transform:none}
+  .hx2 .hx-bl{margin-top:6px}
+  .hx2 h1{font-size:clamp(38px,11vw,56px)}
+  .hx2 .hx-br{align-items:stretch;margin-top:26px}
+  .hx2 .hx-card{display:flex;left:auto;width:auto;max-width:none}
+}
+
+/* Bar-topas style headings on the home page */
+.home .sx-h h2,.home .st-copy h2,.home .bx-copy h2,.home .cta-x h2{font-family:"Anton",Impact,"Arial Narrow Bold",sans-serif;font-weight:400;text-transform:uppercase;letter-spacing:.005em;line-height:.92;font-variation-settings:normal}
+.home .sx-h h2{font-size:clamp(50px,7.6vw,128px);max-width:none}
+.home .st-copy h2{font-size:clamp(50px,6.2vw,104px)}
+.home .bx-copy h2{font-size:clamp(42px,5.2vw,84px)}
+.home .cta-x h2{font-size:clamp(90px,16vw,260px);line-height:.86}
+.home .sx-h h2 em,.home .st-copy h2 em,.home .bx-copy h2 em,.home .cta-x h2 em{font-family:"Courgette","Brush Script MT",cursive;text-transform:none;font-style:normal;font-weight:400;display:inline-block;rotate:-5deg;font-size:.8em;letter-spacing:0;margin-left:.06em}
+.home h2 em .w{padding:0 .06em .24em;margin-bottom:-.24em}
+.home .sx-h{align-items:flex-end}
+.home .kick{font-size:13px;letter-spacing:.2em}
+
+/* Colour blocks */
+.home .offers-band{background:#1a93a8;--char:#1a93a8}
+.home .offers-band .kick{color:#fff}
+.home .offers-band .sx-h h2 em{color:#0b3a43}
+.home .offers-band .sx-h p,.home .offers-band .coins-x .muted{color:rgba(255,255,255,.9)}
+.home .offers-band .coupon{background:#0b3a43}
+.home .offers-band .coins-x{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.3)}
+.home .cta-x h2 em{color:#f2b632}
+@media (prefers-reduced-motion:reduce){.hx-giant span{translate:none;rotate:none}}
+
+/* Signature gallery as full-photo cards (like bar-topas's photo gallery): photo edge to edge, big number
+   above, the name as a tilted sticker; the row skews with scroll speed and photos drift in their frames */
+.hg .sig-grid{align-items:flex-start;gap:clamp(22px,2.6vw,40px);padding-top:50px}
+.hg.on .hg-track{transform:skewX(calc(var(--vel,0) * -7deg))}
+.hg .sig-grid .sig{width:clamp(250px,23vw,330px);height:min(44vh,400px);padding:0;border:0;border-radius:26px;background:#0b3a43;color:#fff;overflow:visible;justify-content:flex-end;box-shadow:0 26px 50px -18px rgba(11,58,67,.55)}
+.hg .sig::before{display:none}
+.hg .sig-ph{position:absolute;inset:0;width:auto;aspect-ratio:auto;margin:0;border-radius:26px;overflow:hidden;cursor:zoom-in}
+.hg .sig-ph::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(11,58,67,0) 38%,rgba(11,58,67,.92) 100%);pointer-events:none}
+.hg .sig-ph img,.hg .sig-ph .pzart{border-radius:0;box-shadow:none;scale:1.18;translate:calc((var(--p,.5) - .5) * -16%) 0;transition:scale .8s var(--ease),rotate .8s var(--ease)}
+.hg .sig-ph .pzart{inset:6% 10% 30%;width:80%;height:64%;scale:1}
+.hg .sig:hover .sig-ph img{transform:none;rotate:0deg;scale:1.26}
+.hg .sx-h h2{font-size:clamp(44px,6vw,96px)}
+.hg .sig-no{position:absolute;top:-50px;right:6px;left:auto;font-family:"Anton",Impact,sans-serif;font-style:normal;font-weight:400;font-size:clamp(36px,3vw,48px);color:#f2b632;line-height:1}
+.hg .sig .ribbon{left:14px;right:auto;top:14px;z-index:2}
+.hg .sig h3,.hg .sig>p,.hg .sig-ft{position:relative;z-index:1;margin-left:20px;margin-right:20px}
+.hg .sig h3{font-family:"Anton",Impact,sans-serif;font-weight:400;text-transform:uppercase;letter-spacing:.01em;font-size:clamp(26px,2.3vw,36px);line-height:.95;color:#fff;align-self:flex-start;rotate:-3deg;transform-origin:left bottom;transition:rotate .4s var(--ease),scale .4s var(--ease);text-shadow:0 4px 14px rgba(0,0,0,.35)}
+.hg .sig:hover h3{rotate:-6deg;scale:1.08}
+.hg .sig h3 .jain{color:#fff;border-color:#fff}
+.hg .sig>p{color:rgba(255,255,255,.82);font-size:13.5px;margin-top:6px}
+.hg .sig-ft{border-top-color:rgba(255,255,255,.22);margin-bottom:18px}
+.hg .sig-ft .from{color:rgba(255,255,255,.7)}.hg .sig-ft .from b{color:#fff;font-family:"Anton",Impact,sans-serif;font-weight:400;font-size:28px}
+.hg .sig-ft .btn.pri{background:#f2b632;border-color:#f2b632;color:#3a2800}
+.hg .sig-grid .sig:nth-child(even){margin-top:30px}
+@media (max-width:900px){.hg .sig-grid .sig{height:min(58vh,420px)}}
+
+@media (prefers-reduced-motion:reduce){
+  .hx-copy,.hx-stage,.hx-spin svg,.hx-card,.hx-badge,.hx-f>div{transform:none!important;opacity:1!important}
+  .hx-tilt{transform:rotateX(54deg)!important}
+  .hx-f{transform:translateZ(var(--z)) rotateX(-54deg)!important}
+  .hx-steam,.hx-scroll i{display:none}
+  .clipr.rv{clip-path:none!important}
+  .st-main img{transform:none!important}
+}
+
+/* ===== Real logo and real food =====
+   The shop's own logo in the header, a sticker of it in the hero and the light version in the footer.
+   The hero pizza and everything around it are cut-out photos of our menu; the food can be grabbed. */
+.bp-logo{display:block;height:46px;width:auto;transition:transform .5s var(--ease)}
+.pubmode .brand-pub:hover .bp-logo{transform:rotate(-3deg) scale(1.04)}
+.drw-h .bp-logo{height:40px}
+@media (max-width:720px){.bp-logo{height:34px}}
+@media (max-width:400px){.bp-logo{height:29px}}
+.ft-logo{display:block;width:clamp(180px,17vw,240px);height:auto;margin:0 0 16px -6px}
+.hx-real{display:block;width:100%;height:100%;border-radius:50%;transform:rotate(calc(var(--sp) * 70deg));transition:transform .2s linear;box-shadow:0 0 0 3px rgba(255,255,255,.4),0 30px 40px rgba(60,25,5,.35);user-select:none;-webkit-user-drag:none}
+.hx-f img{display:block;width:100%;height:auto;user-select:none;-webkit-user-drag:none;animation:hxBob var(--t,6s) ease-in-out infinite alternate;animation-delay:var(--dl,0s);filter:drop-shadow(0 22px 18px rgba(4,40,48,.42))}
+.hx-grab{pointer-events:auto;cursor:grab;touch-action:none;translate:var(--gx,0px) var(--gy,0px) var(--gz,0px);rotate:var(--gr,0deg)}
+.hx-grab.held{cursor:grabbing}
+.hx-grab.held img{animation-play-state:paused;filter:drop-shadow(0 34px 26px rgba(4,40,48,.5))}
+.hx-logo{position:absolute;left:clamp(12px,3.4vw,56px);top:clamp(70px,11vh,120px);z-index:4;width:clamp(150px,15.5vw,260px);height:auto;rotate:-8deg;filter:drop-shadow(0 20px 34px rgba(4,40,48,.38));transform:translate(calc(var(--mx) * -12px),calc(var(--my) * -9px));animation:logoBob 5.5s ease-in-out infinite alternate}
+@keyframes logoBob{from{translate:0 -7px;rotate:-9deg}to{translate:0 8px;rotate:-5deg}}
+.hx2.enter .hx-logo{animation:logoIn 1.1s cubic-bezier(.3,1.5,.5,1) both .25s,logoBob 5.5s ease-in-out 1.35s infinite alternate}
+@keyframes logoIn{from{opacity:0;scale:.3;rotate:-40deg}to{opacity:1;scale:1;rotate:-9deg}}
+.hx-hint{position:absolute;left:50%;bottom:clamp(58px,8vh,84px);translate:-50% 0;z-index:3;margin:0;pointer-events:none;font-family:"Courgette","Brush Script MT",cursive;font-size:clamp(17px,1.5vw,22px);color:#FFE38F;rotate:-3deg;text-shadow:0 2px 10px rgba(4,40,48,.4);white-space:nowrap}
+.hx-hint .t{display:none}
+@media (hover:none){.hx-hint .m{display:none}.hx-hint .t{display:inline}}
+@media (max-width:900px){
+  .hx-logo{left:12px;top:60px;width:clamp(104px,28vw,150px)}
+  .hx-hint{position:relative;left:auto;bottom:auto;translate:none;text-align:center;margin:12px 0 0;order:1}
+  .hx2 .hx-bl,.hx2 .hx-br{order:2}
+}
+@media (prefers-reduced-motion:reduce){.hx-logo,.hx2.enter .hx-logo{animation:none;transform:none}.hx-real{transform:none!important}.hx-hint{display:none}}
+</style>
 <div id="intro" role="status" aria-label="Cheesy Pizza is loading">
   <div class="in-sea" aria-hidden="true"><div class="in-wave b"></div><div class="in-wave f"></div><div class="in-tops"></div>
     <i class="in-cd" style="left:10%;--s:26px;--t:.8s;--d:0s"></i><i class="in-cd" style="left:30%;bottom:80%;--s:16px;--t:.95s;--d:.3s"></i><i class="in-cd" style="left:86%;--s:22px;--t:1.1s;--d:.6s"></i></div>
@@ -843,19 +1647,25 @@ body.app-customer .seg,body.app-admin .seg,body.app-customer [data-act="mode"][d
   </div>
 </div>
 <script>
-// Letters of the name rise one by one; the intro stays about 6 s, then fades out
+// Letters of the name rise one by one; in the apps the intro stays about 6 s, then fades out
 // once the app has loaded (introDone), or after 10 s at most. A tap skips it.
+// On the website it is only a loading screen: it goes as soon as the shop has loaded.
 (function(){
   const el=document.getElementById('intro'),h=el.querySelector('h1'),t0=Date.now();let gone=false;
-  [...'CHEESY PIZZA'].forEach((c,i)=>{const s=document.createElement('span');if(c===' ')s.className='sp';else s.textContent=c;if(i>6)s.classList.add('in-pz');s.style.animationDelay=(3.3+i*.05)+'s';h.appendChild(s)});
-  const hide=()=>{if(gone)return;gone=true;el.classList.add('out');setTimeout(()=>el.remove(),600)};
-  window.introDone=()=>setTimeout(hide,Math.max(0,6000-(Date.now()-t0)));
+  const web=!/CheesyApp\//.test(navigator.userAgent);
+  if(web){el.classList.add('web');el.insertAdjacentHTML('afterbegin','<div class="stripes" aria-hidden="true">'+['#082a31','#0f6f80','#1a93a8','#5cc3d3','#f2b632'].map((c,k)=>'<i style="--c:'+c+';--k:'+k+'"></i>').join('')+'</div>');
+    el.querySelector('.in-msg').insertAdjacentHTML('afterend','<span class="in-bar" aria-hidden="true"><b></b></span>')}
+  [...'CHEESY PIZZA'].forEach((c,i)=>{const s=document.createElement('span');if(c===' ')s.className='sp';else s.textContent=c;if(i>6)s.classList.add('in-pz');s.style.animationDelay=((web?.15:3.3)+i*.05)+'s';h.appendChild(s)});
+  const hide=()=>{if(gone)return;gone=true;el.classList.add('out');setTimeout(()=>el.remove(),web?1300:600)};
+  window.introDone=()=>setTimeout(hide,Math.max(0,(web?1500:6000)-(Date.now()-t0)));
   el.addEventListener('click',()=>{if(Date.now()-t0>800)hide()});
   setTimeout(hide,10000);
 })();
 </script>
 
+<a class="skip" href="#app">Skip to content</a>
 <header class="top"><div class="top-in">
+  <button class="brand-pub" data-act="pn" data-v="home" aria-label="Cheesy Pizza, home"><img class="bp-logo" src="img/logo-lockup.png" alt="Cheesy Pizza · Really Cheesy...!" width="721" height="146"></button>
   <div class="brand">
     <svg class="pin" viewBox="0 0 40 48" aria-hidden="true"><path d="M20 47C20 47 3 29 3 18a17 17 0 0 1 34 0c0 11-17 29-17 29z" fill="var(--teal)"/><circle cx="20" cy="18" r="10" fill="var(--surface)"/><text x="20" y="23" text-anchor="middle" font-family="Baloo Bhai 2, sans-serif" font-weight="800" font-size="14" fill="var(--teal)">C</text></svg>
     <div><b>CHEESY PIZZA</b><small>Really Cheesy · ચીઝી પિઝ્ઝા</small></div>
@@ -866,10 +1676,15 @@ body.app-customer .seg,body.app-admin .seg,body.app-customer [data-act="mode"][d
   </div>
   <div id="acct" class="row" style="gap:6px"></div>
   <select class="pill" id="outletSel" aria-label="Outlet"></select>
+  <nav id="pubLinks" aria-label="Main"></nav>
+  <button id="cartBtn" data-act="hdr-cart" aria-label="Cart"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 7h14l-1.4 11.2a2 2 0 0 1-2 1.8H8.4a2 2 0 0 1-2-1.8z"/><path d="M9 10V6a3 3 0 0 1 6 0v4"/></svg><span class="cartn num" id="cartN"></span></button>
+  <button class="btn hdr-order" data-act="pn" data-v="menu">Order now</button>
+  <button id="menuBtn" data-act="drawer" aria-expanded="false" aria-controls="drawer" aria-label="Open menu"><span></span><span></span><span></span></button>
 </div></header>
+<div id="drawerRoot" data-lenis-prevent></div>
 
-<div id="app"></div>
-<div id="modalRoot"></div>
+<div id="app" tabindex="-1"></div>
+<div id="modalRoot" data-lenis-prevent></div>
 <div id="boardRoot"></div>
 <div id="ringRoot"></div>
 <div id="printRoot"></div>
@@ -1200,7 +2015,7 @@ function render(){
   const th=document.querySelector('.top')?.offsetHeight;if(th)document.documentElement.style.setProperty('--toph',th+'px');
   const vk=S.mode+'|'+(S.mode==='public'?U.pubView+'|'+(U.accTab||''):'');U.enter=vk!==U.lastView;U.lastView=vk;
   app.innerHTML=S.mode==='public'?pubNav()+(U.pubView==='account'&&me()?renderAccount():U.pubView==='auth'&&!me()?renderAuth():U.pubView==='home'?renderHome():renderPublic()):renderPOS();renderAcct();
-  renderBoard();renderRing();afterRender();navTrack();
+  renderChrome();renderBoard();renderRing();afterRender();navTrack();
 }
 // Android Back button (MainActivity calls cpBack): closes an open panel first, then goes back
 // one screen at a time to the home screen; there it answers 'home' and the app asks to close
@@ -1211,6 +2026,7 @@ const navSame=(x,y)=>!!x&&!!y&&JSON.stringify(x)===JSON.stringify(y);
 function navTrack(){const n=navNow(),top=NAV[NAV.length-1];if(top&&(top.m!==n.m||top.s!==n.s))NAV.length=0;if(!navSame(top,n))NAV.push(n);if(NAV.length>40)NAV.splice(0,NAV.length-40)}
 function navGo(n){if(n.m==='public'){U.pubView=n.v;U.accTab=n.a}else U.pos.tab=n.t;NAV.length=Math.max(0,NAV.length-1);render();window.scrollTo(0,0)}
 window.cpBack=function(){
+  if(U.drawer){setDrawer(false);return 'handled'}
   if(mroot.innerHTML){const x=mroot.querySelector('[data-act="close"]');if(x)x.click();else{closeModal();render()}return 'handled'}
   NAV.pop();
   while(NAV.length&&navSame(NAV[NAV.length-1],navNow()))NAV.pop();
@@ -1222,7 +2038,8 @@ function afterRender(){
   // Tables marked .stk turn into one card per row on phones; each cell is labelled from its column
   document.querySelectorAll('table.stk').forEach(t=>{const hs=[...t.querySelectorAll('thead th')].map(h=>h.textContent.trim());
     t.querySelectorAll('tbody tr').forEach(r=>[...r.children].forEach((c,i)=>{if(!c.hasAttribute('data-label'))c.setAttribute('data-label',hs[i]||'')}))});
-  if(S.mode==='public')animatePub();
+  if(S.mode==='public'){if(U.pubView==='home')splitWords();animatePub();if(U.pubView==='home'){sxLayout();hxKick();sxKick()}}
+  smoothScroll(S.mode==='public'&&U.pubView==='home');playMount();if(CUR.el&&!(S.mode==='public'&&U.pubView==='home'))CUR.el.classList.add('off');
   if(typeof initScratch==='function')initScratch();
   document.querySelectorAll('[data-qr]').forEach(el=>{if(!el.dataset.done)drawQr(el)});
   document.querySelectorAll('[data-route]').forEach(svg=>{
@@ -1242,7 +2059,7 @@ function animatePub(){
   app.classList.remove('enter');void app.offsetWidth;app.classList.add('enter');
   revealObs?.disconnect();
   revealObs=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');revealObs.unobserve(e.target)}}),{rootMargin:'0px 0px -6% 0px'});
-  const els=app.querySelectorAll('.pub .item,.pub .coupon,.pub .combo-card,.pub .how>div,.pub .sec-h,.pub .outlet-bar,.pub .foot,.hm-col,.hm-box,.hm-bev,.hm-banner,.hm-cats,.hm-nomayo,.hm-addr,.hm-feat,.hm-flow,.hm-pz,.hm-steps');
+  const els=app.querySelectorAll('.pub .item,.pub .coupon,.pub .combo-card,.pub .sec-h,.pub .outlet-bar,.home .sx-h,.home .coupon,.sig,.st-main,.st-sub,.st-copy>*,.steps>div,.cmb,.coins-x,.fav-i,.cat-t,.cx,.phone-steps,.cta-x h2,.ft-grid>div');
   // What is on screen already stays visible (the page fades in); only what is further down rises in
   let i=0;els.forEach(el=>{if(el.getBoundingClientRect().top<innerHeight)return;el.style.setProperty('--d',(i++%4)*70+'ms');el.classList.add('rv');revealObs.observe(el)});
 }
@@ -1316,30 +2133,18 @@ function renderPublic(){
       <div class="bd"><h3><span class="veg" title="Veg"></span>${esc(m.name)} ${m.jain?'<span class="jain" title="Jain option">J</span>':''} ${m.spicy?'<span title="Spicy">'+'🌶'.repeat(m.spicy)+'</span>':''}</h3>
       <div class="desc">${esc(m.desc)}</div>
       <div class="ft">${m.cat==='pizza'?`<div class="sizes">${S.sizes.filter(s=>+m.prices[s.id]).map(s=>`<span>${esc(s.label)} <b class="num">${rs(m.prices[s.id])}</b></span>`).join('')}</div>`:`<div class="price num">${rs(m.price)}</div>`}
-      <button class="btn pri" data-act="pub-add" data-id="${m.id}">Add</button></div></div></article>`}).join('')}</div></section>`;
+      <button class="btn pri" data-act="pub-add" data-id="${m.id}" aria-label="Add ${esc(m.name)} to cart">Add</button></div></div></article>`}).join('')}</div></section>`;
   }).join('');
-  return `${offerTicker()}
+  const pzs=S.menu.filter(m=>m.cat==='pizza'&&!m.off),minPz=pzs.length?Math.min(...pzs.map(fromPrice)):0;
+  return `<header class="mhead"><div class="sx-in"><div>
+      <span class="kick" style="color:var(--gold)">${open?'Oven is on · ordering open':'Closed now · order ahead'} · Pure veg</span>
+      <h1>The <em>menu</em></h1>
+      <p>${pizzasCount} pizzas${minPz?' from '+rs(minPz):''} in ${S.sizes.map(s=>esc(s.label)).join(' and ')}, plus pockets, garlic bread, fries and more. Tap a photo to see it up close, tap Add to build yours.</p></div>
+      <div class="pz-spin" aria-hidden="true">${heroPizza()}</div>
+      ${best?`<button class="hx-badge" style="position:static;transform:rotate(-8deg)" data-act="scroll" data-v="offers" aria-label="Today's offer: ${esc(best.name)}"><span><b>${leadBadge(best,dow)[0]}</b><small>${esc(leadBadge(best,dow)[1])}</small></span></button>`:''}
+  </div></header>
+  ${offerTicker()}
   <main class="pub">
-  <section class="hero3">
-    <svg class="drip" viewBox="0 0 1200 46" preserveAspectRatio="none" aria-hidden="true"><path d="${dripPath()}" fill="#f2b632"/></svg>
-    <div class="h-copy">
-      <span class="eyebrow"><i></i>${open?'Oven is on · ordering open':'Opens 12 noon'} · Pure Veg</span>
-      <h1 style="margin-top:14px">Really <span class="sw">cheesy.<svg viewBox="0 0 200 20" preserveAspectRatio="none" aria-hidden="true"><path d="M3 14 Q50 3 100 11 T197 8" fill="none" stroke="#f2b632" stroke-width="6" stroke-linecap="round"/></svg></span><br>Freshly baked.</h1>
-      <p>Build your pizza your way, watch it take shape as you pick toppings, and follow it live from our oven to your door. No mayonnaise, ever.</p>
-      <div class="cta"><button class="btn chz lg" data-act="scroll" data-v="menu">Order now</button><button class="btn ghost lg" data-act="scroll" data-v="offers">See today's offers</button></div>
-      <div class="facts"><div><b class="num">${pizzasCount}</b><span>Pizzas</span></div><div><b>${S.sizes.map(s=>esc(s.label)).join(' · ')}</b><span>Sizes</span></div><div><b class="num">~${PREP_MIN} min</b><span>Oven to box</span></div><div><b>${hoursText()}</b><span>Noon to night</span></div></div>
-    </div>
-    <div><div class="plate"><img src="${IMG('cheesyspecial')}" alt="Cheesy Special pizza">
-      <span class="fl f1"><i style="background:#f2b632"></i>5-cheese blend</span>
-      <span class="fl f2"><i style="background:#1f8a4c"></i>Jain options</span>
-      <span class="fl f3"><i style="background:#d23f35"></i>Kathiyavadi heat</span>
-      ${best?`<div class="sticker"><b>${best.type==='bogo'?'Buy 1 Get 1':best.type==='day'?best.pct+'% OFF':esc(best.name)}</b><small>${DAYS[dow]} special</small></div>`:''}</div></div>
-  </section>
-  <section class="how" aria-label="How it works">
-    <div><b>1</b><h3>Build it</h3><p>Pick size, cheese burst base and toppings. See it on screen.</p></div>
-    <div><b>2</b><h3>We bake it</h3><p>Fresh in our oven in about ${PREP_MIN} minutes.</p></div>
-    <div><b>3</b><h3>Track it live</h3><p>Follow the rider on the map right to your door.</p></div>
-  </section>
   <div class="card outlet-bar">
     <span class="dot ${open?'':'off'}"></span>
     <div class="grow"><b>${esc(o.name)}</b> <span class="muted small">· ${esc(o.area)}</span><div class="small muted">${open?'Open now · orders go straight to the kitchen':'Closed now · you can still schedule for later'} · Call <span class="num">${esc(fmtPhone(o.phone))}</span></div></div>
@@ -1362,60 +2167,449 @@ function renderPublic(){
     ${CATS.map(([k,n])=>`<button data-act="pubcat" data-v="${k}" aria-pressed="${U.pubCat===k}">${n}</button>`).join('')}
   </nav>
   ${sections}${!shown?`<div class="empty card">Nothing matches${filtered?' these filters':''}. <button class="btn sm" data-act="pubclear">Clear filters</button></div>`:''}
-  <footer class="foot">
-    <div><h3>CHEESY PIZZA</h3><p>Really Cheesy · ચીઝી પિઝ્ઝા<br>Pure veg · No mayonnaise products<br>Open 12:00 noon to 10:00 pm</p><p class="small">We also book orders on phone call. Pay first; waiting time depends on booked orders.</p><button class="btn sm ghost staff" data-act="mode" data-v="pos">Staff login</button></div>
-    <div class="ol">${S.outlets.map(x=>`<div><b>${esc(x.name)}</b><br><small>${esc(x.area)}</small><br><span class="num">${esc(fmtPhone(x.phone))}</span>${x.id!==S.cur?`<br><button class="btn sm ghost" style="margin-top:6px" data-act="use-outlet" data-id="${x.id}">Order from here</button>`:'<br><small>Ordering from here</small>'}</div>`).join('')}</div>
-  </footer>
   </main>
+  ${siteFooter()}
   ${cartN?`<div class="cartbar${cartN>(U.lastCartN||0)?' bump':''}"><div class="in"><div class="grow"><b class="num">${cartN} item${cartN>1?'s':''} · ${rs(b.total)}</b>${b.saved?` <span class="chip ready num">You save ${rs(b.saved)}</span>`:''}<div class="small muted">${b.hint?esc(b.hint):esc(o.name)}</div></div><button class="btn chz lg" data-act="pub-cart">View cart</button></div></div>`:''}`;
 }
 
-/* ===== HOME (like the shop's poster) ===== */
-function renderHome(){
-  const o=cur();const ph=o.phone||'7778043066';const open=isOpen();
-  const addr=o.area&&o.area!=='Set your address'?o.area:'B/H Gopi Cinema, Maniyani Khad, Anand, Gujarat';
-  const col=(price,label,list,note)=>`<div class="hm-col"><h3><span class="hm-slice" aria-hidden="true"></span>${label}</h3>${note?`<div class="hm-note">${note}</div>`:''}<span class="hm-badge num">${price}<small>Rs</small></span><ol class="${note?'':'plain'}">${list.map(x=>`<li>${x}</li>`).join('')}</ol></div>`;
-  return `${offerTicker()}<main class="pub hm">
-  <section class="hm-card">
-    <div class="hm-head">
-      <div class="hm-logo"><svg viewBox="0 0 40 48" aria-hidden="true"><path d="M20 47C20 47 3 29 3 18a17 17 0 0 1 34 0c0 11-17 29-17 29z" fill="var(--teal)"/><circle cx="20" cy="18" r="10" fill="var(--surface)"/><text x="20" y="23" text-anchor="middle" font-family="Baloo Bhai 2, sans-serif" font-weight="800" font-size="14" fill="var(--teal)">C</text></svg><small>Really Cheesy…!<br>ચીઝી પિઝ્ઝા</small></div>
-      <div class="hm-title"><h1>CHEESY PIZZA<sup>™</sup></h1><p class="hm-nomayo">(No Mayonnaise Products)</p></div>
-      <div class="hm-contact"><span class="hm-veg"><span class="veg"></span> PURE VEG.</span>
-        <a class="hm-phone num" href="tel:+91${esc(ph)}">☎ ${esc(fmtPhone(ph))}</a>
-        <div class="hm-time"><b>TIME</b>${hr12(OPEN_H)}:00 NOON to ${hr12(CLOSE_H)}:00 PM</div>
-        <span class="chip ${open?'ready':'cancelled'}">${open?'Open now':'Closed now'}</span></div>
-    </div>
-    <div class="hm-feat"><span>FRESH DOUGH</span><span>LIVE PIZZA</span><span>SOFT BASE</span><span>HAND STRETCHED</span></div>
-
-    <h2 class="hm-sec"><span class="hm-slice" aria-hidden="true"></span>Pizza</h2>
-    <div class="hm-tops">
-      ${col(70,'Single topping',['Onion','Capsicum','Tomato'])}
-      ${col(90,'Single topping',['Corn','Jalapeno','Olive'])}
-      ${col(110,'Double toppings',['Onion','Capsicum','Tomato','Corn','Jalapeno','Olive','Paneer'],'Choose any two')}
-      <div class="hm-bev"><h3>Beverages <small>(250 ml)</small></h3>
-        <div class="hm-bevl">${['Thums Up','Coca Cola','Sprite','Fanta'].map(n=>`<span>${n}</span><b class="num">20<small>Rs</small></b>`).join('')}</div></div>
-    </div>
-    <div class="hm-cta"><button class="btn chz lg" data-act="pn" data-v="menu">See full menu & order</button><a class="btn lg" href="tel:+91${esc(ph)}">Call to book</a></div>
-
-    <div class="hm-cats">${CATS.map(([,n])=>`<span>${esc(n)}</span>`).join('')}</div>
-    <div class="hm-banner">☞ We Don't Use Mayonnaise In Any Product.</div>
-    <div class="hm-addr"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s-7-7.5-7-13a7 7 0 0 1 14 0c0 5.5-7 13-7 13z" fill="none" stroke="var(--cheese)" stroke-width="2"/><circle cx="12" cy="9" r="2.5" fill="var(--cheese)"/></svg><b>${esc(addr.toUpperCase())}</b></div>
-
-    <div class="hm-boxes">
-      <div class="hm-box"><div class="hm-bh">Available on</div><div class="hm-zomato">zomato</div></div>
-      <div class="hm-box"><div class="hm-bh">Delivery available</div><div class="hm-bb"><svg viewBox="0 0 64 40" width="84" aria-hidden="true"><circle cx="14" cy="32" r="6" fill="none" stroke="var(--ink)" stroke-width="3"/><circle cx="50" cy="32" r="6" fill="none" stroke="var(--ink)" stroke-width="3"/><path d="M14 32h22l6-12h10l-2 12" fill="none" stroke="var(--cheese)" stroke-width="4" stroke-linejoin="round"/><rect x="40" y="6" width="16" height="12" rx="2" fill="var(--teal)"/><circle cx="30" cy="10" r="5" fill="var(--bad)"/></svg><small class="muted">Charges apply</small></div></div>
-      <div class="hm-box"><div class="hm-bh">Follow us</div><div class="hm-bb"><a class="btn sm" href="https://wa.me/91${esc(ph)}" target="_blank" rel="noopener">WhatsApp</a><span class="small muted">Instagram · Facebook · X</span></div></div>
-    </div>
-
-    <div class="hm-bottom">
-      <ul class="hm-steps">${['Save our number to book order…','We accept order on phone call…','Pay first to confirm order…','Book your order to avoid waiting…','Wait minimum 20 minutes after order'].map(t=>`<li>☞ ${t}</li>`).join('')}</ul>
-      <img src="${IMG('veggieparadise')}" alt="Veggie pizza" class="hm-pz">
-    </div>
-    <div class="hm-flow"><span>Save our number</span>→<span>Call us</span>→<span>Book order</span>→<span>Pay first</span>→<span>Confirm order</span></div>
-  </section>
-  <div class="hm-staff"><button class="btn sm ghost" data-act="mode" data-v="pos">Staff login</button></div>
-  </main>`;
+/* ===== HOME: cinematic landing page ===== */
+// Everything shown comes from the shop's data (menu, offers, combos, outlets, settings); the only
+// fixed text is the shop's own poster wording (fresh dough, no mayonnaise, the counter board).
+const PRIVACY_URL='https://github.com/bhattsamp/Cheesy_Pizza/blob/main/PRIVACY.md';
+const SHOP_ADDR='B/H Gopi Cinema, Maniyani Khad, Anand, Gujarat';
+const RM=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
+const hrText=h=>hr12(h)+':00 '+(h===12?'noon':h<12?'am':'pm');
+const fromPrice=m=>m.cat==='pizza'?Math.min(...S.sizes.map(s=>+m.prices[s.id]).filter(Boolean)):m.price;
+const shopAddr=o=>o.area&&o.area!=='Set your address'?o.area:SHOP_ADDR;
+const brandWord='<img class="bp-logo" src="img/logo-lockup.png" alt="Cheesy Pizza · Really Cheesy...!" width="721" height="146">';
+const brandStack='<img class="ft-logo" src="img/logo-stack-light.png" alt="Cheesy Pizza · Really Cheesy...!" width="750" height="640" loading="lazy">';
+// The offer that leads the day: Buy 1 Get 1 first, then a day-wide % off, then any other deal
+function leadOffer(dow){const l=activeOffers(dow);return l.find(x=>x.type==='bogo')||l.find(x=>x.type==='day')||l.find(x=>x.type!=='code')}
+function leadBadge(x,dow){
+  if(x.type==='bogo')return ['1+1',DAYS[dow]+' special'];
+  if(x.type==='day')return [x.pct+'%','off · '+DAYS[dow]];
+  if(x.type==='item')return [x.kind==='pct'?x.value+'%':'₹'+x.value,menuItem(x.itemId)?.name||x.name];
+  return [esc(x.name),'Today'];
 }
+
+// The hero pizza is a real photo: our Veggie Paradise, seen from the top, on the plate that tilts and turns
+function heroPizza(){return '<img class="hx-real" src="img/hero-pizza.webp" alt="Veggie Paradise pizza from Cheesy Pizza" width="900" height="900" draggable="false">'}
+// Real food from the menu floating around the hero pizza. Each piece can be grabbed and thrown; it springs back.
+const FLOAT={garlic:'garlicbread',fries:'fries',pocket:'paneerpockets',masala:'masalabread',marg:'margherita',mex:'mexican',dbl:'doublecheese',kath:'kathiyavadi'};
+const FLOATERS=[['garlic',-6,60,30,140,26,6,-12,8],['fries',80,-6,19,180,34,7,-6,10,'m'],['pocket',86,58,22,220,40,5.5,-8,6],['marg',58,-14,15,110,20,6.5,-10,10,'m'],
+  ['mex',-26,6,20,160,30,7.5,-8,4,'m'],['dbl',118,26,15,170,32,6.5,-10,12,'m']];
+
+function renderHome(){
+  const o=cur(),ph=o.phone||'7778043066',open=isOpen(),dow=new Date().getDay(),addr=shopAddr(o);
+  const pizzas=S.menu.filter(m=>m.cat==='pizza'&&!m.off);
+  const lead=leadOffer(dow);const live=S.offers.filter(x=>x.active).sort((a,b)=>dayOK(b,dow)-dayOK(a,dow));
+  const combos=S.combos.filter(c=>c.active);const best=S.menu.filter(m=>m.best&&!m.off);
+  const feat=pizzas.find(m=>m.best&&m.img)||pizzas.find(m=>m.img)||pizzas[0];
+  const sig=[...pizzas.filter(m=>m.img),...pizzas.filter(m=>!m.img)].slice(0,6);
+  const jain=pizzas.filter(m=>m.jain).length;const minPz=pizzas.length?Math.min(...pizzas.map(fromPrice)):0;
+  const enter=U.enter&&!RM()?' enter':'';
+  const name=m=>`${esc(m.name)}${m.jain?' <span class="jain" title="Jain option">J</span>':''}${m.spicy?' <span title="Spicy">'+'🌶'.repeat(m.spicy)+'</span>':''}`;
+  const addBtn=(m,label='Add',cls='btn pri')=>`<button class="${cls}" data-act="pub-add" data-id="${m.id}" aria-label="Add ${esc(m.name)} to cart">${label}</button>`;
+  const lb=lead?leadBadge(lead,dow):null;
+  const floaters=FLOATERS.map(([k,x,y,w,z,d,t,r0,r1,m],i)=>`<div class="hx-f${m?' m-hide':''}" style="--x:${x}%;--y:${y}%;--w:${w}%;--z:${z}px;--d:${d};--k:${i};--t:${t}s;--r0:${r0}deg;--r1:${r1}deg;--dl:-${i*1.3}s"><div class="hx-grab" data-grab><img src="img/play/${FLOAT[k]}.webp" alt="" draggable="false"></div></div>`).join('');
+  const steps=[['Build it','Pick size, cheese burst base and toppings. See it on screen.'],['We bake it',`Fresh in our oven in about ${PREP_MIN} minutes.`],['Track it live','Follow the rider on the map right to your door.']];
+  const p1=fillWords('Cheesy Pizza is a pure veg pizza shop from Gujarat. Every base starts as fresh dough, stretched by hand and baked soft, then loaded with cheese the way the name promises.');
+  const p2a=fillWords("We don't use mayonnaise in any product."),p2b=fillWords(`Not in the pockets, not in the dips, not anywhere.${jain?` ${jain} of our pizzas come in a Jain option, too.`:''}`);
+  const craft=['Fresh dough','Hand stretched','Soft base','Live pizza','Pure veg','No mayonnaise'].map(t=>`<span><b>✦</b> ${t}</span>`).join('');
+  // toppings that drop onto the pizza in the "how ordering works" scene
+  const TOPS={tom:'<svg viewBox="-30 -30 60 60"><circle r="27" fill="#E2432A"/><circle r="25" fill="none" stroke="#A9260F" stroke-width="3.5"/><g fill="#F8B79E">'+[0,1,2,3,4].map(k=>`<ellipse cy="-12" rx="4" ry="7" transform="rotate(${k*72})"/>`).join('')+'</g><circle r="5" fill="#FBCDB9"/></svg>',
+    oli:'<svg viewBox="-14 -14 28 28"><circle r="9.5" fill="none" stroke="#2A221F" stroke-width="6.5"/></svg>',
+    jal:'<svg viewBox="-20 -20 40 40"><circle r="15" fill="#A7C86B" opacity=".6"/><circle r="15" fill="none" stroke="#3E8E2E" stroke-width="7"/><circle cx="-4" cy="-2" r="2.2" fill="#EEF3CF"/><circle cx="4" cy="3" r="2.2" fill="#EEF3CF"/></svg>',
+    pep:'<svg viewBox="-26 -16 52 32"><path d="M-21 7Q0-16 21 7" fill="none" stroke="#F6C431" stroke-width="10" stroke-linecap="round"/></svg>',
+    red:'<svg viewBox="-26 -16 52 32"><path d="M-21 7Q0-16 21 7" fill="none" stroke="#D9341E" stroke-width="10" stroke-linecap="round"/></svg>',
+    bas:'<svg viewBox="-18 -28 36 56"><path d="M0-24C15-13 15 11 0 24C-15 11-15-13 0-24Z" fill="#3E9A3E"/><path d="M0-21V21" stroke="#1B5A22" stroke-width="1.4" opacity=".55"/></svg>'};
+  const drops=[['tom',32,30,15],['jal',62,26,10],['oli',48,46,6],['pep',70,52,14],['tom',66,72,15],['bas',40,64,9],['red',28,54,14],['jal',50,78,10],['oli',76,38,6],['tom',46,24,13],['oli',30,74,6],['bas',58,58,8],['pep',38,40,13],['jal',78,62,9]]
+    .map(([k,x,y,s],i)=>`<span class="bx-top" style="--x:${x}%;--y:${y}%;--s:${s}%;--t:${(.3+i*.016).toFixed(3)};--r:${(i*47)%360}deg">${TOPS[k]}</span>`).join('');
+  return `<main class="home"><div class="home-bg" aria-hidden="true"><i class="b1"></i><i class="b2"></i><i class="b3"></i></div>
+  <section class="hx hx2${enter}" aria-labelledby="hx-title">
+    <div class="hx-pill"><span class="kick${open?'':' closed'}"><i></i>${open?'Oven is on · ordering open':'Closed now · opens at '+hrText(OPEN_H)} · Pure veg</span></div>
+    <img class="hx-logo" src="img/logo-badge.png" alt="Cheesy Pizza · Really Cheesy...!" width="804" height="824">
+    <p class="hx-hint" aria-hidden="true"><span class="m">Grab the food and throw it ↗</span><span class="t">Drag the food around ↗</span></p>
+    <div class="hx-giant" aria-hidden="true">${[...'CHEESY'].map((c,j)=>`<span style="--j:${j};--k:${[-140,90,-60,160,-110,70][j]};--r:${[-14,8,-6,12,-10,6][j]};--b:${[-7,5,-3,8,-6,4][j]}"><b>${c}</b></span>`).join('')}</div>
+    <div class="hx-stage">
+      <div class="hx-tilt" aria-hidden="true"><div class="hx-glow"></div><div class="hx-plate"></div>
+        <div class="hx-pz"><div class="hx-spin" style="animation-delay:-${(Date.now()/1000%140).toFixed(1)}s">${heroPizza()}</div></div>
+        <div class="hx-steam"><i style="--l:0px;--dl:0s"></i><i style="--l:30px;--dl:1.7s"></i><i style="--l:-26px;--dl:3.3s"></i></div>${floaters}</div>
+    </div>
+    ${lb?`<button class="hx-badge" data-act="pn" data-v="offers" aria-label="Today's offer: ${esc(lead.name)}"><span><b>${lb[0]}</b><small>${esc(lb[1])}</small></span></button>`:''}
+    <div class="hx-bl">
+      <h1 id="hx-title">${['Serious','Cheese.','<em>Unforgettable</em>','Pizza.'].map((w,i)=>`<span class="ln"><span style="--i:${i}">${w}</span></span>`).join('')}</h1>
+      <p class="hx-sub">Fresh dough, stretched by hand and baked soft under a proper blanket of cheese. Pure veg, built your way, and never a drop of mayonnaise.</p>
+      <div class="hx-cta"><button class="btn pri lg glow" data-act="pn" data-v="menu">Order now <span class="arr" aria-hidden="true">→</span></button><button class="btn ghost lg" data-act="pn" data-v="offers">Today's offers</button></div>
+    </div>
+    <div class="hx-br">
+      <div class="hx-facts"><div><b class="num">${pizzas.length}</b><span>Pizzas</span></div><div><b>${S.sizes.map(s=>esc(s.label)).join(' · ')}</b><span>Sizes</span></div><div><b class="num">~${PREP_MIN} min</b><span>Oven to box</span></div><div><b>${hoursText()}</b><span>Hours</span></div></div>
+      ${feat?`<div class="hx-card">${feat.img?`<img src="${IMG(feat.img)}" alt="" width="64" height="64">`:''}<div><small>${feat.best?'Best seller':'From the oven'}</small><b>${esc(feat.name)}</b><span>from <span class="num">${rs(fromPrice(feat))}</span></span></div>${addBtn(feat,'Add','btn pri sm')}</div>`:''}
+    </div>
+    <button class="hx-scroll" data-act="scroll" data-v="signature">Scroll<i aria-hidden="true"></i></button>
+  </section>
+  <div class="ribbons"><div class="rb a">${(t=>{const i=t.indexOf('>',t.indexOf('class="tk"'))+1,j=t.lastIndexOf('</div></div>'),x=t.slice(i,j);return t.slice(0,i)+x+x+t.slice(j)})(offerTicker())}</div><div class="rb b" aria-hidden="true"><div class="ticker"><div class="tk" style="animation-duration:60s">${craft}${craft}${craft}${craft}</div></div></div></div>
+
+  ${sig.length?`<section class="sx hg" id="signature" data-sx="hpin"><div class="hg-pin"><div class="hg-word" aria-hidden="true">Signature pizzas</div><div class="sx-in">
+    <div class="sx-h"><div><span class="kick">From the oven</span><h2>Signature <em>pizzas</em></h2></div><p>Pick a size, go cheese burst, pile on extra toppings. Tap a pizza to see it up close.</p></div></div>
+    <div class="hg-track"><div class="sig-grid">${sig.map((m,i)=>{const tags=itemOfferTags(m,dow);return `<article class="sig"><span class="sig-no">No. ${String(i+1).padStart(2,'0')}</span>${m.best||tags.length?`<div class="ribbon">${m.best?'<span>Best seller</span>':''}${tags.map(t=>`<span class="o">${esc(t)}</span>`).join('')}</div>`:''}
+      <div class="sig-ph" data-act="pz-info" data-id="${m.id}" role="button" tabindex="0" aria-label="About ${esc(m.name)}">${thumb(m)}</div>
+      <h3>${name(m)}</h3><p>${esc(m.desc)}</p>
+      <div class="sig-ft"><span class="from">from<b class="num">${rs(fromPrice(m))}</b></span>${addBtn(m,'Add <span class="arr" aria-hidden="true">+</span>')}</div></article>`}).join('')}</div></div>
+    <div class="sx-in hg-foot"><button class="btn lg" data-act="pn" data-v="menu">See the full menu <span class="arr" aria-hidden="true">→</span></button><span class="hg-prog" aria-hidden="true"><i></i></span><p class="hint-swipe" style="margin:0">Swipe for more →</p></div>
+  </div></section>`:''}
+
+  <section class="sx" id="story" style="background:var(--surface)"><div class="sx-in">
+    <div class="story">
+      <div class="st-art" data-sx>
+        <figure class="st-main clipr" style="margin:0"><img src="${IMG('fivecheese')}" alt="5 Cheese pizza" loading="lazy" width="400" height="400"></figure>
+        <div class="st-sub"><img src="${IMG('masalabread')}" alt="Indian Masala Bread" loading="lazy" width="400" height="400"></div>
+        <div class="st-seal" aria-hidden="true"><svg viewBox="0 0 200 200"><defs><path id="sealp" d="M100 100m-76 0a76 76 0 1 1 152 0a76 76 0 1 1-152 0"/></defs><text font-size="13.5" font-weight="700" fill="#F5EEE4" font-family="Hind Vadodara,sans-serif"><textPath href="#sealp" textLength="470" lengthAdjust="spacing">PURE VEG · NO MAYONNAISE · FRESH DOUGH ·</textPath></text></svg><b>Pure<br>veg</b></div>
+      </div>
+      <div class="st-copy">
+        <span class="kick">Our story</span><span class="script" aria-hidden="true">Really cheesy…!</span>
+        <h2>Cheese first. <em>Always.</em></h2>
+        <p data-sx style="--n:${p1.n}">${p1.html}</p>
+        <p data-sx style="--n:${p2a.n+p2b.n}"><strong>${p2a.html}</strong> ${p2b.html.replace(/--i:(\d+)/g,(m,d)=>'--i:'+(+d+p2a.n))}</p>
+        <ul class="craft">${['Fresh dough','Hand stretched','Soft base','Live pizza'].map((t,i)=>`<li><span>0${i+1}</span>${t}</li>`).join('')}</ul>
+        <div class="st-stats"><div><b class="num">${pizzas.length}</b><span>Pizzas</span></div>${minPz?`<div><b class="num">${rs(minPz)}</b><span>Pizzas from</span></div>`:''}<div><b class="num">${Math.round(COIN_RATE*100)}%</b><span>Back in coins</span></div></div>
+      </div>
+    </div>
+  </div></section>
+
+  <section class="bx" id="how" data-sx="pin" data-step="0" aria-labelledby="bx-title"><div class="bx-pin"><div class="sx-in bx-in">
+    <div class="bx-copy"><span class="kick">How ordering works</span><h2 id="bx-title">${steps.map(([h])=>h.replace(' it',' it.')).slice(0,2).join(' ')} <em>${steps[2][0]}.</em></h2>
+      <ol class="bx-steps">${steps.map(([h,p],i)=>`<li data-i="${i}"><b>0${i+1}</b><div><h3>${h}</h3><p>${p}</p></div></li>`).join('')}</ol>
+      <div class="bx-bar"><i></i></div></div>
+    <div class="bx-stage" aria-hidden="true"><div class="bx-plate"></div><div class="bx-heat"></div>
+      <div class="bx-pz"><div class="bx-dough"></div><div class="bx-sauce"></div><div class="bx-cheese"></div><div class="bx-bake"></div>${drops}</div>
+      <div class="bx-steam"><i style="--l:0px;--dl:0s"></i><i style="--l:34px;--dl:1.2s"></i><i style="--l:-30px;--dl:2.3s"></i></div>
+      <div class="bx-route"><svg viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M50 50C66 46 78 30 90 16" fill="none" stroke="#0f7f91" stroke-width="1.6" vector-effect="non-scaling-stroke" stroke-linecap="round"/></svg><span class="bx-pin-ic">📍</span></div>
+    </div>
+  </div></div></section>
+
+  <section class="sx dark offers-band" id="deals"><div class="sx-in">
+    <div class="sx-h"><div><span class="kick">Offers &amp; combos</span><h2>More cheese, <em>less to pay</em></h2></div><p>The best offer applies by itself in your cart. Coupon codes go in at checkout.</p></div>
+    ${live.length?`<div class="hscroll">${live.map(x=>coupon(x,dow)).join('')}</div>`:''}
+    ${combos.length?`<div class="combo-grid">${combos.map(c=>{const ex=c.extras.map(menuItem).filter(Boolean),worth=comboWorth(c);return `<article class="cmb">${worth>c.price?`<span class="save num">Save up to ${rs(worth-c.price)}</span>`:''}
+      <div class="stack">${[...Array(c.pizzas)].map((_,i)=>`<img src="${IMG(['margherita','veggieparadise','cheesyspecial'][i%3])}" alt="" loading="lazy">`).join('')}${ex.map(m=>m.img?`<img src="${IMG(m.img)}" alt="" loading="lazy">`:'<span class="pzs"></span>').join('')}</div>
+      <h3>${esc(c.name)}</h3><p>${esc(c.desc)}</p>
+      <div class="cmb-ft"><span class="price num">${rs(c.price)}</span>${worth>c.price?`<s class="num">${rs(worth)}</s>`:''}<button class="btn pri" data-act="combo-add" data-id="${c.id}" data-t="pub" aria-label="Add ${esc(c.name)} combo">Add combo</button></div></article>`}).join('')}</div>`:''}
+    <div class="coins-x"><div class="coin" aria-hidden="true">C</div><div class="grow"><h3>Cheese Coins</h3><div class="muted">Get ${Math.round(COIN_RATE*100)}% back as coins on every order. Use them to pay up to 20% of your next bill. 1 coin = ₹1.</div></div><button class="btn" data-act="pub-track-find">Check my coins</button></div>
+  </div></section>
+
+  ${best.length?`<section class="sx" id="favourites"><div class="sx-in">
+    <div class="sx-h"><div><span class="kick">Best sellers</span><h2>Our <em>best sellers</em></h2></div></div>
+    <div class="fav">${best.map(m=>`<div class="fav-i"><div class="ph" data-act="pz-info" data-id="${m.id}" role="button" tabindex="0" aria-label="About ${esc(m.name)}">${thumb(m)}</div><div><h3>${name(m)}</h3><span class="price num">from ${rs(fromPrice(m))}</span></div>${addBtn(m)}</div>`).join('')}</div>
+  </div></section>`:''}
+
+  <section class="sx" id="explore"${best.length?' style="padding-top:0"':''}><div class="sx-in">
+    <div class="sx-h"><div><span class="kick">Explore</span><h2>The whole <em>menu</em></h2></div><p>Pizzas, pockets, garlic bread, fries, dessert and dips, all pure veg.</p></div>
+    <div class="cats-x">${CATS.map(([k,n])=>{const items=S.menu.filter(m=>m.cat===k&&!m.off);if(!items.length)return '';const pic=items.find(m=>m.img);
+      return `<button class="cat-t" data-act="pub-gocat" data-v="${k}">${pic?`<img src="${IMG(pic.img)}" alt="" loading="lazy">`:thumb(items[0])}<span class="cl"><span><b>${esc(n)}</b>${GU[k]?`<span class="gu">${esc(GU[k])}</span>`:''}</span><small>${items.length} item${items.length>1?'s':''}</small></span></button>`}).join('')}</div>
+  </div></section>
+
+  <section class="sx" id="counter"><div class="sx-in">
+    <div class="sx-h"><div><span class="kick">At the counter</span><h2>From our <em>menu board</em></h2></div><p>Counter favourites from the shop's board. Call us to book these.</p></div>
+    <div class="counter-x">
+      ${[[70,'Single topping',['Onion','Capsicum','Tomato']],[90,'Single topping',['Corn','Jalapeno','Olive']],[110,'Double toppings',['Onion','Capsicum','Tomato','Corn','Jalapeno','Olive','Paneer'],'Choose any two']].map(([p,h,l,n])=>`<div class="cx"><h3>${h}<b class="num">${p}<small>Rs</small></b></h3>${n?`<p>${n}</p>`:''}<ul>${l.map(x=>`<li>${x}</li>`).join('')}</ul></div>`).join('')}
+      <div class="cx bev"><h3>Beverages<b class="num">20<small>Rs</small></b></h3><p>250 ml</p><ul>${['Thums Up','Coca Cola','Sprite','Fanta'].map(x=>`<li>${x}</li>`).join('')}</ul></div>
+    </div>
+    <div class="phone-steps" aria-label="Ordering by phone"><span>Save our number</span>→<span>Call us</span>→<span>Book order</span>→<span>Pay first</span>→<span>Confirm order</span><a class="btn pri" href="tel:+91${esc(ph)}">Call to book</a></div>
+    <p class="small muted" style="margin-top:12px">Please wait at least 20 minutes after booking.</p>
+  </div></section>
+
+  <section class="sx dark cta-x"><div class="names" aria-hidden="true">${[0,1,2].map(r=>{const t=pizzas.filter((_,i)=>i%3===r).map(m=>`<span>${esc(m.name)}</span>`).join('');return `<div class="nr">${t}${t}${t}</div>`}).join('')}</div><span class="ring" aria-hidden="true"></span><span class="ring r2" aria-hidden="true"></span><div class="sx-in">
+    <span class="kick">${open?'The oven is on':'Order ahead'}</span>
+    <h2>Hungry<br><em>yet?</em></h2>
+    <p>${open?`Order online and it's out of the oven in about ${PREP_MIN} minutes.`:`We're closed right now. You can still schedule your order for later, or call us from ${hrText(OPEN_H)}.`}</p>
+    <div class="hx-cta"><button class="btn pri lg glow" data-act="pn" data-v="menu">Order online <span class="arr" aria-hidden="true">→</span></button><a class="btn ghost lg num" href="tel:+91${esc(ph)}">Call ${esc(fmtPhone(ph))}</a><a class="btn ghost lg" href="https://wa.me/91${esc(ph)}" target="_blank" rel="noopener">WhatsApp</a></div>
+    <div class="avail"><span>Delivery available · charges apply</span><span>Takeaway &amp; dine-in</span><span>Also on Zomato</span></div>
+  </div></section>
+  </main>${siteFooter()}`;
+}
+
+function siteFooter(){
+  const o=cur(),c=me();const area=x=>x.area&&x.area!=='Set your address'?`<small>${esc(x.area)}</small><br>`:'';
+  const l=(v,n)=>`<li><button class="ft-link" data-act="pn" data-v="${v}">${n}</button></li>`;
+  return `<footer class="sfoot"><div class="sx-in">
+    <div class="ft-grid">
+      <div class="ft-brand">${brandStack}<p>Really cheesy · <span lang="gu">ચીઝી પિઝ્ઝા</span>. Pure veg, no mayonnaise products. We also book orders on phone call. Pay first; waiting time depends on booked orders.</p></div>
+      <div><h3>Visit</h3><p>${esc(shopAddr(o))}<br>Open ${hrText(OPEN_H)} to ${hrText(CLOSE_H)}<br><span class="dot ${isOpen()?'':'off'}" style="margin-right:8px"></span>${isOpen()?'Open now':'Closed now'}</p></div>
+      <div><h3>Outlets</h3>${S.outlets.map(x=>`<div class="ft-out"><b>${esc(x.name)}</b>${area(x)}${x.phone?`<a class="num" href="tel:+91${esc(x.phone)}">${esc(fmtPhone(x.phone))}</a>`:''}${x.id!==S.cur?`<br><button class="btn sm" data-act="use-outlet" data-id="${x.id}">Order from here</button>`:'<br><small>Ordering from here</small>'}</div>`).join('')}</div>
+      <div><h3>Explore</h3><ul>${l('menu','Menu')}${l('offers','Offers')}${l('story','Our story')}${l('track','Track order')}${c?l('account','My account'):l('signin','Sign in')}
+        ${APP_ROLE?'':`<li><a href="${APP_LINK}" rel="noopener">Android app</a></li>`}<li><a href="${PRIVACY_URL}" target="_blank" rel="noopener">Privacy policy</a></li><li><button class="ft-link" data-act="mode" data-v="pos">Staff login</button></li></ul></div>
+    </div>
+    <div class="play"><div class="ft-big" data-sx aria-hidden="true">Really cheesy</div>${U.pubView==='home'?'<p class="play-hint" aria-hidden="true"><span class="m">Psst… grab a pizza and throw it</span><span class="t">Psst… tap the pizzas</span></p>':''}</div>
+    <div class="ft-bottom"><span>© ${new Date().getFullYear()} Cheesy Pizza · Pure veg</span><span lang="gu">ચીઝી પિઝ્ઝા</span></div>
+  </div></footer>`;
+}
+
+/* ===== customer header: wide-screen links, cart count and the menu drawer ===== */
+const PUB_TITLE=document.title;
+function renderChrome(){
+  const pub=S.mode==='public';document.title=pub?PUB_TITLE:'Cheesy Pizza POS';
+  const v=U.pubView,b=(k,n,on)=>`<button data-act="pn" data-v="${k}" ${on?'aria-current="page"':''}>${n}</button>`;
+  document.getElementById('pubLinks').innerHTML=pub?b('home','Home',v==='home')+b('menu','Menu',v==='menu')+b('offers','Offers')+b('story','Our story')+b('track','Track order'):'';
+  const n=U.cart.reduce((s,l)=>s+l.qty,0),btn=document.getElementById('cartBtn');
+  document.getElementById('cartN').textContent=n||'';btn.setAttribute('aria-label',n?`Cart, ${n} item${n>1?'s':''}`:'Cart, empty');
+  if(U.hdrN!=null&&n>U.hdrN&&!RM()){btn.classList.remove('bump');void btn.offsetWidth;btn.classList.add('bump')}U.hdrN=n;
+  renderDrawer();
+}
+function renderDrawer(){
+  const root=document.getElementById('drawerRoot'),open=S.mode==='public'&&!!U.drawer,was=!!root.innerHTML;
+  document.getElementById('menuBtn').setAttribute('aria-expanded',open);document.body.classList.toggle('drawer-open',open);
+  if(!open){root.innerHTML='';return}
+  const c=me(),v=U.pubView,o=cur();
+  const it=(k,n,sub,on)=>[k,n,sub,on];
+  const items=[it('home','Home','',v==='home'),it('menu','Menu','',v==='menu'),it('offers','Offers'),it('story','Our story'),it('track','Track order'),it('orders','My orders'),it('wallet','Wallet',c?rs(c.wallet||0):''),
+    ...(c?[it('account','My account',esc(c.name.split(' ')[0]))]:[it('signin','Sign in'),it('signup','Create account','25 coins free')])];
+  root.innerHTML=`<div class="drw-scrim" data-act="drawer"></div><aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-label="Menu">
+    <div class="drw-h">${brandWord}<button class="drw-x" data-act="drawer" aria-label="Close menu">×</button></div>
+    <nav class="drw-nav" aria-label="Site">${items.map(([k,n,sub,on],i)=>`<button style="--i:${i}" data-act="pn" data-v="${k}" ${on?'aria-current="page"':''}>${n}${sub?`<small>${sub}</small>`:''}</button>`).join('')}</nav>
+    ${S.outlets.length>1?`<div class="drw-sec"><h3>Order from</h3><div class="drw-outs">${S.outlets.map(x=>`<button data-act="use-outlet" data-id="${x.id}" aria-pressed="${x.id===S.cur}"><span>${esc(x.name)}${x.area&&x.area!=='Set your address'?`<br><small>${esc(x.area)}</small>`:''}</span>${x.id===S.cur?'<small>Selected</small>':''}</button>`).join('')}</div></div>`:''}
+    ${o.phone?`<div class="drw-sec"><h3>Talk to us</h3><div class="drw-row"><a class="btn num" href="tel:+91${esc(o.phone)}">Call ${esc(fmtPhone(o.phone))}</a><a class="btn" href="https://wa.me/91${esc(o.phone)}" target="_blank" rel="noopener">WhatsApp</a></div></div>`:''}
+    <div class="drw-foot"><button data-act="mode" data-v="pos">Staff login</button><a href="${PRIVACY_URL}" target="_blank" rel="noopener">Privacy policy</a></div>
+  </aside>`;
+  if(!was)root.querySelector('.drw-nav button')?.focus();
+}
+function setDrawer(open){U.drawer=open;renderDrawer();if(!open)document.getElementById('menuBtn').focus({preventScroll:true})}
+// A tap on anything in the drawer (a page, an outlet, a phone link) closes it once that action has run
+document.addEventListener('click',e=>{const t=e.target.closest('#drawerRoot [data-act],#drawerRoot a');if(t&&t.dataset.act!=='drawer'){U.drawer=false;setTimeout(renderDrawer,0)}},true);
+document.addEventListener('keydown',e=>{
+  if(!U.drawer)return;
+  if(e.key==='Escape'){e.stopImmediatePropagation();setDrawer(false);return}
+  if(e.key==='Tab'){const f=[...document.querySelectorAll('#drawer button,#drawer a')];if(!f.length)return;const a=f[0],z=f[f.length-1];
+    if(e.shiftKey&&document.activeElement===a){e.preventDefault();z.focus()}else if(!e.shiftKey&&document.activeElement===z){e.preventDefault();a.focus()}}
+},true);
+matchMedia('(min-width:901px)').addEventListener?.('change',e=>{if(e.matches&&U.drawer)setDrawer(false)});
+// Photos and tiles that act as buttons also open with Enter or Space
+document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches?.('[role="button"][data-act]')){e.preventDefault();e.target.click()}});
+addEventListener('scroll',()=>document.body.classList.toggle('scrolled',scrollY>8),{passive:true});
+
+/* ===== hero motion: the pizza leans toward the mouse and turns as the page scrolls =====
+   One animation frame loop runs only while something is still moving. Nothing runs for
+   reduced motion, and touch screens only get the scroll part. */
+const HX={mx:0,my:0,tx:0,ty:0,raf:0};
+const hxEl=()=>S&&S.mode==='public'&&U.pubView==='home'?document.querySelector('.hx'):null;
+function hxTick(){
+  HX.raf=0;const el=hxEl();if(!el||RM())return;
+  HX.mx+=(HX.tx-HX.mx)*.09;HX.my+=(HX.ty-HX.my)*.09;
+  const r=el.getBoundingClientRect(),sp=Math.min(1,Math.max(0,-r.top/Math.max(1,r.height)));
+  el.style.setProperty('--mx',HX.mx.toFixed(3));el.style.setProperty('--my',HX.my.toFixed(3));el.style.setProperty('--sp',sp.toFixed(3));
+  if(Math.abs(HX.tx-HX.mx)>.002||Math.abs(HX.ty-HX.my)>.002)HX.raf=requestAnimationFrame(hxTick);
+}
+const hxKick=()=>{if(!HX.raf)HX.raf=requestAnimationFrame(hxTick)};
+document.addEventListener('pointermove',e=>{if(e.pointerType!=='mouse')return;const el=hxEl();if(!el)return;const r=el.getBoundingClientRect();
+  if(e.clientY>r.bottom){HX.tx=HX.ty=0}else{HX.tx=Math.max(-1,Math.min(1,(e.clientX/innerWidth-.5)*2));HX.ty=Math.max(-1,Math.min(1,((e.clientY-r.top)/r.height-.5)*2))}hxKick()},{passive:true});
+document.addEventListener('pointerleave',()=>{HX.tx=HX.ty=0;if(hxEl())hxKick()});
+addEventListener('scroll',()=>{if(hxEl())hxKick()},{passive:true});
+/* Hero play zone: the floating ingredients scatter away from the mouse (or a tap) and spring back home */
+const HP={s:[],raf:0,px:-1e4,py:-1e4,on:false};
+function hpTick(){
+  HP.raf=0;const els=hxEl()&&!RM()?[...document.querySelectorAll('.hx-f svg')]:[];if(!els.length)return;let moving=false;
+  els.forEach((el,i)=>{const s=HP.s[i]||(HP.s[i]={x:0,y:0,vx:0,vy:0,r:0,vr:0}),b=el.getBoundingClientRect();
+    const dx=b.left+b.width/2-HP.px,dy=b.top+b.height/2-HP.py,d=Math.hypot(dx,dy),R=190;let fx=-s.x*.05,fy=-s.y*.05;
+    if(d<R&&d>0){const f=(1-d/R)*6;fx+=dx/d*f;fy+=dy/d*f;s.vr+=(dx>0?1:-1)*f*.5}
+    s.vx=(s.vx+fx)*.86;s.vy=(s.vy+fy)*.86;s.x+=s.vx;s.y+=s.vy;s.vr*=.9;s.r=(s.r+s.vr)*.97;
+    el.style.translate=s.x.toFixed(1)+'px '+s.y.toFixed(1)+'px';el.style.rotate=s.r.toFixed(1)+'deg';
+    if(Math.abs(s.vx)+Math.abs(s.vy)+Math.abs(s.x)+Math.abs(s.y)+Math.abs(s.vr)>.4)moving=true});
+  if(moving||HP.on)HP.raf=requestAnimationFrame(hpTick);
+}
+const hpKick=()=>{if(!HP.raf)HP.raf=requestAnimationFrame(hpTick)};
+document.addEventListener('pointermove',e=>{const hx=hxEl();if(!hx||e.pointerType!=='mouse')return;
+  const inside=hx.contains(e.target);HP.on=inside;HP.px=inside?e.clientX:-1e4;HP.py=inside?e.clientY:-1e4;if(inside)hpKick()},{passive:true});
+document.addEventListener('pointerdown',e=>{const hx=hxEl();if(!hx||e.pointerType==='mouse'||!hx.contains(e.target))return;
+  HP.px=e.clientX;HP.py=e.clientY;HP.on=true;hpKick();setTimeout(()=>{HP.on=false;HP.px=HP.py=-1e4},260)},{passive:true});
+
+/* ===== hero play: grab a piece of food, throw it, and a spring pulls it back to its place ===== */
+const GRAB={el:null};
+function grabSet(g){const st=g._st;g.style.setProperty('--gx',st.x.toFixed(1)+'px');g.style.setProperty('--gy',st.y.toFixed(1)+'px');g.style.setProperty('--gr',st.r.toFixed(1)+'deg');g.style.setProperty('--gz',Math.min(220,Math.hypot(st.x,st.y)*1.4+(GRAB.el===g?60:0)).toFixed(0)+'px')} // lifted toward you, so it passes over the pizza
+document.addEventListener('pointerdown',e=>{
+  const g=e.target.closest?.('[data-grab]');if(!g||RM())return;e.preventDefault();
+  cancelAnimationFrame(g._raf);g._st=g._st||{x:0,y:0,r:0,vx:0,vy:0,vr:0};
+  Object.assign(GRAB,{el:g,px:e.clientX,py:e.clientY,t:performance.now()});g.classList.add('held');
+});
+document.addEventListener('pointermove',e=>{
+  const g=GRAB.el;if(!g)return;const st=g._st,now=performance.now(),dt=Math.max(8,now-GRAB.t),dx=e.clientX-GRAB.px,dy=e.clientY-GRAB.py;
+  st.x+=dx;st.y+=dy;st.vx=dx/dt*16;st.vy=dy/dt*16;st.r+=dx*.12;Object.assign(GRAB,{px:e.clientX,py:e.clientY,t:now});grabSet(g);
+},{passive:true});
+function grabEnd(){
+  const g=GRAB.el;if(!g)return;GRAB.el=null;g.classList.remove('held');const st=g._st;st.vr=st.vx*.7;
+  const tick=()=>{
+    st.vx=(st.vx-st.x*.014)*.93;st.vy=(st.vy-st.y*.014)*.93;st.x+=st.vx;st.y+=st.vy;st.vr=(st.vr-st.r*.012)*.9;st.r+=st.vr;
+    if(Math.abs(st.x)+Math.abs(st.y)+Math.abs(st.vx)+Math.abs(st.vy)+Math.abs(st.r)+Math.abs(st.vr)>.5&&g.isConnected){grabSet(g);g._raf=requestAnimationFrame(tick)}
+    else{Object.assign(st,{x:0,y:0,r:0,vx:0,vy:0,vr:0});grabSet(g)}};
+  g._raf=requestAnimationFrame(tick);
+}
+document.addEventListener('pointerup',grabEnd);document.addEventListener('pointercancel',grabEnd);
+
+/* ===== home scroll scenes =====
+   Sections marked data-sx get --p: 0 as they enter at the bottom of the screen, 1 as they leave at the
+   top (the pinned "how ordering works" scene runs 0→1 while it is pinned). The ribbons get a scroll
+   offset that wraps around their text. One animation frame per scroll, only on the home page. */
+const SX={raf:0,y:null,vel:0};
+const onHome=()=>S&&S.mode==='public'&&U.pubView==='home';
+function sxTick(){
+  SX.raf=0;const home=app.querySelector('main.home');if(!home||RM())return;
+  const vh=innerHeight,y=scrollY;
+  home.style.setProperty('--sy',y.toFixed(0));
+  SX.vel+=((SX.y==null?0:y-SX.y)-SX.vel)*.25;SX.y=y;const hg=app.querySelector('.hg.on');if(hg)hg.style.setProperty('--vel',Math.max(-1,Math.min(1,SX.vel/45)).toFixed(3));
+  app.querySelectorAll('[data-sx]').forEach(el=>{
+    const r=el.getBoundingClientRect();if(r.bottom<-200||r.top>vh+200)return;
+    let p;
+    if(el.dataset.sx==='hpin'){if(!el.classList.contains('on'))return;const top=parseFloat(document.documentElement.style.getPropertyValue('--toph'))||64;p=(top-r.top)/Math.max(1,r.height-el.firstElementChild.clientHeight)}
+    else if(el.dataset.sx==='pin'){p=-r.top/Math.max(1,r.height-vh);const s=p<.5?0:p<.78?1:2;if(el.dataset.step!==String(s))el.dataset.step=s}
+    else p=(vh-r.top)/(vh+r.height);
+    el.style.setProperty('--p',Math.min(1,Math.max(0,p)).toFixed(4));
+  });
+  // each ribbon holds 4 copies of its text; drift and scroll each move it at most one copy, so it never runs out
+  if(Math.abs(SX.vel)>.3)requestAnimationFrame(()=>sxKick());
+  app.querySelectorAll('.nr').forEach((nr,i)=>{const L=nr.scrollWidth/3||1,o=(y*(.22+i*.08))%L;nr.style.setProperty('--mq',(i%2?o-L:-o).toFixed(1)+'px')});
+  app.querySelectorAll('.rb .tk').forEach((tk,i)=>{const L=tk.scrollWidth/4||1,o=(y*.35)%L;tk.style.setProperty('--mq',(i?o-L:-o).toFixed(1)+'px')});
+}
+const sxKick=()=>{if(!SX.raf)SX.raf=requestAnimationFrame(sxTick)};
+// The gallery pins only when the cards fit the screen height; otherwise it stays a swipeable row
+function sxLayout(){
+  const s=app.querySelector('.hg');if(!s)return;const pin=s.querySelector('.hg-pin'),g=s.querySelector('.sig-grid');
+  s.classList.add('on');s.style.height='';
+  const dist=Math.max(0,g.scrollWidth-innerWidth);
+  const gap=parseFloat(getComputedStyle(pin).rowGap)||0,need=[...pin.children].filter(c=>!c.classList.contains('hg-word')).reduce((t,c)=>t+c.offsetHeight+gap,0);
+  if(RM()||dist<40||need>pin.clientHeight){s.classList.remove('on');return}
+  s.style.setProperty('--dist',dist+'px');s.style.height=Math.round(pin.clientHeight+dist*1.15)+'px';
+}
+addEventListener('resize',()=>{if(onHome()){sxLayout();sxKick()}},{passive:true});
+
+/* Smooth, weighted scrolling on the home page with a mouse or trackpad (the Lenis library, loaded only
+   here). Phones keep their own scrolling, the apps and reduced motion get none. */
+let LEN=null,lenLoad=null;
+function smoothScroll(on){
+  if(on&&!LEN&&!APP_ROLE&&!RM()&&matchMedia('(pointer:fine)').matches){
+    lenLoad=lenLoad||new Promise((ok,bad)=>{const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/lenis@1.3.26/dist/lenis.min.js';s.onload=ok;s.onerror=bad;document.head.appendChild(s)});
+    lenLoad.then(()=>{if(LEN||!onHome()||!window.Lenis)return;LEN=new Lenis({lerp:.085});const raf=t=>{if(!LEN)return;LEN.raf(t);requestAnimationFrame(raf)};requestAnimationFrame(raf)}).catch(()=>{});
+  }else if(!on&&LEN){LEN.destroy();LEN=null}
+}
+
+/* A ring that follows the mouse on the home page and grows over things you can press */
+const CUR={el:null,x:0,y:0,tx:0,ty:0,raf:0};
+function curTick(){CUR.raf=0;const c=CUR.el;if(!c)return;CUR.x+=(CUR.tx-CUR.x)*.22;CUR.y+=(CUR.ty-CUR.y)*.22;c.style.translate=CUR.x.toFixed(1)+'px '+CUR.y.toFixed(1)+'px';
+  if(Math.abs(CUR.tx-CUR.x)>.3||Math.abs(CUR.ty-CUR.y)>.3)CUR.raf=requestAnimationFrame(curTick)}
+document.addEventListener('pointermove',e=>{
+  if(e.pointerType!=='mouse'||RM())return;
+  if(!onHome()||mroot.innerHTML||U.drawer){if(CUR.el)CUR.el.classList.add('off');return}
+  if(!CUR.el){CUR.el=document.createElement('div');CUR.el.id='cursor';CUR.el.setAttribute('aria-hidden','true');CUR.el.innerHTML='<span></span>';document.body.appendChild(CUR.el);CUR.x=CUR.tx=e.clientX;CUR.y=CUR.ty=e.clientY}
+  const t=e.target.closest?e.target:null,lab=t&&t.closest('.play-cv,.hx-grab')?'Grab':t&&t.closest('.sig-ph,.fav-i .ph')?'Look':t&&t.closest('[data-act="pub-add"],[data-act="combo-add"]')?'Add':'';
+  CUR.el.classList.remove('off');CUR.el.classList.toggle('big',!!(t&&t.closest('[data-act],a,button')));CUR.el.classList.toggle('lab',!!lab);CUR.el.firstChild.textContent=lab;
+  CUR.tx=e.clientX;CUR.ty=e.clientY;if(!CUR.raf)CUR.raf=requestAnimationFrame(curTick)},{passive:true});
+document.documentElement.addEventListener('mouseleave',()=>{if(CUR.el)CUR.el.classList.add('off')});
+
+/* ===== Footer play zone (home page): real food from our menu to throw around =====
+   Cut-out photos of our pizzas, garlic bread, fries, paneer pockets and masala bread fall in and pile up.
+   Matter.js (2D physics) loads the first time the footer comes into view and only runs while it is on
+   screen. Mouse: push pieces by moving through them, drag and throw them, click empty space to drop a new
+   one. Touch: tap a piece to flip it, tap empty space to drop one; the page still scrolls. The canvas
+   survives re-renders: it is moved into each new footer. */
+const PLAY={cv:null,ctx:null,eng:null,bodies:[],walls:null,raf:0,vis:false,io:null,w:0,h:0,d:1,spr:null,mc:null,push:null,load:null,filled:false,drag:false,down:null};
+// photo, width on a 1100 px wide footer, and how round its outline is (share of the height used as corner radius)
+const PLAY_KINDS={garlic:['garlicbread',170,.3],fries:['fries',96,.12],pocket:['paneerpockets',104,.3],masala:['masalabread',124,.2],
+  marg:['margherita',138,.48],mex:['mexican',138,.48],veg:['veggieparadise',142,.48],dbl:['doublecheese',134,.48],kath:['kathiyavadi',146,.45],five:['fivecheese',136,.45]};
+const PLAY_DROP=['garlic','garlic','fries','pocket','masala','marg','mex','veg','dbl','kath','five'];
+function playSprites(){
+  const o={};for(const [k,[f]] of Object.entries(PLAY_KINDS)){const i=new Image();i.decoding='async';i.src='img/play/'+f+'.webp';o[k]=i}return o;
+}
+function playSpawn(kind,x,y){
+  const {Bodies,Composite,Body}=Matter,u=Math.max(.5,Math.min(1.15,PLAY.w/1100)),o={restitution:.3,friction:.5,frictionAir:.012,density:.0016};
+  const [,bw,rr]=PLAY_KINDS[kind],img=PLAY.spr[kind],ar=img.naturalWidth?img.naturalHeight/img.naturalWidth:.8,w=bw*u,h=w*ar;
+  const b=Bodies.rectangle(x,y,w*.94,h*.9,{...o,chamfer:{radius:Math.min(w,h)*rr}});
+  b.plugin.k=kind;b.plugin.w=w;b.plugin.h=h;Body.setAngle(b,Math.random()*6.28);Body.setAngularVelocity(b,(Math.random()-.5)*.2);
+  Composite.add(PLAY.eng.world,b);PLAY.bodies.push(b);
+  if(PLAY.bodies.length>40)Composite.remove(PLAY.eng.world,PLAY.bodies.shift());
+}
+const playPick=()=>PLAY_DROP[Math.random()*PLAY_DROP.length|0];
+function playFill(){
+  const kinds=[...Array(6).fill('garlic'),'fries','fries','pocket','pocket','masala','marg','mex','veg','dbl','kath','five'].sort(()=>Math.random()-.5).slice(0,PLAY.w<600?10:17); // fewer on a phone, so the pile stays playful
+  kinds.forEach((k,i)=>setTimeout(()=>{if(PLAY.eng)playSpawn(k,PLAY.w*(.08+Math.random()*.84),-80-Math.random()*120)},i*130));
+}
+function playSize(){
+  const box=PLAY.cv.parentNode;if(!box)return;const w=box.clientWidth,h=box.clientHeight,d=Math.min(2,devicePixelRatio||1);
+  if(!w||!h||(w===PLAY.w&&h===PLAY.h))return;
+  PLAY.w=w;PLAY.h=h;PLAY.d=d;PLAY.cv.width=w*d;PLAY.cv.height=h*d;PLAY.cv.setAttribute('data-pixel-ratio',d);if(PLAY.mc)PLAY.mc.mouse.pixelRatio=d; // Matter reads the ratio only once, when the mouse is made
+  const {Bodies,Composite,Body}=Matter,T=400;if(PLAY.walls)Composite.remove(PLAY.eng.world,PLAY.walls);
+  PLAY.walls=[Bodies.rectangle(w/2,h+T/2,w+2*T,T,{isStatic:true}),Bodies.rectangle(-T/2,h/2-600,T,h+1600,{isStatic:true}),Bodies.rectangle(w+T/2,h/2-600,T,h+1600,{isStatic:true})];
+  Composite.add(PLAY.eng.world,PLAY.walls);
+  PLAY.bodies.forEach(b=>{if(b.position.x>w-20||b.position.y>h-10)Body.setPosition(b,{x:Math.min(w-60,Math.max(60,b.position.x)),y:Math.min(b.position.y,h-80)})});
+  if(!PLAY.filled){PLAY.filled=true;Promise.all(Object.values(PLAY.spr).map(i=>i.decode().catch(()=>{}))).then(playFill)}
+}
+function playInit(){
+  const {Engine,Bodies,Composite,Mouse,MouseConstraint,Events}=Matter;
+  PLAY.eng=Engine.create();PLAY.eng.gravity.y=1.1;PLAY.spr=playSprites();PLAY.ctx=PLAY.cv.getContext('2d');
+  const m=Mouse.create(PLAY.cv);
+  // the page keeps the wheel and touch: Matter only gets the mouse buttons and movement
+  ['wheel','mousewheel','DOMMouseScroll'].forEach(n=>m.element.removeEventListener(n,m.mousewheel));
+  m.element.removeEventListener('touchstart',m.mousedown);m.element.removeEventListener('touchmove',m.mousemove);m.element.removeEventListener('touchend',m.mouseup);
+  PLAY.mc=MouseConstraint.create(PLAY.eng,{mouse:m,constraint:{stiffness:.18,damping:.12,render:{visible:false}}});
+  Events.on(PLAY.mc,'startdrag',()=>{PLAY.drag=true});
+  PLAY.push=Bodies.circle(-500,-500,24,{isStatic:true});
+  Composite.add(PLAY.eng.world,[PLAY.mc,PLAY.push]);
+  const at=e=>{const r=PLAY.cv.getBoundingClientRect();return {x:e.clientX-r.left,y:e.clientY-r.top}};
+  PLAY.cv.addEventListener('pointerdown',e=>{
+    PLAY.down=at(e);PLAY.drag=false;
+    if(e.pointerType==='mouse')return;
+    const hit=Matter.Query.point(PLAY.bodies,PLAY.down)[0];
+    if(hit){Matter.Body.setVelocity(hit,{x:(Math.random()-.5)*12,y:-16-Math.random()*6});Matter.Body.setAngularVelocity(hit,(Math.random()-.5)*.5)}
+    else playSpawn(playPick(),PLAY.down.x,-60);
+  });
+  PLAY.cv.addEventListener('pointerup',e=>{if(e.pointerType!=='mouse'||!PLAY.down)return;const p=at(e);
+    if(!PLAY.drag&&Math.hypot(p.x-PLAY.down.x,p.y-PLAY.down.y)<6&&!Matter.Query.point(PLAY.bodies,p).length)playSpawn(playPick(),p.x,-60);PLAY.down=null});
+  PLAY.cv.addEventListener('pointerleave',()=>{Matter.Body.setPosition(PLAY.push,{x:-500,y:-500})});
+}
+function playLoop(){
+  PLAY.raf=0;if(!PLAY.vis||!PLAY.cv.isConnected||!onHome()||RM())return;
+  const {Engine,Body}=Matter,mp=PLAY.mc.mouse.position;
+  // A quick swipe of the mouse knocks pieces aside; a slow hover or a held button leaves them to be grabbed
+  const p=PLAY.push,last=PLAY.last||mp,dx=mp.x-last.x,dy=mp.y-last.y;PLAY.last={x:mp.x,y:mp.y};
+  if(PLAY.mc.body||PLAY.mc.mouse.button===0||Math.hypot(dx,dy)<6||mp.x<=0&&mp.y<=0)Body.setPosition(p,{x:-500,y:-500});
+  else{Body.setPosition(p,{x:mp.x,y:mp.y});Body.setVelocity(p,{x:Math.max(-24,Math.min(24,dx)),y:Math.max(-24,Math.min(24,dy))})}
+  Engine.update(PLAY.eng,1000/60);
+  const x=PLAY.ctx,d=PLAY.d;x.setTransform(d,0,0,d,0,0);x.clearRect(0,0,PLAY.w,PLAY.h);
+  PLAY.bodies.forEach(b=>{const s=PLAY.spr[b.plugin.k],w=b.plugin.w,h=b.plugin.h;if(!s.complete||!s.naturalWidth)return;
+    x.save();x.translate(b.position.x,b.position.y);x.rotate(b.angle);x.shadowColor='rgba(0,0,0,.4)';x.shadowBlur=14;x.shadowOffsetY=7;x.drawImage(s,-w/2,-h/2,w,h);x.restore()});
+  PLAY.raf=requestAnimationFrame(playLoop);
+}
+function playStart(){
+  if(!window.Matter){PLAY.load=PLAY.load||new Promise((ok,bad)=>{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js';s.onload=ok;s.onerror=bad;document.head.appendChild(s)});
+    PLAY.load.then(()=>{if(PLAY.vis)playStart()},()=>{});return}
+  if(!PLAY.eng)playInit();
+  playSize();
+  if(!PLAY.raf)PLAY.raf=requestAnimationFrame(playLoop);
+}
+function playMount(){
+  const box=onHome()&&!RM()?app.querySelector('.play'):null;
+  PLAY.io?.disconnect();PLAY.io=null;
+  if(!box){PLAY.vis=false;return}
+  if(!PLAY.cv){PLAY.cv=document.createElement('canvas');PLAY.cv.className='play-cv';PLAY.cv.setAttribute('aria-hidden','true')}
+  if(PLAY.cv.parentNode!==box)box.appendChild(PLAY.cv);
+  PLAY.io=new IntersectionObserver(([e])=>{PLAY.vis=e.isIntersecting;if(PLAY.vis)playStart()},{rootMargin:'150px'});PLAY.io.observe(box);
+}
+addEventListener('resize',()=>{if(PLAY.eng&&PLAY.cv?.isConnected)playSize()},{passive:true});
+
+addEventListener('scroll',()=>{if(onHome())sxKick()},{passive:true});
+addEventListener('resize',()=>{if(onHome())sxKick()},{passive:true});
+// Headings on the home page: each word sits in a mask and slides up when its section scrolls in
+function splitWords(){
+  app.querySelectorAll('.home .sx-h h2:not([data-split]),.home .bx-copy h2:not([data-split]),.home .cta-x h2:not([data-split])').forEach(h=>{
+    h.dataset.split=1;let i=0;
+    const walk=n=>[...n.childNodes].forEach(c=>{
+      if(c.nodeType===3){const f=document.createDocumentFragment();
+        c.textContent.split(/(\s+)/).forEach(t=>{if(!t)return;if(/^\s+$/.test(t)){f.appendChild(document.createTextNode(t));return}
+          const w=document.createElement('span'),s=document.createElement('span');w.className='w';s.style.setProperty('--i',i++);s.textContent=t;w.appendChild(s);f.appendChild(w)});
+        c.replaceWith(f)}
+      else if(c.nodeType===1&&c.tagName!=='BR')walk(c)});
+    walk(h);
+  });
+}
+// A paragraph whose words fill in as it scrolls past; the text itself is unchanged
+function fillWords(t){let i=0;const html=t.split(/(\s+)/).map(s=>!s||/^\s+$/.test(s)?s:`<span class="fw" style="--i:${i++}">${s}</span>`).join('');return {html,n:i}}
 
 /* ===== CUSTOMIZERS ===== */
 // Pizza builder, or the options box for sides. With `edit` set, changes that cart line instead of adding one.
@@ -2454,7 +3648,9 @@ function showModal(html,handlers={}){
   const sc=mroot.querySelector('.modal')?.scrollTop||0;
   const fresh=!mroot.innerHTML;
   mroot.innerHTML=`<div class="scrim${fresh?' pop':''}" data-act="scrim"><div class="modal" role="dialog" aria-modal="true">${html}</div></div>`;
-  mroot.querySelector('.modal').scrollTop=sc;
+  const md=mroot.querySelector('.modal');md.scrollTop=sc;md.tabIndex=-1;
+  const mt=md.querySelector('.mh h3');if(mt){mt.id='mtitle';md.setAttribute('aria-labelledby','mtitle')}
+  if(fresh&&!prev)md.focus({preventScroll:true});
   afterRender();
   if(prev){const el=document.getElementById(prev);if(el&&mroot.contains(el)){el.focus();if(el.setSelectionRange&&el.type!=='number'&&el.tagName!=='SELECT')try{el.setSelectionRange(el.value.length,el.value.length)}catch(e){}}}
 }
@@ -3172,11 +4368,15 @@ document.addEventListener('click',e=>{
   switch(act){
     case 'auth':openAuth(el.dataset.v,el.dataset.next);break;
     case 'au-mode':U.au.m=el.dataset.v;U.au.err='';render();break;
+    case 'drawer':setDrawer(!U.drawer);break;
+    case 'hdr-cart':if(U.cart.length)openPubCart();else{U.pubView='menu';closeModal();render();document.getElementById('menu')?.scrollIntoView({behavior:RM()?'auto':'smooth'});toast('Your cart is empty. Pick something cheesy!')}break;
+    case 'pub-gocat':U.pubCat=el.dataset.v;U.pubQ='';U.pubF={};U.pubView='menu';closeModal();render();document.getElementById('menu')?.scrollIntoView({behavior:RM()?'auto':'smooth'});break;
     case 'au-go':authGo();break;
     case 'au-code':if(U.au&&!U.au.busy)auSend();break;
     case 'pn':{const v=el.dataset.v;closeModal();
       if(v==='home'){U.pubView='home';render();window.scrollTo(0,0)}
       else if(v==='menu'||v==='offers'){U.pubView='menu';render();document.getElementById(v)?.scrollIntoView({behavior:'smooth'});if(v==='menu'&&!document.getElementById(v))window.scrollTo(0,0)}
+      else if(v==='story'){U.pubView='home';render();document.getElementById('story')?.scrollIntoView({behavior:RM()?'auto':'smooth'})}
       else if(v==='track'){openTrackFind()}
       else if(v==='orders'||v==='wallet'){if(me()){U.pubView='account';U.accTab=v;render();window.scrollTo(0,0)}else openAuth('in',v)}
       else if(v==='account'){U.pubView='account';U.accTab='rewards';render();window.scrollTo(0,0)}
