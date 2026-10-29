@@ -1630,6 +1630,73 @@ html.lenis,html.lenis body{height:auto}
   .hx2 .hx-bl,.hx2 .hx-br{order:2}
 }
 @media (prefers-reduced-motion:reduce){.hx-logo,.hx2.enter .hx-logo{animation:none;transform:none}.hx-real{transform:none!important}.hx-hint{display:none}}
+
+/* ===== Group picture: a pencil sketch that turns into the photo as it scrolls past ===== */
+.gang{background:#FFF8EC}
+.gang-fig{position:relative;margin:0;border-radius:28px;overflow:hidden;aspect-ratio:16/9;background:#FAF4E8;box-shadow:0 30px 60px -24px rgba(11,58,67,.35);--r:clamp(0,(var(--p,0) - .28) * 3.4,1)}
+.gang-fig img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.g-ph{clip-path:inset(0 calc(100% - var(--r) * 100%) 0 0)}
+.g-line{position:absolute;top:0;bottom:0;left:calc(var(--r) * 100%);width:4px;margin-left:-2px;background:#F2B632;box-shadow:0 0 18px rgba(242,182,50,.8);opacity:calc(1 - clamp(0,(var(--r) - .97) * 40,1))}
+.g-tag{position:absolute;top:18px;padding:6px 14px;border-radius:999px;font-family:"Courgette",cursive;font-size:18px;rotate:-4deg}
+.g-t1{right:18px;background:#fff;color:#0c5c6c;opacity:calc(1 - var(--r))}
+.g-t2{left:18px;background:#F2B632;color:#3a2800;opacity:var(--r)}
+.gang-steps{list-style:none;padding:0;margin:clamp(28px,4vw,44px) 0 0;display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(16px,3vw,36px)}
+.gang-steps li{display:flex;gap:14px;align-items:baseline;border-top:2px solid #0f7f91;padding-top:14px}
+.gang-steps b{font-family:"Anton",Impact,sans-serif;font-weight:400;font-size:40px;color:#F2B632;line-height:1}
+.gang-steps h3{font-family:"Anton",Impact,sans-serif;font-weight:400;text-transform:uppercase;font-size:24px;letter-spacing:.01em}
+.gang-steps p{margin:4px 0 0;color:var(--muted)}
+@media (max-width:720px){.gang-steps{grid-template-columns:1fr}.gang-fig{aspect-ratio:4/3}}
+
+/* ===== Visit: big name, address, open-now box, buttons and a drawn map with our menu as the places ===== */
+.visit{background:#2B9FA8;color:#FFF8EC;padding:clamp(64px,8vw,110px) 0;overflow:hidden;position:relative}
+.visit::before{content:"ANAND";position:absolute;left:-2vw;bottom:-4vw;font-family:"Anton",Impact,sans-serif;font-size:clamp(140px,26vw,420px);line-height:.8;color:transparent;-webkit-text-stroke:2px rgba(255,248,236,.18);pointer-events:none}
+.visit-in{display:grid;grid-template-columns:minmax(0,.95fr) minmax(0,1.05fr);gap:clamp(28px,5vw,64px);align-items:center;position:relative}
+.vi-kick{font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#F2B632;font-size:14px}
+.vi-big{font-family:"Anton",Impact,sans-serif;font-weight:400;text-transform:uppercase;font-size:clamp(64px,9vw,150px);line-height:.95;margin:6px 0 10px;color:#FFF8EC;letter-spacing:.005em}
+.vi-outlet{display:inline-block;margin-bottom:24px;padding:5px 14px;border-radius:999px;background:#F2B632;color:#3a2800;font-weight:800;letter-spacing:.08em;text-transform:uppercase;font-size:13px}
+.vi-addr{display:flex;gap:14px;align-items:flex-start}
+.vi-addr svg{width:44px;height:44px;flex:none;animation:pinB 1s ease-in-out infinite alternate}
+.vi-addr p{margin:0;font-family:"Anton",Impact,sans-serif;font-size:clamp(28px,3.2vw,46px);line-height:1.02;max-width:16ch}
+.vi-open{margin-top:26px;display:inline-flex;flex-direction:column;gap:2px;background:rgba(8,42,49,.22);border:1px solid rgba(255,248,236,.18);border-radius:18px;padding:16px 24px}
+.vi-open small{font-weight:800;letter-spacing:.12em;font-size:12px;color:rgba(255,248,236,.85)}
+.vi-open b{font-family:"Anton",Impact,sans-serif;font-weight:400;font-size:clamp(32px,3vw,44px);color:#F2B632;line-height:1.05;text-transform:uppercase}
+.vi-open span{font-family:"Anton",Impact,sans-serif;font-size:clamp(20px,2vw,28px);text-transform:uppercase}
+.vi-btns{display:flex;gap:14px;flex-wrap:wrap;margin-top:26px}
+.vi-btn{display:inline-flex;align-items:center;gap:10px;padding:16px 30px;border-radius:999px;background:#FFF8EC;color:#B2533A;font-weight:800;letter-spacing:.1em;text-transform:uppercase;text-decoration:none;font-size:16px;border:2px solid #FFF8EC;transition:transform .3s var(--ease)}
+.vi-btn svg{width:22px;height:22px}
+.vi-btn.ghost{background:transparent;color:#FFF8EC}
+.vi-btn:hover{transform:translateY(-3px) rotate(-1.5deg)}
+.vi-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px}
+.vi-chips span{padding:7px 14px;border-radius:999px;background:rgba(255,248,236,.14);font-weight:700;font-size:13.5px}
+.vi-map{position:relative}
+.vi-card{position:relative;border-radius:28px;overflow:hidden;border:12px solid rgba(255,248,236,.28);aspect-ratio:10/7;box-shadow:0 30px 60px rgba(4,40,48,.3)}
+.vi-card svg{position:absolute;inset:0;width:100%;height:100%}
+.vi-lab{position:absolute;translate:-50% -50%;display:inline-flex;align-items:center;gap:6px;background:#2B9FA8;color:#FFF8EC;font-weight:800;font-size:clamp(11px,1.1vw,14px);letter-spacing:.06em;text-transform:uppercase;padding:5px 12px;border-radius:999px;white-space:nowrap;box-shadow:0 4px 0 rgba(8,42,49,.25)}
+.vi-lab::before{content:"";width:8px;height:8px;border-radius:50%;background:#F2B632}
+.vi-pin{position:absolute;left:53.75%;top:53%;width:13%;height:auto;translate:-50% -96%;filter:drop-shadow(0 8px 8px rgba(0,0,0,.3));animation:pinB 1s ease-in-out infinite alternate}
+.vi-here{position:absolute;left:31%;top:44%;rotate:-6deg;background:#F2B632;color:#3a2800;border-radius:12px;padding:6px 16px 8px;box-shadow:0 6px 0 rgba(8,42,49,.2);line-height:1}
+.vi-here b{display:block;font-family:"Courgette",cursive;font-size:clamp(22px,2.4vw,32px);font-weight:400}
+.vi-here small{font-weight:800;letter-spacing:.08em;text-transform:uppercase;font-size:11px}
+.vi-note{position:absolute;left:12px;bottom:8px;font-size:11px;color:#8a6d5a}
+.vi-badge{position:absolute;right:-26px;bottom:-40px;width:clamp(110px,12vw,170px);height:auto;rotate:10deg;animation:logoBob 5.5s ease-in-out infinite alternate}
+@media (max-width:900px){.visit-in{grid-template-columns:1fr}.vi-badge{right:-8px;bottom:-30px}.vi-big{margin-bottom:18px}}
+
+/* ===== Footer word: ¡CHEEESY! with food on a line, which plays when touched ===== */
+.vam{position:relative;margin-top:clamp(36px,5vw,60px);text-align:center}
+.vam-tr{margin:0 0 6px;font-family:"Courgette",cursive;color:#F2B632;font-size:clamp(16px,1.6vw,22px)}
+.vam-row{position:relative;padding-bottom:clamp(30px,4vw,56px);cursor:default}
+.vam-word{font-family:"Anton",Impact,sans-serif;font-size:clamp(70px,15vw,250px);line-height:.9;color:#FFF8EC;white-space:nowrap;display:flex;justify-content:center;letter-spacing:.01em}
+.vam-word span{display:inline-block;transition:translate .25s var(--ease),rotate .25s var(--ease),color .25s;translate:0 calc(var(--lift,0) * -.22em);rotate:calc(var(--lift,0) * (var(--i) - 4) * 2deg)}
+.vam-word span:hover{color:#F2B632}
+.vam-food{position:absolute;left:0;right:0;bottom:clamp(6px,1vw,14px);display:flex;justify-content:space-between;align-items:flex-end;padding:0 2%;pointer-events:none}
+.vam-str{position:absolute;left:0;right:0;bottom:22%;height:2px;background:rgba(255,248,236,.5)}
+.vf{position:relative;width:calc(var(--w) * 1%);pointer-events:auto;cursor:pointer;transform-origin:50% 100%;animation:vfIdle 3.2s ease-in-out infinite alternate;animation-delay:calc(var(--i) * -.37s)}
+.vf img{display:block;width:100%;height:auto;filter:drop-shadow(0 10px 10px rgba(0,0,0,.4));user-select:none;-webkit-user-drag:none}
+.vf.hop{animation:vfHop .7s cubic-bezier(.3,1.6,.5,1)}
+@keyframes vfIdle{from{rotate:-3deg}to{rotate:3deg}}
+@keyframes vfHop{0%{translate:0 0;rotate:0deg}40%{translate:0 -60%;rotate:-18deg}70%{translate:0 -10%;rotate:10deg}100%{translate:0 0;rotate:0deg}}
+.vam-hint{margin:6px 0 0;text-align:left;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#F2B632;font-size:13px}
+@media (prefers-reduced-motion:reduce){.vf,.vf.hop,.vi-pin,.vi-addr svg,.vi-badge{animation:none}.vam-word span{translate:none;rotate:none}.g-ph{clip-path:none}.g-line{display:none}}
 </style>
 <div id="intro" role="status" aria-label="Cheesy Pizza is loading">
   <div class="in-sea" aria-hidden="true"><div class="in-wave b"></div><div class="in-wave f"></div><div class="in-tops"></div>
@@ -2200,6 +2267,33 @@ function heroPizza(){return '<img class="hx-real" src="img/hero-pizza.webp" alt=
 const FLOATERS=[['tomato-slice',-8,58,15,140,26,6,-12,8],['olive',80,-4,9,180,34,7,-6,10,'m'],['capsicum',86,58,13,220,40,5.5,-8,6],['mushroom',58,-12,11,110,20,6.5,-10,10,'m'],
   ['basil',-24,6,13,160,30,7.5,-8,4,'m'],['cheese',20,86,11,240,44,5,6,-4,'m'],['onion',112,24,13,170,32,6.5,-10,12,'m'],['corn',46,94,9,200,36,7.5,8,-6,'m'],['olive',2,-8,7,130,24,6,0,20,'m'],['tomato',104,86,12,190,38,7,-6,8,'m']];
 
+
+// The visit section's map: drawn, not a real map. Streets, a canal and blocks around the shop, with our
+// menu as the place labels and the pin on the shop. Same picture every time, so it is built once.
+let VISIT_MAP=null;
+function visitMap(){
+  if(VISIT_MAP)return VISIT_MAP;
+  let seed=11;const rnd=()=>(seed=(seed*1103515245+12345)>>>0)/4294967296,f=n=>n.toFixed(1);
+  const W=800,H=560,main=x=>352-x*.12+Math.sin(x/110)*14,canal=x=>178+Math.sin(x/150)*42+x*.05;
+  const sides=[[120,-20,90,600],[300,-20,330,600],[520,-20,470,600],[660,120,760,600],[0,250,240,230],[560,470,800,430],[240,560,330,352]];
+  const near=(x,y)=>Math.abs(y-main(x))<26||Math.abs(y-canal(x))<22||sides.some(([x1,y1,x2,y2])=>{const t=Math.max(0,Math.min(1,((x-x1)*(x2-x1)+(y-y1)*(y2-y1))/((x2-x1)**2+(y2-y1)**2)));return Math.hypot(x-(x1+t*(x2-x1)),y-(y1+t*(y2-y1)))<18});
+  let blocks='';
+  for(let y=14;y<H;y+=24)for(let x=10;x<W;x+=26){
+    const bx=x+rnd()*8,by=y+rnd()*8,w=10+rnd()*12,h=8+rnd()*10;
+    if(rnd()<.18||near(bx+w/2,by+h/2)||Math.hypot(bx-430,by-322)<46)continue;
+    blocks+=`<rect x="${f(bx)}" y="${f(by)}" width="${f(w)}" height="${f(h)}" transform="rotate(${f((rnd()-.5)*24)} ${f(bx+w/2)} ${f(by+h/2)})"/>`;
+  }
+  const path=fn=>{let d='';for(let x=-10;x<=W+10;x+=10)d+=(d?'L':'M')+x+' '+f(fn(x));return d};
+  return VISIT_MAP=`<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <rect width="${W}" height="${H}" fill="#FFF8EC"/>
+    <path d="${path(canal)}" fill="none" stroke="#2BA3B5" stroke-width="10" stroke-linecap="round"/><path d="${path(canal)}" fill="none" stroke="#9ED8E0" stroke-width="3"/>
+    <g fill="#FCE3A6" stroke="#B2533A" stroke-width="1.4">${blocks}</g>
+    <g fill="none" stroke="#B2533A" stroke-linecap="round">${sides.map(([a,b,c,d])=>`<path d="M${a} ${b}L${c} ${d}" stroke-width="3"/>`).join('')}</g>
+    <path d="${path(main)}" fill="none" stroke="#B2533A" stroke-width="9" stroke-linecap="round"/><path d="${path(main)}" fill="none" stroke="#F2B632" stroke-width="2.2" stroke-dasharray="10 9"/>
+    <ellipse cx="430" cy="${f(main(430)+6)}" rx="46" ry="15" fill="none" stroke="#E2432A" stroke-width="3" opacity=".55"/>
+  </svg>`;
+}
+
 function renderHome(){
   const o=cur(),ph=o.phone||'7778043066',open=isOpen(),dow=new Date().getDay(),addr=shopAddr(o);
   const pizzas=S.menu.filter(m=>m.cat==='pizza'&&!m.off);
@@ -2281,6 +2375,13 @@ function renderHome(){
     </div>
   </div></div></section>
 
+
+  <section class="sx gang" id="gang"><div class="sx-in">
+    <div class="sx-h"><div><span class="kick">The whole gang</span><h2>A little of <em>everything.</em></h2></div><p>Pizzas, garlic bread, fries, paneer pockets and masala bread. Drawn by hand first, then baked for real. Scroll and watch.</p></div>
+    <figure class="gang-fig" data-sx><img class="g-sk" src="img/gang/sketch.webp" alt="" loading="lazy" width="1600" height="900"><img class="g-ph" src="img/gang/photo.webp" alt="Cheesy Pizza's pizzas, garlic bread, fries, paneer pockets and masala bread together" loading="lazy" width="1600" height="900"><span class="g-line" aria-hidden="true"></span>
+      <span class="g-tag g-t1" aria-hidden="true">sketch</span><span class="g-tag g-t2" aria-hidden="true">baked!</span></figure>
+    <ol class="gang-steps">${[['Pick a pizza','Sixteen of them, 7" or 10", cheese burst if you like.'],['Add a side','Garlic bread, fries, pockets or masala bread.'],['Grab a cold drink','Thums Up, Coca Cola, Sprite or Fanta.']].map(([h,t],i)=>`<li><b>0${i+1}</b><div><h3>${h}</h3><p>${t}</p></div></li>`).join('')}</ol>
+  </div></section>
   <section class="sx dark offers-band" id="deals"><div class="sx-in">
     <div class="sx-h"><div><span class="kick">Offers &amp; combos</span><h2>More cheese, <em>less to pay</em></h2></div><p>The best offer applies by itself in your cart. Coupon codes go in at checkout.</p></div>
     ${live.length?`<div class="hscroll">${live.map(x=>coupon(x,dow)).join('')}</div>`:''}
@@ -2312,6 +2413,25 @@ function renderHome(){
     <p class="small muted" style="margin-top:12px">Please wait at least 20 minutes after booking.</p>
   </div></section>
 
+  <section class="visit" id="visit" aria-labelledby="visit-title"><div class="sx-in visit-in">
+    <div class="vi-copy">
+      <span class="vi-kick">Cheesy Pizza is at</span>
+      <h2 id="visit-title" class="vi-big">Cheesy<br>Pizza</h2><span class="vi-outlet">${esc(o.name)}</span>
+      <div class="vi-addr"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s-7-7.5-7-13a7 7 0 0 1 14 0c0 5.5-7 13-7 13z" fill="#F2B632"/><circle cx="12" cy="9" r="2.6" fill="#0f7f91"/></svg><p>${esc(addr.toUpperCase())}</p></div>
+      <div class="vi-open"><small>Every day · ${esc(hrText(OPEN_H).toUpperCase())} to ${esc(hrText(CLOSE_H).toUpperCase())}</small>
+        <b>${open?'Open now!':'Closed now'}</b><span>${open?'Till '+esc(hrText(CLOSE_H))+' tonight':'Opens at '+esc(hrText(OPEN_H))}</span></div>
+      <div class="vi-btns"><a class="vi-btn" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent('Cheesy Pizza, '+addr)}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s-7-7.5-7-13a7 7 0 0 1 14 0c0 5.5-7 13-7 13z" fill="currentColor"/></svg>Directions</a>
+        <a class="vi-btn ghost num" href="tel:+91${esc(ph)}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.6 10.8a15 15 0 0 0 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1A17 17 0 0 1 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1z" fill="currentColor"/></svg>${esc(fmtPhone(ph))}</a></div>
+      <div class="vi-chips">${['Pizza','Garlic bread','Cold drinks','Pure veg','No mayonnaise','UPI & cash'].map(t=>`<span>${t}</span>`).join('')}</div>
+    </div>
+    <div class="vi-map"><div class="vi-card">${visitMap()}
+      ${[['Pizza',14,14],['Garlic bread',64,10],['Cold drinks',76,40],['French fries',12,72],['Paneer pockets',58,78],['Dips',86,66],['Gopi Cinema',38,28]].map(([t,x,y])=>`<span class="vi-lab" style="left:${x}%;top:${y}%">${t}</span>`).join('')}
+      <div class="vi-here"><b>Ahiyā!</b><small>Cheesy Pizza</small></div>
+      <img class="vi-pin" src="img/cheesy-pin.png" alt="" width="720" height="720">
+      <span class="vi-note">Drawn map · tap Directions for the real one</span></div>
+      <img class="vi-badge" src="img/logo-badge.png" alt="" width="804" height="824" loading="lazy"></div>
+  </div></section>
+
   <section class="sx dark cta-x"><div class="names" aria-hidden="true">${[0,1,2].map(r=>{const t=pizzas.filter((_,i)=>i%3===r).map(m=>`<span>${esc(m.name)}</span>`).join('');return `<div class="nr">${t}${t}${t}</div>`}).join('')}</div><span class="ring" aria-hidden="true"></span><span class="ring r2" aria-hidden="true"></span><div class="sx-in">
     <span class="kick">${open?'The oven is on':'Order ahead'}</span>
     <h2>Hungry<br><em>yet?</em></h2>
@@ -2333,6 +2453,10 @@ function siteFooter(){
       <div><h3>Explore</h3><ul>${l('menu','Menu')}${l('offers','Offers')}${l('story','Our story')}${l('track','Track order')}${c?l('account','My account'):l('signin','Sign in')}
         ${APP_ROLE?'':`<li><a href="${APP_LINK}" rel="noopener">Android app</a></li>`}<li><a href="${PRIVACY_URL}" target="_blank" rel="noopener">Privacy policy</a></li><li><button class="ft-link" data-act="mode" data-v="pos">Staff login</button></li></ul></div>
     </div>
+    <div class="vam" aria-label="Really cheesy!"><p class="vam-tr">Translation: so much cheese, yaar!</p>
+      <div class="vam-row"><div class="vam-word" aria-hidden="true">${[...'¡CHEEESY!'].map((c,i)=>`<span style="--i:${i}">${c}</span>`).join('')}</div>
+        <div class="vam-food" aria-hidden="true"><i class="vam-str"></i>${[['slice-veggie',7],['garlic-stick',14],['tomato',5.5],['slice-veggie2',7],['basil',4.5],['garlic-stick',14],['tomato-slice',5.5],['slice-veggie',7],['olive',3.5],['garlic-stick',14],['tomato',5.5],['slice-veggie2',7]].map(([k,w],i)=>`<span class="vf" style="--w:${w};--i:${i}"><img src="img/ing/${k}.webp" alt="" draggable="false" loading="lazy"></span>`).join('')}</div></div>
+      <p class="vam-hint">Psst… touch the slices.</p></div>
     <div class="play"><div class="ft-big" data-sx aria-hidden="true">Really cheesy</div>${U.pubView==='home'?'<p class="play-hint" aria-hidden="true"><span class="m">Psst… grab the garlic bread</span><span class="t">Psst… tap the garlic bread</span></p>':''}</div>
     <div class="ft-bottom"><span>© ${new Date().getFullYear()} Cheesy Pizza · Pure veg</span><span lang="gu">ચીઝી પિઝ્ઝા</span></div>
   </div></footer>`;
@@ -2414,6 +2538,14 @@ document.addEventListener('pointermove',e=>{const hx=hxEl();if(!hx||e.pointerTyp
   const inside=hx.contains(e.target);HP.on=inside;HP.px=inside?e.clientX:-1e4;HP.py=inside?e.clientY:-1e4;if(inside)hpKick()},{passive:true});
 document.addEventListener('pointerdown',e=>{const hx=hxEl();if(!hx||e.pointerType==='mouse'||!hx.contains(e.target))return;
   HP.px=e.clientX;HP.py=e.clientY;HP.on=true;hpKick();setTimeout(()=>{HP.on=false;HP.px=HP.py=-1e4},260)},{passive:true});
+
+/* ===== footer word: letters lift toward the pointer, the food on the line hops when touched ===== */
+document.addEventListener('pointermove',e=>{
+  const w=e.target.closest?.('.vam-row');if(!w||RM())return;
+  w.querySelectorAll('.vam-word span').forEach(sp=>{const r=sp.getBoundingClientRect(),d=Math.abs(e.clientX-(r.left+r.width/2))/r.width;sp.style.setProperty('--lift',Math.max(0,1-d/1.6).toFixed(3))});
+},{passive:true});
+document.addEventListener('pointerout',e=>{const w=e.target.closest?.('.vam-row');if(w&&!w.contains(e.relatedTarget))w.querySelectorAll('.vam-word span').forEach(sp=>sp.style.setProperty('--lift',0))});
+document.addEventListener('pointerover',e=>{const f=e.target.closest?.('.vf');if(!f||RM()||f.classList.contains('hop'))return;f.classList.add('hop');setTimeout(()=>f.classList.remove('hop'),700)});
 
 /* ===== hero play: grab a piece of food, throw it, and a spring pulls it back to its place ===== */
 const GRAB={el:null};
