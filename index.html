@@ -1678,6 +1678,23 @@ html.lenis,html.lenis body{height:auto}
 /* ===== Visit: big name, address, open-now box, buttons and a drawn map with our menu as the places ===== */
 .ft-mini{display:inline-flex;gap:16px;align-items:center}.ft-mini a,.ft-mini .ft-link{color:inherit;opacity:.75;font-size:inherit}
 .hp{display:flex;flex-direction:column;gap:2px}.hp small{color:var(--muted);font-size:11px}.hp .lp-in{width:76px}
+/* Cheese pull: one slice lifts out of the real pizza on scroll, pulling strings of cheese, which snap at the end */
+.pull{position:relative;height:300vh;background:#FFF4D6;--lift:clamp(0,(var(--p,0) - .12) * 1.6,1);--snap:clamp(0,(var(--p,0) - .8) * 8,1)}
+.pull-pin{position:sticky;top:var(--toph,64px);height:calc(100vh - var(--toph,64px));display:grid;align-items:center;overflow:hidden}
+.pull-in{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:clamp(24px,5vw,72px);align-items:center;width:100%}
+.pull-copy h2{font-family:"Anton",Impact,sans-serif;font-weight:400;text-transform:uppercase;font-size:clamp(46px,5.6vw,92px);line-height:.92;margin:12px 0 18px;color:#B2533A}
+.pull-copy h2 em{font-family:"Courgette",cursive;text-transform:none;font-style:normal;color:#0f7f91;font-size:.62em;display:inline-block;rotate:-4deg}
+.pull-copy p{max-width:44ch;color:#5a4636;margin:0 0 22px}
+.pull-hint{display:block;margin-top:18px;font-family:"Courgette",cursive;color:#B2533A;opacity:calc(1 - var(--lift))}
+.pull-stage{position:relative;aspect-ratio:1;width:min(100%,520px);justify-self:center;margin-top:28%}
+.pull-plate{position:absolute;inset:3%;border-radius:50%;background:radial-gradient(circle at 50% 45%,#5a3a22 0 40%,#3b2414 70%,#2a180c 100%);box-shadow:0 40px 60px rgba(80,40,10,.35),inset 0 0 0 8px #6b4528}
+.pull-pz,.pull-sl img{position:absolute;inset:7%;width:86%;height:86%;user-select:none}
+.pull-pz{-webkit-mask-image:conic-gradient(from -26deg at 50% 50%,transparent 0 52deg,#000 0);mask-image:conic-gradient(from -26deg at 50% 50%,transparent 0 52deg,#000 0)}
+.pull-sl{position:absolute;inset:0;clip-path:polygon(50% 50%,28.5% 0,71.5% 0);translate:0 calc(var(--lift) * -36%);rotate:calc(var(--lift) * -7deg + var(--snap) * 4deg);transform-origin:50% 50%;filter:drop-shadow(0 calc(10px + var(--lift) * 26px) calc(10px + var(--lift) * 18px) rgba(80,40,0,.35));z-index:2}
+.pull-svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible;z-index:1;filter:drop-shadow(0 2px 3px rgba(150,100,20,.35))}
+.pull-tag{position:absolute;right:-2%;top:6%;z-index:3;background:#F2B632;color:#3a2800;font-family:"Courgette",cursive;font-size:clamp(20px,2vw,28px);padding:4px 16px 6px;border-radius:12px;rotate:8deg;box-shadow:0 6px 0 rgba(120,80,20,.2);opacity:clamp(0,(var(--lift) - .4) * 4,1);scale:calc(.6 + clamp(0,(var(--lift) - .4) * 4,1) * .4)}
+@media (max-width:900px){.pull{height:260vh}.pull-stage{margin-top:22vh!important}.pull-pin{height:calc(100vh - var(--toph,64px) - 64px)}.pull-in{grid-template-columns:1fr;gap:6px}.pull-stage{order:-1;width:min(70vw,38vh);margin-top:16vh}.pull-copy h2{font-size:40px;margin:6px 0 8px}.pull-copy p{font-size:14px;margin-bottom:12px}.pull-hint{display:none}}
+@media (prefers-reduced-motion:reduce){.pull{height:auto;--lift:.7;--snap:0}.pull-pin{position:static;height:auto;padding:64px 0}}
 .hrs{background:#F2B632;color:#4a1f10;padding:clamp(64px,8vw,120px) 0;overflow:hidden;position:relative}
 .hrs-in{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:clamp(28px,5vw,72px);align-items:center}
 .hrs-kick{font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#B2533A;font-size:14px}
@@ -2426,6 +2443,18 @@ function renderHome(){
   </section>
   <div class="ribbons"><div class="rb a">${(t=>{const i=t.indexOf('>',t.indexOf('class="tk"'))+1,j=t.lastIndexOf('</div></div>'),x=t.slice(i,j);return t.slice(0,i)+x+x+t.slice(j)})(offerTicker())}</div><div class="rb b" aria-hidden="true"><div class="ticker"><div class="tk" style="animation-duration:60s">${craft}${craft}${craft}${craft}</div></div></div></div>
 
+  <section class="pull" id="pull" data-sx="pull" aria-labelledby="pull-title"><div class="pull-pin"><div class="sx-in pull-in">
+    <div class="pull-copy"><span class="kick">Really cheesy</span><h2 id="pull-title">Pull a slice.<br><em>Watch it stretch.</em></h2>
+      <p>A proper blanket of real cheese on every pizza, so every slice comes away in long, stretchy strings. Never a drop of mayonnaise.</p>
+      <button class="btn pri lg" data-act="pn" data-v="menu">Order a cheesy one <span class="arr" aria-hidden="true">→</span></button>
+      <span class="pull-hint" aria-hidden="true">Keep scrolling ↓</span></div>
+    <div class="pull-stage" aria-hidden="true"><div class="pull-plate"></div>
+      <img class="pull-pz" src="img/hero-pizza.webp" alt="" width="900" height="900" loading="lazy">
+      <svg class="pull-svg" viewBox="0 0 100 100" preserveAspectRatio="none"><defs><linearGradient id="pullg" x1="0" x2="1"><stop offset="0" stop-color="#e2a93a"/><stop offset=".35" stop-color="#fff0b0"/><stop offset=".65" stop-color="#f7d670"/><stop offset="1" stop-color="#d49a2c"/></linearGradient></defs><g fill="url(#pullg)"></g><g class="pull-hi" fill="none" stroke="#fffbe6" stroke-linecap="round"></g></svg>
+      <div class="pull-sl"><img src="img/hero-pizza.webp" alt="" width="900" height="900" loading="lazy"></div>
+      <span class="pull-tag">¡Stretchy!</span></div>
+  </div></div></section>
+
   ${sig.length?`<section class="sx hg" id="signature" data-sx="hpin"><div class="hg-pin"><div class="hg-word" aria-hidden="true">Ekdum cheesy</div>
     <button class="hg-try" data-act="pn" data-v="menu" aria-label="See the full menu"><svg viewBox="0 0 200 200" aria-hidden="true"><defs><path id="hgtp" d="M100 100m-78 0a78 78 0 1 1 156 0a78 78 0 1 1-156 0"/></defs><text><textPath href="#hgtp" textLength="488" lengthAdjust="spacing">AAVO, CHAKHO! · COME TASTE IT! ·</textPath></text></svg><b>Try<br>it!</b></button><div class="sx-in">
     <div class="sx-h"><div><span class="kick">Pizzas, garlic bread &amp; more</span><h2>Ekdum <em>cheesy</em></h2></div><p>Our pizzas, then the sides: garlic bread, pockets and fries. Keep scrolling and they slide past. Tap any of them to see it up close.</p></div></div>
@@ -2666,6 +2695,25 @@ document.addEventListener('pointerup',grabEnd);document.addEventListener('pointe
    offset that wraps around their text. One animation frame per scroll, only on the home page. */
 const SX={raf:0,y:null,vel:0};
 const onHome=()=>S&&S.mode==='public'&&U.pubView==='home';
+// The cheese strings between the lifted slice and the pizza: each one is wide where it sticks and thin in
+// the middle, thinning as the slice rises, and they snap and fall away at the end
+const PULL=[[-1,2.6,.8],[-.82,1.6,1.1],[-.62,3,.7],[-.42,1.8,1.25],[-.22,3.4,.75],[-.04,2,1.1],[.16,3.6,.7],[.36,1.8,1.2],[.56,3,.8],[.74,1.6,1.1],[.9,2.6,.85],[1,1.8,1]];
+function pullDraw(el,p){
+  const g=el.querySelector('.pull-svg g'),hi=el.querySelector('.pull-hi');if(!g)return;
+  const lift=Math.min(1,Math.max(0,(p-.12)*1.6)),snap=Math.min(1,Math.max(0,(p-.8)*8)),tip=50-lift*36,f=n=>n.toFixed(2);
+  if(lift<.02){g.innerHTML='';hi.innerHTML='';return}
+  let d='',h='';
+  PULL.forEach(([u,w,k],i)=>{
+    const bx=50+u*6.6,by=50.5-Math.abs(u)*13.5,tx=50+u*4.6,ty=tip-Math.abs(u)*9.5+1;if(by-ty<.5)return;
+    // after the snap the lower half drops back and the upper half curls up to the slice
+    const cut=snap*(.35+.3*((i*37)%10)/10),y1=ty+(by-ty)*cut*(i%2?1:0),y2=by-(by-ty)*cut*(i%2?0:1);
+    const sw=Math.sin(i*1.7+p*9)*(1.2+lift*2.2),mx=(bx+tx)/2+sw,my=(y1+y2)/2+lift*2,wm=Math.max(.18,w*(1-lift*.82*k))*(1-snap*.5),we=w*1.1;
+    const x1=tx+(bx-tx)*((y1-ty)/(by-ty)),x2=tx+(bx-tx)*((y2-ty)/(by-ty));
+    d+=`M${f(x1-we/2)} ${f(y1)}Q${f(mx-wm)} ${f(my)} ${f(x2-we/2)} ${f(y2)}L${f(x2+we/2)} ${f(y2)}Q${f(mx+wm)} ${f(my)} ${f(x1+we/2)} ${f(y1)}Z`;
+    h+=`<path d="M${f(x1-we*.15)} ${f(y1+.6)}Q${f(mx-wm*.3)} ${f(my)} ${f(x2-we*.15)} ${f(y2-.6)}" stroke-width="${f(Math.max(.08,wm*.35))}" opacity=".7"/>`;
+  });
+  g.innerHTML=`<path d="${d}" opacity="${f(1-snap*.6)}"/>`;hi.innerHTML=h;hi.style.opacity=1-snap;
+}
 function sxTick(){
   SX.raf=0;const home=app.querySelector('main.home');if(!home||RM())return;
   const vh=innerHeight,y=scrollY;
@@ -2675,6 +2723,7 @@ function sxTick(){
     const r=el.getBoundingClientRect();if(r.bottom<-200||r.top>vh+200)return;
     let p;
     if(el.dataset.sx==='hpin'){if(!el.classList.contains('on'))return;const top=parseFloat(document.documentElement.style.getPropertyValue('--toph'))||64;p=(top-r.top)/Math.max(1,r.height-el.firstElementChild.clientHeight)}
+    else if(el.dataset.sx==='pull'){p=-r.top/Math.max(1,r.height-vh);pullDraw(el,Math.min(1,Math.max(0,p)))}
     else if(el.dataset.sx==='pin'){p=-r.top/Math.max(1,r.height-vh);const s=[.065,.145,.225,.315,.5,.58,.67,.76,.88].filter(x=>p>=x).length;if(el.dataset.step!==String(s))el.dataset.step=s;
       // q: the pizza is built; sl: it slides aside; g: the garlic bread is built; d: both go out the door
       const c=v=>Math.min(1,Math.max(0,v)).toFixed(4),ph=s>=5?'1':'0';if(el.dataset.ph!==ph)el.dataset.ph=ph;
