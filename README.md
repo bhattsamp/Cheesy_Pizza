@@ -48,6 +48,13 @@ in one of two ways, chosen when it is built:
   address, or the shop computer's LAN address like `http://192.168.1.20:3000` on the same Wi-Fi);
   `localhost` will not work.
 
+**Receipt printer and cash drawer (Admin app):** bills and KOTs print straight to a 58 mm or 80 mm
+ESC/POS receipt printer, either plugged in by USB (POS terminals) or paired over Bluetooth (built-in
+terminal printers such as "InnerPrinter" usually show up as Bluetooth). A cash drawer plugged into the
+printer's drawer port opens on cash payments only, not on UPI, card, bank or baki. Pick the printer
+from the bill screen's "Choose your printer" link; it also has Test print, Open drawer and a switch to
+turn the drawer off.
+
 **Get an APK without installing anything:** in GitHub open Actions > Android APK > Run workflow.
 Leave `server_url` blank for the offline app, or paste a server address (a repository variable
 `CHEESY_SERVER_URL` under Settings > Secrets and variables > Actions > Variables sets it for every

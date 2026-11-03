@@ -1963,31 +1963,41 @@ function vNew(){
           <button class="btn" data-act="pos-go" data-v="bill" ${can?'':'disabled'}>Bill</button>
           <button class="btn chz" data-act="pos-go" data-v="kot" ${P.cart.length?'':'disabled'}>KOT Print</button>
         </div>
-        <div class="row small muted"><span class="grow">${run?'KOT Print sends only the new items to the kitchen.':'KOT Print sends to the kitchen now; take payment later.'}</span><button class="btn sm" data-act="pos-clear" ${P.cart.length||run?'':'disabled'}>Clear</button></div>
+        <div class="row small muted"><span class="grow">${run?'KOT Print sends only the new items to the kitchen.':'KOT Print sends to the kitchen now; take payment later.'}</span>${btp()&&btGet()?'<button class="btn sm" data-act="drawer-open">Open drawer</button>':''}<button class="btn sm" data-act="pos-clear" ${P.cart.length||run?'':'disabled'}>Clear</button></div>
       </div>
     </aside>
   </div>`;
 }
 // Cashiers must enter the customer's mobile, so every bill can be checked later
 const needPhone=()=>staff()?.role==='cashier'&&U.pos.type!=='zomato';
-function printText(txt){if(btp())return btPrint(txt);const r=document.getElementById('printRoot');r.innerHTML=`<pre>${esc(txt)}</pre>`;try{window.print()}catch(_){}}
-/* Admin app: bills and KOTs go straight to the Bluetooth receipt printer paired with this phone
-   (chosen once, kept on this phone). The website and older apps use the browser's print box. */
+function printText(txt,o){if(btp())return btPrint(txt,o&&o.drawer);const r=document.getElementById('printRoot');r.innerHTML=`<pre>${esc(txt)}</pre>`;try{window.print()}catch(_){}}
+/* Admin app: bills and KOTs go straight to the receipt printer (Bluetooth or USB, chosen once, kept
+   on this device), and cash payments open the cash drawer plugged into that printer. The website
+   and older apps use the browser's print box. */
 const BT_KEY='cheesy_printer';
 const btp=()=>APP_ROLE==='admin'&&window.Capacitor&&Capacitor.Plugins&&Capacitor.Plugins.ThermalPrinter||null;
 const btGet=()=>{try{return JSON.parse(localStorage.getItem(BT_KEY))||null}catch(_){return null}};
 const btSet=v=>{try{v?localStorage.setItem(BT_KEY,JSON.stringify(v)):localStorage.removeItem(BT_KEY)}catch(_){}};
 // Receipt printers only know plain letters: swap the few symbols the bills use
 const btAscii=t=>String(t).replace(/[·•]/g,'-').replace(/₹/g,'Rs ').replace(/×/g,'x').replace(/[‘’]/g,"'").replace(/[“”]/g,'"').replace(/[–—]/g,'-').replace(/[^\x0a\x20-\x7e]/g,'');
-const BT_ERR={BT_OFF:'Bluetooth is off. Turn it on and try again.',NO_BT:'This phone has no Bluetooth.',NO_PERMISSION:'Allow "Nearby devices" for Cheesy Pizza Admin in phone Settings, then try again.'};
-let btPending=null;
-async function btPrint(txt){
-  const p=btGet();if(!p)return btChoose(txt);
-  toast('Printing on '+p.name+'…');
-  try{await btp().print({address:p.address,text:btAscii(txt)});toast('Printed')}
-  catch(e){btPending=txt;showModal(`<div class="mh"><h3>Could not print</h3><button class="x" data-act="close" aria-label="Close">×</button></div>
+const BT_ERR={BT_OFF:'Bluetooth is off. Turn it on and try again.',NO_BT:'This phone has no Bluetooth.',NO_PERMISSION:'Allow "Nearby devices" for Cheesy Pizza Admin in phone Settings, then try again.',USB_GONE:'The USB printer is not plugged in. Plug it in and try again.',USB_DENIED:'Tap Allow when Android asks about the USB printer, then try again.'};
+let btPending=null,btPendDrawer=false;
+async function btPrint(txt,drawer){
+  const p=btGet();if(!p){btPendDrawer=!!drawer;return btChoose(txt)}
+  const dr=!!drawer&&p.drawer!==false;
+  toast((dr?'Opening drawer · printing on ':'Printing on ')+p.name+'…');
+  try{await btp().print({address:p.address,text:btAscii(txt),drawer:dr});toast('Printed')}
+  catch(e){btPending=txt;btPendDrawer=dr;showModal(`<div class="mh"><h3>Could not print</h3><button class="x" data-act="close" aria-label="Close">×</button></div>
     <div class="mb"><p>${esc(BT_ERR[e&&e.code]||'Could not reach '+p.name+'. Check it is switched on, has paper and is near this phone.')}</p>
     <div class="row"><button class="btn pri grow" data-act="bt-retry">Try again</button><button class="btn" data-act="bt-change">Change printer</button></div></div>`)}
+}
+// Cash payment without a printout: just kick the drawer open
+async function openDrawer(manual){
+  if(!btp())return;const p=btGet();
+  if(!p){if(manual)btChoose(null);return}
+  if(!manual&&p.drawer===false)return;
+  try{await btp().openDrawer({address:p.address});toast('Cash drawer opened')}
+  catch(e){toast(BT_ERR[e&&e.code]||'Could not open the cash drawer. Check the printer is on.')}
 }
 async function btChoose(txt){
   btPending=txt||null;let list=[];
@@ -1998,8 +2008,9 @@ async function btChoose(txt){
   <div class="mb">${list.length?`<div class="col" style="display:grid;gap:8px">${list.map(d=>`<button class="btn ${cur&&cur.address===d.address?'pri':''}" data-act="bt-pick" data-a="${esc(d.address)}" data-n="${esc(d.name)}">🖨️ ${esc(d.name)}</button>`).join('')}</div>`
     :'<p>No printer is paired with this phone yet.</p>'}
     <label class="row small" style="gap:8px;margin-top:6px"><input type="checkbox" id="bt-auto" ${auto?'checked':''}> Print the KOT by itself when I accept an online order</label>
-    <p class="small muted" style="margin:0">Printer not in the list? Switch it on, open phone <b>Settings › Bluetooth</b>, pair it (PIN is usually 0000 or 1234), then come back and tap Refresh. Works with 58 mm and 80 mm Bluetooth receipt printers.</p>
-    <div class="row"><button class="btn" data-act="bt-change">Refresh</button>${cur?`<button class="btn" data-act="bt-test">Test print</button><button class="btn bad" data-act="bt-forget">Forget printer</button>`:''}</div></div>`);
+    <label class="row small" style="gap:8px"><input type="checkbox" id="bt-drawer" ${!cur||cur.drawer!==false?'checked':''}> Open the cash drawer for cash payments (not for UPI, card or others)</label>
+    <p class="small muted" style="margin:0">Printer not in the list? <b>USB printer:</b> plug it in and tap Refresh. <b>Bluetooth printer:</b> switch it on, open <b>Settings › Bluetooth</b>, pair it (PIN is usually 0000 or 1234), then tap Refresh. Works with 58 mm and 80 mm receipt printers. The cash drawer plugs into the printer's drawer port.</p>
+    <div class="row"><button class="btn" data-act="bt-change">Refresh</button>${cur?`<button class="btn" data-act="bt-test">Test print</button><button class="btn" data-act="drawer-open">Open drawer</button><button class="btn bad" data-act="bt-forget">Forget printer</button>`:''}</div></div>`);
 }
 const btTest=()=>[center('CHEESY PIZZA'),center('Printer test'),'-'.repeat(32),pad('Printer',btGet()?.name||''),pad('Time',fmtTime(Date.now())),'-'.repeat(32),center('All good!')].join('\n');
 function recalcOrder(o){
@@ -2057,7 +2068,7 @@ function posGo(kind){
   }
   save();Object.assign(U.pos,JSON.parse(JSON.stringify(POS_BLANK)));render();
   if(kind==='kot'){const txt=kotText(o,run?round:null);printText(txt);toast((run?'New items for '+o.no:o.no)+' sent to kitchen')}
-  else{openDone(o);if(kind==='billprint')printText(billText(o))}
+  else{openDone(o);const cash=mode==='cash';if(kind==='billprint')printText(billText(o),{drawer:cash});else if(cash)openDrawer()}
 }
 function openDone(o){
   showModal(`<div class="mh"><h3>Order ${o.paid?'billed':'saved'}</h3><button class="x" data-act="close" aria-label="Close">×</button></div>
@@ -2626,15 +2637,16 @@ document.addEventListener('click',e=>{
     case 'pc-apply':P.code=(document.getElementById('pc-code').value||'').trim().toUpperCase();render();break;
     case 'pos-qr':{const amt=P.total||0;showModal(`<div class="mh"><h3>Scan to pay · ${rs(amt)}</h3><button class="x" data-act="close" aria-label="Close">×</button></div><div class="mb"><div class="qr"><div data-qr="upi://pay?pa=${encodeURIComponent(cur().upi)}&pn=${encodeURIComponent('Cheesy Pizza')}&am=${amt}&cu=INR"></div><b class="num">${rs(amt)} · ${esc(cur().upi)}</b></div><button class="btn pri lg block" data-act="close">Done</button></div>`);break}
     case 'collect-open':openCollect(find(el.dataset.id));break;
-    case 'collect':{const o=find(el.dataset.id);if(o.paid){closeModal();render();break}settleOrder(o,el.dataset.v,0);save();closeModal();toast(o.no+' · '+rs(o.total)+' paid by '+PAY[el.dataset.v]);render();break}
+    case 'collect':{const o=find(el.dataset.id);if(o.paid){closeModal();render();break}settleOrder(o,el.dataset.v,0);save();closeModal();toast(o.no+' · '+rs(o.total)+' paid by '+PAY[el.dataset.v]);render();if(el.dataset.v==='cash')openDrawer();break}
     case 'kitem':{const o=find(el.dataset.id);const l=o.items[+el.dataset.i];l.kdone=!l.kdone;save();render();break}
     case 'kready':{const o=find(el.dataset.id);if(o.status==='preparing'){setStatus(o,'ready');toast(o.no+' ready → counter');render()}break}
     case 'od-scope':U.ordersScope=el.dataset.v;render();break;
     case 'od-new':U.ordersNew=!U.ordersNew;render();break;
     case 'print-txt':printText(el.dataset.t);break;
     case 'bt-change':e.preventDefault();btChoose(btPending);break;
-    case 'bt-retry':closeModal();if(btPending)btPrint(btPending);break;
-    case 'bt-pick':{const old=btGet(),a=document.getElementById('bt-auto');btSet({address:el.dataset.a,name:el.dataset.n,autoKot:a?a.checked:(old?old.autoKot!==false:true)});closeModal();const t=btPending;btPending=null;t?btPrint(t):toast(el.dataset.n+' saved as printer');break}
+    case 'bt-retry':closeModal();if(btPending)btPrint(btPending,btPendDrawer);break;
+    case 'bt-pick':{const old=btGet(),a=document.getElementById('bt-auto'),dw=document.getElementById('bt-drawer');btSet({address:el.dataset.a,name:el.dataset.n,autoKot:a?a.checked:(old?old.autoKot!==false:true),drawer:dw?dw.checked:(old?old.drawer!==false:true)});closeModal();const t=btPending,d=btPendDrawer;btPending=null;btPendDrawer=false;t?btPrint(t,d):toast(el.dataset.n+' saved as printer');break}
+    case 'drawer-open':openDrawer(true);break;
     case 'bt-test':closeModal();btPrint(btTest());break;
     case 'bt-forget':btSet(null);btPending=null;closeModal();toast('Printer removed');break;
     case 'rate':{const o=find(el.dataset.id);o.rating=+el.dataset.v;save();toast('Thanks for rating!');openTrack();break}
@@ -2744,7 +2756,8 @@ document.addEventListener('input',e=>{
 // Review link: refresh the status and message preview once the owner leaves the box
 document.addEventListener('change',e=>{if(e.target.dataset?.ou&&e.target.dataset.f==='review')render()});
 // Printer box: the auto-KOT tick is kept straight away for the chosen printer
-document.addEventListener('change',e=>{if(e.target.id==='bt-auto'){const p=btGet();if(p){p.autoKot=e.target.checked;btSet(p)}}});
+document.addEventListener('change',e=>{if(e.target.id==='bt-auto'){const p=btGet();if(p){p.autoKot=e.target.checked;btSet(p)}}
+  if(e.target.id==='bt-drawer'){const p=btGet();if(p){p.drawer=e.target.checked;btSet(p);toast(p.drawer?'Cash drawer opens for cash payments':'Cash drawer will stay shut')}}});
 document.addEventListener('change',e=>{
   if(e.target.dataset.gst){const t=e.target,o=S.outlets.find(x=>x.id===t.dataset.gst);if(!o)return;
     if(staff()?.role!=='owner')return toast('Only the owner can change GST settings');
