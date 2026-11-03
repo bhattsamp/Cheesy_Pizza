@@ -2638,7 +2638,8 @@ function vOutlets(){const own=staff()?.role==='owner';
     <div class="field"><label for="olg-${o.id}">Company name on bill</label><input class="inp" id="olg-${o.id}" data-ou="${o.id}" data-f="legal" value="${esc(o.legal||'')}" placeholder="CHEESY PIZZA" ${own?'':'readonly'}></div>
     <div class="row"><div class="field grow"><label for="ogs-${o.id}">GSTIN</label><input class="inp" id="ogs-${o.id}" data-ou="${o.id}" data-f="gstin" value="${esc(o.gstin||'')}" maxlength="15" autocapitalize="characters" placeholder="15 characters" ${own?'':'readonly'}></div>
     <div class="field grow"><label for="ofs-${o.id}">FSSAI no.</label><input class="inp num" id="ofs-${o.id}" data-ou="${o.id}" data-f="fssai" value="${esc(o.fssai||'')}" inputmode="numeric" maxlength="14" ${own?'':'readonly'}></div></div>
-    <div class="row"><div class="field grow"><label for="ogr-${o.id}">GST rate</label><select class="inp" id="ogr-${o.id}" data-gst="${o.id}" data-f="gstRate" ${own?'':'disabled'}>${[0,5,12,18].map(r=>`<option value="${r}" ${(+o.gstRate||0)===r?'selected':''}>${r?r+'%':'No GST'}</option>`).join('')}</select></div>
+    <div class="row"><div class="field grow"><label for="ogr-${o.id}">Tax (GST) rate</label><div class="row" style="gap:6px;flex-wrap:nowrap"><input class="inp num" id="ogr-${o.id}" type="number" inputmode="decimal" min="0" max="28" step="0.01" data-gst="${o.id}" data-f="gstRate" value="${+o.gstRate||0}" style="width:90px" ${own?'':'disabled'}><b>%</b></div>
+      ${own?`<div class="waits" style="margin-top:6px">${[0,5,12,18].map(r=>`<button data-act="gst-rate" data-o="${o.id}" data-v="${r}" aria-pressed="${(+o.gstRate||0)===r}">${r?r+'%':'None'}</button>`).join('')}</div>`:''}</div>
     <div class="field grow"><label for="ogm-${o.id}">Menu prices</label><select class="inp" id="ogm-${o.id}" data-gst="${o.id}" data-f="gstMode" ${own?'':'disabled'}><option value="incl" ${o.gstMode!=='excl'?'selected':''}>Include GST</option><option value="excl" ${o.gstMode==='excl'?'selected':''}>GST added on top</option></select></div></div>
     <span class="small muted">${gstOf(o)?(o.gstMode==='excl'?`Bills add ${o.gstRate}% GST to the total.`:`Bills show ${o.gstRate}% GST inside the price; totals stay the same.`):'GST appears on bills once you enter a GSTIN and pick a rate.'}</span>
     <div class="grp-h">Payment options for online orders</div>
@@ -2769,6 +2770,7 @@ document.addEventListener('click',e=>{
     case 'lp-edit':U.editLine=+el.dataset.i;render();{const i=document.getElementById('lp-'+el.dataset.i);if(i){i.focus();i.select()}}break;
     case 'pos-clear':P.cart=[];P.addTo=null;render();break;
     case 'pos-pay':openPay();break;
+    case 'gst-rate':{const o=S.outlets.find(x=>x.id===el.dataset.o);if(!o)break;if(staff()?.role!=='owner'){toast('Only the owner can change GST settings');break}o.gstRate=+el.dataset.v;save();render();toast('Tax set to '+(o.gstRate?o.gstRate+'%':'none')+' for '+o.name);break}
     case 'pos-opts':P.opts=1;render();break;
     case 'lrm':P.cart.splice(+el.dataset.i,1);render();break;
     case 'cust-open':P.tab='cust';U.custQ=el.dataset.ph;closeModal();render();window.scrollTo(0,0);break;
@@ -2855,7 +2857,8 @@ document.addEventListener('change',e=>{if(e.target.id==='bt-auto'){const p=btGet
 document.addEventListener('change',e=>{
   if(e.target.dataset.gst){const t=e.target,o=S.outlets.find(x=>x.id===t.dataset.gst);if(!o)return;
     if(staff()?.role!=='owner')return toast('Only the owner can change GST settings');
-    o[t.dataset.f]=t.dataset.f==='gstRate'?+t.value:t.value;save();render();toast('GST setting saved for '+o.name);return}
+    if(t.dataset.f==='gstRate'){const r=Math.round((+t.value||0)*100)/100;if(r<0||r>28){toast('Tax rate should be between 0 and 28%');render();return}o.gstRate=r}else o[t.dataset.f]=t.value;
+    save();render();toast('Tax setting saved for '+o.name);return}
   if(e.target.dataset.paysw){const t=e.target,o=S.outlets.find(x=>x.id===t.dataset.paysw);if(!o)return;
     if(staff()?.role!=='owner'){t.checked=o[t.dataset.f]!==false;return toast('Only the owner can change payment options')}
     const prev=o[t.dataset.f];o[t.dataset.f]=t.checked;
