@@ -789,10 +789,6 @@ html:has(#modalRoot:not(:empty)),html:has(#boardRoot:not(:empty)),html:has(#choo
 .pos .tables button{padding:9px 0}
 .pos .btn.sm{min-height:34px}
 .pos .acts .btn{padding:14px 6px;font-size:15px}
-.tkpay{padding:0 14px 14px;display:flex;flex-direction:column;gap:6px;background:var(--surface);border-radius:0 0 var(--r) var(--r)}
-.tkpay .tot2{display:none;justify-content:space-between;align-items:baseline;gap:10px;padding-top:10px;font-weight:600;color:var(--muted);font-size:14px}
-.tkpay .tot2 b{font-family:var(--display);font-size:22px;font-weight:800;color:var(--ink)}
-.poscats{top:calc(env(safe-area-inset-top,0px) + var(--toph,61px));z-index:6;margin-inline:-2px;padding-inline:2px}
 @media (min-width:761px){
   .pos{max-width:none}
   body:not(.pubmode) .top-in{max-width:none}
@@ -837,7 +833,7 @@ html:has(#modalRoot:not(:empty)),html:has(#boardRoot:not(:empty)),html:has(#choo
   .pos .ticket.order{position:sticky;top:calc(var(--toph,61px) + 12px);max-height:var(--tkh,calc(100vh - var(--toph,61px) - 24px));overflow-y:auto;overscroll-behavior:contain}
   .pos .ticket.order>*{flex-shrink:0}
   .pos .ticket.order .tkpay{position:sticky;bottom:0;margin-top:auto;z-index:2;box-shadow:0 -8px 16px -12px rgba(0,0,0,.3)}
-  .pos .ticket.order .tkpay .tot2{display:flex}
+  .pos .ticket.order .tkhead{position:sticky;top:0;z-index:3}
 }
 /* Short terminal screens (1024x600, 1280x720 and similar): tighter spacing */
 @media (min-width:761px) and (max-height:720px){
@@ -845,18 +841,87 @@ html:has(#modalRoot:not(:empty)),html:has(#boardRoot:not(:empty)),html:has(#choo
   .ph1{margin-bottom:8px}.ph1 h2{font-size:22px}
   .online{padding:8px 10px;margin-bottom:10px}
   .pos .ticket.order .sec,.pos .ticket.order .ft{padding:8px 12px}
-  .pos .ticket.order .tkpay{padding:0 12px 10px}.tkpay .tot2{padding-top:8px}
+  .pos .ticket.order .tkpay{padding:8px 12px 10px}.paybig{padding:10px 16px}.paybig b{font-size:24px}
   .pos .ticket.order .ft{gap:5px}
   .pos .acts .btn{padding:11px 6px}
   .calc.sm{padding:8px;gap:6px}.calc.sm .big{font-size:22px}
   .side button{padding-block:6px}
   .side button svg{width:20px;height:20px}
+  .tkcust .field label,.tkcust .cbhelp,.pos .ph1>span{display:none}
+  .tkhead{padding:6px}.tkhead .types button{padding:7px 2px}
+  .pos .tph{aspect-ratio:16/10}
 }
 /* Big terminal screens */
 @media (min-width:1600px){
   .tiles{grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px}
   .pos .tile b{font-size:15px}
   .kds{grid-template-columns:repeat(auto-fill,minmax(270px,1fr))}
+}
+/* ===== POS order screen: photo tiles, clean ticket, big Pay button ===== */
+.mbar{display:flex;align-items:center;gap:8px;padding:4px 6px 4px 10px;margin-bottom:10px;position:sticky;top:calc(env(safe-area-inset-top,0px) + var(--toph,61px));z-index:6;box-shadow:0 4px 14px -10px rgba(0,0,0,.3)}
+.mbar .cats{position:static;flex:1;min-width:0;padding-block:6px;background:transparent;gap:4px}
+.mbar .cats button{border:0;background:transparent;padding:8px 14px;border-radius:10px;color:var(--muted)}
+.mbar .cats button[aria-pressed="true"]{background:var(--teal-soft);color:var(--teal)}
+.msearch{position:relative;flex:0 0 210px;display:block}
+.msearch svg{position:absolute;left:10px;top:50%;width:18px;height:18px;transform:translateY(-50%);color:var(--muted);pointer-events:none}
+.msearch .inp{padding-left:34px;max-width:none!important;width:100%}
+.pos .tiles{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.pos .tile{padding:0;gap:0;overflow:hidden;min-height:0;text-align:center;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.tph{display:block;position:relative;aspect-ratio:4/3;background:var(--surface2);overflow:hidden}
+.tph>img{width:100%;height:100%;object-fit:cover;display:block}
+.tph>.pzart{position:absolute;inset:8%;width:84%;height:84%}
+.tph>.pz{position:absolute;inset:14%;width:auto;height:auto;margin:0}
+.tcombo{position:absolute;inset:0;display:grid;place-items:center;background:linear-gradient(135deg,var(--cheese),var(--warn));color:#3a2800;font-family:var(--display);font-weight:800;font-size:20px;letter-spacing:.08em}
+.pos .tile .tg{position:absolute;left:6px;top:6px;right:auto;width:auto;height:auto;border-radius:6px;background:var(--bad);color:#fff;font-size:10px;font-weight:800;padding:1px 6px;letter-spacing:.04em;text-transform:uppercase}
+.pos .tile b{display:flex;align-items:center;justify-content:center;min-height:2.9em;padding:6px 8px;font-size:13.5px;line-height:1.2}
+.pos .tile .tpr{display:block;margin-top:auto;background:#22343d;color:#fff;font-weight:700;font-size:13px;padding:6px 8px}
+.pos .tile:disabled .tph{filter:grayscale(1)}
+.tkhead{background:#22343d;padding:10px;border-radius:var(--r) var(--r) 0 0}
+.tkhead .types button{background:transparent;color:#d7e6ea;border-color:rgba(255,255,255,.22)}
+.tkhead .types button[aria-pressed="true"]{background:#fff;color:#22343d;border-color:#fff}
+.ticket .line{grid-template-columns:minmax(0,1fr) auto auto auto;align-items:center;gap:4px 8px;padding:10px 0}
+.lnm .nm{font-weight:600;line-height:1.25}
+.lnm .ad{margin-top:2px}
+.lnm .ed{border:0;background:none;padding:0;color:var(--teal);font:inherit;font-size:12px;font-weight:600;text-align:left;text-decoration:none}
+.ticket .qty{border:0;gap:4px;overflow:visible}
+.ticket .qty button{background:transparent;color:var(--teal);font-size:20px;border-radius:8px}
+.ticket .qty button:active{background:var(--teal-soft)}
+.ticket .qty span{border:1px solid var(--line);border-radius:8px;min-width:40px;padding:5px 0;background:var(--surface)}
+.lpr{min-width:62px;text-align:right}
+.lrm{border:0;background:transparent;color:var(--bad);font-size:24px;line-height:1;width:32px;height:32px;border-radius:8px}
+.lrm:active{background:var(--bad-soft)}
+.optbtn{width:100%;border:1px dashed var(--line);background:transparent;border-radius:10px;padding:10px 12px;color:var(--muted);font-weight:600;text-align:left}
+.tkpay{padding:10px 14px 14px;display:flex;flex-direction:column;gap:8px;background:var(--surface);border-top:1px solid var(--line);border-radius:0 0 var(--r) var(--r)}
+.tksum:empty{display:none}
+.tksum{display:flex;flex-direction:column;gap:4px}
+.paybig{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;border:0;border-radius:14px;padding:14px 20px;background:var(--teal);color:var(--teal-ink);font-family:var(--display);font-weight:800;font-size:22px;box-shadow:0 8px 20px -10px var(--teal);touch-action:manipulation}
+.paybig small{font-family:var(--body,inherit);font-size:13px;font-weight:600;opacity:.85}
+.paybig b{font-size:32px;line-height:1}
+.paybig:active:not(:disabled){transform:scale(.99)}
+.paybig:disabled{opacity:.45;box-shadow:none}
+.tkrow{display:flex;gap:6px}.tkrow .btn{flex:1;padding:10px 6px}
+.paysheet{display:flex;flex-direction:column;gap:12px}
+.paysheet .paymodes button{padding:16px 6px;font-size:15px}
+.paysheet .paymodes.five{grid-template-columns:repeat(auto-fit,minmax(90px,1fr))}
+.paysheet .calc .big{font-size:32px}
+.paysheet .quick button{padding:10px 14px;font-size:15px}
+.acts2{display:grid;grid-template-columns:1.3fr 1fr;gap:8px}.acts2 .btn{padding:16px 8px;font-size:17px}
+@media (max-width:760px){
+  .mbar{flex-wrap:wrap;padding:6px}
+  .mbar .cats{flex:1 1 100%;order:2}
+  .msearch{flex:1 1 100%}
+  .pos .tiles{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (min-width:1600px){.pos .tiles{grid-template-columns:repeat(auto-fill,minmax(180px,1fr))}}
+@media (min-width:761px) and (max-width:1023px){
+  .msearch{flex-basis:140px}
+  .mbar .cats button{padding:8px 10px}
+  .ticket .line{gap:4px 4px}
+  .ticket .qty button{width:30px}
+  .ticket .qty span{min-width:30px}
+  .lpr{min-width:52px}
+  .lrm{width:26px}
+  .paybig b{font-size:26px}
 }
 #printRoot{display:none}
 @media print{body>*:not(#printRoot){display:none!important}#printRoot{display:block!important}#printRoot pre{font:12px/1.3 "Courier New",monospace;margin:0;white-space:pre}@page{margin:4mm}}
@@ -1874,14 +1939,14 @@ function custInfo(ph){
   return {c,count:list.length,spent:list.reduce((s,o)=>s+o.total,0)};
 }
 function custBox(ci){
-  if(!ci)return '<div class="small muted">Enter mobile to see past orders and baki amount.</div>';
+  if(!ci)return '<div class="small muted cbhelp">Enter mobile to see past orders and baki amount.</div>';
   if(!ci.count&&!(ci.c&&ci.c.due))return '<div class="custbox"><span class="chip c">New customer</span> First order from this number</div>';
   const due=ci.c&&ci.c.due||0;
   return `<div class="custbox ${due?'due':''}"><b>${ci.count} past order${ci.count===1?'':'s'}</b><span class="num">· spent ${rs(ci.spent)} · ${Math.floor(ci.c?.coins||0)} coins</span>${due?`<b style="color:var(--bad)" class="num">· Baki ${rs(due)}</b>`:''}<button class="btn sm" style="margin-left:auto" data-act="cust-open" data-ph="${U.pos.phone}">History</button></div>`;
 }
 const priceLabel=m=>m.cat==='pizza'?S.sizes.filter(s=>+m.prices[s.id]).map(s=>rs(m.prices[s.id])).join(' / '):rs(m.price);
 
-const POS_BLANK={cart:[],phone:'',name:'',table:'',address:'',note:'',type:'takeaway',zid:'',pay:'cash',given:'',code:'',useCoins:false,wait:null,addTo:null};
+const POS_BLANK={opts:0,cart:[],phone:'',name:'',table:'',address:'',note:'',type:'takeaway',zid:'',pay:'cash',given:'',code:'',useCoins:false,wait:null,addTo:null};
 // A dine-in table is busy while its order is cooking, or served but not paid yet
 function tableState(t){
   const run=S.orders.find(o=>o.outletId===S.cur&&o.type==='dine'&&String(o.table)===t&&o.ts>Date.now()-16*3600e3&&o.status!=='cancelled'&&(o.status!=='done'||!o.paid));
@@ -1893,82 +1958,108 @@ function tablePicker(P){
     return `<button data-act="pick-table" data-v="${t}" aria-pressed="${P.table===t}" class="${run?'busy':hold?'held':''}">T${t}${run?`<small class="num">${rs(run.total)}</small>`:hold?`<small>${esc((hold.name||'Hold').split(' ')[0].slice(0,8))}</small>`:''}</button>`}).join('')}</div>
   ${P.table&&!P.addTo?(()=>{const h=(cur().holds||{})[P.table];return h?`<div class="addto">T${esc(P.table)} is on hold for ${esc(h.name||'a guest')} since ${fmtTime(h.ts)}<span class="grow"></span><button class="btn sm" data-act="hold-table" data-v="off">Release hold</button></div>`:`<button class="btn sm" style="align-self:flex-start" data-act="hold-table" data-v="on">Hold T${esc(P.table)} ${P.name?'for '+esc(P.name):''}</button>`})():''}`;
 }
-function vNew(){
-  const P=U.pos;const dow=new Date().getDay();
-  let items;
-  if(P.q)items=S.menu.filter(m=>m.name.toLowerCase().includes(P.q.toLowerCase())).map(m=>({id:m.id,name:m.name,off:m.off,tag:itemOfferTags(m,dow).length,label:priceLabel(m)}));
-  else if(P.cat==='combo')items=S.combos.filter(c=>c.active).map(c=>({combo:1,id:c.id,name:c.name,label:rs(c.price)}));
-  else items=S.menu.filter(m=>m.cat===P.cat).map(m=>({id:m.id,name:m.name,off:m.off,tag:itemOfferTags(m,dow).length,label:priceLabel(m)}));
-  const ci=custInfo(P.phone);const todays=activeOffers(dow);
+// Bill, payment choices and totals for the order on the POS ticket (used by the ticket and the Pay sheet)
+function posCalc(){
+  const P=U.pos;
   const run=P.addTo&&S.orders.find(o=>o.id===P.addTo);if(P.addTo&&!run)P.addTo=null;
   const coins=P.phone.length===10?coinsOf(P.phone):0;
   const b=run?computeBill([...run.items,...P.cart],run.date,{...(run.extra||{}),...(P.code?{code:P.code}:{}),phone:run.customer.phone}):computeBill(P.cart,null,{code:P.code,coins:P.useCoins?coins:0,phone:P.phone});
-  const t=b.total;P.total=t;const g=+P.given||0;const ch=g-t;
+  const t=b.total;P.total=t;
   const zom=P.type==='zomato';
   const modes=zom?['zomato']:[...COUNTER_MODES,...(t>0&&walletOf(P.phone)>=t?['wallet']:[]),'due'];
   if(!modes.includes(P.pay))P.pay=modes[0];
-  const can=P.cart.length||run;
+  return {P,run,coins,b,t,zom,modes,can:!!(P.cart.length||run)};
+}
+const posTile=m=>`<button class="tile" data-act="${m.combo?'combo-add':'pos-add'}" data-id="${m.id}" data-t="pos" ${m.off?'disabled':''}>
+  <span class="tph">${m.combo?`<span class="tcombo">COMBO</span>`:thumb(m.m)}${m.tag?'<span class="tg">Offer</span>':''}</span>
+  <b>${esc(m.name)}</b><span class="tpr num">${m.off?'Not available':m.label}</span></button>`;
+function vNew(){
+  const {P,run,coins,b,t,zom,can}=posCalc();const dow=new Date().getDay();
+  const mk=m=>({m,id:m.id,name:m.name,off:m.off,tag:itemOfferTags(m,dow).length,label:priceLabel(m)});
+  let items;
+  if(P.q)items=S.menu.filter(m=>m.name.toLowerCase().includes(P.q.toLowerCase())).map(mk);
+  else if(P.cat==='combo')items=S.combos.filter(c=>c.active).map(c=>({combo:1,id:c.id,name:c.name,label:rs(c.price)}));
+  else items=S.menu.filter(m=>m.cat===P.cat).map(mk);
+  const ci=custInfo(P.phone);const todays=activeOffers(dow);
+  const n=P.cart.reduce((a,l)=>a+l.qty,0);
+  const optsOn=P.opts||P.note||P.code||(P.wait&&P.wait!==PREP_MIN);
   return `<div class="ph1"><h2>New order</h2><span class="muted small">${esc(cur().name)} · next no. <b class="num">${cur().code}-${String((S.seq[S.cur+'|'+today()]||0)+1).padStart(3,'0')}</b></span></div>
   ${todays.length?`<div class="row" style="margin-bottom:10px"><span class="grp-h">Live today</span>${todays.map(o=>`<span class="chip ${o.type==='bogo'?'r':o.type==='item'?'c':'t'}">${esc(o.name)}</span>`).join('')}</div>`:''}
   <div class="neworder">
-    <div>
-      <input class="inp" id="pos-q" placeholder="Search menu" value="${esc(P.q)}" style="max-width:260px">
-      <nav class="cats poscats" aria-label="Categories"><button data-act="poscat" data-v="combo" aria-pressed="${P.cat==='combo'&&!P.q}">Combos</button>${CATS.map(([k,n])=>`<button data-act="poscat" data-v="${k}" aria-pressed="${P.cat===k&&!P.q}">${n}</button>`).join('')}</nav>
-      <div class="tiles">${items.map(m=>`<button class="tile" data-act="${m.combo?'combo-add':'pos-add'}" data-id="${m.id}" data-t="pos" ${m.off?'disabled':''}>${m.tag?'<span class="tg" title="Offer applies"></span>':''}<b>${esc(m.name)}</b><span class="num">${m.label}${m.off?' · off':''}</span></button>`).join('')||'<div class="empty">No items</div>'}</div>
+    <div class="menucol">
+      <div class="mbar card">
+        <nav class="cats poscats" aria-label="Categories"><button data-act="poscat" data-v="combo" aria-pressed="${P.cat==='combo'&&!P.q}">Combos</button>${CATS.map(([k,nm])=>`<button data-act="poscat" data-v="${k}" aria-pressed="${P.cat===k&&!P.q}">${nm}</button>`).join('')}</nav>
+        <label class="msearch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input class="inp" id="pos-q" placeholder="Search menu" value="${esc(P.q)}" aria-label="Search menu"></label>
+      </div>
+      <div class="tiles">${items.map(posTile).join('')||'<div class="empty">No items</div>'}</div>
     </div>
-    ${P.cart.length?`<button class="tkjump" data-act="to-ticket"><b class="num">${P.cart.reduce((n,l)=>n+l.qty,0)} item${P.cart.reduce((n,l)=>n+l.qty,0)>1?'s':''} · ${rs(b.total)}</b><span>View order ↓</span></button>`:''}
+    ${P.cart.length?`<button class="tkjump" data-act="to-ticket"><b class="num">${n} item${n>1?'s':''} · ${rs(t)}</b><span>View order ↓</span></button>`:''}
     <aside class="card ticket order" id="ticket" data-ks="ticket">
-      <div class="sec">
-        <div class="types">${Object.entries(TYPES).map(([k,n])=>`<button data-act="pos-type" data-v="${k}" aria-pressed="${P.type===k}">${n}</button>`).join('')}</div>
+      <div class="tkhead">
+        <div class="types">${Object.entries(TYPES).map(([k,nm])=>`<button data-act="pos-type" data-v="${k}" aria-pressed="${P.type===k}">${nm}</button>`).join('')}</div>
+      </div>
+      <div class="sec tkcust">
         ${zom?`<div class="field"><label for="pos-zid">Zomato order ID</label><input class="inp num" id="pos-zid" value="${esc(P.zid)}" placeholder="e.g. 5123456789"></div>`:''}
-        <div class="row"><div class="field grow"><label for="pos-ph">Mobile${zom?' (optional)':needPhone()?' *':''}</label><input class="inp num" id="pos-ph" inputmode="numeric" maxlength="10" value="${esc(P.phone)}" placeholder="10 digits"></div>
-        <div class="field grow"><label for="pos-nm">Name${zom?' (optional)':''}</label><input class="inp" id="pos-nm" value="${esc(P.name)}"></div></div>
+        <div class="row"><div class="field grow"><label for="pos-ph">Mobile${zom?' (optional)':needPhone()?' *':''}</label><input class="inp num" id="pos-ph" inputmode="numeric" maxlength="10" value="${esc(P.phone)}" placeholder="Mobile · 10 digits"></div>
+        <div class="field grow"><label for="pos-nm">Name${zom?' (optional)':''}</label><input class="inp" id="pos-nm" value="${esc(P.name)}" placeholder="Customer name"></div></div>
         <div id="custbox">${custBox(ci)}</div>
         ${P.type==='dine'?tablePicker(P):''}
         ${run?`<div class="addto">Adding to ${run.no} · Table ${esc(run.table)} · ${rs(run.total)} so far${run.paid?'':' · not paid'}<span class="grow"></span><button class="btn sm" data-act="addto-x">New order instead</button></div>
           <div class="small muted">${run.items.map(l=>l.qty+'× '+esc(l.name)+(l.size?' '+sizeLabel(l.size):'')).join(', ')}</div>`:''}
         ${P.type==='delivery'?`<input class="inp" id="pos-ad" placeholder="Delivery address" value="${esc(P.address)}" aria-label="Delivery address">`:''}
       </div>
-      <div class="lines" style="flex:none;overflow:visible">${P.cart.length?P.cart.map((l,i)=>`<div class="line">
-        <div class="nm">${esc(l.name)}${canEdit(l)?` <button class="ed" data-act="pos-edit" data-i="${i}">Edit</button>`:''}</div>
-        <div>${U.editLine===i?`<input class="lp-in num" id="lp-${i}" type="number" value="${l.unit}" aria-label="Unit price">`:`<button class="lp num" data-act="lp-edit" data-i="${i}" title="Change price">${rs(l.unit*l.qty)}</button>`}</div>
-        <div class="ad">${esc(addonText(l))}${l.custom?' · <span style="color:var(--warn)">price changed</span>':''}${noteText(l)?`<br><span class="cook">Chef: ${esc(noteText(l))}</span>`:''}</div>
+      <div class="lines">${P.cart.length?P.cart.map((l,i)=>`<div class="line">
+        <div class="lnm"><div class="nm">${esc(l.name)}</div>
+          <div class="ad">${canEdit(l)?`<button class="ed" data-act="pos-edit" data-i="${i}">${esc(addonText(l)||'Options')}</button>`:esc(addonText(l))}${l.custom?' · <span style="color:var(--warn)">price changed</span>':''}${noteText(l)?`<br><span class="cook">Chef: ${esc(noteText(l))}</span>`:''}</div></div>
         <div class="qty"><button data-act="lq" data-i="${i}" data-v="-1" aria-label="Less">−</button><span class="num">${l.qty}</span><button data-act="lq" data-i="${i}" data-v="1" aria-label="More">+</button></div>
-      </div>`).join(''):`<div class="empty small">${run?'Tap items to add them to this table.':'Tap items to add them. Tap Edit to change toppings or options.'}</div>`}</div>
-      <div class="sec">
-        <input class="inp" id="pos-note" placeholder="Kitchen note (optional)" value="${esc(P.note||'')}" aria-label="Kitchen note">
+        <div class="lpr">${U.editLine===i?`<input class="lp-in num" id="lp-${i}" type="number" value="${l.unit}" aria-label="Unit price">`:`<button class="lp num" data-act="lp-edit" data-i="${i}" title="Change price">${rs(l.unit*l.qty)}</button>`}</div>
+        <button class="lrm" data-act="lrm" data-i="${i}" aria-label="Remove ${esc(l.name)}">×</button>
+      </div>`).join(''):`<div class="empty small">${run?'Tap items to add them to this table.':'Tap items to add them. Tap the options under an item to change toppings or size.'}</div>`}</div>
+      <div class="sec tkopts">
+        ${optsOn?`<input class="inp" id="pos-note" placeholder="Kitchen note (optional)" value="${esc(P.note||'')}" aria-label="Kitchen note">
         <div class="codes">${['Extra crispy','Less spicy','Jain','Pack separately','Rush order'].map(c=>`<button data-act="pos-chip" data-v="${c}" style="font-family:inherit">+ ${c}</button>`).join('')}</div>
         ${run?'':`<div class="waits"><span class="lbl" style="margin-right:4px">Waiting time</span>${WAITS.map(w=>`<button data-act="pos-wait" data-v="${w}" aria-pressed="${(P.wait||PREP_MIN)===w}">${w} min</button>`).join('')}<input class="inp num" id="pos-wait" type="number" min="1" placeholder="min" value="${P.wait&&!WAITS.includes(P.wait)?P.wait:''}" aria-label="Other waiting time in minutes"></div>`}
-        <div class="row"><input class="inp grow" id="pc-code" placeholder="Coupon code" value="${esc(P.code)}" style="text-transform:uppercase;width:auto" aria-label="Coupon code"><button class="btn sm" data-act="pc-apply">Apply</button></div>
+        <div class="row"><input class="inp grow" id="pc-code" placeholder="Coupon code" value="${esc(P.code)}" style="text-transform:uppercase;width:auto" aria-label="Coupon code"><button class="btn sm" data-act="pc-apply">Apply</button></div>`
+        :`<button class="optbtn" data-act="pos-opts">+ Kitchen note · waiting time ${PREP_MIN} min · coupon</button>`}
         ${b.codeMsg?`<div class="${b.codeOk?'msg-ok':'msg-bad'}">${esc(b.codeMsg)}</div>`:''}
         ${coins&&!run?`<label class="opt"><input type="checkbox" id="pc-coins" ${P.useCoins?'checked':''}><span class="coin sm">C</span> Use Cheese Coins <span class="small muted num">(${coins})</span></label>`:''}
       </div>
-      <div class="ft">
-        ${b.hint?`<div class="hint">${esc(b.hint)}</div>`:''}
-        ${billLines(b)}
-        <div class="paymodes sm ${modes.length===5?'five':''}">${modes.map(k=>`<button data-act="pos-pm" data-v="${k}" aria-pressed="${P.pay===k}">${k==='due'?'Baki':PAY[k]}</button>`).join('')}</div>
-        ${P.pay==='cash'?`<div class="calc sm">
-          <div class="field"><label for="pos-given">Customer given</label><input class="inp num" id="pos-given" type="number" inputmode="numeric" value="${esc(P.given)}" placeholder="${t}" style="font-size:20px;font-weight:700"></div>
-          <div><div class="grp-h">Return amount</div><div class="big num" style="color:${ch<0&&g?'var(--bad)':'var(--ok)'}" id="chg">${g?(ch<0?'Short '+rs(-ch):rs(ch)):'—'}</div></div>
-          <div class="quick" style="grid-column:1/-1">${[100,200,500,1000,2000].filter(v=>v>t).slice(0,3).map(v=>`<button data-act="pos-gv" data-v="${v}" class="num">${rs(v)}</button>`).join('')}</div>
-        </div>`:''}
-        ${P.pay==='upi'?`<div class="small muted">Customer pays ${rs(t)} to ${esc(cur().upi)}. <button class="btn sm" data-act="pos-qr">Show QR</button></div>`:''}
-        ${P.pay==='due'?(P.phone.length===10?`<div class="small muted">${rs(t)} goes to ${esc(P.name||'this customer')}'s baki account.</div>`:'<div class="msg-bad">Add the mobile number to keep a baki amount.</div>'):''}
-        ${P.pay==='zomato'?'<div class="small muted">Paid through Zomato.</div>':''}
-      </div>
       <div class="tkpay">
-        <div class="tot2"><span>To pay${P.cart.length?` · <span class="num">${P.cart.reduce((n,l)=>n+l.qty,0)} item${P.cart.reduce((n,l)=>n+l.qty,0)>1?'s':''}</span>`:''}</span><b class="num">${rs(t)}</b></div>
-        <div class="acts">
-          <button class="btn pri" data-act="pos-go" data-v="billprint" ${can?'':'disabled'}>Bill & Print</button>
-          <button class="btn" data-act="pos-go" data-v="bill" ${can?'':'disabled'}>Bill</button>
-          <button class="btn chz" data-act="pos-go" data-v="kot" ${P.cart.length?'':'disabled'}>KOT Print</button>
-        </div>
-        <div class="row small muted"><span class="grow">${run?'KOT Print sends only the new items to the kitchen.':'KOT Print sends to the kitchen now; take payment later.'}</span>${btp()&&btGet()?'<button class="btn sm" data-act="drawer-open">Open drawer</button>':''}<button class="btn sm" data-act="pos-clear" ${P.cart.length||run?'':'disabled'}>Clear</button></div>
+        ${b.hint?`<div class="hint">${esc(b.hint)}</div>`:''}
+        <div class="tksum">${b.subtotal!==t||(b.discounts||[]).length?`<div class="bl"><span>Item total</span><span class="num">${rs(b.subtotal)}</span></div>`:''}${(b.discounts||[]).map(d=>`<div class="bl disc"><span>${esc(d.name)}</span><span class="num">−${rs(d.amt)}</span></div>`).join('')}${b.gst&&b.gst.mode==='excl'?`<div class="bl"><span>GST ${b.gst.rate}%</span><span class="num">+${rs2(b.gst.tax)}</span></div>`:''}</div>
+        <button class="paybig" data-act="pos-pay" ${can?'':'disabled'}><span>Pay${n?` <small class="num">· ${n} item${n>1?'s':''}</small>`:''}</span><b class="num">${rs(t)}</b></button>
+        <div class="tkrow"><button class="btn chz" data-act="pos-go" data-v="kot" ${P.cart.length?'':'disabled'}>KOT Print</button>${btp()&&btGet()?'<button class="btn" data-act="drawer-open">Open drawer</button>':''}<button class="btn" data-act="pos-clear" ${P.cart.length||run?'':'disabled'}>Clear</button></div>
       </div>
     </aside>
   </div>`;
 }
-// Cashiers must enter the customer's mobile, so every bill can be checked later
+// Pay sheet: pick how the customer pays, work out change, then bill
+function openPay(){
+  const {P,t,modes,can,run}=posCalc();if(!can){closeModal();return}
+  const g=+P.given||0,ch=g-t;
+  showModal(`<div class="mh"><h3>Pay <span class="num">${rs(t)}</span></h3><button class="x" data-act="close" aria-label="Close">×</button></div>
+  <div class="mb paysheet">
+    <div class="paymodes ${modes.length>=5?'five':''}">${modes.map(k=>`<button data-act="pos-pm" data-v="${k}" aria-pressed="${P.pay===k}">${k==='due'?'Baki':PAY[k]}</button>`).join('')}</div>
+    ${P.pay==='cash'?`<div class="calc">
+      <div class="field"><label for="pos-given">Customer given</label><input class="inp num" id="pos-given" type="number" inputmode="numeric" value="${esc(P.given)}" placeholder="${t}" style="font-size:24px;font-weight:700"></div>
+      <div><div class="grp-h">Return amount</div><div class="big num" style="color:${ch<0&&g?'var(--bad)':'var(--ok)'}" id="chg">${g?(ch<0?'Short '+rs(-ch):rs(ch)):'—'}</div></div>
+      <div class="quick" style="grid-column:1/-1"><button data-act="pos-gv" data-v="${t}" class="num">Exact ${rs(t)}</button>${[100,200,500,1000,2000].filter(v=>v>t).slice(0,3).map(v=>`<button data-act="pos-gv" data-v="${v}" class="num">${rs(v)}</button>`).join('')}</div>
+    </div>`:''}
+    ${P.pay==='upi'?`<div class="small muted">Customer pays ${rs(t)} to ${esc(cur().upi)}. <button class="btn sm" data-act="pos-qr">Show QR</button></div>`:''}
+    ${P.pay==='due'?(P.phone.length===10||(run&&run.customer.phone)?`<div class="small muted">${rs(t)} goes to ${esc(P.name||(run&&run.customer.name)||'this customer')}'s baki account.</div>`:'<div class="msg-bad">Add the mobile number to keep a baki amount.</div>'):''}
+    ${P.pay==='zomato'?'<div class="small muted">Paid through Zomato.</div>':''}
+    <div class="acts2"><button class="btn pri lg" data-act="pos-go" data-v="billprint">Bill & Print</button><button class="btn lg" data-act="pos-go" data-v="bill">Bill only</button></div>
+    ${P.pay==='cash'&&btp()&&btGet()&&btGet().drawer!==false?'<div class="small muted" style="text-align:center">The cash drawer opens when you bill.</div>':''}
+  </div>`,{
+    onAct:(act,el)=>{
+      if(act==='pos-pm'){P.pay=el.dataset.v;render();openPay();return true}
+      if(act==='pos-gv'){P.given=el.dataset.v;openPay();return true}
+      if(act==='pos-go'){closeModal();posGo(el.dataset.v);return true}
+      return false},
+    onInput:e=>{const tg=e.target;if(tg.id!=='pos-given')return;P.given=tg.value;const gg=+tg.value||0,c=gg-t;const el=document.getElementById('chg');if(el){el.textContent=gg?(c<0?'Short '+rs(-c):rs(c)):'—';el.style.color=c<0&&gg?'var(--bad)':'var(--ok)'}}
+  });
+  if(P.pay==='cash')setTimeout(()=>document.getElementById('pos-given')?.focus(),50);
+}// Cashiers must enter the customer's mobile, so every bill can be checked later
 const needPhone=()=>staff()?.role==='cashier'&&U.pos.type!=='zomato';
 function printText(txt,o){if(btp())return btPrint(txt,o&&o.drawer);const r=document.getElementById('printRoot');r.innerHTML=`<pre>${esc(txt)}</pre>`;try{window.print()}catch(_){}}
 /* Admin app: bills and KOTs go straight to the receipt printer (Bluetooth or USB, chosen once, kept
@@ -2677,6 +2768,9 @@ document.addEventListener('click',e=>{
     case 'lq':{const l=P.cart[+el.dataset.i];l.qty+= +el.dataset.v;if(l.qty<1)P.cart.splice(+el.dataset.i,1);render();break}
     case 'lp-edit':U.editLine=+el.dataset.i;render();{const i=document.getElementById('lp-'+el.dataset.i);if(i){i.focus();i.select()}}break;
     case 'pos-clear':P.cart=[];P.addTo=null;render();break;
+    case 'pos-pay':openPay();break;
+    case 'pos-opts':P.opts=1;render();break;
+    case 'lrm':P.cart.splice(+el.dataset.i,1);render();break;
     case 'cust-open':P.tab='cust';U.custQ=el.dataset.ph;closeModal();render();window.scrollTo(0,0);break;
     case 'cust-all':U.custQ='';render();break;
     case 'bill':openReceipt(find(el.dataset.id),'bill');break;
