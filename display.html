@@ -249,6 +249,52 @@ body.idle{cursor:none}
 .pcv{position:absolute;left:0;top:0;width:1920px;height:1010px;z-index:1}
 .s-play .hint{position:absolute;right:140px;top:330px;z-index:2;font-size:44px;color:var(--gold);rotate:-5deg}
 
+/* moving light behind the food, and sparkles that twinkle on it */
+.rays{position:absolute;left:var(--rx,50%);top:var(--ry,50%);width:3200px;height:3200px;margin:-1600px 0 0 -1600px;pointer-events:none;
+  background:repeating-conic-gradient(rgba(255,255,255,var(--ra,.09)) 0 5deg,transparent 5deg 15deg);
+  -webkit-mask-image:radial-gradient(closest-side,#000 10%,transparent 75%);mask-image:radial-gradient(closest-side,#000 10%,transparent 75%);animation:spin 50s linear infinite}
+.spk{position:absolute;width:var(--z,46px);height:var(--z,46px);background:#fff;pointer-events:none;z-index:4;
+  clip-path:polygon(50% 0,61% 39%,100% 50%,61% 61%,50% 100%,39% 61%,0 50%,39% 39%);filter:drop-shadow(0 0 10px #fff6c8);animation:twinkle 1.8s var(--d,0s) ease-in-out infinite}
+@keyframes twinkle{0%,100%{transform:scale(0) rotate(0)}50%{transform:scale(1) rotate(90deg)}}
+.bokeh{position:absolute;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.35),transparent 70%);pointer-events:none;animation:bokeh var(--t,9s) var(--d,0s) ease-in-out infinite alternate}
+@keyframes bokeh{to{transform:translate(var(--bx,80px),-120px) scale(1.4)}}
+.shine{position:relative;display:inline-block}
+.shine::after{content:"";position:absolute;inset:-10% -5%;background:linear-gradient(105deg,transparent 40%,rgba(255,255,255,.75) 50%,transparent 60%) no-repeat;background-size:250% 100%;mix-blend-mode:overlay;animation:shine 3.2s 1.4s ease-in-out infinite;pointer-events:none}
+@keyframes shine{from{background-position:150% 0}60%,to{background-position:-60% 0}}
+
+/* spotlight: one item fills the screen */
+.s-spot{background:var(--bg)}
+.s-spot .copy{position:absolute;left:120px;top:210px;width:860px;z-index:3}
+.s-spot .h1{font-size:var(--fs,170px);color:#fff}
+.s-spot .desc{font-size:40px;line-height:1.3;margin-top:26px;color:rgba(255,255,255,.9);max-width:760px}
+.s-spot .cta{display:inline-flex;align-items:center;gap:14px;margin-top:40px;background:#fff;color:var(--ink);font-size:36px;font-weight:800;padding:14px 36px 8px;border-radius:99px;box-shadow:0 14px 30px rgba(0,0,0,.25)}
+.on .cta{animation:rise .9s 1.4s cubic-bezier(.2,.9,.3,1.2) both,pulse 1.6s 2.4s ease-in-out infinite}
+@keyframes pulse{50%{transform:scale(1.07)}}
+.spotw{position:absolute;right:150px;top:120px;width:800px;height:800px;perspective:1600px;z-index:2}
+.spot{position:absolute;inset:0;border-radius:50%;overflow:hidden;box-shadow:0 0 0 16px #fff,0 0 0 30px rgba(255,255,255,.25),0 60px 90px rgba(0,0,0,.45);background:#f5ead3}
+.on .spot{animation:spotin 1.4s .2s cubic-bezier(.3,1.3,.5,1) both,spotsway 6s 1.6s ease-in-out infinite alternate}
+@keyframes spotin{from{transform:rotateY(200deg) scale(.2);opacity:0}to{transform:none;opacity:1}}
+@keyframes spotsway{from{transform:rotateY(-10deg) rotateX(6deg)}to{transform:rotateY(10deg) rotateX(-5deg)}}
+.spot img{width:100%;height:100%;object-fit:cover}
+.spot img.png{object-fit:contain;padding:8%}
+.on .spot img{animation:kb 8s ease-out both}
+@keyframes kb{from{transform:scale(1.35) rotate(-6deg)}to{transform:scale(1.05) rotate(2deg)}}
+.star{position:absolute;right:90px;top:640px;width:300px;height:300px;z-index:5;display:grid;place-items:center;color:#3a2800;text-align:center}
+.star svg{position:absolute;inset:0;width:100%;height:100%;filter:drop-shadow(0 16px 20px rgba(0,0,0,.35));animation:spin 14s linear infinite}
+.star b{position:relative;font-family:Anton,sans-serif;font-weight:400;font-size:78px;line-height:.9}
+.star small{display:block;font-size:26px;font-family:'Baloo Bhai 2',sans-serif;font-weight:800;letter-spacing:.08em}
+.star{opacity:0}
+.on .star{animation:pop .8s 1.5s cubic-bezier(.3,2,.5,1) both,wob 2.4s 2.3s ease-in-out infinite}
+@keyframes pop{from{opacity:0;transform:scale(0) rotate(-90deg)}to{opacity:1;transform:none}}
+@keyframes wob{50%{transform:rotate(-8deg) scale(1.06)}}
+.s-spot .steam{opacity:1;z-index:3}
+.s-spot .steam i{bottom:auto;top:60px}
+
+/* the cheese curtain that drips down between some slides */
+.drip{position:absolute;left:0;top:0;width:1920px;height:1400px;z-index:30;pointer-events:none;transform:translateY(-110%);display:grid;place-items:center}
+.drip svg{position:absolute;inset:0;width:100%;height:100%}
+.drip img{position:relative;width:340px;margin-top:-200px;filter:drop-shadow(0 20px 30px rgba(120,60,0,.4))}
+
 /* confetti of ingredients that rains between slides */
 .rain{position:absolute;inset:0;z-index:15;pointer-events:none;overflow:hidden}
 .rain img{position:absolute;top:-200px;width:120px;animation:rain 1.6s cubic-bezier(.4,0,.8,.6) both}
@@ -260,6 +306,7 @@ body.idle{cursor:none}
 <div id="stage">
   <div class="deck" id="deck"></div>
   <div class="rain" id="rain"></div>
+  <div class="drip" id="drip"></div>
   <div class="brand"><img src="img/logo-stack-light.png" alt="Cheesy Pizza"></div>
   <div class="clock"><span class="pill" id="status">Open now</span><b id="time"></b></div>
   <div class="dots" id="dots"></div>
@@ -299,16 +346,16 @@ const hours=()=>{const o=outlet();return[+o.openHour||+D.config.openHour||12,+o.
 const live=()=>(D.menu||[]).filter(m=>!m.off);
 
 /* ---------- slides ---------- */
-const SLIDES=[
- {k:'hero',t:9,make(){return`<div class="glow" style="width:900px;height:900px;right:60px;top:90px;background:#f2b632;opacity:.25"></div>
-   <div class="copy"><div class="kick rise" style="--d:.1s">Fresh from our oven</div><div class="h1 anton">${letters('Cheesy')}</div>
+const SLIDES0=[
+ {k:'hero',t:9,make(){return`<div class="rays" style="--rx:1440px;--ry:550px"></div>${bokeh(10)}<div class="glow" style="width:900px;height:900px;right:60px;top:90px;background:#f2b632;opacity:.25"></div>${sparkles(7,1000,1820,140,900)}
+   <div class="copy"><div class="kick rise" style="--d:.1s">Fresh from our oven</div><div class="h1 anton shine">${letters('Cheesy')}</div>
    <div class="sub script rise" style="--d:.9s">Ekdum cheesy pizza!</div>
    <div class="tags rise" style="--d:1.2s"><b>Pizza</b><b>Garlic bread</b><b>Pockets</b><b>Fries</b></div></div>
    <div class="pzw"><div class="pz3"><div class="plate"></div><img src="img/hero-pizza.webp" alt=""></div><div class="orbit">${ING.slice(0,8).map(s=>`<img src="${s}" alt="">`).join('')}</div></div>`},
   tick(el,t){const imgs=el.querySelectorAll('.orbit img'),n=imgs.length,cx=400,cy=400;
    imgs.forEach((im,i)=>{const a=t*.45+i/n*Math.PI*2,x=Math.cos(a)*470,z=Math.sin(a),y=Math.sin(a)*170-40+Math.sin(t*1.3+i)*30,s=.7+(z+1)*.35;
     im.style.transform=`translate(${cx+x-75}px,${cy+y-75}px) scale(${s.toFixed(3)}) rotate(${(a*60+i*40)%360}deg)`;im.style.zIndex=z>0?3:0;im.style.opacity=Math.min(1,t*1.2)})}},
- {k:'pull',t:9,make(){return`<div class="bigword anton">Stretch it</div>
+ {k:'pull',t:9,make(){return`<div class="rays" style="--rx:1370px;--ry:560px;--ra:.18"></div><div class="bigword anton">Stretch it</div>${sparkles(5,1100,1800,160,900)}
    <div class="copy"><div class="kick rise" style="--d:.1s;color:#7a4300">The cheese pull</div><div class="h1 anton">${letters('Pull a')}<br>${letters('slice!')}</div>
    <div class="sub script rise" style="--d:1s">Watch that cheese stretch.</div></div>
    <div class="pullw"><div class="pull-stage"><div class="pull-plate"></div><img class="pull-pz" src="img/hero-pizza.webp" alt="">
@@ -340,14 +387,14 @@ const SLIDES=[
    return`<div class="bigword anton">Combos</div><div class="head"><div class="kick rise" style="--d:.1s">Bring friends</div><div class="h1 anton">${letters('Combo meals')}</div></div>
    <div class="combos" style="--n:${c.length}">${c.map((x,i)=>{const pics=[...Array(x.pizzas||1)].map((_,j)=>IMG(['margherita','veggieparadise','cheesyspecial'][j%3])).concat((x.extras||[]).map(byId).filter(m=>m.img).map(m=>IMG(m.img)));
     return`<div class="cmb" style="--i:${i}"><div class="stk">${pics.slice(0,4).map(s=>`<img src="${s}" alt="">`).join('')}</div><h3>${esc(x.name)}</h3><p>${esc(x.desc||'')}</p><div class="price">₹${x.price}</div></div>`}).join('')}</div>`}},
- {k:'hours',t:9,make(){const[o,c]=hours();return`<div class="bigword anton">Open daily</div>
+ {k:'hours',t:9,make(){const[o,c]=hours();return`<div class="rays" style="--rx:1380px;--ry:520px;--ra:.22"></div><div class="bigword anton">Open daily</div>
    <div class="copy"><div class="kick rise" style="--d:.1s;color:#7a4300">Come say kem cho</div><div class="h1 anton">${letters('Open')}<br>${letters('every day')}</div>
    <div class="sub rise" style="--d:1s">${hrText(o)} to ${hrText(c)}</div><div class="rise" style="--d:1.3s"><span class="pill hp"></span></div></div>
    <div class="discw"><div class="disc"><div><div class="anton">${hr12(o)} to ${hr12(c)}</div><small>Monday to Sunday</small></div></div></div>
    ${['slice-veggie','cold-drink','garlic-stick','tomato-slice','basil','olive'].map((n,i)=>`<img class="fl" src="img/ing/${n}.webp" alt="" style="--d:${i*.4}s;left:${[1000,1680,1080,1720,1300,1500][i]}px;top:${[180,170,800,760,120,880][i]}px">`).join('')}`},
   enter(el){const p=el.querySelector('.hp'),s=openState();p.className='pill hp'+(s.open?'':' shut');p.textContent=s.text}},
- {k:'order',t:10,make(){const o=outlet(),url=location.origin.replace(/^http:\/\/(localhost|127\.)[^/]*/,'https://cheesypizza.online');
-   return`<div class="copy"><div class="kick rise" style="--d:.1s">Skip the queue</div><div class="h1 anton">${letters('Order')}<br><em>${letters('online')}</em></div>
+ {k:'order',t:10,make(){const o=outlet(),rays='<div class="rays" style="--rx:1500px;--ry:520px"></div>'+bokeh(8),url=location.origin.replace(/^http:\/\/(localhost|127\.)[^/]*/,'https://cheesypizza.online');
+   return`${rays}<div class="copy"><div class="kick rise" style="--d:.1s">Skip the queue</div><div class="h1 anton">${letters('Order')}<br><em>${letters('online')}</em></div>
    <div class="url rise" style="--d:1s">${esc(url.replace(/^https?:\/\//,''))}</div>
    <div class="sub rise" style="--d:1.2s">Scan the code, pick your pizza, pay by UPI${o.phone?` · Call ${esc(o.phone)}`:''}</div></div>
    <div class="qrw"><div class="qr"><div class="code" data-qr="${esc(url)}">${esc(url)}</div><div class="scan"></div><p>Scan to order</p></div></div>`},
@@ -356,6 +403,21 @@ const SLIDES=[
    <div class="pbig anton">${letters('Really cheesy')}</div><canvas class="pcv" width="1920" height="1010"></canvas><p class="hint script rise" style="--d:1.6s">Psst… try it on our website!</p>`},
   enter(el){playReset(el)},tick(el,t){playStep(el,t)}},
 ];
+// one full-screen spotlight after every couple of sections, each on a different item
+const SPOT_BG=['radial-gradient(circle at 72% 48%,#e85a4f,#a5241b 70%)','radial-gradient(circle at 72% 48%,#2bb3c8,#0d5f6d 70%)','radial-gradient(circle at 72% 48%,#ffcf5a,#d48f12 72%)','radial-gradient(circle at 72% 48%,#1f8a8a,#0b3a43 70%)'];
+const spotSlide=i=>({k:'spot',t:7,ok:()=>homeItems().length>i,make(){const m=homeItems()[i],long=m.name.length>13;
+  return`<div class="rays" style="--rx:1550px;--ry:520px;--ra:.14"></div>${bokeh(9)}
+   <div class="copy"><div class="kick rise" style="--d:.1s;color:#fff">${m.best?'Best seller':['Must try','Ekdum cheesy','Fresh and hot','Our favourite'][i%4]}</div>
+   <div class="h1 anton" style="--fs:${long?120:170}px">${m.name.split(' ').map(w=>`<span style="display:inline-block;white-space:nowrap">${letters(w)}</span>`).join(' ')}</div>
+   <div class="desc rise" style="--d:1s">${esc(m.desc||'')}</div><div class="cta">Order now at the counter</div></div>
+   <div class="spotw"><div class="spot"><img class="${m.img?'':'png'}" src="${photo(m)}" alt=""></div><div class="steam">${[0,1,2].map(j=>`<i style="left:${35+j*12}%;animation-delay:${j*.6}s"></i>`).join('')}</div></div>
+   ${sparkles(6,1050,1820,120,900)}
+   <div class="star"><svg viewBox="0 0 100 100"><polygon fill="${i%4===2?'#d23f35':'#F2B632'}" stroke="#fff" stroke-width="2.5" points="${starPts()}"/></svg><b style="${i%4===2?'color:#fff':''}">${m.prices?`<small>from</small>₹${Math.min(...Object.values(m.prices).map(Number))}`:`₹${m.price}`}</b></div>`},
+  enter(el){el.style.setProperty('--bg',SPOT_BG[i%SPOT_BG.length])}});
+const SLIDES=[];SLIDES0.forEach(s=>{SLIDES.push(s);const at={hero:0,ring:1,garlic:2,combos:3}[s.k];if(at!=null)SLIDES.push(spotSlide(at))});
+function starPts(){let p=[];for(let i=0;i<24;i++){const r=i%2?40:50,a=i/24*Math.PI*2;p.push((50+Math.cos(a)*r).toFixed(1)+','+(50+Math.sin(a)*r).toFixed(1))}return p.join(' ')}
+function sparkles(n,x0,x1,y0,y1){return[...Array(n)].map((_,i)=>`<i class="spk" style="left:${x0+Math.random()*(x1-x0)|0}px;top:${y0+Math.random()*(y1-y0)|0}px;--z:${30+Math.random()*40|0}px;--d:${(i*.37).toFixed(2)}s"></i>`).join('')}
+function bokeh(n){return[...Array(n)].map((_,i)=>{const z=60+Math.random()*180|0;return`<i class="bokeh" style="width:${z}px;height:${z}px;left:${Math.random()*1800|0}px;top:${Math.random()*900|0}px;--t:${6+Math.random()*6|0}s;--d:-${Math.random()*6|0}s;--bx:${(Math.random()*200-100)|0}px"></i>`}).join('')}
 
 function homeItems(){const L=live(),picked=L.filter(m=>m.home).slice(0,6);if(picked.length)return picked;
   const pz=L.filter(m=>m.cat==='pizza'),sig=[...pz.filter(m=>m.img),...pz.filter(m=>!m.img)];
@@ -463,15 +525,24 @@ function go(n){
   const prev=order[idx];
   if(n>=order.length||n<0){n=(n+order.length)%order.length;if(n===0&&needsRebuild){rebuild();idx=-1}}
   const next=order[n];if(!next)return;idx=n;
-  const fx=FX[fxN++%FX.length],opt={duration:1300,easing:E,fill:'none'};
+  const curtain=fxN%3===2&&prev&&prev!==next,fx=FX[fxN++%FX.length],opt={duration:1300,easing:E,fill:'none'};
+  if(curtain){ // cheese drips down over the screen, the slide changes behind it, and it slides away
+    drip();setTimeout(()=>{if(prev.el)prev.el.classList.remove('on');show(next,n,null)},560);startAt=performance.now()+560;return}
   if(prev&&prev.el&&prev.el.isConnected&&prev!==next){const pe=prev.el;pe.classList.remove('on');pe.classList.add('out');pe.animate(fx[0],opt).onfinish=()=>pe.classList.remove('out')}
+  show(next,n,fx[1])}
+function show(next,n,fxIn){const opt={duration:1300,easing:E,fill:'none'};
   const el=next.el;el._s=null;el.classList.remove('on');void el.offsetWidth;el.classList.add('on');
   // clear what the last pass built so it plays again from the start
   el.querySelectorAll('.go,.fade,.front').forEach(x=>x.classList.remove('go','fade','front'));
-  el.animate(fx[1],opt);if(next.enter)next.enter(el);
+  if(fxIn)el.animate(fxIn,opt);if(next.enter)next.enter(el);
   if(fxN%3===0)rain();
   dots.querySelectorAll('i').forEach((d,i)=>d.classList.toggle('on',i===n));
   startAt=performance.now()}
+
+function drip(){const d=$('#drip');
+  if(!d.firstChild){let p='M0 0H1920V1080';for(let x=1920;x>0;){const w=60+Math.random()*120,l=40+Math.random()*(Math.random()<.3?260:90);p+=`C${x-w*.15} 1080 ${x-w*.2} ${1080+l} ${x-w/2} ${1080+l}C${x-w*.8} ${1080+l} ${x-w*.85} 1080 ${x-w} 1080`;x-=w}
+    d.innerHTML=`<svg viewBox="0 0 1920 1400" preserveAspectRatio="none"><defs><linearGradient id="dg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd76a"/><stop offset=".8" stop-color="#f2b632"/><stop offset="1" stop-color="#e09a18"/></linearGradient></defs><path d="${p}V0Z" fill="url(#dg)"/></svg><img src="img/logo-badge.png" alt="">`}
+  d.animate([{transform:'translateY(-110%)'},{transform:'translateY(-14%)',offset:.42},{transform:'translateY(-14%)',offset:.56},{transform:'translateY(110%)'}],{duration:1400,easing:'cubic-bezier(.6,0,.3,1)'})}
 
 function loop(now){requestAnimationFrame(loop);const s=order[idx];if(!s)return;
   if(paused){startAt+=now-(loop.last||now)}loop.last=now;
