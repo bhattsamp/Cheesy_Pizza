@@ -10,6 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Baloo+Bhai+2:wght@500;600;700;800&family=Courgette&display=swap">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js" defer></script>
 <!--
   Shop TV slideshow. Open /display on the TV and tap once for full screen.
   It plays every section of the site in turn and reads the menu, prices,
@@ -239,6 +240,15 @@ body.idle{cursor:none}
 .on .scan{animation:scan 2.4s 1.6s ease-in-out infinite alternate}
 @keyframes scan{from{opacity:.8;transform:translateY(0)}to{opacity:.8;transform:translateY(454px)}}
 
+/* 11 play zone (the footer of the site): food tumbles onto "Really cheesy" and keeps getting tossed */
+.s-play{background:radial-gradient(70% 80% at 50% 100%,#14606e,#0b3a43 70%)}
+.s-play .head{position:absolute;left:0;right:0;top:160px;text-align:center;z-index:2;pointer-events:none}
+.s-play .pbig{position:absolute;left:0;right:0;top:430px;text-align:center;font-size:330px;color:#1a93a8;opacity:.95;white-space:nowrap}
+.on .pbig span{animation:flipin .9s calc(.2s + var(--i) * .05s) cubic-bezier(.3,1.6,.5,1) both}
+.s-play .pbig span{display:inline-block}
+.pcv{position:absolute;left:0;top:0;width:1920px;height:1010px;z-index:1}
+.s-play .hint{position:absolute;right:140px;top:330px;z-index:2;font-size:44px;color:var(--gold);rotate:-5deg}
+
 /* confetti of ingredients that rains between slides */
 .rain{position:absolute;inset:0;z-index:15;pointer-events:none;overflow:hidden}
 .rain img{position:absolute;top:-200px;width:120px;animation:rain 1.6s cubic-bezier(.4,0,.8,.6) both}
@@ -342,6 +352,9 @@ const SLIDES=[
    <div class="sub rise" style="--d:1.2s">Scan the code, pick your pizza, pay by UPI${o.phone?` · Call ${esc(o.phone)}`:''}</div></div>
    <div class="qrw"><div class="qr"><div class="code" data-qr="${esc(url)}">${esc(url)}</div><div class="scan"></div><p>Scan to order</p></div></div>`},
   enter(el){const c=el.querySelector('.code');if(c.dataset.done||!window.QRCode)return;c.innerHTML='';try{new QRCode(c,{text:c.dataset.qr,width:460,height:460,colorDark:'#0b3a43',correctLevel:QRCode.CorrectLevel.M});c.dataset.done=1}catch(e){}}},
+ {k:'play',t:12,make(){return`<div class="head"><div class="kick rise" style="--d:.1s">Play zone</div><div class="h1 anton" style="font-size:110px;color:#fff">${letters('Come play with your food')}</div></div>
+   <div class="pbig anton">${letters('Really cheesy')}</div><canvas class="pcv" width="1920" height="1010"></canvas><p class="hint script rise" style="--d:1.6s">Psst… try it on our website!</p>`},
+  enter(el){playReset(el)},tick(el,t){playStep(el,t)}},
 ];
 
 function homeItems(){const L=live(),picked=L.filter(m=>m.home).slice(0,6);if(picked.length)return picked;
@@ -392,6 +405,30 @@ function pullDraw(el,p){
   });
   g.innerHTML=`<path d="${d}" opacity="${f(1-snap*.6)}"/>`;hi.innerHTML=h;hi.style.opacity=1-snap;
 }
+
+/* the site's footer play zone, playing on its own: pieces drop in, pile up on "Really cheesy" and get tossed */
+const PK={garlic:['garlic-stick',300,.45],slice:['slice-veggie',170,'slice'],slice2:['slice-veggie2',170,'slice'],tomato:['tomato-slice',112,'ball'],cheese:['cheese',96,.12],basil:['basil',90,.3],olive:['olive',58,'ball']};
+const PSPR={};for(const[k,[f]]of Object.entries(PK)){const i=new Image();i.src='img/ing/'+f+'.webp';PSPR[k]=i}
+const PL={eng:null,bodies:[],next:0,ctx:null};
+function playReset(el){if(!window.Matter)return;const{Engine,Bodies,Composite}=Matter,W=1920,H=1010,T=400;
+  PL.eng=Engine.create();PL.eng.gravity.y=1.1;PL.bodies=[];PL.next=0;PL.spawned=0;PL.ctx=el.querySelector('.pcv').getContext('2d');
+  Composite.add(PL.eng.world,[Bodies.rectangle(W/2,H+T/2,W+2*T,T,{isStatic:true}),Bodies.rectangle(-T/2,H/2-600,T,H+1600,{isStatic:true}),Bodies.rectangle(W+T/2,H/2-600,T,H+1600,{isStatic:true})])}
+function playSpawn(kind,x,y){const{Bodies,Composite,Body}=Matter,[,w,shape]=PK[kind],img=PSPR[kind],h=w*(img.naturalWidth?img.naturalHeight/img.naturalWidth:1),o={restitution:.35,friction:.5,frictionAir:.012,density:.0016};let b,dy=0;
+  if(shape==='ball')b=Bodies.circle(x,y,Math.min(w,h)/2*.94,o);
+  else if(shape==='slice'){b=Bodies.fromVertices(x,y,[[{x:0,y:-h/2},{x:w/2,y:h/2},{x:-w/2,y:h/2}]],o);dy=-h/6}
+  else b=Bodies.rectangle(x,y,w*.94,h*.88,{...o,chamfer:{radius:Math.min(w,h)*shape}});
+  b.plugin={k:kind,w,h,dy};Body.setAngle(b,Math.random()*6.28);Body.setAngularVelocity(b,(Math.random()-.5)*.2);Composite.add(PL.eng.world,b);PL.bodies.push(b)}
+function playStep(el,t){if(!PL.eng||!window.Matter){if(window.Matter&&!PL.eng)playReset(el);return}
+  const{Engine,Body}=Matter,kinds=['garlic','garlic','garlic','slice','slice2','tomato','tomato','cheese','basil','olive','olive'];
+  // a first wave of 30 pieces, then every second one piece is tossed up and a new one drops in
+  while(PL.spawned<30&&t>.6+PL.spawned*.09){playSpawn(kinds[PL.spawned%kinds.length],120+Math.random()*1680,-100-Math.random()*200);PL.spawned++}
+  if(t>4&&t>PL.next){PL.next=t+.8+Math.random()*.6;const b=PL.bodies[Math.random()*PL.bodies.length|0];
+    if(b){Body.setVelocity(b,{x:(Math.random()-.5)*16,y:-22-Math.random()*10});Body.setAngularVelocity(b,(Math.random()-.5)*.5)}
+    if(PL.bodies.length<44)playSpawn(kinds[Math.random()*kinds.length|0],200+Math.random()*1520,-120)}
+  Engine.update(PL.eng,1000/60);
+  const x=PL.ctx;x.clearRect(0,0,1920,1010);
+  PL.bodies.forEach(b=>{const s=PSPR[b.plugin.k];if(!s.naturalWidth)return;const{w,h,dy}=b.plugin;
+    x.save();x.translate(b.position.x,b.position.y);x.rotate(b.angle);x.shadowColor='rgba(0,0,0,.4)';x.shadowBlur=18;x.shadowOffsetY=9;x.drawImage(s,-w/2,-h/2+dy,w,h);x.restore()})}
 
 /* ---------- 3D transitions between slides ---------- */
 const E='cubic-bezier(.7,0,.2,1)';
