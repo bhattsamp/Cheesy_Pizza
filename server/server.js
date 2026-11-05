@@ -200,6 +200,8 @@ function createApp(store) {
   /* ----- site ----- */
   app.use('/img', express.static(path.join(ROOT, 'img')));
   app.get('/', (req, res) => res.sendFile(path.join(ROOT, 'index.html')));
+  // The previous home page, kept for reference; nothing on the site links to it
+  app.get('/home2', (req, res) => res.sendFile(path.join(ROOT, 'home2.html')));
 
   app.use((err, req, res, next) => { console.error(err); res.status(500).json({ error: 'Server error' }); });
   return app;
