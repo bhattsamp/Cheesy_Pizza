@@ -3,8 +3,10 @@
 Customer ordering site and outlet POS for Cheesy Pizza, backed by MongoDB.
 
 - **Customer site**: menu, combos, coupons, cart, order tracking, accounts, wallet and rewards
-- **TV slideshow**: open `/tv` (or `#tv`, or the TV slideshow button on the home page) on a shop TV for a
-  full-screen slideshow of the home page, offers, combos and every menu item. Remote or keyboard: ← → change
+- **Home page slideshow**: the customer home page is a slideshow with one slide per section (price board,
+  offers, combos, each menu section, how to book, visit us, ...), each with Add to cart, Pause and a Go to menu.
+- **TV slideshow**: open `/tv` (or `#tv`, or TV mode on the home page) on a shop TV for the same
+  slideshow full screen of the home page, offers, combos and every menu item. Remote or keyboard: ← → change
   slide, Space pauses, OK adds the item to the cart (the usual size and topping picker opens), Esc closes.
   The Show menu picks Every section (default: each home page section and each menu section on its own
   slide, with all its items and an Add button on each), Every item (one big slide per item), or Home page only.

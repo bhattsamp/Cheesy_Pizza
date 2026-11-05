@@ -1074,9 +1074,22 @@ body.app-customer .seg,body.app-admin .seg,body.app-customer [data-act="mode"][d
 
 /* ===== TV slideshow (#tv, /tv) ===== */
 html.tv-open,html.tv-open body{overflow:hidden}
-#tv{position:fixed;inset:0;z-index:45;color:#fff;overflow:hidden;font-size:clamp(14px,1.25vw,26px);
+#homeRoot{padding-block:14px 120px}
+#tv{position:relative;height:clamp(560px,calc(100vh - 190px),760px);border-radius:28px;box-shadow:var(--shadow-lg);color:#fff;overflow:hidden;isolation:isolate;font-size:clamp(11px,1.02vw,16px);
   background:radial-gradient(110% 100% at 75% 45%,#1c8fa3 0,#0d4f5c 45%,#061f25 100%)}
+#tv.full{position:fixed;inset:0;height:auto;border-radius:0;box-shadow:none;z-index:45;font-size:clamp(14px,1.25vw,26px)}
 #tv.idle{cursor:none}
+#tv:not(.full) .tv-fo,#tv.full .tv-emb{display:none}
+#tv:not(.full) .tv-qr,#tv:not(.full) .tv-keys{display:none}
+#tv.full .tv-helloart{display:none}
+#tv:not(.full) .tv-hello h2{font-size:4.4em}
+#tv:not(.full) .tv-art{width:min(26em,34vw)}
+#tv:not(.full) .tv-coupon{width:min(28em,38vw)}
+#tv:not(.full) .tv-s.tv-hello{grid-template-columns:1.1fr 1fr}
+.tv-sp{flex:1}
+#tv.hold:not(.full) .tv-bar i{animation-play-state:paused}
+.hm-foot{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;align-items:center;margin-top:16px}
+.hm-foot .btn.ghost{color:var(--muted);border-color:var(--line)}
 #tv button{font:inherit;color:inherit;cursor:pointer}
 #tv :focus-visible{outline:4px solid #ffd166;outline-offset:4px}
 .tv-bgfx{position:absolute;inset:0;pointer-events:none;overflow:hidden}
@@ -1240,8 +1253,15 @@ html.tv-open,html.tv-open body{overflow:hidden}
 #tv.paused.idle .tv-top,#tv.paused.idle .tv-ctl{opacity:1}
 @media (max-width:820px),(orientation:portrait){
   #tv{font-size:13px}
+  #tv:not(.full){height:min(720px,calc(100svh - 170px));border-radius:22px}
+  .tv-s.tv-hello{grid-template-columns:1fr!important}.tv-helloart{order:-1}
+  .tv-grid:not(.g2):not(.g3) .tv-card{display:flex;flex-direction:column;align-items:center;text-align:center}
+  .tv-grid:not(.g2):not(.g3) .tv-cb{text-align:center}.tv-grid:not(.g2):not(.g3) .tv-tg{justify-content:center}
+  .tv-grid:not(.g2):not(.g3) .tv-plus{align-self:center}
+  .tv-brand small{display:none}.tv-open{white-space:nowrap;font-size:.8em}
+  .tv-s{overflow-y:auto}
   .tv-s{grid-template-columns:1fr;gap:1.2em;padding:5.5em 1.4em 9em;align-content:center;text-align:center}
-  .tv-art{order:-1;width:min(62vw,36vh)}
+  .tv-art,#tv:not(.full) .tv-art{order:-1;width:min(62vw,36vh)}
   .tv-copy h2,.tv-hello h2{font-size:3em}
   .tv-copy p{margin-inline:auto}
   .tv-badges,.tv-prices{justify-content:center}
@@ -1608,7 +1628,7 @@ function render(){
   app.innerHTML=S.mode==='public'?pubNav()+(U.pubView==='account'&&me()?renderAccount():U.pubView==='auth'&&!me()?renderAuth():U.pubView==='home'?renderHome():renderPublic()):renderPOS();renderAcct();
   app.querySelectorAll('[data-ks]').forEach(el=>{const v=ks[el.dataset.ks];if(v)el.scrollTop=v});
   renderBoard();renderRing();afterRender();navTrack();fitTicket();
-  if(TV.on)tvChrome();
+  tvMount();
 }
 // POS terminals and tablets: the order ticket fills the space from its top to the bottom of the
 // screen, so totals and the Bill buttons stay in view while the menu scrolls beside it
@@ -1630,7 +1650,7 @@ const navSame=(x,y)=>!!x&&!!y&&JSON.stringify(x)===JSON.stringify(y);
 function navTrack(){const n=navNow(),top=NAV[NAV.length-1];if(top&&(top.m!==n.m||top.s!==n.s))NAV.length=0;if(!navSame(top,n))NAV.push(n);if(NAV.length>40)NAV.splice(0,NAV.length-40)}
 function navGo(n){if(n.m==='public'){U.pubView=n.v;U.accTab=n.a}else U.pos.tab=n.t;NAV.length=Math.max(0,NAV.length-1);render();window.scrollTo(0,0)}
 window.cpBack=function(){
-  if(TV.on&&!mroot.innerHTML){closeTV();return 'handled'}
+  if(TV.full&&!mroot.innerHTML){closeTV();return 'handled'}
   if(mroot.innerHTML){const x=mroot.querySelector('[data-act="close"]');if(x)x.click();else{closeModal();render()}return 'handled'}
   NAV.pop();
   while(NAV.length&&navSame(NAV[NAV.length-1],navNow()))NAV.pop();
@@ -1801,49 +1821,9 @@ const HOME={
 };
 const homePhone=o=>o.phone||'7778043066';
 const homeAddr=o=>o.area&&o.area!=='Set your address'?o.area:'B/H Gopi Cinema, Maniyani Khad, Anand, Gujarat';
+// The home page: the offers strip, then the section slideshow (#homeRoot, placed after #app by tvMount)
 function renderHome(){
-  const o=cur();const ph=homePhone(o);const open=isOpen();
-  const addr=homeAddr(o);
-  const col=(price,label,list,note)=>`<div class="hm-col"><h3><span class="hm-slice" aria-hidden="true"></span>${label}</h3>${note?`<div class="hm-note">${note}</div>`:''}<span class="hm-badge num">${price}<small>Rs</small></span><ol class="${note?'':'plain'}">${list.map(x=>`<li>${x}</li>`).join('')}</ol></div>`;
-  return `${offerTicker()}<main class="pub hm">
-  ${heroSlides()}
-  <section class="hm-card">
-    <div class="hm-head">
-      <div class="hm-logo"><svg viewBox="0 0 40 48" aria-hidden="true"><path d="M20 47C20 47 3 29 3 18a17 17 0 0 1 34 0c0 11-17 29-17 29z" fill="var(--teal)"/><circle cx="20" cy="18" r="10" fill="var(--surface)"/><text x="20" y="23" text-anchor="middle" font-family="Baloo Bhai 2, sans-serif" font-weight="800" font-size="14" fill="var(--teal)">C</text></svg><small>Really Cheesy…!<br>ચીઝી પિઝ્ઝા</small></div>
-      <div class="hm-title"><h1>CHEESY PIZZA<sup>™</sup></h1><p class="hm-nomayo">(No Mayonnaise Products)</p></div>
-      <div class="hm-contact"><span class="hm-veg"><span class="veg"></span> PURE VEG.</span>
-        <a class="hm-phone num" href="tel:+91${esc(ph)}">☎ ${esc(fmtPhone(ph))}</a>
-        <div class="hm-time"><b>TIME</b>${hr12(OPEN_H)}:00 NOON to ${hr12(CLOSE_H)}:00 PM</div>
-        <span class="chip ${open?'ready':'cancelled'}">${open?'Open now':'Closed now'}</span></div>
-    </div>
-    <div class="hm-feat">${HOME.feat.map(t=>`<span>${t}</span>`).join('')}</div>
-
-    <h2 class="hm-sec"><span class="hm-slice" aria-hidden="true"></span>Pizza</h2>
-    <div class="hm-tops">
-      ${HOME.tops.map(t=>col(...t)).join('')}
-      <div class="hm-bev"><h3>Beverages <small>(250 ml)</small></h3>
-        <div class="hm-bevl">${HOME.bev.map(n=>`<span>${n}</span><b class="num">${HOME.bevPrice}<small>Rs</small></b>`).join('')}</div></div>
-    </div>
-    <div class="hm-cta"><button class="btn chz lg" data-act="pn" data-v="menu">See full menu & order</button><a class="btn lg" href="tel:+91${esc(ph)}">Call to book</a></div>
-
-    <div class="hm-cats">${CATS.map(([,n])=>`<span>${esc(n)}</span>`).join('')}</div>
-    <div class="hm-banner">☞ We Don't Use Mayonnaise In Any Product.</div>
-    <div class="hm-addr"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s-7-7.5-7-13a7 7 0 0 1 14 0c0 5.5-7 13-7 13z" fill="none" stroke="var(--cheese)" stroke-width="2"/><circle cx="12" cy="9" r="2.5" fill="var(--cheese)"/></svg><b>${esc(addr.toUpperCase())}</b></div>
-
-    <div class="hm-boxes">
-      <div class="hm-box"><div class="hm-bh">Available on</div><div class="hm-zomato">zomato</div></div>
-      <div class="hm-box"><div class="hm-bh">Delivery available</div><div class="hm-bb"><svg viewBox="0 0 64 40" width="84" aria-hidden="true"><circle cx="14" cy="32" r="6" fill="none" stroke="var(--ink)" stroke-width="3"/><circle cx="50" cy="32" r="6" fill="none" stroke="var(--ink)" stroke-width="3"/><path d="M14 32h22l6-12h10l-2 12" fill="none" stroke="var(--cheese)" stroke-width="4" stroke-linejoin="round"/><rect x="40" y="6" width="16" height="12" rx="2" fill="var(--teal)"/><circle cx="30" cy="10" r="5" fill="var(--bad)"/></svg><small class="muted">Charges apply</small></div></div>
-      <div class="hm-box"><div class="hm-bh">Follow us</div><div class="hm-bb"><a class="btn sm" href="https://wa.me/91${esc(ph)}" target="_blank" rel="noopener">WhatsApp</a><span class="small muted">Instagram · Facebook · X</span></div></div>
-    </div>
-
-    <div class="hm-bottom">
-      <ul class="hm-steps">${HOME.steps.map(t=>`<li>☞ ${t}</li>`).join('')}</ul>
-      <img src="${IMG('veggieparadise')}" alt="Veggie pizza" class="hm-pz">
-    </div>
-    <div class="hm-flow">${HOME.flow.map(t=>`<span>${t}</span>`).join('→')}</div>
-  </section>
-  <div class="hm-staff"><button class="btn sm ghost" data-act="mode" data-v="pos">Staff login</button></div>
-  </main>`;
+  return offerTicker();
 }
 
 /* ===== CUSTOMIZERS ===== */
@@ -3723,58 +3703,12 @@ function itemBadges(m,dow,cls){
   return [`<span class="vg">Pure veg</span>`,m.best?'<span>Best seller</span>':'',m.jain?'<span>Jain option</span>':'',m.spicy?`<span>${'🌶'.repeat(m.spicy)} Spicy</span>`:'',...itemOfferTags(m,dow).map(t=>`<span class="o">${esc(t)}</span>`)].filter(Boolean).join('');
 }
 
-/* ===== HOME: featured pizzas slideshow. Slides change on their own; hover, a tap on Pause or
-   a modal holds them. The active dot's fill animation sets the pace and moves to the next slide. ===== */
-var HH={i:0,paused:false};
-const hhItems=()=>{const ok=S.menu.filter(m=>!m.off);return [...ok.filter(m=>m.cat==='pizza'&&m.img),...ok.filter(m=>m.cat!=='pizza'&&m.img&&m.best)].slice(0,7)};
-function heroSlides(){
-  const list=hhItems();if(!list.length)return'';
-  HH.i%=list.length;const dow=new Date().getDay();
-  const word=n=>{const w=n.split(' ');return w.length>1?esc(w.slice(0,-1).join(' '))+' <em>'+esc(w[w.length-1])+'</em>':'<em>'+esc(n)+'</em>'};
-  return `<section class="hh${HH.paused?' paused':''}" aria-roledescription="carousel" aria-label="Featured from our oven">
-    <svg class="drip" viewBox="0 0 1200 46" preserveAspectRatio="none" aria-hidden="true"><path d="${dripPath()}" fill="#f2b632"/></svg>
-    <div class="hh-float" aria-hidden="true">${floatTops(12,11)}</div>
-    <div class="hh-slides">${list.map((m,i)=>{const tags=itemOfferTags(m,dow);return `<div class="hh-slide${i===HH.i?' on':''}" data-hh="${i}" role="group" aria-roledescription="slide" aria-label="${i+1} of ${list.length}: ${esc(m.name)}" ${i===HH.i?'':'inert aria-hidden="true"'}>
-      <div class="hh-copy">
-        <span class="eyebrow"><i></i>${m.best?'Best seller':m.cat==='pizza'?'Fresh from the oven':'Customer favourite'}</span>
-        <h2>${word(m.name)}</h2>
-        <p>${esc(m.desc)}</p>
-        <div class="hh-tags">${itemBadges(m,dow)}</div>
-        <div class="hh-buy"><span class="hh-price num"><small>${m.cat==='pizza'?'Starts at':'Only'}</small>${rs(fromPrice(m))}</span><button class="btn chz lg" data-act="pub-add" data-id="${m.id}">Add to cart</button><button class="btn ghost" data-act="pz-info" data-id="${m.id}">Details</button></div>
-      </div>
-      <div class="hh-art" aria-hidden="true"><div class="hh-glow"></div><div class="hh-board">${thumb(m)}</div><span class="hh-steam s1"></span><span class="hh-steam s2"></span><span class="hh-steam s3"></span>
-        ${tags.length?`<div class="hh-sticker"><span><b>${esc(tags[0])}</b>today</span></div>`:m.cat==='pizza'?`<div class="hh-sticker"><span><b>~${PREP_MIN}</b>min bake</span></div>`:''}</div>
-    </div>`}).join('')}</div>
-    <div class="hh-ctl">
-      <button class="hh-nav" data-act="hh-go" data-v="-1" aria-label="Previous slide">‹</button>
-      <div class="hh-dots">${list.map((m,i)=>`<button data-act="hh-to" data-v="${i}" aria-label="Show ${esc(m.name)}" aria-current="${i===HH.i}"><i></i></button>`).join('')}</div>
-      <button class="hh-nav" data-act="hh-go" data-v="1" aria-label="Next slide">›</button>
-      <button class="hh-pp" data-act="hh-pause" aria-pressed="${HH.paused}">${HH.paused?'▶ Play':'❚❚ Pause'}</button>
-      <button class="btn sm ghost" data-act="tv-open" title="Full screen slideshow for a TV">📺 <span class="tv-lbl">TV slideshow</span></button>
-    </div>
-  </section>`;
-}
-function hhShow(i){
-  const el=document.querySelector('.hh');if(!el)return;const sl=el.querySelectorAll('.hh-slide'),n=sl.length;if(!n)return;
-  HH.i=((i%n)+n)%n;
-  sl.forEach((x,k)=>{const on=k===HH.i;x.classList.toggle('on',on);x.classList.toggle('go',on);x.inert=!on;on?x.removeAttribute('aria-hidden'):x.setAttribute('aria-hidden','true')});
-  el.querySelectorAll('.hh-dots button').forEach((b,k)=>b.setAttribute('aria-current',k===HH.i));
-}
-function hhPause(v){
-  HH.paused=v;const el=document.querySelector('.hh');if(!el)return;el.classList.toggle('paused',v);
-  const b=el.querySelector('.hh-pp');if(b){b.textContent=v?'▶ Play':'❚❚ Pause';b.setAttribute('aria-pressed',v)}
-}
-// The active dot finished filling: next slide (not while a pop-up is open over the page)
-document.addEventListener('animationend',e=>{if(e.animationName!=='hhFill'||!e.target.closest('.hh-dots'))return;
-  if(mroot.innerHTML){const b=e.target;b.style.animation='none';void b.offsetWidth;b.style.animation='';return}hhShow(HH.i+1)});
-{let x0=null;
-  document.addEventListener('touchstart',e=>{x0=e.target.closest('.hh-slides')?e.touches[0].clientX:null},{passive:true});
-  document.addEventListener('touchend',e=>{if(x0==null)return;const dx=e.changedTouches[0].clientX-x0;x0=null;if(Math.abs(dx)>50)hhShow(HH.i+(dx<0?1:-1))},{passive:true})}
-
-/* ===== TV SLIDESHOW: a full-screen page for a TV in the shop (open /tv or #tv). Every menu item,
-   offer and combo gets a slide. Remote or keyboard: ← → change slide, OK/Space pauses or adds,
-   Esc closes. Add to cart opens the usual size and topping picker over the slideshow. ===== */
-var TV={on:false,i:0,paused:false,ms:9000,left:0,t0:0,timer:0,slides:[],idle:0,el:null,dir:1};
+/* ===== HOME SLIDESHOW: the customer home page is a slideshow, one slide per section (price board,
+   offers, combos, each menu section, how to book, visit us...). It lives in #homeRoot, outside #app,
+   so re-renders do not restart it. "TV mode" (/tv, #tv) shows the same slideshow full screen for a
+   TV in the shop. Remote or keyboard: ← → change slide, ↑ ↓ move between Add buttons, OK adds,
+   Space pauses, Esc leaves TV mode. Add opens the usual size and topping picker. ===== */
+var TV={on:false,full:false,hover:false,i:0,paused:false,ms:9000,left:0,t0:0,timer:0,slides:[],idle:0,el:null,dir:1};
 // What the slideshow shows. Every section: each home page section and each menu section gets one
 // slide with all its items on it. Every item: one big slide per menu item, offer and combo.
 const TV_SHOW=[['all','Every section'],['items','Every item'],['home','Home page only']];
@@ -3859,7 +3793,8 @@ function tvSlide(s){
       <p>${S.menu.filter(m=>m.cat==='pizza'&&!m.off).length} pizzas, garlic breads, pockets and more. Baked in about ${PREP_MIN} minutes at ${esc(o.name)}.</p>
       <div class="tv-badges"><span class="vg">Pure veg</span><span>Open ${hoursText()}</span><span>☎ ${esc(fmtPhone(o.phone))}</span></div>
       <div class="tv-keys"><span><kbd>←</kbd><kbd>→</kbd>Browse</span><span><kbd>OK</kbd>Add to cart</span><span><kbd>␣</kbd>Pause</span></div></div>
-      ${url?`<div class="tv-qr"><div data-tvqr="${esc(url)}"></div><b>Order on your phone</b><small>Scan with your camera</small></div>`:'<span></span>'}`}
+      ${url?`<div class="tv-qr"><div data-tvqr="${esc(url)}"></div><b>Order on your phone</b><small>Scan with your camera</small></div>`:''}
+      <div class="tv-art tv-helloart" aria-hidden="true"><div class="hh-glow"></div><div class="tv-plate"><img src="${IMG('cheesyspecial')}" alt=""></div><span class="hh-steam s1"></span><span class="hh-steam s2"></span><span class="hh-steam s3"></span><div class="hh-sticker"><span><b>~${PREP_MIN}</b>min bake</span></div></div>`}
   if(s.k==='offer'){const x=s.o;
     return `<div class="tv-copy"><div class="tv-cat">Today's offer <span>ઓફર</span></div><h2>${esc(x.name)}</h2><p>${esc(offerText(x))}</p>
       <div class="tv-badges"><span class="o">Live today</span><span>${esc(daysText(x.days))}</span></div>
@@ -3899,7 +3834,9 @@ function tvDraw(){
   TV.el.querySelector('.tv-count').textContent=`${TV.i+1} / ${TV.slides.length}`;
   TV.el.querySelector('.tv-next').innerHTML=`Up next: <b>${esc(tvName(nx))}</b>`;
   const bar=TV.el.querySelector('.tv-bar');bar.innerHTML='<i></i>';bar.style.setProperty('--ms',tvMs()+'ms');
-  if(had||document.activeElement===document.body||!TV.el.contains(document.activeElement))stage.querySelector('.tv-add,.tv-plus')?.focus({preventScroll:true});
+  if(TV.full&&(had||document.activeElement===document.body||!TV.el.contains(document.activeElement)))stage.querySelector('.tv-add,.tv-plus')?.focus({preventScroll:true});
+  else if(had)stage.querySelector('.tv-add,.tv-plus')?.focus({preventScroll:true});
+  const j=TV.el.querySelector('[data-tvjump]');if(j){j.innerHTML=TV.slides.map((x,k)=>`<option value="${k}" ${k===TV.i?'selected':''}>${k+1}. ${esc(tvName(x))}</option>`).join('')}
   tvChrome();
 }
 function tvGo(d){
@@ -3909,26 +3846,29 @@ function tvGo(d){
   TV.i=((i%TV.slides.length)+TV.slides.length)%TV.slides.length;
   tvDraw();tvRestart();
 }
-// Timer: runs only while playing and nothing is open over the slideshow
-function tvHeld(){return TV.paused||!!mroot.innerHTML||document.hidden}
+// Timer: runs only while playing, the home page is showing and nothing is open over it
+const homeRoot=()=>document.getElementById('homeRoot');
+function tvHeld(){const r=homeRoot();return TV.paused||!!mroot.innerHTML||document.hidden||!r||r.hidden||(TV.hover&&!TV.full)}
 function tvStop(){if(TV.timer){clearTimeout(TV.timer);TV.timer=0;TV.left=Math.max(0,TV.left-(Date.now()-TV.t0))}}
 function tvRun(){if(!TV.on||TV.timer||tvHeld())return;TV.t0=Date.now();TV.timer=setTimeout(()=>{TV.timer=0;tvGo(1)},TV.left)}
 function tvRestart(){tvStop();TV.left=tvMs();tvRun()}
-function tvSync(){if(!TV.el)return;TV.el.classList.toggle('hold',!!mroot.innerHTML);tvHeld()?tvStop():tvRun()}
+function tvSync(){if(!TV.el)return;TV.el.classList.toggle('hold',tvHeld()&&!TV.paused);tvHeld()?tvStop():tvRun()}
 function tvPause(v){TV.paused=v;tvSync();tvChrome();toast(v?'Slideshow paused':'Slideshow playing')}
-function tvWake(){if(!TV.el)return;TV.el.classList.remove('idle');clearTimeout(TV.idle);TV.idle=setTimeout(()=>TV.el&&TV.el.classList.add('idle'),3500)}
-function openTV(){
-  if(TV.on)return;if(APP_ROLE==='admin')return;
-  if(S.mode!=='public'){S.mode='public';render()}
-  closeModal();TV.on=true;TV.paused=false;TV.i=0;TV.dir=1;tvBuild();
-  const ic={full:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>',x:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>'};
-  const el=document.createElement('div');el.id='tv';el.setAttribute('role','region');el.setAttribute('aria-label','Cheesy Pizza slideshow');
+function tvWake(){if(!TV.el)return;TV.el.classList.remove('idle');clearTimeout(TV.idle);if(TV.full)TV.idle=setTimeout(()=>TV.full&&TV.el.classList.add('idle'),3500)}
+// Builds the slideshow once, after #app
+function tvCreate(){
+  if(TV.el)return;
+  const ic={full:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>',x:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+    tv:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="12" rx="2"/><path d="M8 21h8M12 17v4"/></svg>'};
+  const root=document.createElement('div');root.id='homeRoot';root.className='pub';root.hidden=true;
+  const el=document.createElement('section');el.id='tv';el.setAttribute('aria-roledescription','carousel');el.setAttribute('aria-label','Cheesy Pizza: our menu and offers');
   el.innerHTML=`<div class="tv-bgfx" aria-hidden="true">${floatTops(16,5)}</div>
-    <div class="tv-top"><div class="tv-brand"><svg viewBox="0 0 40 48" aria-hidden="true"><path d="M20 47C20 47 3 29 3 18a17 17 0 0 1 34 0c0 11-17 29-17 29z" fill="#ffd166"/><circle cx="20" cy="18" r="10" fill="#0d4f5c"/><text x="20" y="23" text-anchor="middle" font-family="Baloo Bhai 2, sans-serif" font-weight="800" font-size="14" fill="#ffd166">C</text></svg><div>CHEESY PIZZA<small>${esc(cur().name)}</small></div></div>
-      <span class="tv-open"><i></i><span>Open now</span></span><span class="tv-clock num"></span>
+    <div class="tv-top"><div class="tv-brand"><svg viewBox="0 0 40 48" aria-hidden="true"><path d="M20 47C20 47 3 29 3 18a17 17 0 0 1 34 0c0 11-17 29-17 29z" fill="#ffd166"/><circle cx="20" cy="18" r="10" fill="#0d4f5c"/><text x="20" y="23" text-anchor="middle" font-family="Baloo Bhai 2, sans-serif" font-weight="800" font-size="14" fill="#ffd166">C</text></svg><div>CHEESY PIZZA<small class="tv-oname"></small></div></div>
+      <span class="tv-open"><i></i><span>Open now</span></span><span class="tv-sp"></span><span class="tv-clock num"></span>
       <button class="tv-ib tv-cart" data-act="tv-cart">🛒</button>
-      <button class="tv-ib" data-act="tv-full" aria-label="Full screen" title="Full screen">${ic.full}<span class="tv-lbl">Full screen</span></button>
-      <button class="tv-ib" data-act="tv-close" aria-label="Close slideshow" title="Close (Esc)">${ic.x}</button></div>
+      <button class="tv-ib tv-emb" data-act="tv-open" title="Show full screen on a TV">${ic.tv}<span class="tv-lbl">TV mode</span></button>
+      <button class="tv-ib tv-fo" data-act="tv-full" aria-label="Full screen" title="Full screen">${ic.full}<span class="tv-lbl">Full screen</span></button>
+      <button class="tv-ib tv-fo" data-act="tv-close" aria-label="Leave TV mode" title="Leave TV mode (Esc)">${ic.x}</button></div>
     <div class="tv-pausedtag" aria-hidden="true">❚❚ Paused</div>
     <div class="tv-stage" aria-live="polite"></div>
     <div class="tv-bot"><div class="tv-bar"></div><div class="tv-ctl">
@@ -3936,12 +3876,34 @@ function openTV(){
       <button class="tv-ib tv-play" data-act="tv-pause"></button>
       <button class="tv-ib" data-act="tv-go" data-v="1" aria-label="Next slide">▶</button>
       <span class="tv-count num"></span>
-      <label class="tv-show"><span class="tv-lbl">Show</span><select data-tvshow aria-label="What the slideshow shows">${TV_SHOW.map(([k,n])=>`<option value="${k}" ${TV.show===k?'selected':''}>${n}</option>`).join('')}</select></label>
+      <label class="tv-show tv-jump"><span class="tv-lbl">Go to</span><select data-tvjump aria-label="Go to section"></select></label>
+      <label class="tv-show tv-fo"><span class="tv-lbl">Show</span><select data-tvshow aria-label="What the slideshow shows">${TV_SHOW.map(([k,n])=>`<option value="${k}" ${TV.show===k?'selected':''}>${n}</option>`).join('')}</select></label>
       <span class="tv-next"></span></div></div>`;
+  root.appendChild(el);
+  root.insertAdjacentHTML('beforeend',`<div class="hm-foot"><button class="btn chz lg" data-act="pn" data-v="menu">See full menu & order</button><button class="btn lg" data-act="pub-track-find">Track or reorder</button><button class="btn sm ghost" data-act="mode" data-v="pos">Staff login</button></div>`);
+  app.after(root);TV.el=el;TV.on=true;
   el.querySelector('[data-tvshow]').addEventListener('change',e=>{tvSetShow(e.target.value);e.target.blur()});
-  document.body.appendChild(el);TV.el=el;document.documentElement.classList.add('tv-open');
+  el.querySelector('[data-tvjump]').addEventListener('change',e=>{const i=+e.target.value;TV.dir=i<TV.i?-1:1;TV.i=i;tvDraw();tvRestart()});
+  el.addEventListener('mouseenter',()=>{TV.hover=true;tvSync()});el.addEventListener('mouseleave',()=>{TV.hover=false;tvSync()});
+  let x0=null;el.addEventListener('touchstart',e=>{x0=e.target.closest('select,button')?null:e.touches[0].clientX},{passive:true});
+  el.addEventListener('touchend',e=>{if(x0==null)return;const dx=e.changedTouches[0].clientX-x0;x0=null;if(Math.abs(dx)>50)tvGo(dx<0?1:-1)},{passive:true});
   TV.clk=setInterval(tvChrome,15000);
-  tvDraw();tvRestart();tvWake();
+  tvBuild();tvDraw();tvRestart();
+}
+// Called by render(): show the slideshow on the home page only
+function tvMount(){
+  const home=S.mode==='public'&&U.pubView==='home'&&APP_ROLE!=='admin';
+  if(home)tvCreate();
+  const r=homeRoot();if(!r)return;
+  r.hidden=!home;if(!home&&TV.full)closeTV(true);
+  const on=r.querySelector('.tv-oname');if(on)on.textContent=cur().name;
+  tvSync();tvChrome();
+}
+function openTV(){
+  if(APP_ROLE==='admin')return;
+  closeModal();S.mode='public';U.pubView='home';render();
+  TV.full=true;TV.el.classList.add('full');document.documentElement.classList.add('tv-open');
+  tvSync();tvWake();TV.el.querySelector('.tv-stage .tv-add,.tv-stage .tv-plus')?.focus({preventScroll:true});
   if(!/\/tv\/?$/.test(location.pathname))try{history.replaceState(null,'','#tv')}catch(_){}
 }
 // Pick any item of a section without leaving the slideshow
@@ -3951,12 +3913,13 @@ function tvPick(cat){
   <div class="mb"><div class="tv-pick">${list.map(m=>`<button data-act="pub-add" data-id="${m.id}"><b>${esc(m.name)}</b><small>${esc(m.desc||'')}</small><span class="p num">${m.cat==='pizza'?'from ':''}${rs(fromPrice(m))}</span></button>`).join('')}</div></div>`);
 }
 function tvSetShow(v){TV.show=v;try{localStorage.setItem('cheesy_tv_show',v)}catch(_){}TV.i=0;tvBuild();tvDraw();tvRestart()}
-function closeTV(){
-  if(!TV.on)return;tvStop();clearInterval(TV.clk);clearTimeout(TV.idle);TV.on=false;TV.el?.remove();TV.el=null;
-  document.documentElement.classList.remove('tv-open');
+function closeTV(quiet){
+  if(!TV.full)return;TV.full=false;clearTimeout(TV.idle);
+  TV.el.classList.remove('full','idle');document.documentElement.classList.remove('tv-open');
   if(document.fullscreenElement)document.exitFullscreen?.().catch(()=>{});
   try{history.replaceState(null,'',/\/tv\/?$/.test(location.pathname)?location.pathname.replace(/\/tv\/?$/,'/')+'#public':'#public')}catch(_){}
-  U.pubView='home';render();
+  if(document.activeElement&&TV.el.contains(document.activeElement))document.activeElement.blur();
+  tvSync();if(!quiet)window.scrollTo(0,0);
 }
 function tvAdd(el){
   if(el.dataset.combo){openCombo(el.dataset.combo,'pub');return}
@@ -3964,37 +3927,37 @@ function tvAdd(el){
   const m=menuItem(el.dataset.id);if(!m){toast('This item is no longer on the menu');return}
   openCustomizer(m.id,'pub');
 }
-new MutationObserver(()=>{if(TV.on)tvSync();if(!mroot.innerHTML&&TV.on){const a=TV.el.querySelector('.tv-stage .tv-add,.tv-stage .tv-plus');if(a&&!TV.el.contains(document.activeElement))a.focus({preventScroll:true})}}).observe(mroot,{childList:true});
+new MutationObserver(()=>{if(!TV.on)return;tvSync();if(!mroot.innerHTML&&TV.full){const a=TV.el.querySelector('.tv-stage .tv-add,.tv-stage .tv-plus');if(a&&!TV.el.contains(document.activeElement))a.focus({preventScroll:true})}}).observe(mroot,{childList:true});
 document.addEventListener('visibilitychange',()=>{if(TV.on)tvSync()});
 document.addEventListener('fullscreenchange',()=>{if(TV.el){const b=TV.el.querySelector('[data-act="tv-full"] .tv-lbl');if(b)b.textContent=document.fullscreenElement?'Exit full screen':'Full screen'}});
-['mousemove','pointerdown'].forEach(t=>document.addEventListener(t,()=>{if(TV.on)tvWake()},{passive:true}));
+['mousemove','pointerdown'].forEach(t=>document.addEventListener(t,()=>{if(TV.full)tvWake()},{passive:true}));
 document.addEventListener('click',e=>{
   const el=e.target.closest('[data-act]');if(!el)return;
   switch(el.dataset.act){
-    case 'hh-go':hhShow(HH.i+ +el.dataset.v);break;
-    case 'hh-to':hhShow(+el.dataset.v);break;
-    case 'hh-pause':hhPause(!HH.paused);break;
     case 'tv-open':openTV();break;
     case 'tv-close':closeTV();break;
     case 'tv-go':tvGo(+el.dataset.v);break;
     case 'tv-pause':tvPause(!TV.paused);break;
     case 'tv-add':tvAdd(el);break;
-    case 'tv-cart':if(U.cart.length)openPubCart();else toast('Your cart is empty. Press OK on a pizza to add it.');break;
-    case 'tv-menu':closeTV();U.pubView='menu';render();window.scrollTo(0,0);break;
+    case 'tv-cart':if(U.cart.length)openPubCart();else toast('Your cart is empty. Tap Add on any item.');break;
+    case 'tv-menu':closeTV(true);U.pubView='menu';render();window.scrollTo(0,0);break;
     case 'tv-full':if(document.fullscreenElement)document.exitFullscreen?.().catch(()=>{});else document.documentElement.requestFullscreen?.().catch(()=>toast('Full screen is not available here'));break;
   }
 });
-// TV remotes send arrow keys, Enter (OK), Escape or Backspace (Back) and media keys
-// Capture phase, so Escape in an open picker closes only the picker
+// TV remotes send arrow keys, Enter (OK), Escape or Backspace (Back) and media keys. On the home page
+// the keys work only while focus is inside the slideshow, so the page still scrolls normally.
+// Capture phase, so Escape in an open picker closes only the picker.
 window.addEventListener('keydown',e=>{
-  if(!TV.on||mroot.innerHTML||isBusy())return;tvWake();
+  if(!TV.on||mroot.innerHTML||isBusy())return;
   const k=e.key,f=document.activeElement,inTV=TV.el.contains(f)&&f!==TV.el;
+  if(!TV.full&&!inTV)return;tvWake();
+  if(f&&f.tagName==='SELECT'&&/Arrow/.test(k))return;
   const focusables=()=>[...TV.el.querySelectorAll('.tv-stage button,.tv-bot button,.tv-bot select,.tv-top button')].filter(b=>b.offsetParent);
   if(k==='ArrowRight'||k==='MediaTrackNext'||k==='PageDown'){e.preventDefault();tvGo(1)}
   else if(k==='ArrowLeft'||k==='MediaTrackPrevious'||k==='PageUp'){e.preventDefault();tvGo(-1)}
   else if(k===' '||k==='MediaPlayPause'||k==='k'||k==='p'){e.preventDefault();tvPause(!TV.paused)}
   else if(k==='MediaPlay'){tvPause(false)}else if(k==='MediaPause'||k==='MediaStop'){tvPause(true)}
-  else if(k==='Escape'||k==='Backspace'||k==='BrowserBack'||k==='GoBack'){e.preventDefault();closeTV()}
+  else if(TV.full&&(k==='Escape'||k==='Backspace'||k==='BrowserBack'||k==='GoBack')){e.preventDefault();closeTV()}
   else if(k==='Enter'&&!inTV){e.preventDefault();const a=TV.el.querySelector('.tv-stage .tv-add,.tv-stage .tv-plus');if(a)a.click()}
   else if(k==='ArrowDown'||k==='ArrowUp'){e.preventDefault();const L=focusables();if(!L.length)return;const i=L.indexOf(f);L[(i<0?0:i+(k==='ArrowDown'?1:-1)+L.length)%L.length].focus()}
 },true);
