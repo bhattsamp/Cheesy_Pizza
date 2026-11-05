@@ -202,6 +202,8 @@ function createApp(store) {
   app.get('/', (req, res) => res.sendFile(path.join(ROOT, 'index.html')));
   // The previous home page, kept for reference; nothing on the site links to it
   app.get('/home2', (req, res) => res.sendFile(path.join(ROOT, 'home2.html')));
+  // Full-screen slideshow for the TV in the shop; nothing on the site links to it
+  app.get('/display', (req, res) => res.sendFile(path.join(ROOT, 'display.html')));
 
   app.use((err, req, res, next) => { console.error(err); res.status(500).json({ error: 'Server error' }); });
   return app;

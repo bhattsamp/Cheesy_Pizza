@@ -1,0 +1,468 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#0b3a43">
+<title>Cheesy Pizza Shop Display</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Baloo+Bhai+2:wght@500;600;700;800&family=Courgette&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
+<!--
+  Shop TV slideshow. Open /display on the TV and tap once for full screen.
+  It plays every section of the site in turn and reads the menu, prices,
+  offers, hours and the home page picks from the admin, refreshing every
+  10 minutes. Options: ?outlet=o2 picks a branch, ?sec=1.5 slows it down,
+  arrow keys step, space pauses.
+-->
+<style>
+:root{--teal:#0b3a43;--teal2:#0f4a55;--sea:#1a93a8;--gold:#F2B632;--gold2:#ffd76a;--cream:#fff8e8;--ink:#0f2e36;--red:#d23f35}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#061e23;overflow:hidden;color:#fff;font-family:'Baloo Bhai 2',system-ui,sans-serif}
+body.idle{cursor:none}
+#stage{position:absolute;left:50%;top:50%;width:1920px;height:1080px;translate:-50% -50%;overflow:hidden;background:var(--teal);transform-origin:50% 50%}
+.deck{position:absolute;inset:0;perspective:2600px;perspective-origin:50% 45%}
+.sl{position:absolute;inset:0;overflow:hidden;visibility:hidden;backface-visibility:hidden;transform-style:preserve-3d}
+.sl.on,.sl.out{visibility:visible}
+.sl.out{z-index:1}.sl.on{z-index:2}
+.anton{font-family:Anton,Impact,sans-serif;font-weight:400;letter-spacing:.01em;text-transform:uppercase;line-height:.9}
+.script{font-family:Courgette,cursive}
+
+/* chrome that stays on every slide */
+.brand{position:absolute;left:50px;top:26px;z-index:20;height:120px;filter:drop-shadow(0 6px 10px rgba(0,0,0,.25))}
+.brand img{height:100%}
+.clock{position:absolute;right:56px;top:46px;z-index:20;display:flex;align-items:center;gap:16px;font-weight:700;font-size:30px}
+.clock b{font-size:40px;letter-spacing:.02em}
+.pill{display:inline-flex;align-items:center;gap:10px;padding:6px 20px 4px;border-radius:99px;background:#1f8a4c;font-size:24px;font-weight:800;text-transform:uppercase;letter-spacing:.06em}
+.pill::before{content:"";width:12px;height:12px;border-radius:50%;background:#bff5d2;animation:blink 1.2s infinite}
+.pill.shut{background:var(--red)}.pill.shut::before{background:#ffd0cc}
+@keyframes blink{50%{opacity:.25}}
+.ticker{position:absolute;left:0;right:0;bottom:0;height:70px;z-index:20;background:var(--gold);color:#3a2800;overflow:hidden;display:flex;align-items:center;box-shadow:0 -10px 30px rgba(0,0,0,.25)}
+.ticker .tk{display:flex;gap:0;white-space:nowrap;animation:tick var(--tkd,60s) linear infinite;font-size:30px;font-weight:800}
+.ticker .tk span{padding:0 34px;display:inline-flex;align-items:center;gap:14px}
+.ticker .tk span::after{content:"";width:16px;height:16px;border-radius:50%;background:#3a2800;margin-left:34px;opacity:.5}
+.ticker .tk em{font-style:normal;background:#3a2800;color:var(--gold);padding:0 12px;border-radius:8px}
+@keyframes tick{to{translate:-50% 0}}
+.bar{position:absolute;left:0;bottom:70px;height:8px;z-index:21;background:var(--sea);width:0}
+.dots{position:absolute;right:56px;bottom:96px;z-index:21;display:flex;gap:10px}
+.dots i{width:14px;height:14px;border-radius:50%;background:rgba(255,255,255,.3);transition:.4s}
+.dots i.on{background:var(--gold);width:40px;border-radius:8px}
+.tapme{position:absolute;left:50%;top:50%;translate:-50% -50%;z-index:40;background:rgba(0,0,0,.65);padding:22px 40px;border-radius:20px;font-size:32px;font-weight:700;pointer-events:none;transition:opacity .6s}
+
+/* shared bits */
+.glow{position:absolute;border-radius:50%;filter:blur(40px);opacity:.55;pointer-events:none}
+.bigword{position:absolute;white-space:nowrap;font-size:360px;color:transparent;-webkit-text-stroke:3px rgba(255,255,255,.12);pointer-events:none}
+.on .bigword{animation:drift 14s linear both}
+@keyframes drift{from{translate:6% 0}to{translate:-14% 0}}
+.kick{font-size:34px;font-weight:800;letter-spacing:.24em;text-transform:uppercase;color:var(--gold)}
+.h1{font-size:150px;text-shadow:0 1px 0 #0a2c33,0 2px 0 #0a2c33,0 3px 0 #0a2c33,0 4px 0 #0a2c33,0 5px 0 #0a2c33,0 6px 0 #0a2c33,0 7px 0 #0a2c33,0 8px 0 #0a2c33,0 22px 30px rgba(0,0,0,.4)}
+.h1 span{display:inline-block;transform-origin:50% 100%}
+.on .h1 span{animation:flipin .9s calc(.25s + var(--i) * .06s) cubic-bezier(.3,1.6,.5,1) both}
+@keyframes flipin{from{opacity:0;transform:perspective(800px) rotateX(-100deg) translateY(40px)}}
+.rise{opacity:0}
+.on .rise{animation:rise .9s var(--d,.6s) cubic-bezier(.2,.9,.3,1.2) both}
+@keyframes rise{from{opacity:0;transform:translateY(60px) rotateX(30deg)}to{opacity:1;transform:none}}
+.price{display:inline-flex;gap:10px;align-items:baseline;font-weight:800}
+.price s{text-decoration:none;font-size:.6em;opacity:.75}
+
+/* 1 hero */
+.s-hero{background:radial-gradient(circle at 70% 50%,#14606e 0,#0b3a43 55%,#082a31 100%)}
+.s-hero .copy{position:absolute;left:120px;top:250px;width:860px}
+.s-hero .h1{font-size:260px;color:var(--gold)}
+.s-hero .sub{font-size:58px;color:#fff;margin-top:24px}
+.s-hero .tags{display:flex;gap:18px;margin-top:40px}
+.s-hero .tags b{font-size:30px;padding:10px 28px 6px;border:3px solid rgba(255,255,255,.4);border-radius:99px}
+.s-hero .pzw{position:absolute;right:120px;top:150px;width:800px;height:800px;perspective:1400px}
+.s-hero .pz3{position:absolute;inset:0;transform-style:preserve-3d;transform:rotateX(52deg)}
+.on.s-hero .pz3{animation:tilt 9s ease-in-out both}
+@keyframes tilt{0%{transform:rotateX(80deg) scale(.4) translateZ(-400px)}18%{transform:rotateX(48deg) scale(1)}60%{transform:rotateX(30deg) rotateY(-12deg)}100%{transform:rotateX(55deg) rotateY(8deg)}}
+.s-hero .pz3 .plate{position:absolute;inset:-2%;border-radius:50%;background:radial-gradient(circle,#5a3a22 0 58%,#3b2414 70%,#2a180c 100%);box-shadow:0 0 0 14px #6b4528,0 60px 80px rgba(0,0,0,.55);transform:translateZ(-30px)}
+.s-hero .pz3 img{position:absolute;inset:0;width:100%;height:100%;animation:spin 24s linear infinite}
+@keyframes spin{to{rotate:360deg}}
+.orbit{position:absolute;inset:0;pointer-events:none}
+.orbit img{position:absolute;left:0;top:0;width:150px;height:150px;object-fit:contain;filter:drop-shadow(0 18px 18px rgba(0,0,0,.35));will-change:transform}
+
+/* 2 cheese pull */
+.s-pull{background:radial-gradient(circle at 66% 55%,#ffe7a0 0,#f2b632 45%,#d48f12 100%);color:#3a2800}
+.s-pull .copy{position:absolute;left:120px;top:300px;width:720px}
+.s-pull .h1{font-size:180px;color:#fff;text-shadow:0 1px 0 #b77708,0 2px 0 #b77708,0 3px 0 #b77708,0 4px 0 #b77708,0 5px 0 #b77708,0 6px 0 #b77708,0 7px 0 #b77708,0 8px 0 #b77708,0 22px 30px rgba(120,60,0,.4)}
+.s-pull .sub{font-size:52px;margin-top:30px}
+.s-pull .bigword{top:40px;left:0;-webkit-text-stroke-color:rgba(120,60,0,.14)}
+.pullw{position:absolute;right:140px;top:140px;width:820px;height:820px;perspective:1600px}
+.pull-stage{position:absolute;inset:0;transform:rotateX(22deg);transform-style:preserve-3d;--lift:0;--snap:0}
+.on .pull-stage{animation:pullsway 9s ease-in-out both}
+@keyframes pullsway{0%{transform:rotateX(60deg) rotateZ(-30deg) scale(.6)}15%{transform:rotateX(22deg) rotateZ(0) scale(1)}100%{transform:rotateX(16deg) rotateZ(6deg) scale(1.04)}}
+.pull-plate{position:absolute;inset:3%;border-radius:50%;background:radial-gradient(circle at 50% 45%,#5a3a22 0 40%,#3b2414 70%,#2a180c 100%);box-shadow:0 50px 70px rgba(80,40,10,.45),inset 0 0 0 10px #6b4528}
+.pull-pz,.pull-sl img{position:absolute;inset:7%;width:86%;height:86%}
+.pull-pz{-webkit-mask-image:conic-gradient(from -26deg at 50% 50%,transparent 0 52deg,#000 0);mask-image:conic-gradient(from -26deg at 50% 50%,transparent 0 52deg,#000 0)}
+.pull-sl{position:absolute;inset:0;z-index:2;clip-path:polygon(50% 50%,28.5% 0,71.5% 0);translate:0 calc(var(--lift) * -36%);rotate:calc(var(--lift) * -7deg + var(--snap) * 4deg);filter:drop-shadow(0 calc(10px + var(--lift) * 30px) 24px rgba(80,40,0,.4))}
+.pull-svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible;z-index:1;filter:drop-shadow(0 2px 3px rgba(150,100,20,.35))}
+.pull-tag{position:absolute;right:-20px;top:40px;z-index:3;background:var(--red);color:#fff;font-family:Courgette,cursive;font-size:46px;padding:10px 30px;border-radius:20px;rotate:8deg;opacity:0;scale:.4;transition:.5s cubic-bezier(.3,1.8,.5,1)}
+.pull-stage.up .pull-tag{opacity:1;scale:1}
+
+/* 3 ekdum cheesy carousel */
+.s-ring{background:radial-gradient(circle at 50% 60%,#14606e 0,#0b3a43 60%,#072328 100%)}
+.s-ring .bigword{top:110px;left:0}
+.s-ring .head{position:absolute;left:0;right:0;top:150px;text-align:center}
+.s-ring .head .h1{font-size:130px;color:var(--gold)}
+.ringw{position:absolute;left:50%;top:575px;width:0;height:0;perspective:2200px}
+.ring{position:absolute;transform-style:preserve-3d;transition:transform 1.1s cubic-bezier(.6,-0.2,.25,1.25)}
+.card{position:absolute;left:-210px;top:-215px;width:420px;height:440px;border-radius:34px;background:#fff;color:var(--ink);overflow:hidden;box-shadow:0 30px 60px rgba(0,0,0,.4);transition:filter .6s,opacity .6s;filter:brightness(.5)}
+.card.front{filter:none}
+.card .ph{height:270px;background:#f5ead3 center/cover}
+.card .ph.png{background-size:80%;background-repeat:no-repeat}
+.card .tx{padding:20px 28px}
+.card h3{font-size:40px;line-height:1.05;font-weight:800}
+.card .price{font-size:40px;color:var(--sea);margin-top:6px}
+.card .badge{position:absolute;top:18px;left:18px;background:var(--gold);color:#3a2800;font-weight:800;font-size:22px;padding:4px 16px 0;border-radius:99px}
+.s-ring .now{position:absolute;left:200px;right:200px;bottom:104px;text-align:center;font-size:48px;font-weight:700;color:#fff;min-height:70px}
+.s-ring .now .price{color:var(--gold)}
+
+/* 4 and 5 build */
+.s-build{background:linear-gradient(115deg,#0b3a43 0 48%,#f2b632 48%)}
+.s-build.gb{background:linear-gradient(115deg,#0b3a43 0 48%,#1a93a8 48%)}
+.s-build .copy{position:absolute;left:120px;top:190px;width:760px}
+.s-build .h1{font-size:120px;color:#fff}
+.steps{list-style:none;margin-top:46px;display:grid;gap:18px}
+.steps li{display:flex;align-items:center;gap:26px;font-size:46px;font-weight:700;opacity:.35;transform:translateX(-10px);transition:.5s}
+.steps li b{flex:none;width:74px;height:74px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.12);font-size:36px;font-family:Anton,sans-serif;font-weight:400;transition:.5s}
+.steps li.on{opacity:1;transform:none}
+.steps li.on b{background:var(--gold);color:#3a2800;transform:scale(1.15) rotate(-8deg)}
+.bw{position:absolute;right:130px;top:120px;width:840px;height:840px;perspective:1500px}
+.b3{position:absolute;inset:0;transform-style:preserve-3d;transform:rotateX(48deg) rotateZ(-10deg)}
+.on .b3{animation:b3 10s ease-in-out both}
+@keyframes b3{0%{transform:rotateX(70deg) rotateZ(-50deg) scale(.7)}12%{transform:rotateX(50deg) rotateZ(-10deg)}86%{transform:rotateX(40deg) rotateZ(20deg)}100%{transform:rotateX(14deg) rotateZ(30deg) scale(1.06)}}
+.b3 .plate{position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle,#5a3a22 0 58%,#3b2414 70%,#2a180c 100%);box-shadow:0 0 0 14px #6b4528,0 70px 80px rgba(0,0,0,.5)}
+.b3 .ly{position:absolute;inset:6%;width:88%;height:88%;opacity:0}
+.b3.gbw .plate{inset:12% -4%;border-radius:40px;background:linear-gradient(135deg,#3a4146,#22282c);box-shadow:0 0 0 12px #4b5358,0 70px 80px rgba(0,0,0,.5)}
+.b3.gbw .ly{inset:auto;left:2%;top:24%;width:96%;height:auto}
+.b3 .drop{position:absolute;left:50%;top:20%;opacity:0;translate:-50% 0;filter:drop-shadow(0 20px 18px rgba(0,0,0,.35))}
+.ly.go{animation:ly .8s cubic-bezier(.3,1.3,.5,1) both}
+@keyframes ly{from{opacity:0;transform:translateZ(500px) scale(1.25) rotate(-30deg)}to{opacity:1;transform:none}}
+.ly.fade{animation:fade .9s ease both}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.drop.go{animation:drop 1.1s cubic-bezier(.5,0,.7,.4) both}
+@keyframes drop{0%{opacity:0;transform:translateZ(700px) translateY(-60%)}25%{opacity:1}75%{opacity:1;transform:translateZ(0) scale(1)}100%{opacity:0;transform:translateZ(0) scale(1.4,.3)}}
+.steam{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity 1s}
+.steam.go{opacity:1}
+.steam i{position:absolute;bottom:55%;width:60px;height:180px;border-radius:50%;background:radial-gradient(rgba(255,255,255,.55),transparent 70%);filter:blur(10px);animation:steam 2.4s linear infinite}
+@keyframes steam{from{transform:translateY(0) scale(.6);opacity:0}30%{opacity:.8}to{transform:translateY(-300px) scale(1.6);opacity:0}}
+.s-build .done{position:absolute;z-index:6;right:130px;top:150px;font-size:70px;color:#3a2800;font-family:Courgette,cursive;opacity:0;scale:.5;rotate:-8deg;transition:.6s cubic-bezier(.3,1.8,.5,1)}
+.s-build.gb .done{color:#fff}
+.s-build .done.go{opacity:1;scale:1}
+
+/* 6 best sellers */
+.s-best{background:linear-gradient(160deg,#1a93a8,#0b3a43)}
+.s-best .bigword{top:80px;left:0}
+.s-best .head{position:absolute;left:120px;top:170px}
+.s-best .head .h1{font-size:120px;color:#fff}
+.grid{position:absolute;left:120px;right:120px;top:400px;display:grid;grid-template-columns:repeat(var(--n,4),1fr);gap:44px;perspective:1600px}
+.bcard{background:#fff;color:var(--ink);border-radius:34px;overflow:hidden;box-shadow:0 30px 50px rgba(0,0,0,.35);transform-origin:50% 100%;opacity:0}
+.on .bcard{animation:bflip 1s calc(.5s + var(--i) * .22s) cubic-bezier(.3,1.4,.5,1) both,bob 4s calc(1.6s + var(--i) * .3s) ease-in-out infinite alternate}
+@keyframes bflip{from{opacity:0;transform:rotateY(-95deg) translateZ(-300px)}to{opacity:1;transform:none}}
+@keyframes bob{from{transform:rotateY(-7deg) rotateX(4deg) translateY(0)}to{transform:rotateY(7deg) rotateX(-3deg) translateY(-24px)}}
+.bcard .ph{height:300px;background:#f5ead3 center/cover;position:relative}
+.bcard .ph.png{background-size:78%;background-repeat:no-repeat}
+.bcard .rib{position:absolute;right:-50px;top:28px;rotate:40deg;background:var(--red);color:#fff;font-weight:800;font-size:22px;padding:6px 60px 2px;letter-spacing:.08em;text-transform:uppercase}
+.bcard .tx{padding:22px 30px 30px}
+.bcard h3{font-size:42px;line-height:1.05;font-weight:800}
+.bcard p{font-size:24px;color:#56727a;line-height:1.3;margin-top:8px;height:62px;overflow:hidden}
+.bcard .price{font-size:44px;color:var(--sea);margin-top:12px}
+
+/* 7 offers */
+.s-offers{background:radial-gradient(circle at 30% 30%,#e04a3f,#a5241b 70%)}
+.s-offers .bigword{top:90px;left:0}
+.s-offers .head{position:absolute;left:0;right:0;top:160px;text-align:center}
+.s-offers .head .h1{font-size:130px;color:#fff}
+.offs{position:absolute;left:120px;right:120px;top:500px;display:flex;justify-content:center;gap:50px;perspective:1600px}
+.off{flex:0 1 520px;background:var(--cream);color:#3a1008;border-radius:36px;padding:44px 40px 40px;text-align:center;position:relative;box-shadow:0 30px 60px rgba(60,0,0,.35);opacity:0}
+.on .off{animation:offin 1s calc(.5s + var(--i) * .25s) cubic-bezier(.3,1.5,.5,1) both}
+@keyframes offin{from{opacity:0;transform:rotateX(90deg) translateY(-100px)}to{opacity:1;transform:none}}
+.coin{width:210px;height:210px;margin:-130px auto 20px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ffe9a3,#f2b632 55%,#c88a0e);display:grid;place-items:center;font-family:Anton,sans-serif;font-size:76px;color:#3a2800;box-shadow:0 0 0 10px #fff,0 20px 30px rgba(0,0,0,.3);line-height:.9}
+.coin small{display:block;font-size:34px}
+.on .coin{animation:coin 3.6s 1.2s ease-in-out infinite}
+@keyframes coin{0%,60%{transform:rotateY(0)}80%,100%{transform:rotateY(360deg)}}
+.off h3{font-size:50px;font-weight:800;line-height:1.05}
+.off p{font-size:30px;margin-top:10px;color:#7a3a2a}
+.s-offers .codes{position:absolute;left:0;right:0;bottom:130px;text-align:center;font-size:36px;font-weight:700}
+.s-offers .codes b{background:#fff;color:var(--red);padding:4px 18px 0;border-radius:12px;margin:0 6px;letter-spacing:.06em}
+
+/* 8 combos */
+.s-combos{background:linear-gradient(200deg,#0f4a55,#072328)}
+.s-combos .bigword{top:90px;left:0}
+.s-combos .head{position:absolute;left:120px;top:170px}
+.s-combos .head .h1{font-size:120px;color:var(--gold)}
+.combos{position:absolute;left:120px;right:120px;top:420px;display:grid;grid-template-columns:repeat(var(--n,3),1fr);gap:50px;perspective:1600px}
+.cmb{background:rgba(255,255,255,.08);border:3px solid rgba(255,255,255,.18);border-radius:36px;padding:36px;opacity:0;position:relative}
+.on .cmb{animation:cmbin 1s calc(.5s + var(--i) * .25s) cubic-bezier(.3,1.4,.5,1) both}
+@keyframes cmbin{from{opacity:0;transform:translateZ(-800px) rotateY(40deg)}to{opacity:1;transform:none}}
+.cmb .stk{display:flex;height:150px;margin-bottom:20px}
+.cmb .stk img{width:150px;height:150px;border-radius:50%;object-fit:cover;border:6px solid #fff;margin-right:-40px;box-shadow:0 10px 20px rgba(0,0,0,.3)}
+.cmb h3{font-size:54px;font-weight:800;color:#fff}
+.cmb p{font-size:28px;color:#bfe1e7;line-height:1.3;margin-top:6px;min-height:74px}
+.cmb .price{font-size:64px;color:var(--gold);margin-top:16px;font-family:Anton,sans-serif;font-weight:400}
+
+/* 9 hours */
+.s-hours{background:#f2b632;color:#3a2800}
+.s-hours .bigword{top:80px;left:0;-webkit-text-stroke-color:rgba(120,60,0,.14)}
+.s-hours .copy{position:absolute;left:120px;top:250px;width:820px}
+.s-hours .h1{font-size:200px;color:#fff;text-shadow:0 1px 0 #b77708,0 2px 0 #b77708,0 3px 0 #b77708,0 4px 0 #b77708,0 5px 0 #b77708,0 6px 0 #b77708,0 7px 0 #b77708,0 8px 0 #b77708,0 22px 30px rgba(120,60,0,.35)}
+.s-hours .sub{font-size:56px;margin-top:30px;font-weight:700}
+.s-hours .pill{margin-top:40px;font-size:30px;padding:10px 28px 6px}
+.discw{position:absolute;right:220px;top:200px;width:640px;height:640px;perspective:1400px}
+.disc{position:absolute;inset:0;border-radius:50%;background:var(--teal);color:#fff;display:grid;place-items:center;text-align:center;box-shadow:0 0 0 18px #fff,0 40px 60px rgba(100,50,0,.35)}
+.on .disc{animation:disc 8s cubic-bezier(.5,0,.3,1) both}
+@keyframes disc{0%{transform:rotateY(-180deg) scale(.5)}20%{transform:rotateY(0) scale(1)}55%{transform:rotateY(0) rotateX(12deg)}70%{transform:rotateY(360deg)}100%{transform:rotateY(360deg) rotateX(-8deg)}}
+.disc .anton{font-size:190px;color:var(--gold)}
+.disc small{display:block;font-size:44px;font-weight:700;margin-top:10px;letter-spacing:.1em;text-transform:uppercase}
+.fl{position:absolute;width:150px;filter:drop-shadow(0 14px 14px rgba(100,50,0,.3))}
+.on .fl{animation:fl 4s var(--d,0s) ease-in-out infinite alternate}
+@keyframes fl{from{transform:translateY(0) rotate(-10deg)}to{transform:translateY(-40px) rotate(14deg)}}
+
+/* 10 order online */
+.s-order{background:radial-gradient(circle at 70% 50%,#14606e,#0b3a43 60%)}
+.s-order .copy{position:absolute;left:120px;top:230px;width:900px}
+.s-order .h1{font-size:190px;color:#fff}
+.s-order .h1 em{font-style:normal;color:var(--gold)}
+.s-order .url{font-size:70px;font-weight:800;color:var(--gold);margin-top:30px}
+.s-order .sub{font-size:42px;margin-top:16px;color:#cfe8ec}
+.qrw{position:absolute;right:220px;top:200px;width:560px;height:640px;perspective:1400px}
+.qr{position:absolute;inset:0;background:#fff;border-radius:44px;padding:50px;color:var(--ink);text-align:center;box-shadow:0 40px 70px rgba(0,0,0,.45)}
+.on .qr{animation:qr 9s ease-in-out both}
+@keyframes qr{0%{transform:rotateY(100deg) translateZ(-400px)}16%{transform:rotateY(-12deg) rotateX(6deg)}55%{transform:rotateY(10deg) rotateX(-4deg)}100%{transform:rotateY(-8deg) rotateX(5deg)}}
+.qr .code{width:460px;height:460px;margin:0 auto;display:grid;place-items:center;font-size:30px;font-weight:700}
+.qr .code img,.qr .code canvas{width:460px!important;height:460px!important;image-rendering:pixelated}
+.qr p{font-size:40px;font-weight:800;margin-top:18px}
+.scan{position:absolute;left:50px;right:50px;top:50px;height:6px;border-radius:3px;background:var(--red);box-shadow:0 0 20px var(--red);opacity:0}
+.on .scan{animation:scan 2.4s 1.6s ease-in-out infinite alternate}
+@keyframes scan{from{opacity:.8;transform:translateY(0)}to{opacity:.8;transform:translateY(454px)}}
+
+/* confetti of ingredients that rains between slides */
+.rain{position:absolute;inset:0;z-index:15;pointer-events:none;overflow:hidden}
+.rain img{position:absolute;top:-200px;width:120px;animation:rain 1.6s cubic-bezier(.4,0,.8,.6) both}
+@keyframes rain{to{transform:translateY(1400px) rotate(var(--r,360deg))}}
+@media (prefers-reduced-motion:reduce){.on *{animation-duration:.01s!important}}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div class="deck" id="deck"></div>
+  <div class="rain" id="rain"></div>
+  <div class="brand"><img src="img/logo-stack-light.png" alt="Cheesy Pizza"></div>
+  <div class="clock"><span class="pill" id="status">Open now</span><b id="time"></b></div>
+  <div class="dots" id="dots"></div>
+  <div class="bar" id="bar"></div>
+  <div class="ticker"><div class="tk" id="tk"></div></div>
+  <div class="tapme" id="tapme">Tap anywhere for full screen</div>
+</div>
+<script>
+'use strict';
+const Q=new URLSearchParams(location.search),SPEED=Math.max(.3,+Q.get('sec')||1);
+const $=(s,r=document)=>r.querySelector(s),esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const IMG=n=>/[\/:]/.test(n)?n:'img/'+n+'.jpg';
+const ING=['basil','capsicum','corn','olive','onion','mushroom','tomato-slice','slice-veggie','cheese','garlic-stick'].map(n=>'img/ing/'+n+'.webp');
+const hr12=h=>h%12||12,hrText=h=>hr12(h)+' '+(h===12?'noon':h<12||h===24?'am':'pm');
+const letters=t=>[...t].map((c,i)=>c===' '?' ':`<span style="--i:${i}">${esc(c)}</span>`).join('');
+
+// Used until the shop's data loads, or if it cannot be reached
+const FALLBACK={menu:[
+  {id:'p1',cat:'pizza',name:'Margherita',prices:{'7':150,'10':280},img:'margherita',desc:'Tangy tomato sauce under a thick blanket of stretchy mozzarella.'},
+  {id:'p2',cat:'pizza',name:'Double Cheese Margherita',prices:{'7':230,'10':380},img:'doublecheese',best:1,desc:'Twice the mozzarella, baked golden.'},
+  {id:'p15',cat:'pizza',name:'5 Cheese',prices:{'7':320,'10':490},img:'fivecheese',desc:'Five times cheesy.'},
+  {id:'p16',cat:'pizza',name:'Cheesy Special',prices:{'7':320,'10':490},img:'cheesyspecial',best:1,desc:'Masala paneer, olives, jalapeno, corn and three bell peppers.'},
+  {id:'p14',cat:'pizza',name:'Kathiyavadi',prices:{'7':300,'10':470},img:'kathiyavadi',desc:'Our Gujarati special. Hot!'},
+  {id:'b1',cat:'bread',name:'Cheesy Garlic Bread',price:160,img:'garlicbread',best:1,desc:'6 soft sticks with garlic butter, herbs and melted cheese.'},
+  {id:'s1',cat:'pockets',name:'Classic Paneer Pockets',price:170,img:'paneerpockets',best:1,desc:'2 crispy baked pockets stuffed with spiced paneer.'},
+  {id:'f1',cat:'fries',name:'Salted Fries',price:100,img:'fries',desc:'Golden crispy fries.'}],
+  sizes:[{id:'7',label:'7"'},{id:'10',label:'10"'}],outlets:[],offers:[],combos:[],config:{openHour:12,closeHour:22}};
+let D=FALLBACK;
+
+const priceOf=m=>{if(m.prices){const sz=(D.sizes||[]).map(s=>s.id).filter(id=>m.prices[id]!=null);
+  return sz.map(id=>`<span>₹${m.prices[id]}<s> ${esc(((D.sizes||[]).find(s=>s.id===id)||{}).label||id+'"')}</s></span>`).join(' ')}
+  return m.price!=null?`<span>₹${m.price}</span>`:''};
+const photo=m=>m.img?IMG(m.img):m.cat==='pizza'?'img/hero-pizza.webp':m.cat==='bread'?'img/build/gb-baked.webp':'img/logo-badge.png';
+const isPng=m=>!m.img;
+const outlet=()=>{const o=D.outlets||[];return o.find(x=>x.id===Q.get('outlet'))||o[0]||{}};
+const hours=()=>{const o=outlet();return[+o.openHour||+D.config.openHour||12,+o.closeHour||+D.config.closeHour||22]};
+const live=()=>(D.menu||[]).filter(m=>!m.off);
+
+/* ---------- slides ---------- */
+const SLIDES=[
+ {k:'hero',t:9,make(){return`<div class="glow" style="width:900px;height:900px;right:60px;top:90px;background:#f2b632;opacity:.25"></div>
+   <div class="copy"><div class="kick rise" style="--d:.1s">Fresh from our oven</div><div class="h1 anton">${letters('Cheesy')}</div>
+   <div class="sub script rise" style="--d:.9s">Ekdum cheesy pizza!</div>
+   <div class="tags rise" style="--d:1.2s"><b>Pizza</b><b>Garlic bread</b><b>Pockets</b><b>Fries</b></div></div>
+   <div class="pzw"><div class="pz3"><div class="plate"></div><img src="img/hero-pizza.webp" alt=""></div><div class="orbit">${ING.slice(0,8).map(s=>`<img src="${s}" alt="">`).join('')}</div></div>`},
+  tick(el,t){const imgs=el.querySelectorAll('.orbit img'),n=imgs.length,cx=400,cy=400;
+   imgs.forEach((im,i)=>{const a=t*.45+i/n*Math.PI*2,x=Math.cos(a)*470,z=Math.sin(a),y=Math.sin(a)*170-40+Math.sin(t*1.3+i)*30,s=.7+(z+1)*.35;
+    im.style.transform=`translate(${cx+x-75}px,${cy+y-75}px) scale(${s.toFixed(3)}) rotate(${(a*60+i*40)%360}deg)`;im.style.zIndex=z>0?3:0;im.style.opacity=Math.min(1,t*1.2)})}},
+ {k:'pull',t:9,make(){return`<div class="bigword anton">Stretch it</div>
+   <div class="copy"><div class="kick rise" style="--d:.1s;color:#7a4300">The cheese pull</div><div class="h1 anton">${letters('Pull a')}<br>${letters('slice!')}</div>
+   <div class="sub script rise" style="--d:1s">Watch that cheese stretch.</div></div>
+   <div class="pullw"><div class="pull-stage"><div class="pull-plate"></div><img class="pull-pz" src="img/hero-pizza.webp" alt="">
+   <svg class="pull-svg" viewBox="0 0 100 100" preserveAspectRatio="none"><defs><linearGradient id="pullg" x1="0" x2="1"><stop offset="0" stop-color="#e2a93a"/><stop offset=".35" stop-color="#fff0b0"/><stop offset=".65" stop-color="#f7d670"/><stop offset="1" stop-color="#d49a2c"/></linearGradient></defs><g fill="url(#pullg)"></g><g class="pull-hi" fill="none" stroke="#fffbe6" stroke-linecap="round"></g></svg>
+   <div class="pull-sl"><img src="img/hero-pizza.webp" alt=""></div><span class="pull-tag">¡Stretchy!</span></div></div>`},
+  tick(el,t){const st=el.querySelector('.pull-stage');
+   // two pulls per slide: lift for 2.6s, hold, snap, settle
+   const c=(t-1.2)%3.9,p=t<1.2?0:Math.min(1,c/3.2);st.style.setProperty('--lift',Math.min(1,Math.max(0,(p-.12)*1.6)).toFixed(3));
+   st.style.setProperty('--snap',Math.min(1,Math.max(0,(p-.8)*8)).toFixed(3));st.classList.toggle('up',p>.35&&p<.85);pullDraw(st,p)}},
+ {k:'ring',t:13,make(){const it=homeItems();this.items=it;const n=it.length,r=Math.max(520,n*105);this.r=r;
+   return`<div class="bigword anton">Ekdum cheesy</div><div class="head"><div class="kick rise" style="--d:.1s">Our signature six</div><div class="h1 anton">${letters('Ekdum cheesy')}</div></div>
+   <div class="ringw"><div class="ring">${it.map((m,i)=>`<div class="card" style="transform:rotateY(${i*360/n}deg) translateZ(${r}px)">${m.best?'<span class="badge">Best seller</span>':''}<div class="ph${isPng(m)?' png':''}" style="background-image:url('${photo(m)}')"></div><div class="tx"><h3>${esc(m.name)}</h3><div class="price">${priceOf(m)}</div></div></div>`).join('')}</div></div>
+   <div class="now"></div>`},
+  enter(el){this.step=-1},
+  tick(el,t){const n=this.items.length;if(!n)return;const s=Math.max(0,Math.floor((t-.8)/(11.5/n)));if(s===this.step)return;this.step=s;
+   const ring=el.querySelector('.ring'),i=s%n;ring.style.transform=`translateZ(${-this.r}px) rotateX(-6deg) rotateY(${-s*360/n}deg)`;
+   el.querySelectorAll('.card').forEach((c,j)=>c.classList.toggle('front',j===i));const m=this.items[i];
+   el.querySelector('.now').innerHTML=`${esc(m.desc||m.name)}`}},
+ {k:'pizza',t:11,make(){return build('pizza')},tick(el,t){buildTick(el,t,[.9,2.4,3.9,5.4,7.2])}},
+ {k:'garlic',t:11,make(){return build('garlic')},tick(el,t){buildTick(el,t,[.9,2.4,3.9,5.4,7.2])}},
+ {k:'best',t:10,ok:()=>bestItems().length,make(){const b=bestItems();return`<div class="bigword anton">Best sellers</div>
+   <div class="head"><div class="kick rise" style="--d:.1s">Everyone's favourites</div><div class="h1 anton">${letters('Our best sellers')}</div></div>
+   <div class="grid" style="--n:${b.length}">${b.map((m,i)=>`<div class="bcard" style="--i:${i}"><div class="ph${isPng(m)?' png':''}" style="background-image:url('${photo(m)}')"><span class="rib">Best seller</span></div><div class="tx"><h3>${esc(m.name)}</h3><p>${esc(m.desc||'')}</p><div class="price">${priceOf(m)}</div></div></div>`).join('')}</div>`}},
+ {k:'offers',t:10,ok:()=>todayOffers().length,make(){const o=todayOffers(),codes=(D.offers||[]).filter(x=>x.active!==false&&x.type==='code'&&!x.firstOnly&&!x.once).slice(0,2);
+   return`<div class="bigword anton">Today only</div><div class="head"><div class="kick rise" style="--d:.1s;color:#ffd76a">${esc(new Date().toLocaleDateString('en-IN',{weekday:'long'}))} deals</div><div class="h1 anton">${letters("Today's offers")}</div></div>
+   <div class="offs">${o.map((x,i)=>`<div class="off" style="--i:${i}"><div class="coin">${x.big}</div><h3>${esc(x.name)}</h3><p>${esc(x.line)}</p></div>`).join('')}</div>
+   ${codes.length?`<div class="codes rise" style="--d:1.6s">Use code ${codes.map(c=>`<b>${esc(c.code)}</b>`).join(' or ')} when you order online</div>`:''}`}},
+ {k:'combos',t:10,ok:()=>combos().length,make(){const c=combos(),byId=id=>(D.menu||[]).find(m=>m.id===id)||{};
+   return`<div class="bigword anton">Combos</div><div class="head"><div class="kick rise" style="--d:.1s">Bring friends</div><div class="h1 anton">${letters('Combo meals')}</div></div>
+   <div class="combos" style="--n:${c.length}">${c.map((x,i)=>{const pics=[...Array(x.pizzas||1)].map((_,j)=>IMG(['margherita','veggieparadise','cheesyspecial'][j%3])).concat((x.extras||[]).map(byId).filter(m=>m.img).map(m=>IMG(m.img)));
+    return`<div class="cmb" style="--i:${i}"><div class="stk">${pics.slice(0,4).map(s=>`<img src="${s}" alt="">`).join('')}</div><h3>${esc(x.name)}</h3><p>${esc(x.desc||'')}</p><div class="price">₹${x.price}</div></div>`}).join('')}</div>`}},
+ {k:'hours',t:9,make(){const[o,c]=hours();return`<div class="bigword anton">Open daily</div>
+   <div class="copy"><div class="kick rise" style="--d:.1s;color:#7a4300">Come say kem cho</div><div class="h1 anton">${letters('Open')}<br>${letters('every day')}</div>
+   <div class="sub rise" style="--d:1s">${hrText(o)} to ${hrText(c)}</div><div class="rise" style="--d:1.3s"><span class="pill hp"></span></div></div>
+   <div class="discw"><div class="disc"><div><div class="anton">${hr12(o)} to ${hr12(c)}</div><small>Monday to Sunday</small></div></div></div>
+   ${['slice-veggie','cold-drink','garlic-stick','tomato-slice','basil','olive'].map((n,i)=>`<img class="fl" src="img/ing/${n}.webp" alt="" style="--d:${i*.4}s;left:${[1000,1680,1080,1720,1300,1500][i]}px;top:${[180,170,800,760,120,880][i]}px">`).join('')}`},
+  enter(el){const p=el.querySelector('.hp'),s=openState();p.className='pill hp'+(s.open?'':' shut');p.textContent=s.text}},
+ {k:'order',t:10,make(){const o=outlet(),url=location.origin.replace(/^http:\/\/(localhost|127\.)[^/]*/,'https://cheesypizza.online');
+   return`<div class="copy"><div class="kick rise" style="--d:.1s">Skip the queue</div><div class="h1 anton">${letters('Order')}<br><em>${letters('online')}</em></div>
+   <div class="url rise" style="--d:1s">${esc(url.replace(/^https?:\/\//,''))}</div>
+   <div class="sub rise" style="--d:1.2s">Scan the code, pick your pizza, pay by UPI${o.phone?` · Call ${esc(o.phone)}`:''}</div></div>
+   <div class="qrw"><div class="qr"><div class="code" data-qr="${esc(url)}">${esc(url)}</div><div class="scan"></div><p>Scan to order</p></div></div>`},
+  enter(el){const c=el.querySelector('.code');if(c.dataset.done||!window.QRCode)return;c.innerHTML='';try{new QRCode(c,{text:c.dataset.qr,width:460,height:460,colorDark:'#0b3a43',correctLevel:QRCode.CorrectLevel.M});c.dataset.done=1}catch(e){}}},
+];
+
+function homeItems(){const L=live(),picked=L.filter(m=>m.home).slice(0,6);if(picked.length)return picked;
+  const pz=L.filter(m=>m.cat==='pizza'),sig=[...pz.filter(m=>m.img),...pz.filter(m=>!m.img)];
+  return[...sig.slice(0,4),...L.filter(m=>m.cat!=='pizza'&&m.img).filter((m,i,a)=>a.findIndex(x=>x.img===m.img)===i)].slice(0,6)}
+function bestItems(){return live().filter(m=>m.best).sort((a,b)=>!!b.img-!!a.img).slice(0,4)}
+function todayOffers(){const d=new Date().getDay(),L=D.menu||[];
+  return(D.offers||[]).filter(x=>x.active!==false&&['day','bogo','item'].includes(x.type)&&(!x.days||!x.days.length||x.days.includes(d))).map(x=>{
+   if(x.type==='day')return{name:x.name,big:`${x.pct}%<small>off</small>`,line:`${x.pct}% off ${x.scope==='pizza'?'every pizza':'your whole order'}${x.min?` above ₹${x.min}`:''}`};
+   if(x.type==='bogo')return{name:x.name,big:`1+1<small>free</small>`,line:`Buy one ${x.size&&x.size!=='any'?x.size+'" ':''}pizza, get one free`};
+   const m=L.find(y=>y.id===x.itemId)||{};return{name:x.name,big:x.kind==='flat'?`₹${x.value}`:`${x.value}%<small>off</small>`,line:`${m.name||'Selected item'}${x.size&&x.size!=='any'?` (${x.size}")`:''}${x.kind==='flat'?` for just ₹${x.value}`:` at ${x.value}% off`}`}}).slice(0,3)}
+function combos(){return(D.combos||[]).filter(c=>c.active!==false).slice(0,3)}
+function openState(){const[o,c]=hours(),n=new Date(),h=n.getHours()+n.getMinutes()/60;
+  return h>=o&&h<c?{open:1,text:`Open now · till ${hrText(c)}`}:{open:0,text:`Opens at ${hrText(o)}`}}
+
+/* the pizza and garlic bread being made, layer by layer */
+const BUILD={
+ pizza:{title:'Made fresh',steps:['Fresh dough','Tangy sauce','Loads of mozzarella','Fresh veggies','Baked hot!'],
+  layers:['dough','sauce','cheese','toppings'].map(k=>`<img class="ly" src="img/build/${k}.webp" alt="">`).join('')+`<img class="ly baked" src="img/hero-pizza.webp" alt="">`},
+ garlic:{title:'Garlic bread',steps:['Fresh dough','Garlic butter','Loads of cheese','Baked and sliced','Hot to your table'],
+  layers:['dough','butter','cheese','baked'].map(k=>`<img class="ly" src="img/build/gb-${k}.webp" alt="">`).join('')+`<img class="drop" src="img/build/drop-butter.webp" alt="" style="width:46%"><img class="drop" src="img/build/drop-cheese.webp" alt="" style="width:50%;top:10%">`}};
+function build(k){const b=BUILD[k];return`<div class="copy"><div class="kick rise" style="--d:.1s">Watch us make it</div><div class="h1 anton">${letters(b.title)}</div>
+  <ol class="steps">${b.steps.map((s,i)=>`<li><b>${i+1}</b>${esc(s)}</li>`).join('')}</ol></div>
+  <div class="bw"><div class="b3${k==='garlic'?' gbw':''}"><div class="plate"></div>${b.layers}<div class="steam">${[0,1,2,3,4].map(i=>`<i style="left:${24+i*12}%;animation-delay:${i*.45}s"></i>`).join('')}</div></div></div>
+  <div class="done">${k==='pizza'?'Ready to eat!':'Hot and cheesy!'}</div>`}
+function buildTick(el,t,at){const s=at.filter(x=>t>=x).length;if(el._s===s)return;el._s=s;
+  el.querySelectorAll('.steps li').forEach((li,i)=>li.classList.toggle('on',i<s));
+  const ly=el.querySelectorAll('.ly'),gb=!!el.querySelector('.gbw'),dr=el.querySelectorAll('.drop');
+  if(gb){ // dough lands, butter drips on, cheese falls on, then it bakes
+    if(s>=1)ly[0].classList.add('go');if(s>=2){dr[0].classList.add('go');setTimeout(()=>ly[1].classList.add('fade'),700)}
+    if(s>=3){dr[1].classList.add('go');setTimeout(()=>ly[2].classList.add('fade'),700)}if(s>=4)ly[3].classList.add('fade')}
+  else{for(let i=0;i<Math.min(s,4);i++)ly[i].classList.add('go');if(s>=5)ly[4].classList.add('fade')}
+  if(s>=4)el.querySelector('.steam').classList.add('go');if(s>=5)el.querySelector('.done').classList.add('go')}
+
+const PULL=[[-1,2.6,.8],[-.82,1.6,1.1],[-.62,3,.7],[-.42,1.8,1.25],[-.22,3.4,.75],[-.04,2,1.1],[.16,3.6,.7],[.36,1.8,1.2],[.56,3,.8],[.74,1.6,1.1],[.9,2.6,.85],[1,1.8,1]];
+function pullDraw(el,p){
+  const g=el.querySelector('.pull-svg g'),hi=el.querySelector('.pull-hi');if(!g)return;
+  const lift=Math.min(1,Math.max(0,(p-.12)*1.6)),snap=Math.min(1,Math.max(0,(p-.8)*8)),tip=50-lift*36,f=n=>n.toFixed(2);
+  if(lift<.02){g.innerHTML='';hi.innerHTML='';return}
+  let d='',h='';
+  PULL.forEach(([u,w,k],i)=>{
+    const bx=50+u*6.6,by=50.5-Math.abs(u)*13.5,tx=50+u*4.6,ty=tip-Math.abs(u)*9.5+1;if(by-ty<.5)return;
+    const cut=snap*(.35+.3*((i*37)%10)/10),y1=ty+(by-ty)*cut*(i%2?1:0),y2=by-(by-ty)*cut*(i%2?0:1);
+    const sw=Math.sin(i*1.7+p*9)*(1.2+lift*2.2),mx=(bx+tx)/2+sw,my=(y1+y2)/2+lift*2,wm=Math.max(.18,w*(1-lift*.82*k))*(1-snap*.5),we=w*1.1;
+    const x1=tx+(bx-tx)*((y1-ty)/(by-ty)),x2=tx+(bx-tx)*((y2-ty)/(by-ty));
+    d+=`M${f(x1-we/2)} ${f(y1)}Q${f(mx-wm)} ${f(my)} ${f(x2-we/2)} ${f(y2)}L${f(x2+we/2)} ${f(y2)}Q${f(mx+wm)} ${f(my)} ${f(x1+we/2)} ${f(y1)}Z`;
+    h+=`<path d="M${f(x1-we*.15)} ${f(y1+.6)}Q${f(mx-wm*.3)} ${f(my)} ${f(x2-we*.15)} ${f(y2-.6)}" stroke-width="${f(Math.max(.08,wm*.35))}" opacity=".7"/>`;
+  });
+  g.innerHTML=`<path d="${d}" opacity="${f(1-snap*.6)}"/>`;hi.innerHTML=h;hi.style.opacity=1-snap;
+}
+
+/* ---------- 3D transitions between slides ---------- */
+const E='cubic-bezier(.7,0,.2,1)';
+const FX=[
+ // cube turning left
+ [[{transformOrigin:'100% 50%',transform:'translateX(0) rotateY(0)'},{transformOrigin:'100% 50%',transform:'translateX(-100%) rotateY(-90deg)',filter:'brightness(.4)'}],
+  [{transformOrigin:'0% 50%',transform:'translateX(100%) rotateY(90deg)',filter:'brightness(.4)'},{transformOrigin:'0% 50%',transform:'translateX(0) rotateY(0)',filter:'brightness(1)'}]],
+ // zoom through
+ [[{transform:'scale(1)',opacity:1},{transform:'scale(1.8) translateZ(400px)',opacity:0,filter:'blur(12px)'}],
+  [{transform:'translateZ(-1800px) rotateX(25deg) rotateZ(-8deg)',opacity:0},{transform:'none',opacity:1}]],
+ // cube rolling up
+ [[{transformOrigin:'50% 0%',transform:'translateY(0) rotateX(0)'},{transformOrigin:'50% 0%',transform:'translateY(-100%) rotateX(90deg)',filter:'brightness(.4)'}],
+  [{transformOrigin:'50% 100%',transform:'translateY(100%) rotateX(-90deg)',filter:'brightness(.4)'},{transformOrigin:'50% 100%',transform:'translateY(0) rotateX(0)',filter:'brightness(1)'}]],
+ // door swing
+ [[{transformOrigin:'0% 50%',transform:'rotateY(0)'},{transformOrigin:'0% 50%',transform:'rotateY(-100deg)',opacity:0}],
+  [{transform:'translateZ(-900px) rotateY(50deg)',opacity:0},{transform:'none',opacity:1}]],
+];
+
+const deck=$('#deck'),bar=$('#bar'),dots=$('#dots');
+let order=[],idx=-1,startAt=0,paused=false,timer=0,fxN=0,needsRebuild=true;
+
+function rebuild(){needsRebuild=false;deck.innerHTML='';
+  order=SLIDES.filter(s=>!s.ok||s.ok());
+  order.forEach(s=>{const el=document.createElement('section');el.className='sl s-'+s.k+(s.k==='pizza'||s.k==='garlic'?' s-build':'')+(s.k==='garlic'?' gb':'');el.innerHTML=s.make();s.el=el;deck.appendChild(el)});
+  dots.innerHTML=order.map(()=>'<i></i>').join('');
+  const tk=live().map(m=>`<span>${esc(m.name)} <em>₹${m.prices?Math.min(...Object.values(m.prices)):m.price}</em></span>`).join('');
+  $('#tk').innerHTML=tk+tk;$('#tk').style.setProperty('--tkd',Math.max(40,live().length*4.5)+'s')}
+
+function rain(){const r=$('#rain');r.innerHTML=ING.map(()=>`<img src="${ING[Math.random()*ING.length|0]}" alt="" style="left:${Math.random()*1800}px;animation-delay:${(Math.random()*.4).toFixed(2)}s;--r:${(Math.random()*720-360)|0}deg;width:${80+Math.random()*90|0}px">`).join('');setTimeout(()=>r.innerHTML='',2200)}
+
+function go(n){
+  const prev=order[idx];
+  if(n>=order.length||n<0){n=(n+order.length)%order.length;if(n===0&&needsRebuild){rebuild();idx=-1}}
+  const next=order[n];if(!next)return;idx=n;
+  const fx=FX[fxN++%FX.length],opt={duration:1300,easing:E,fill:'none'};
+  if(prev&&prev.el&&prev.el.isConnected&&prev!==next){const pe=prev.el;pe.classList.remove('on');pe.classList.add('out');pe.animate(fx[0],opt).onfinish=()=>pe.classList.remove('out')}
+  const el=next.el;el._s=null;el.classList.remove('on');void el.offsetWidth;el.classList.add('on');
+  // clear what the last pass built so it plays again from the start
+  el.querySelectorAll('.go,.fade,.front').forEach(x=>x.classList.remove('go','fade','front'));
+  el.animate(fx[1],opt);if(next.enter)next.enter(el);
+  if(fxN%3===0)rain();
+  dots.querySelectorAll('i').forEach((d,i)=>d.classList.toggle('on',i===n));
+  startAt=performance.now()}
+
+function loop(now){requestAnimationFrame(loop);const s=order[idx];if(!s)return;
+  if(paused){startAt+=now-(loop.last||now)}loop.last=now;
+  const t=(now-startAt)/1000/SPEED,dur=s.t;
+  bar.style.width=Math.min(100,t/dur*100).toFixed(2)+'%';
+  if(s.tick)s.tick(s.el,t);
+  if(t>=dur&&!paused)go(idx+1)}
+
+function clock(){const n=new Date();$('#time').textContent=n.toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'});
+  const s=openState(),p=$('#status');p.className='pill'+(s.open?'':' shut');p.textContent=s.open?'Open now':'Closed'}
+
+function fit(){const s=Math.min(innerWidth/1920,innerHeight/1080);$('#stage').style.transform=`scale(${s})`}
+
+async function load(){try{const r=await fetch('/api/state',{cache:'no-store'});if(!r.ok)throw 0;const j=await r.json(),st=j.state||j;
+  if(st&&Array.isArray(st.menu)&&st.menu.length){D={...FALLBACK,...st,config:{...FALLBACK.config,...(st.config||{})}};needsRebuild=true}}catch(e){}}
+
+addEventListener('resize',fit);fit();
+addEventListener('keydown',e=>{if(e.key==='ArrowRight')go(idx+1);else if(e.key==='ArrowLeft')go(idx-1);else if(e.key===' '){paused=!paused;e.preventDefault()}else if(e.key==='f')full()});
+function full(){const d=document.documentElement;if(!document.fullscreenElement&&d.requestFullscreen)d.requestFullscreen().catch(()=>{});wake()}
+addEventListener('click',()=>{full();$('#tapme').style.opacity=0});
+setTimeout(()=>$('#tapme').style.opacity=0,6000);
+let idleT;addEventListener('mousemove',()=>{document.body.classList.remove('idle');clearTimeout(idleT);idleT=setTimeout(()=>document.body.classList.add('idle'),2500)});
+async function wake(){try{if(navigator.wakeLock&&!wake.l)wake.l=await navigator.wakeLock.request('screen'),wake.l.addEventListener('release',()=>wake.l=null)}catch(e){}}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)wake()});
+
+(async()=>{rebuild();clock();setInterval(clock,15000);await Promise.race([load(),new Promise(r=>setTimeout(r,2500))]);
+  if(needsRebuild)rebuild();go(0);requestAnimationFrame(loop);wake();
+  setInterval(load,10*60*1000)})();
+</script>
+</body>
+</html>
