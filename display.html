@@ -496,7 +496,7 @@ function playStep(el,t){if(!PL.eng||!window.Matter){if(window.Matter&&!PL.eng)pl
     x.save();x.translate(b.position.x,b.position.y);x.rotate(b.angle);x.shadowColor='rgba(0,0,0,.4)';x.shadowBlur=18;x.shadowOffsetY=9;x.drawImage(s,-w/2,-h/2+dy,w,h);x.restore()})}
 
 /* ---------- 3D transitions between slides ---------- */
-const E='cubic-bezier(.65,0,.35,1)',DUR=1500;
+const E='cubic-bezier(.65,0,.35,1)',DUR=2000;
 const FX=[
  // cube turning left
  [[{transformOrigin:'100% 50%',transform:'translateX(0) rotateY(0)'},{transformOrigin:'100% 50%',transform:'translateX(-100%) rotateY(-90deg)',filter:'brightness(.4)'}],
@@ -530,7 +530,7 @@ function go(n){
   const next=order[n];if(!next)return;idx=n;
   const curtain=fxN%3===2&&prev&&prev!==next,fx=FX[fxN++%FX.length],opt={duration:DUR,easing:E,fill:'none'};
   if(curtain){ // cheese drips down over the screen, the slide changes behind it, and it slides away
-    leaving=prev;leaveAt=startAt;drip();setTimeout(()=>{if(prev.el)prev.el.classList.remove('on');if(leaving===prev)leaving=null;show(next,n,null)},780);startAt=performance.now()+780;return}
+    leaving=prev;leaveAt=startAt;drip();setTimeout(()=>{if(prev.el)prev.el.classList.remove('on');if(leaving===prev)leaving=null;show(next,n,null)},DUR*.49);startAt=performance.now()+DUR*.49;return}
   if(prev&&prev.el&&prev.el.isConnected&&prev!==next){const pe=prev.el;leaving=prev;leaveAt=startAt;pe.classList.add('out');
     pe.animate(fx[0],opt).onfinish=()=>{pe.classList.remove('out');if(order[idx]!==prev)pe.classList.remove('on');if(leaving===prev)leaving=null}}
   show(next,n,fx[1])}
@@ -546,7 +546,7 @@ function show(next,n,fxIn){const opt={duration:DUR,easing:E,fill:'none'};
 function drip(){const d=$('#drip');
   if(!d.firstChild){let p='M0 0H1920V1080';for(let x=1920;x>0;){const w=60+Math.random()*120,l=40+Math.random()*(Math.random()<.3?260:90);p+=`C${x-w*.15} 1080 ${x-w*.2} ${1080+l} ${x-w/2} ${1080+l}C${x-w*.8} ${1080+l} ${x-w*.85} 1080 ${x-w} 1080`;x-=w}
     d.innerHTML=`<svg viewBox="0 0 1920 1400" preserveAspectRatio="none"><defs><linearGradient id="dg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd76a"/><stop offset=".8" stop-color="#f2b632"/><stop offset="1" stop-color="#e09a18"/></linearGradient></defs><path d="${p}V0Z" fill="url(#dg)"/></svg><img src="img/logo-badge.png" alt="">`}
-  const ez='cubic-bezier(.65,0,.35,1)';d.animate([{transform:'translateY(-110%)',easing:ez},{transform:'translateY(-14%)',offset:.42},{transform:'translateY(-14%)',offset:.56,easing:ez},{transform:'translateY(110%)'}],{duration:1600})}
+  const ez='cubic-bezier(.65,0,.35,1)';d.animate([{transform:'translateY(-110%)',easing:ez},{transform:'translateY(-14%)',offset:.42},{transform:'translateY(-14%)',offset:.56,easing:ez},{transform:'translateY(110%)'}],{duration:DUR})}
 
 function loop(now){requestAnimationFrame(loop);const s=order[idx];if(!s)return;
   if(paused){startAt+=now-(loop.last||now)}loop.last=now;
