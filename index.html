@@ -1187,6 +1187,43 @@ html.tv-open,html.tv-open body{overflow:hidden}
 .tv-show{display:inline-flex;align-items:center;gap:.4em;color:rgba(255,255,255,.8);font-weight:700}
 .tv-show select{font:inherit;font-weight:700;color:#fff;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.3);border-radius:999px;height:2.6em;padding:0 .9em}
 .tv-show select option{color:#0f2e36}
+.tv-s.tv-wide{grid-template-columns:1fr;align-content:center;gap:1.1em;padding:5em 2.6em 7em}
+.tv-sh{display:flex;align-items:flex-end;justify-content:space-between;gap:1em;flex-wrap:wrap;animation:hhUp .7s cubic-bezier(.2,.8,.2,1) both}
+.tv-sh h2{font-size:3.2em;font-weight:800;color:#fff;line-height:1}.tv-sh h2 em{font-style:normal;color:#ffd166}
+.tv-sh p{margin:0;color:rgba(255,255,255,.8);font-size:1.05em}
+.tv-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1em}
+.tv-grid.g3{grid-template-columns:repeat(3,minmax(0,1fr))}.tv-grid.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.tv-card{position:relative;display:flex;flex-direction:column;gap:.5em;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:1.1em;padding:.9em;min-width:0;opacity:0;animation:hhUp .6s cubic-bezier(.2,.8,.2,1) forwards;backdrop-filter:blur(4px)}
+.tv-card b{font:800 1.15em/1.15 var(--display);color:#fff}
+.tv-card small{display:block;color:rgba(255,255,255,.78);line-height:1.35;margin-top:.2em}
+.tv-ph{position:relative;width:6.4em;aspect-ratio:1;border-radius:50%;overflow:hidden;background:#7a4a24;box-shadow:0 .5em 1.2em rgba(0,0,0,.35);align-self:center}
+.tv-ph img,.tv-ph .pzart{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;animation:spin 40s linear infinite}
+.tv-ph .pz{position:absolute;inset:12%;width:76%;height:76%}
+.tv-cb{display:flex;flex-direction:column;gap:.25em;text-align:center;flex:1}
+.tv-tg{display:flex;gap:.3em;flex-wrap:wrap;justify-content:center;min-height:1.3em}
+.tv-tg>span{font-style:normal;font-size:.75em;font-weight:700;padding:.05em .55em;border-radius:999px;background:rgba(255,255,255,.16)}
+.tv-tg>span.o{background:#ffd166;color:#4a3200}
+.tv-pr{color:rgba(255,255,255,.85);font-size:.92em}.tv-pr b{font:800 1.15em var(--display);color:#ffd166}
+.tv-pr s{color:rgba(255,255,255,.55);margin-left:.3em}
+.tv-cmb .tv-pr{font:800 1.5em var(--display);color:#ffd166;margin-top:.3em}
+.tv-plus{align-self:center;border:0;border-radius:999px;padding:.35em 1.2em;background:#ffd166;color:#3d2900!important;font:800 1em var(--display)!important;transition:transform .15s}
+.tv-plus:hover{transform:scale(1.06)}
+/* menu cards: photo on the left, name, tags, price and Add on the right */
+.tv-grid:not(.g2):not(.g3) .tv-card{display:grid;grid-template-columns:5.2em minmax(0,1fr);grid-template-areas:"ph cb" "ph add";gap:.35em .8em;align-items:center;padding:.8em}
+.tv-grid:not(.g2):not(.g3) .tv-ph{grid-area:ph;width:5.2em}
+.tv-grid:not(.g2):not(.g3) .tv-cb{grid-area:cb;text-align:left}
+.tv-grid:not(.g2):not(.g3) .tv-tg{justify-content:flex-start;min-height:0}
+.tv-grid:not(.g2):not(.g3) .tv-plus{grid-area:add;justify-self:start}
+.tv-off{flex-direction:row;align-items:center;gap:1em;background:#ffd166;border-color:#ffd166;color:#3d2900}
+.tv-off b{color:#3d2900}.tv-off small{color:#5a3d00}
+.tv-stub{flex:none;width:4.6em;text-align:center;font:800 1.9em/1 var(--display);border-right:3px dashed rgba(61,41,0,.4);padding-right:.4em}
+.tv-stub small{display:block;font-size:.4em;letter-spacing:.1em;color:#3d2900;margin:0}
+.tv-off code{display:inline-block;margin-top:.4em;font:800 1.05em var(--display);letter-spacing:.1em;border:2px dashed #3d2900;border-radius:.35em;padding:0 .5em}
+.tv-cmb{flex-direction:row;align-items:center;gap:1em}
+.tv-cmb>div:nth-child(2){flex:1;min-width:0}
+.tv-mini{display:flex;flex:none}
+.tv-mini img{width:4.6em;height:4.6em;border-radius:50%;object-fit:cover;border:.2em solid rgba(255,255,255,.85);margin-left:-1.6em;box-shadow:0 .4em 1em rgba(0,0,0,.35)}
+.tv-mini img:first-child{margin-left:0}
 .tv-bot{position:absolute;left:0;right:0;bottom:0;z-index:3;padding:0 2.2em 1.3em;background:linear-gradient(transparent,rgba(3,18,22,.7));transition:opacity .5s}
 .tv-bar{height:.35em;border-radius:1em;background:rgba(255,255,255,.18);overflow:hidden;margin-bottom:1em}
 .tv-bar i{display:block;height:100%;width:0;background:#ffd166;border-radius:1em;animation:hhFill var(--ms,9s) linear forwards}
@@ -1210,6 +1247,10 @@ html.tv-open,html.tv-open body{overflow:hidden}
   .tv-badges,.tv-prices{justify-content:center}
   .tv-coupon,.tv-stack{order:-1;width:min(80vw,30em)}
   .tv-board{grid-template-columns:repeat(2,1fr);gap:.6em}.tv-pc{padding:.8em}
+  .tv-s.tv-wide{align-content:start;overflow-y:auto;padding:5em 1em 9em;text-align:left}
+  .tv-grid,.tv-grid.g3{grid-template-columns:repeat(2,minmax(0,1fr));gap:.6em}.tv-grid.g2{grid-template-columns:1fr}
+  .tv-sh h2{font-size:2.4em}.tv-ph{width:5em}.tv-off{flex-direction:column;text-align:center}.tv-stub{border:0;padding:0}
+  .tv-cmb{flex-wrap:wrap}
   .tv-coins{height:14em;font-size:.7em}.tv-list{display:none}
   .tv-steps,.tv-flow,.tv-bev{font-size:.85em}
   .tv-stack img,.tv-stack .pzs{width:min(9em,28vw)}
@@ -3734,28 +3775,53 @@ document.addEventListener('animationend',e=>{if(e.animationName!=='hhFill'||!e.t
    offer and combo gets a slide. Remote or keyboard: ← → change slide, OK/Space pauses or adds,
    Esc closes. Add to cart opens the usual size and topping picker over the slideshow. ===== */
 var TV={on:false,i:0,paused:false,ms:9000,left:0,t0:0,timer:0,slides:[],idle:0,el:null,dir:1};
-// What the slideshow shows: everything (home page slides between the menu), only the home page, or only menu and offers
-const TV_SHOW=[['all','Everything'],['home','Home page'],['menu','Menu & offers']];
+// What the slideshow shows. Every section: each home page section and each menu section gets one
+// slide with all its items on it. Every item: one big slide per menu item, offer and combo.
+const TV_SHOW=[['all','Every section'],['items','Every item'],['home','Home page only']];
 try{TV.show=localStorage.getItem('cheesy_tv_show')||'all'}catch(_){TV.show='all'}
 if(!TV_SHOW.some(([k])=>k===TV.show))TV.show='all';
 const TV_HOME=['board','feat','bev','how','order','visit','coins'];
+const TV_WIDE=['offers','combos','cat'];
+const TV_PER=8; // menu cards per slide: 4 across, 2 down
 function tvBuild(){
   const dow=new Date().getDay(),show=TV.show;
-  const home=TV_HOME.map(k=>({k}));
-  if(show==='home'){TV.slides=[{k:'hello'},...home];if(TV.i>=TV.slides.length)TV.i=0;return}
-  const out=[{k:'hello'}];
-  if(show==='all')out.push(home[0],home[1]);
-  activeOffers(dow).forEach(o=>out.push({k:'offer',o}));
-  S.combos.filter(c=>c.active).forEach(c=>out.push({k:'combo',c}));
-  let h=2;
-  CATS.forEach(([cat])=>{const items=S.menu.filter(m=>m.cat===cat&&!m.off);if(!items.length)return;
-    items.forEach(m=>out.push({k:'item',m}));
-    if(show==='all'&&h<home.length)out.push(home[h++])});  // a home page slide after each menu section
-  if(show==='all')while(h<home.length)out.push(home[h++]);
+  const home=Object.fromEntries(TV_HOME.map(k=>[k,{k}]));
+  const offers=activeOffers(dow),combos=S.combos.filter(c=>c.active);
+  let out;
+  if(show==='home')out=[{k:'hello'},...TV_HOME.map(k=>home[k])];
+  else if(show==='items'){
+    out=[{k:'hello'}];offers.forEach(o=>out.push({k:'offer',o}));combos.forEach(c=>out.push({k:'combo',c}));
+    CATS.forEach(([cat])=>S.menu.filter(m=>m.cat===cat&&!m.off).forEach(m=>out.push({k:'item',m})));
+  }else{
+    out=[{k:'hello'},home.board,home.feat];
+    if(offers.length)out.push({k:'offers',list:offers});
+    if(combos.length)out.push({k:'combos',list:combos});
+    CATS.forEach(([cat,name])=>{const items=S.menu.filter(m=>m.cat===cat&&!m.off);const pages=Math.ceil(items.length/TV_PER);
+      for(let p=0;p<pages;p++)out.push({k:'cat',cat,name,page:p,pages,items:items.slice(p*TV_PER,p*TV_PER+TV_PER)})});
+    out.push(home.bev,home.how,home.order,home.visit,home.coins);
+  }
   TV.slides=out;if(TV.i>=out.length)TV.i=0;
 }
-const TV_NAMES={hello:'Welcome',board:'Pizza price board',feat:'Fresh dough, no mayonnaise',bev:'Beverages',how:'How it works',order:'How to book your order',visit:'Visit us',coins:'Cheese Coins'};
-const tvName=s=>TV_NAMES[s.k]||(s.k==='offer'?s.o.name:s.k==='combo'?s.c.name+' combo':s.m.name);
+const TV_NAMES={hello:'Welcome',board:'Pizza price board',feat:'Fresh dough, no mayonnaise',bev:'Beverages',how:'How it works',order:'How to book your order',visit:'Visit us',coins:'Cheese Coins',offers:"Today's offers",combos:'Combos'};
+const tvName=s=>s.k==='cat'?s.name+(s.pages>1?` (${s.page+1} of ${s.pages})`:''):TV_NAMES[s.k]||(s.k==='offer'?s.o.name:s.k==='combo'?s.c.name+' combo':s.m.name);
+const tvMs=()=>{const s=TV.slides[TV.i];return s&&TV_WIDE.includes(s.k)?15000:9000};
+// Section slides: a heading row, then every item of the section as cards
+function tvSection(s){
+  const dow=new Date().getDay();
+  const head=(cat,gu,title,note)=>`<div class="tv-sh"><div><div class="tv-cat">${cat} <span>${gu||''}</span></div><h2>${title}</h2></div>${note?`<p>${note}</p>`:''}</div>`;
+  const d=i=>`style="animation-delay:${(.15+i*.07).toFixed(2)}s"`;
+  if(s.k==='offers')return head("Today's offers",'ઓફર્સ','Offers <em>live today</em>','The best offer applies by itself in your cart.')+
+    `<div class="tv-grid g3">${s.list.map((o,i)=>`<div class="tv-card tv-off" ${d(i)}><span class="tv-stub">${offerStub(o)}</span><div><b>${esc(o.name)}</b><small>${esc(offerText(o))}</small>${o.type==='code'?`<code>${esc(o.code)}</code>`:''}</div></div>`).join('')}</div>`;
+  if(s.k==='combos')return head('Combos','કોમ્બો','Meals for <em>one, two or all</em>','Pick your pizzas, we add the sides.')+
+    `<div class="tv-grid g2">${s.list.map((c,i)=>{const ex=c.extras.map(menuItem).filter(Boolean);return `<div class="tv-card tv-cmb" ${d(i)}><div class="tv-mini">${[...Array(c.pizzas)].map((_,j)=>`<img src="${IMG(['margherita','veggieparadise','cheesyspecial'][j%3])}" alt="">`).join('')}${ex.map(m=>m.img?`<img src="${IMG(m.img)}" alt="">`:'').join('')}</div>
+      <div><b>${esc(c.name)}</b><small>${esc(c.desc)}</small><span class="tv-pr num">${rs(c.price)} <s>${rs(comboWorth(c))}</s></span></div><button class="tv-plus" data-act="tv-add" data-combo="${c.id}" aria-label="Add ${esc(c.name)} combo">＋ Add</button></div>`}).join('')}</div>`;
+  // a menu section
+  return head(s.name+(s.pages>1?` · ${s.page+1}/${s.pages}`:''),GU[s.cat]||'',esc(s.name),s.cat==='pizza'?'Tap ＋ Add to pick size, base and toppings.':'')+
+    `<div class="tv-grid">${s.items.map((m,i)=>{const tags=itemOfferTags(m,dow);const pr=m.cat==='pizza'?S.sizes.filter(z=>+m.prices?.[z.id]).map(z=>`${esc(z.label)} <b>${rs(m.prices[z.id])}</b>`).join(' · '):`<b>${rs(m.price)}</b>`;
+      return `<div class="tv-card" ${d(i)}><div class="tv-ph">${thumb(m)}</div><div class="tv-cb"><b>${esc(m.name)}</b>
+        <span class="tv-tg">${m.best?'<span>Best seller</span>':''}${m.jain?'<span>Jain</span>':''}${m.spicy?`<span>${'🌶'.repeat(m.spicy)}</span>`:''}${tags.map(t=>`<span class="o">${esc(t)}</span>`).join('')}</span>
+        <span class="tv-pr num">${pr}</span></div><button class="tv-plus" data-act="tv-add" data-id="${m.id}" aria-label="Add ${esc(m.name)}">＋ Add</button></div>`}).join('')}</div>`;
+}
 // Home page slides
 function tvHomeSlide(k){
   const o=cur(),ph=homePhone(o);
@@ -3785,6 +3851,7 @@ function tvHomeSlide(k){
 }
 function tvSlide(s){
   const dow=new Date().getDay(),o=cur(),open=isOpen();
+  if(TV_WIDE.includes(s.k))return tvSection(s);
   if(TV_NAMES[s.k]&&s.k!=='hello')return tvHomeSlide(s.k);
   if(s.k==='hello'){const url=/^https?:/.test(location.protocol)?location.origin+location.pathname.replace(/\/tv\/?$/,'/'):'';
     return `<div class="tv-copy"><div class="tv-cat">Pure veg · No mayonnaise <span>ચીઝી પિઝ્ઝા</span></div>
@@ -3824,15 +3891,15 @@ function tvChrome(){
 }
 function tvDraw(){
   if(!TV.el)return;const s=TV.slides[TV.i];if(!s)return;
-  const had=TV.el.querySelector('.tv-stage .tv-add')===document.activeElement;
+  const had=!!document.activeElement?.closest?.('.tv-stage');
   const stage=TV.el.querySelector('.tv-stage');
-  stage.innerHTML=`<div class="tv-s in${TV.dir<0?' back':''}${s.k==='hello'?' tv-hello':''}" role="group" aria-roledescription="slide" aria-label="${esc(tvName(s))}">${tvSlide(s)}</div>`;
+  stage.innerHTML=`<div class="tv-s in${TV.dir<0?' back':''}${s.k==='hello'?' tv-hello':''}${TV_WIDE.includes(s.k)?' tv-wide':''}" role="group" aria-roledescription="slide" aria-label="${esc(tvName(s))}">${tvSlide(s)}</div>`;
   stage.querySelectorAll('[data-tvqr]').forEach(el=>{if(window.QRCode)try{new QRCode(el,{text:el.dataset.tvqr,width:220,height:220,correctLevel:QRCode.CorrectLevel.M});return}catch(_){}el.closest('.tv-qr').innerHTML=`<b>Order on your phone</b><small>${esc(el.dataset.tvqr.replace(/^https?:\/\//,''))}</small>`});
   const nx=TV.slides[(TV.i+1)%TV.slides.length];
   TV.el.querySelector('.tv-count').textContent=`${TV.i+1} / ${TV.slides.length}`;
   TV.el.querySelector('.tv-next').innerHTML=`Up next: <b>${esc(tvName(nx))}</b>`;
-  const bar=TV.el.querySelector('.tv-bar');bar.innerHTML='<i></i>';bar.style.setProperty('--ms',TV.ms+'ms');
-  if(had||document.activeElement===document.body||!TV.el.contains(document.activeElement))stage.querySelector('.tv-add')?.focus({preventScroll:true});
+  const bar=TV.el.querySelector('.tv-bar');bar.innerHTML='<i></i>';bar.style.setProperty('--ms',tvMs()+'ms');
+  if(had||document.activeElement===document.body||!TV.el.contains(document.activeElement))stage.querySelector('.tv-add,.tv-plus')?.focus({preventScroll:true});
   tvChrome();
 }
 function tvGo(d){
@@ -3845,8 +3912,8 @@ function tvGo(d){
 // Timer: runs only while playing and nothing is open over the slideshow
 function tvHeld(){return TV.paused||!!mroot.innerHTML||document.hidden}
 function tvStop(){if(TV.timer){clearTimeout(TV.timer);TV.timer=0;TV.left=Math.max(0,TV.left-(Date.now()-TV.t0))}}
-function tvRun(){if(!TV.on||TV.timer||tvHeld())return;TV.t0=Date.now();TV.timer=setTimeout(()=>{TV.timer=0;TV.left=TV.ms;tvGo(1)},TV.left)}
-function tvRestart(){tvStop();TV.left=TV.ms;tvRun()}
+function tvRun(){if(!TV.on||TV.timer||tvHeld())return;TV.t0=Date.now();TV.timer=setTimeout(()=>{TV.timer=0;tvGo(1)},TV.left)}
+function tvRestart(){tvStop();TV.left=tvMs();tvRun()}
 function tvSync(){if(!TV.el)return;TV.el.classList.toggle('hold',!!mroot.innerHTML);tvHeld()?tvStop():tvRun()}
 function tvPause(v){TV.paused=v;tvSync();tvChrome();toast(v?'Slideshow paused':'Slideshow playing')}
 function tvWake(){if(!TV.el)return;TV.el.classList.remove('idle');clearTimeout(TV.idle);TV.idle=setTimeout(()=>TV.el&&TV.el.classList.add('idle'),3500)}
@@ -3897,7 +3964,7 @@ function tvAdd(el){
   const m=menuItem(el.dataset.id);if(!m){toast('This item is no longer on the menu');return}
   openCustomizer(m.id,'pub');
 }
-new MutationObserver(()=>{if(TV.on)tvSync();if(!mroot.innerHTML&&TV.on){const a=TV.el.querySelector('.tv-stage .tv-add');if(a&&!TV.el.contains(document.activeElement))a.focus({preventScroll:true})}}).observe(mroot,{childList:true});
+new MutationObserver(()=>{if(TV.on)tvSync();if(!mroot.innerHTML&&TV.on){const a=TV.el.querySelector('.tv-stage .tv-add,.tv-stage .tv-plus');if(a&&!TV.el.contains(document.activeElement))a.focus({preventScroll:true})}}).observe(mroot,{childList:true});
 document.addEventListener('visibilitychange',()=>{if(TV.on)tvSync()});
 document.addEventListener('fullscreenchange',()=>{if(TV.el){const b=TV.el.querySelector('[data-act="tv-full"] .tv-lbl');if(b)b.textContent=document.fullscreenElement?'Exit full screen':'Full screen'}});
 ['mousemove','pointerdown'].forEach(t=>document.addEventListener(t,()=>{if(TV.on)tvWake()},{passive:true}));
@@ -3922,13 +3989,13 @@ document.addEventListener('click',e=>{
 window.addEventListener('keydown',e=>{
   if(!TV.on||mroot.innerHTML||isBusy())return;tvWake();
   const k=e.key,f=document.activeElement,inTV=TV.el.contains(f)&&f!==TV.el;
-  const focusables=()=>[...TV.el.querySelectorAll('button')].filter(b=>b.offsetParent);
+  const focusables=()=>[...TV.el.querySelectorAll('.tv-stage button,.tv-bot button,.tv-bot select,.tv-top button')].filter(b=>b.offsetParent);
   if(k==='ArrowRight'||k==='MediaTrackNext'||k==='PageDown'){e.preventDefault();tvGo(1)}
   else if(k==='ArrowLeft'||k==='MediaTrackPrevious'||k==='PageUp'){e.preventDefault();tvGo(-1)}
   else if(k===' '||k==='MediaPlayPause'||k==='k'||k==='p'){e.preventDefault();tvPause(!TV.paused)}
   else if(k==='MediaPlay'){tvPause(false)}else if(k==='MediaPause'||k==='MediaStop'){tvPause(true)}
   else if(k==='Escape'||k==='Backspace'||k==='BrowserBack'||k==='GoBack'){e.preventDefault();closeTV()}
-  else if(k==='Enter'&&!inTV){e.preventDefault();const a=TV.el.querySelector('.tv-stage .tv-add');if(a)a.click()}
+  else if(k==='Enter'&&!inTV){e.preventDefault();const a=TV.el.querySelector('.tv-stage .tv-add,.tv-stage .tv-plus');if(a)a.click()}
   else if(k==='ArrowDown'||k==='ArrowUp'){e.preventDefault();const L=focusables();if(!L.length)return;const i=L.indexOf(f);L[(i<0?0:i+(k==='ArrowDown'?1:-1)+L.length)%L.length].focus()}
 },true);
 (async function boot(){
