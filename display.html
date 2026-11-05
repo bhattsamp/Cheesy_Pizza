@@ -56,7 +56,7 @@ body.idle{cursor:none}
 /* shared bits */
 .glow{position:absolute;border-radius:50%;opacity:.55;pointer-events:none;-webkit-mask-image:radial-gradient(closest-side,#000 30%,transparent);mask-image:radial-gradient(closest-side,#000 30%,transparent)}
 .bigword{position:absolute;white-space:nowrap;font-size:360px;color:transparent;-webkit-text-stroke:3px rgba(255,255,255,.12);pointer-events:none}
-.on .bigword{animation:drift 14s linear both}
+.on .bigword{animation:drift 19s linear both}
 @keyframes drift{from{translate:6% 0}to{translate:-14% 0}}
 .kick{font-size:34px;font-weight:800;letter-spacing:.24em;text-transform:uppercase;color:var(--gold)}
 .h1{font-size:150px;text-shadow:0 1px 0 #0a2c33,0 2px 0 #0a2c33,0 3px 0 #0a2c33,0 4px 0 #0a2c33,0 5px 0 #0a2c33,0 6px 0 #0a2c33,0 7px 0 #0a2c33,0 8px 0 #0a2c33,0 22px 30px rgba(0,0,0,.4)}
@@ -78,7 +78,7 @@ body.idle{cursor:none}
 .s-hero .tags b{font-size:30px;padding:10px 28px 6px;border:3px solid rgba(255,255,255,.4);border-radius:99px}
 .s-hero .pzw{position:absolute;right:120px;top:150px;width:800px;height:800px;perspective:1400px}
 .s-hero .pz3{position:absolute;inset:0;transform-style:preserve-3d;transform:rotateX(52deg)}
-.on.s-hero .pz3{animation:tilt 9s ease-in-out both}
+.on.s-hero .pz3{animation:tilt 15s ease-in-out both}
 @keyframes tilt{0%{transform:rotateX(80deg) scale(.4) translateZ(-400px)}18%{transform:rotateX(48deg) scale(1)}60%{transform:rotateX(30deg) rotateY(-12deg)}100%{transform:rotateX(55deg) rotateY(8deg)}}
 .s-hero .pz3 .plate{position:absolute;inset:-2%;border-radius:50%;background:radial-gradient(circle,#5a3a22 0 58%,#3b2414 70%,#2a180c 100%);box-shadow:0 0 0 14px #6b4528,0 60px 80px rgba(0,0,0,.55);transform:translateZ(-30px)}
 .s-hero .pz3 img{position:absolute;inset:0;width:100%;height:100%;animation:spin 24s linear infinite}
@@ -94,7 +94,7 @@ body.idle{cursor:none}
 .s-pull .bigword{top:40px;left:0;-webkit-text-stroke-color:rgba(120,60,0,.14)}
 .pullw{position:absolute;right:140px;top:140px;width:820px;height:820px;perspective:1600px}
 .pull-stage{position:absolute;inset:0;transform:rotateX(22deg);transform-style:preserve-3d;--lift:0;--snap:0}
-.on .pull-stage{animation:pullsway 9s ease-in-out both}
+.on .pull-stage{animation:pullsway 15s ease-in-out both}
 @keyframes pullsway{0%{transform:rotateX(60deg) rotateZ(-30deg) scale(.6)}15%{transform:rotateX(22deg) rotateZ(0) scale(1)}100%{transform:rotateX(16deg) rotateZ(6deg) scale(1.04)}}
 .pull-plate{position:absolute;inset:3%;border-radius:50%;background:radial-gradient(circle at 50% 45%,#5a3a22 0 40%,#3b2414 70%,#2a180c 100%);box-shadow:0 50px 70px rgba(80,40,10,.45),inset 0 0 0 10px #6b4528}
 .pull-pz,.pull-sl img{position:absolute;inset:7%;width:86%;height:86%}
@@ -136,7 +136,7 @@ body.idle{cursor:none}
 .steps li.on b{background:var(--gold);color:#3a2800;transform:scale(1.15) rotate(-8deg)}
 .bw{position:absolute;right:130px;top:120px;width:840px;height:840px;perspective:1500px}
 .b3{position:absolute;inset:0;transform-style:preserve-3d;transform:rotateX(48deg) rotateZ(-10deg)}
-.on .b3{animation:b3 10s ease-in-out both}
+.on .b3{animation:b3 15s ease-in-out both}
 @keyframes b3{0%{transform:rotateX(70deg) rotateZ(-50deg) scale(.7)}12%{transform:rotateX(50deg) rotateZ(-10deg)}86%{transform:rotateX(40deg) rotateZ(20deg)}100%{transform:rotateX(14deg) rotateZ(30deg) scale(1.06)}}
 .b3 .plate{position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle,#5a3a22 0 58%,#3b2414 70%,#2a180c 100%);box-shadow:0 0 0 14px #6b4528,0 70px 80px rgba(0,0,0,.5)}
 .b3 .ly{position:absolute;inset:6%;width:88%;height:88%;opacity:0}
@@ -217,7 +217,7 @@ body.idle{cursor:none}
 .s-hours .pill{margin-top:40px;font-size:30px;padding:10px 28px 6px}
 .discw{position:absolute;right:220px;top:200px;width:640px;height:640px;perspective:1400px}
 .disc{position:absolute;inset:0;border-radius:50%;background:var(--teal);color:#fff;display:grid;place-items:center;text-align:center;box-shadow:0 0 0 18px #fff,0 40px 60px rgba(100,50,0,.35)}
-.on .disc{animation:disc 8s cubic-bezier(.5,0,.3,1) both}
+.on .disc{animation:disc 15s cubic-bezier(.5,0,.3,1) both}
 @keyframes disc{0%{transform:rotateY(-180deg) scale(.5)}20%{transform:rotateY(0) scale(1)}55%{transform:rotateY(0) rotateX(12deg)}70%{transform:rotateY(360deg)}100%{transform:rotateY(360deg) rotateX(-8deg)}}
 .disc .anton{font-size:190px;color:var(--gold)}
 .disc small{display:block;font-size:44px;font-weight:700;margin-top:10px;letter-spacing:.1em;text-transform:uppercase}
@@ -234,7 +234,7 @@ body.idle{cursor:none}
 .s-order .sub{font-size:42px;margin-top:16px;color:#cfe8ec}
 .qrw{position:absolute;right:220px;top:200px;width:560px;height:640px;perspective:1400px}
 .qr{position:absolute;inset:0;background:#fff;border-radius:44px;padding:50px;color:var(--ink);text-align:center;box-shadow:0 40px 70px rgba(0,0,0,.45)}
-.on .qr{animation:qr 9s ease-in-out both}
+.on .qr{animation:qr 15s ease-in-out both}
 @keyframes qr{0%{transform:rotateY(100deg) translateZ(-400px)}16%{transform:rotateY(-12deg) rotateX(6deg)}55%{transform:rotateY(10deg) rotateX(-4deg)}100%{transform:rotateY(-8deg) rotateX(5deg)}}
 .qr .code{width:460px;height:460px;margin:0 auto;display:grid;place-items:center;font-size:30px;font-weight:700}
 .qr .code img,.qr .code canvas{width:460px!important;height:460px!important;image-rendering:pixelated}
@@ -280,7 +280,7 @@ body.idle{cursor:none}
 @keyframes spotsway{from{transform:rotateY(-10deg) rotateX(6deg)}to{transform:rotateY(10deg) rotateX(-5deg)}}
 .spot img{width:100%;height:100%;object-fit:cover}
 .spot img.png{object-fit:contain;padding:8%}
-.on .spot img{animation:kb 8s ease-out both}
+.on .spot img{animation:kb 15s ease-out both}
 @keyframes kb{from{transform:scale(1.35) rotate(-6deg)}to{transform:scale(1.05) rotate(2deg)}}
 .star{position:absolute;right:90px;top:640px;width:300px;height:300px;z-index:5;display:grid;place-items:center;color:#3a2800;text-align:center}
 .star svg{position:absolute;inset:0;width:100%;height:100%;filter:drop-shadow(0 16px 20px rgba(0,0,0,.35));animation:spin 14s linear infinite}
@@ -373,12 +373,12 @@ const SLIDES0=[
    <div class="ringw"><div class="ring">${it.map((m,i)=>`<div class="card" style="transform:rotateY(${i*360/n}deg) translateZ(${r}px)">${m.best?'<span class="badge">Best seller</span>':''}<div class="ph${isPng(m)?' png':''}" style="background-image:url('${photo(m)}')"></div><div class="tx"><h3>${esc(m.name)}</h3><div class="price">${priceOf(m)}</div></div></div>`).join('')}</div></div>
    <div class="now"></div>`},
   enter(el){this.step=-1},
-  tick(el,t){const n=this.items.length;if(!n)return;const s=Math.max(0,Math.floor((t-.8)/(11.5/n)));if(s===this.step)return;this.step=s;
+  tick(el,t){const n=this.items.length;if(!n)return;const s=Math.max(0,Math.floor((t-.8)/((SHOW-2)/n)));if(s===this.step)return;this.step=s;
    const ring=el.querySelector('.ring'),i=s%n;ring.style.transform=`translateZ(${-this.r}px) rotateX(-6deg) rotateY(${-s*360/n}deg)`;
    el.querySelectorAll('.card').forEach((c,j)=>c.classList.toggle('front',j===i));const m=this.items[i];
    el.querySelector('.now').innerHTML=`<span class="nw">${esc(m.desc||m.name)}</span>`}},
- {k:'pizza',t:11,make(){return build('pizza')},tick(el,t){buildTick(el,t,[.9,2.4,3.9,5.4,7.2])}},
- {k:'garlic',t:11,make(){return build('garlic')},tick(el,t){buildTick(el,t,[.9,2.4,3.9,5.4,7.2])}},
+ {k:'pizza',t:11,make(){return build('pizza')},tick(el,t){buildTick(el,t,[1.5,3.8,6.1,8.4,10.7])}},
+ {k:'garlic',t:11,make(){return build('garlic')},tick(el,t){buildTick(el,t,[1.5,3.8,6.1,8.4,10.7])}},
  {k:'best',t:10,ok:()=>bestItems().length,make(){const b=bestItems();return`<div class="bigword anton">Best sellers</div>
    <div class="head"><div class="kick rise" style="--d:.1s">Everyone's favourites</div><div class="h1 anton">${letters('Our best sellers')}</div></div>
    <div class="grid" style="--n:${b.length}">${b.map((m,i)=>`<div class="bcard" style="--i:${i}"><div class="ph${isPng(m)?' png':''}" style="background-image:url('${photo(m)}')"><span class="rib">Best seller</span></div><div class="tx"><h3>${esc(m.name)}</h3><p>${esc(m.desc||'')}</p><div class="price">${priceOf(m)}</div></div></div>`).join('')}</div>`}},
@@ -496,7 +496,7 @@ function playStep(el,t){if(!PL.eng||!window.Matter){if(window.Matter&&!PL.eng)pl
     x.save();x.translate(b.position.x,b.position.y);x.rotate(b.angle);x.shadowColor='rgba(0,0,0,.4)';x.shadowBlur=18;x.shadowOffsetY=9;x.drawImage(s,-w/2,-h/2+dy,w,h);x.restore()})}
 
 /* ---------- 3D transitions between slides ---------- */
-const E='cubic-bezier(.65,0,.35,1)',DUR=2000;
+const E='cubic-bezier(.65,0,.35,1)',DUR=4000,SHOW=15; // a change takes 4s; each slide stays 15s
 const FX=[
  // cube turning left
  [[{transformOrigin:'100% 50%',transform:'translateX(0) rotateY(0)'},{transformOrigin:'100% 50%',transform:'translateX(-100%) rotateY(-90deg)',filter:'brightness(.4)'}],
@@ -550,7 +550,7 @@ function drip(){const d=$('#drip');
 
 function loop(now){requestAnimationFrame(loop);const s=order[idx];if(!s)return;
   if(paused){startAt+=now-(loop.last||now)}loop.last=now;
-  const t=(now-startAt)/1000/SPEED,dur=s.t;
+  const t=(now-startAt)/1000/SPEED,dur=SHOW;
   bar.style.width=Math.min(100,t/dur*100).toFixed(2)+'%';
   if(s.tick)s.tick(s.el,t);
   // the slide that is leaving keeps moving until it is out of sight, so nothing freezes mid-turn
