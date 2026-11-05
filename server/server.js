@@ -200,6 +200,9 @@ function createApp(store) {
   /* ----- site ----- */
   app.use('/img', express.static(path.join(ROOT, 'img')));
   app.get('/', (req, res) => res.sendFile(path.join(ROOT, 'index.html')));
+  // Full-screen menu slideshow for a TV in the shop (same app, opens straight into the slideshow)
+  app.get('/tv', (req, res) => res.sendFile(path.join(ROOT, 'index.html')));
+  app.get('/tv/', (req, res) => res.redirect(301, '/tv'));
 
   app.use((err, req, res, next) => { console.error(err); res.status(500).json({ error: 'Server error' }); });
   return app;
