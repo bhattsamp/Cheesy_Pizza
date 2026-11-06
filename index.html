@@ -944,6 +944,40 @@ html:has(#modalRoot:not(:empty)),html:has(#boardRoot:not(:empty)),html:has(#choo
   .lrm{width:26px}
   .paybig b{font-size:26px}
 }
+/* ===== POS layout: sections in one bar across the top that scrolls sideways; on wider
+   screens the item categories sit in a column on the right of the menu ===== */
+:root{--navh:0px}
+html:has(body:not(.pubmode) .pos){scroll-padding-top:calc(env(safe-area-inset-top,0px) + var(--toph,61px) + var(--navh) + 8px)}
+.pos{display:block;max-width:none}
+.pos .side{display:flex;height:auto;align-self:auto;position:sticky;top:calc(env(safe-area-inset-top,0px) + var(--toph,61px));z-index:8;flex-direction:row;align-items:center;gap:4px;padding:6px 10px;border-right:0;border-bottom:1px solid var(--line);overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain;scrollbar-width:thin;-webkit-overflow-scrolling:touch;box-shadow:0 4px 14px -12px rgba(0,0,0,.35)}
+.pos .side button{flex:none;flex-direction:row;justify-content:flex-start;gap:7px;padding:9px 13px;font-size:14px;line-height:1.2;white-space:nowrap;text-align:left;position:relative}
+.pos .side button svg{width:18px;height:18px}
+.pos .side .cnt{position:static;margin:0 0 0 2px;font-size:11px;padding:0 7px}
+.pos .side-foot{flex:none;flex-direction:row;align-items:center;margin:0 0 0 auto;padding:0 0 0 14px;gap:6px;white-space:nowrap}
+.pos .side-foot>span{display:inline}
+.pos .side-foot .sdemo{display:none}
+.pos .side-foot .btn.sm{font-size:12px;padding:6px 10px;white-space:nowrap}
+.mobnav{display:none!important}
+.mbar{top:calc(env(safe-area-inset-top,0px) + var(--toph,61px) + var(--navh))}
+.catrail{display:none}
+@media (max-width:760px){
+  .pos .side{padding:6px 8px}
+  .pos .side button{padding:8px 11px;font-size:13px}
+  .pos .side-foot>span{display:none}
+  .main{padding-bottom:24px}
+}
+@media (min-width:761px){
+  .menucol{display:grid;grid-template-columns:minmax(0,1fr) clamp(118px,11vw,150px);gap:10px;align-items:start}
+  .menucol>.mbar{grid-column:1/-1;margin-bottom:0}
+  .menucol>.mbar .cats{display:none}
+  .menucol>.mbar .msearch{flex:1 1 auto}
+  .catrail{display:flex;flex-direction:column;gap:3px;padding:6px;position:sticky;top:calc(var(--toph,61px) + var(--navh) + 70px);max-height:calc(100vh - var(--toph,61px) - var(--navh) - 84px);overflow-y:auto;overscroll-behavior:contain}
+  .catrail button{border:0;background:transparent;text-align:left;padding:10px 12px;border-radius:10px;font-weight:700;color:var(--muted);line-height:1.2}
+  .catrail button[aria-pressed="true"]{background:var(--teal-soft);color:var(--teal)}
+}
+@media (min-width:761px) and (min-height:540px){
+  .pos .ticket.order{top:calc(var(--toph,61px) + var(--navh) + 12px);max-height:var(--tkh,calc(100vh - var(--toph,61px) - var(--navh) - 24px))}
+}
 #printRoot{display:none}
 @media print{body>*:not(#printRoot){display:none!important}#printRoot{display:block!important}#printRoot pre{font:12px/1.3 "Courier New",monospace;margin:0;white-space:pre}@page{margin:4mm}}
 </style>
@@ -2387,22 +2421,29 @@ function render(){
   const th=document.querySelector('.top')?.offsetHeight;if(th)document.documentElement.style.setProperty('--toph',th+'px');
   const vk=S.mode+'|'+(S.mode==='public'?U.pubView+'|'+(U.accTab||''):'');U.enter=vk!==U.lastView;U.lastView=vk;
   // Keep the scroll position of panes that scroll on their own (POS menu, order ticket) across re-renders
-  const ks={};app.querySelectorAll('[data-ks]').forEach(el=>{ks[el.dataset.ks]=el.scrollTop});
+  const ks={};app.querySelectorAll('[data-ks]').forEach(el=>{ks[el.dataset.ks]=[el.scrollTop,el.scrollLeft]});
   app.innerHTML=S.mode==='public'?pubNav()+(U.pubView==='account'&&me()?renderAccount():U.pubView==='auth'&&!me()?renderAuth():U.pubView==='home'?renderHome():renderPublic()):renderPOS();renderAcct();
-  app.querySelectorAll('[data-ks]').forEach(el=>{const v=ks[el.dataset.ks];if(v)el.scrollTop=v});
-  renderChrome();renderBoard();renderRing();afterRender();navTrack();fitTicket();
+  app.querySelectorAll('[data-ks]').forEach(el=>{const v=ks[el.dataset.ks];if(v){el.scrollTop=v[0];el.scrollLeft=v[1]}});
+  renderChrome();renderBoard();renderRing();afterRender();navTrack();sideBar();fitTicket();
 }
 // POS terminals and tablets: the order ticket fills the space from its top to the bottom of the
 // screen, so totals and the Bill buttons stay in view while the menu scrolls beside it
+// Height of the POS section bar, so sticky panes sit below it; keeps the current section in view
+function sideBar(){
+  const sd=app.querySelector('.pos .side');document.documentElement.style.setProperty('--navh',(sd?sd.offsetHeight:0)+'px');
+  const on=sd&&sd.querySelector('[aria-current="page"]');if(!on||U.sideFor===U.pos.tab)return;U.sideFor=U.pos.tab;
+  const l=on.offsetLeft,r=l+on.offsetWidth;if(l<sd.scrollLeft||r>sd.scrollLeft+sd.clientWidth)sd.scrollLeft=Math.max(0,l-sd.clientWidth/2+on.offsetWidth/2);
+}
 function fitTicket(){
   const tk=document.getElementById('ticket');if(!tk)return;
   if(getComputedStyle(tk).position!=='sticky'){tk.style.removeProperty('--tkh');return}
   const th=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--toph'))||60;
-  const top=Math.max(tk.getBoundingClientRect().top,th+12);
+  const nh=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--navh'))||0;
+  const top=Math.max(tk.getBoundingClientRect().top,th+nh+12);
   tk.style.setProperty('--tkh',Math.max(320,Math.floor(window.innerHeight-top-12))+'px');
 }
 let fitRaf=0;const fitSoon=()=>{if(!fitRaf)fitRaf=requestAnimationFrame(()=>{fitRaf=0;fitTicket()})};
-window.addEventListener('scroll',fitSoon,{passive:true});window.addEventListener('resize',()=>{const th=document.querySelector('.top')?.offsetHeight;if(th)document.documentElement.style.setProperty('--toph',th+'px');fitSoon()});
+window.addEventListener('scroll',fitSoon,{passive:true});window.addEventListener('resize',()=>{const th=document.querySelector('.top')?.offsetHeight;if(th)document.documentElement.style.setProperty('--toph',th+'px');sideBar();fitSoon()});
 // Android Back button (MainActivity calls cpBack): closes an open panel first, then goes back
 // one screen at a time to the home screen; there it answers 'home' and the app asks to close
 const NAV=[];
@@ -3507,6 +3548,7 @@ function vNew(){
         <label class="msearch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input class="inp" id="pos-q" placeholder="Search menu" value="${esc(P.q)}" aria-label="Search menu"></label>
       </div>
       <div class="tiles">${items.map(posTile).join('')||'<div class="empty">No items</div>'}</div>
+      <nav class="card catrail" aria-label="Item categories" data-ks="catrail"><button data-act="poscat" data-v="combo" aria-pressed="${P.cat==='combo'&&!P.q}">Combos</button>${CATS.map(([k,nm])=>`<button data-act="poscat" data-v="${k}" aria-pressed="${P.cat===k&&!P.q}">${nm}</button>`).join('')}</nav>
     </div>
     ${P.cart.length?`<button class="tkjump" data-act="to-ticket"><b class="num">${n} item${n>1?'s':''} · ${rs(t)}</b><span>View order ↓</span></button>`:''}
     <aside class="card ticket order" id="ticket" data-ks="ticket">
