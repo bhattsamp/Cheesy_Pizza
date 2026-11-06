@@ -25,10 +25,11 @@ html,body{height:100%;background:#061e23;overflow:hidden;color:#fff;font-family:
 body.idle{cursor:none}
 #stage{position:absolute;left:50%;top:50%;width:1920px;height:1080px;translate:-50% -50%;overflow:hidden;background:var(--teal);transform-origin:50% 50%}
 .deck{position:absolute;inset:0;perspective:2600px;perspective-origin:50% 45%}
-.sl{position:absolute;inset:0;overflow:hidden;visibility:hidden;backface-visibility:hidden;transform-style:preserve-3d}
-.sl.on,.sl.out{visibility:visible}
-.sl.on{z-index:2}.sl.on.out{z-index:1}
-.sl.out{will-change:transform,opacity}
+.sl{position:absolute;inset:0;overflow:hidden;visibility:hidden;transform-style:preserve-3d}
+/* the slide on screen, the one leaving and the one coming next each keep their own GPU layer the whole
+   time, so the TV never has to build or repaint a layer at the moment a slide changes (that was the flicker) */
+.sl.on,.sl.out,.sl.pre{visibility:visible;backface-visibility:hidden;will-change:transform,opacity}
+.sl.on{z-index:2}.sl.on.out{z-index:1}.sl.pre{z-index:0}
 .anton{font-family:Anton,Impact,sans-serif;font-weight:400;letter-spacing:.01em;text-transform:uppercase;line-height:.9}
 .script{font-family:Courgette,cursive}
 
@@ -48,6 +49,19 @@ body.idle{cursor:none}
 .ticker .tk em{font-style:normal;background:#3a2800;color:var(--gold);padding:0 12px;border-radius:8px}
 @keyframes tick{to{translate:-50% 0}}
 .bar{position:absolute;left:0;bottom:70px;height:8px;z-index:21;background:var(--sea);width:0}
+/* "No Mayonnaise" badge on every slide: a red stamp whose words circle round a crossed out jar */
+.nomayo{position:absolute;right:46px;top:118px;z-index:22;width:230px;height:230px;pointer-events:none;filter:drop-shadow(0 14px 18px rgba(0,0,0,.4))}
+/* it steps aside on the slides where the corner holds the QR code or the map */
+.nomayo{transition:translate 1.2s cubic-bezier(.5,0,.3,1)}
+#stage[data-k=order] .nomayo{translate:-824px 22px}
+#stage[data-k=address] .nomayo{translate:-1124px 622px}
+.nomayo .nm-ring{position:absolute;inset:0;animation:nmspin 14s linear infinite}
+.nomayo .nm-core{position:absolute;inset:34px;border-radius:50%;background:#fff;border:7px solid var(--red);display:grid;place-items:center;animation:nmbeat 2.4s ease-in-out infinite}
+.nomayo .nm-core svg{width:118px;height:118px}
+.nomayo .nm-pop{animation:nmpop .9s cubic-bezier(.3,1.8,.5,1)}
+@keyframes nmspin{to{transform:rotate(360deg)}}
+@keyframes nmbeat{0%,60%,100%{transform:scale(1) rotate(0)}70%{transform:scale(1.14) rotate(-8deg)}80%{transform:scale(.96) rotate(5deg)}90%{transform:scale(1.05) rotate(-2deg)}}
+@keyframes nmpop{from{transform:scale(.3) rotate(-120deg)}}
 .dots{position:absolute;right:56px;bottom:96px;z-index:21;display:flex;gap:10px}
 .dots i{width:14px;height:14px;border-radius:50%;background:rgba(255,255,255,.3);transition:.4s}
 .dots i.on{background:var(--gold);width:40px;border-radius:8px}
@@ -344,6 +358,12 @@ body.idle{cursor:none}
   <div class="brand"><img src="img/logo-stack-light.png" alt="Cheesy Pizza"></div>
   <div class="clock"><span class="pill" id="status">Open now</span><b id="time"></b></div>
   <div class="dots" id="dots"></div>
+  <div class="nomayo" id="nomayo"><div class="nm-pop" id="nmpop" style="position:absolute;inset:0">
+    <svg class="nm-ring" viewBox="0 0 230 230"><circle cx="115" cy="115" r="113" fill="#d23f35"/><circle cx="115" cy="115" r="104" fill="none" stroke="#ffd76a" stroke-width="3" stroke-dasharray="6 7"/>
+      <defs><path id="nmc" d="M115 115m-86 0a86 86 0 1 1 172 0a86 86 0 1 1-172 0"/></defs>
+      <text font-family="Anton,Impact,sans-serif" font-size="25" letter-spacing="2.6" fill="#fff"><textPath href="#nmc">NO MAYONNAISE ★ NO MAYONNAISE ★</textPath></text></svg>
+    <div class="nm-core"><svg viewBox="0 0 120 120"><rect x="36" y="22" width="48" height="14" rx="4" fill="#e7a91e"/><path d="M33 40h54a6 6 0 0 1 6 6v50a10 10 0 0 1-10 10H37a10 10 0 0 1-10-10V46a6 6 0 0 1 6-6z" fill="#fff6d8" stroke="#3a2800" stroke-width="4"/><rect x="34" y="58" width="52" height="24" rx="5" fill="#f2b632"/><text x="60" y="76" text-anchor="middle" font-family="Anton,Impact,sans-serif" font-size="17" fill="#3a2800">MAYO</text><circle cx="60" cy="60" r="54" fill="none" stroke="#d23f35" stroke-width="10"/><path d="M22 22L98 98" stroke="#d23f35" stroke-width="10" stroke-linecap="round"/></svg></div>
+  </div></div>
   <div class="bar" id="bar"></div>
   <div class="ticker"><div class="tk" id="tk"></div></div>
   <div class="tapme" id="tapme">Tap anywhere for full screen</div>
@@ -590,21 +610,26 @@ function playStep(el,t){if(!PL.eng||!window.Matter){if(window.Matter&&!PL.eng)pl
 const E='cubic-bezier(.65,0,.35,1)';let DUR=4000,SHOW=15; // set from the owner's settings in rebuild()
 const FX=[
  // cube turning left
- [[{transformOrigin:'100% 50%',transform:'translateX(0) rotateY(0)'},{transformOrigin:'100% 50%',transform:'translateX(-100%) rotateY(-90deg)',filter:'brightness(.4)'}],
-  [{transformOrigin:'0% 50%',transform:'translateX(100%) rotateY(90deg)',filter:'brightness(.4)'},{transformOrigin:'0% 50%',transform:'translateX(0) rotateY(0)',filter:'brightness(1)'}]],
+ [[{transformOrigin:'100% 50%',transform:'translateX(0) rotateY(0)'},{transformOrigin:'100% 50%',transform:'translateX(-100%) rotateY(-90deg)'}],
+  [{transformOrigin:'0% 50%',transform:'translateX(100%) rotateY(90deg)'},{transformOrigin:'0% 50%',transform:'translateX(0) rotateY(0)'}]],
  // zoom through
- [[{transform:'scale(1)',opacity:1},{transform:'scale(1.8) translateZ(400px)',opacity:0,filter:'blur(12px)'}],
+ [[{transform:'scale(1)',opacity:1},{transform:'scale(1.8) translateZ(400px)',opacity:0}],
   [{transform:'translateZ(-1800px) rotateX(25deg) rotateZ(-8deg)',opacity:0},{transform:'none',opacity:1}]],
  // cube rolling up
- [[{transformOrigin:'50% 0%',transform:'translateY(0) rotateX(0)'},{transformOrigin:'50% 0%',transform:'translateY(-100%) rotateX(90deg)',filter:'brightness(.4)'}],
-  [{transformOrigin:'50% 100%',transform:'translateY(100%) rotateX(-90deg)',filter:'brightness(.4)'},{transformOrigin:'50% 100%',transform:'translateY(0) rotateX(0)',filter:'brightness(1)'}]],
+ [[{transformOrigin:'50% 0%',transform:'translateY(0) rotateX(0)'},{transformOrigin:'50% 0%',transform:'translateY(-100%) rotateX(90deg)'}],
+  [{transformOrigin:'50% 100%',transform:'translateY(100%) rotateX(-90deg)'},{transformOrigin:'50% 100%',transform:'translateY(0) rotateX(0)'}]],
  // door swing
  [[{transformOrigin:'0% 50%',transform:'rotateY(0)'},{transformOrigin:'0% 50%',transform:'rotateY(-100deg)',opacity:0}],
   [{transform:'translateZ(-900px) rotateY(50deg)',opacity:0},{transform:'none',opacity:1}]],
 ];
 
 const deck=$('#deck'),bar=$('#bar'),dots=$('#dots');
-let order=[],idx=-1,leaving=null,leaveAt=0,startAt=0,paused=false,timer=0,fxN=0,needsRebuild=true;
+let order=[],idx=-1,leaving=null,leaveAt=0,startAt=0,paused=false,timer=0,fxN=0,needsRebuild=true,preEl=null;
+// a second before a change, lay the next slide ready behind the current one and decode its photos,
+// so its first frame on screen is already painted
+function prep(s){if(!s||!s.el||s.el===preEl||s.el.classList.contains('on'))return;unprep();preEl=s.el;preEl.classList.add('pre');
+  preEl.querySelectorAll('img').forEach(i=>{if(i.decode)i.decode().catch(()=>{})})}
+function unprep(){if(preEl)preEl.classList.remove('pre');preEl=null}
 
 function rebuild(){needsRebuild=false;
   // the slide on screen stays until it has moved away, so a change from Admin never cuts the picture
@@ -614,7 +639,7 @@ function rebuild(){needsRebuild=false;
   order=all.filter(s=>!hide[s.key]&&(!s.ok||s.ok())).sort((a,b)=>pos(a)-pos(b));
   if(!order.length)order=[SLIDES[0]];
   order.forEach(s=>{const el=document.createElement('section');el.className='sl s-'+s.k+(s.k==='pizza'||s.k==='garlic'?' s-build':'')+(s.k==='garlic'?' gb':'')+(s.k==='custom'?' s-spot':'');el.innerHTML=s.make();s.el=el;deck.appendChild(el)});
-  document.querySelector('.ticker').style.display=c.ticker===false?'none':'';$('#bar').style.bottom=c.ticker===false?'0':'';
+  document.querySelector('.ticker').style.display=c.ticker===false?'none':'';$('#nomayo').style.display=c.nomayo===false?'none':'';$('#bar').style.bottom=c.ticker===false?'0':'';
   dots.innerHTML=order.map(()=>'<i></i>').join('');
   const tk=live().map(m=>`<span>${esc(m.name)} <em>₹${m.prices?Math.min(...Object.values(m.prices)):m.price}</em></span>`).join('');
   const msg=c.tickerMsg&&c.tickerMsg.trim()?`<span>★ ${esc(c.tickerMsg.trim())} ★</span>`:'';
@@ -624,7 +649,7 @@ function rain(){const r=$('#rain');r.innerHTML=ING.map(()=>`<img src="${ING[Math
 
 function go(n){
   const prev=order[idx],pe=prev&&prev.el; // the element on screen now, even if a rebuild replaces it
-  if(needsRebuild){rebuild();n=0;idx=-1}
+  if(needsRebuild){unprep();rebuild();n=0;idx=-1}
   else if(n>=order.length||n<0)n=(n+order.length)%order.length;
   const next=order[n];if(!next)return;idx=n;
   const moving=pe&&pe.isConnected&&pe!==next.el;
@@ -632,15 +657,17 @@ function go(n){
   if(curtain){ // cheese drips down over the screen, the slide changes behind it, and it slides away
     leaving=prev;leaveAt=startAt;drip();setTimeout(()=>{if(pe!==next.el)pe.classList.remove('on');if(leaving===prev)leaving=null;show(next,n,null)},DUR*.49);startAt=performance.now()+DUR*.49;return}
   if(moving){leaving=prev;leaveAt=startAt;pe.classList.add('out');
-    pe.animate(fx[0],opt).onfinish=()=>{pe.classList.remove('out');if(order[idx].el!==pe)pe.classList.remove('on');if(leaving===prev)leaving=null}}
+    pe.getAnimations().forEach(a=>a.cancel());const a=pe.animate(fx[0],{...opt,fill:'forwards'});
+    a.onfinish=()=>{if(order[idx].el!==pe)pe.classList.remove('on');pe.classList.remove('out');if(leaving===prev)leaving=null;a.cancel()}}
   show(next,n,fx[1])}
 function show(next,n,fxIn){const opt={duration:DUR,easing:E,fill:'none'};
-  const el=next.el;el._s=null;el.classList.remove('on');void el.offsetWidth;el.classList.add('on');
+  const el=next.el;el._s=null;el.getAnimations().forEach(a=>a.cancel());if(preEl&&preEl!==el)unprep();preEl=null;el.classList.remove('on','pre','out');void el.offsetWidth;el.classList.add('on');
   // clear what the last pass built so it plays again from the start
   el.querySelectorAll('.go,.fade,.front').forEach(x=>x.classList.remove('go','fade','front'));
   if(fxIn)el.animate(fxIn,opt);if(next.enter)next.enter(el);
   if(fxN%3===0)rain();
   dots.querySelectorAll('i').forEach((d,i)=>d.classList.toggle('on',i===n));
+  $('#stage').dataset.k=next.k;const np=$('#nmpop');np.classList.remove('nm-pop');void np.offsetWidth;np.classList.add('nm-pop');
   startAt=performance.now()}
 
 function drip(){const d=$('#drip');
@@ -655,6 +682,7 @@ function loop(now){requestAnimationFrame(loop);const s=order[idx];if(!s)return;
   if(s.tick)s.tick(s.el,t);
   // the slide that is leaving keeps moving until it is out of sight, so nothing freezes mid-turn
   if(leaving&&leaving!==s&&leaving.tick)leaving.tick(leaving.el,(now-leaveAt)/1000/SPEED);
+  if(!paused&&!leaving&&!needsRebuild&&t>=dur-1.2&&order.length>1)prep(order[(idx+1)%order.length]);
   if(t>=dur&&!paused)go(idx+1)}
 
 function clock(){const n=new Date();$('#time').textContent=n.toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'});
