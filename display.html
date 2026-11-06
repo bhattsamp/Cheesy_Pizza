@@ -119,7 +119,7 @@ body.idle{cursor:none}
 .card h3{font-size:40px;line-height:1.05;font-weight:800}
 .card .price{font-size:40px;color:var(--sea);margin-top:6px}
 .card .badge{position:absolute;top:18px;left:18px;background:var(--gold);color:#3a2800;font-weight:800;font-size:22px;padding:4px 16px 0;border-radius:99px}
-.s-ring .now{position:absolute;left:200px;right:200px;bottom:104px;text-align:center;font-size:48px;font-weight:700;color:#fff;min-height:70px}
+.s-ring .now{position:absolute;left:200px;right:200px;bottom:92px;font-size:38px!important;line-height:1.2;text-align:center;font-size:48px;font-weight:700;color:#fff;min-height:70px}
 .s-ring .now .price{color:var(--gold)}
 .s-ring .nw{display:inline-block;animation:nw .8s .3s cubic-bezier(.3,1,.4,1) both}
 @keyframes nw{from{opacity:0;transform:translateY(24px)}}
@@ -298,6 +298,33 @@ body.idle{cursor:none}
 .drip svg{position:absolute;inset:0;width:100%;height:100%}
 .drip img{position:relative;width:340px;margin-top:-200px;filter:drop-shadow(0 20px 30px rgba(120,60,0,.4))}
 
+/* 12 address: the drawn map from the home page, tilting in 3D, with the address and a QR for directions */
+.s-address{background:radial-gradient(circle at 70% 50%,#14606e,#0b3a43 65%)}
+.s-address .copy{position:absolute;left:110px;top:190px;width:760px;z-index:3}
+.s-address .h1{font-size:150px;color:#fff}
+.s-address .addr{font-size:46px;font-weight:700;line-height:1.25;margin-top:26px;color:#fff}
+.s-address .ph{font-size:40px;font-weight:800;color:var(--gold);margin-top:14px}
+.s-address .dir{display:flex;align-items:center;gap:24px;margin-top:34px}
+.s-address .mq{width:170px;height:170px;background:#fff;border-radius:18px;padding:12px;display:grid;place-items:center;font-size:14px;color:var(--ink)}
+.s-address .mq img,.s-address .mq canvas{width:146px!important;height:146px!important}
+.s-address .dir b{font-size:34px;line-height:1.2}
+.mapw{position:absolute;right:90px;top:150px;width:960px;height:672px;perspective:1800px;z-index:2}
+.mapc{position:absolute;inset:0;border-radius:34px;overflow:hidden;border:14px solid rgba(255,248,236,.3);background:#FFF8EC;box-shadow:0 50px 80px rgba(0,0,0,.45)}
+.on .mapc{animation:mapin 1.6s .2s cubic-bezier(.3,1.2,.5,1) both,mapsway 9s 1.8s ease-in-out infinite alternate}
+@keyframes mapin{from{opacity:0;transform:rotateX(70deg) translateY(200px) scale(.7)}to{opacity:1;transform:rotateX(18deg)}}
+@keyframes mapsway{from{transform:rotateX(18deg) rotateZ(-2deg)}to{transform:rotateX(8deg) rotateZ(2deg) rotateY(-6deg)}}
+.mapc>svg{position:absolute;inset:0;width:100%;height:100%}
+.mlab{position:absolute;translate:-50% -50%;display:inline-flex;align-items:center;gap:8px;background:#2B9FA8;color:#FFF8EC;font-weight:800;font-size:22px;letter-spacing:.06em;text-transform:uppercase;padding:6px 18px 3px;border-radius:999px;white-space:nowrap;box-shadow:0 5px 0 rgba(8,42,49,.25)}
+.mlab::before{content:"";width:12px;height:12px;border-radius:50%;background:#F2B632}
+.on .mlab{animation:pop .6s calc(1.4s + var(--i) * .15s) cubic-bezier(.3,2,.5,1) both}
+.mhere{position:absolute;left:27%;top:36%;rotate:-6deg;background:#F2B632;color:#3a2800;border-radius:16px;padding:8px 22px 10px;box-shadow:0 8px 0 rgba(8,42,49,.2);line-height:1;text-align:center}
+.mhere b{display:block;font-family:Courgette,cursive;font-size:48px;font-weight:400}
+.mhere small{font-weight:800;letter-spacing:.08em;text-transform:uppercase;font-size:18px}
+.mpin{position:absolute;left:53.75%;top:53%;width:15%;translate:-50% -96%;filter:drop-shadow(0 10px 10px rgba(0,0,0,.3))}
+.on .mpin{animation:pindrop 1s 1s cubic-bezier(.3,1.6,.5,1) both,pinb 1s 2s ease-in-out infinite alternate}
+@keyframes pindrop{from{transform:translateY(-500px);opacity:0}to{transform:none;opacity:1}}
+@keyframes pinb{to{transform:translateY(-22px)}}
+
 /* confetti of ingredients that rains between slides */
 .rain{position:absolute;inset:0;z-index:15;pointer-events:none;overflow:hidden}
 .rain img{position:absolute;top:-200px;width:120px;animation:rain 1.6s cubic-bezier(.4,0,.8,.6) both}
@@ -347,11 +374,17 @@ const isPng=m=>!m.img;
 const outlet=()=>{const o=D.outlets||[];return o.find(x=>x.id===Q.get('outlet'))||o[0]||{}};
 const hours=()=>{const o=outlet();return[+o.openHour||+D.config.openHour||12,+o.closeHour||+D.config.closeHour||22]};
 const live=()=>(D.menu||[]).filter(m=>!m.off);
+// The owner's settings from Admin → Shop display, kept on the outlet: timing, slide order and on/off,
+// words on each slide, spotlight items, the ticker and their own slides
+const CFG=()=>outlet().display||{};
+const WORDS=t=>t.split('|').map(l=>l.trim().split(/\s+/).map(w=>`<span style="display:inline-block;white-space:nowrap">${letters(w)}</span>`).join(' ')).join('<br>');
+const KK=(k,d)=>{const v=(((CFG().text||{})[k])||{}).kick;return v&&v.trim()?esc(v):d};
+const TT=(k,d)=>{const v=(((CFG().text||{})[k])||{}).title;return v&&v.trim()?WORDS(v):d};
 
 /* ---------- slides ---------- */
 const SLIDES0=[
  {k:'hero',t:9,make(){return`<div class="rays" style="--rx:1440px;--ry:550px"></div>${bokeh(10)}<div class="glow" style="width:900px;height:900px;right:60px;top:90px;background:#f2b632;opacity:.25"></div>${sparkles(7,1000,1820,140,900)}
-   <div class="copy"><div class="kick rise" style="--d:.1s">Fresh from our oven</div><div class="h1 anton shine">${letters('Cheesy')}</div>
+   <div class="copy"><div class="kick rise" style="--d:.1s">${KK('hero','Fresh from our oven')}</div><div class="h1 anton shine">${TT('hero',letters('Cheesy'))}</div>
    <div class="sub script rise" style="--d:.9s">Ekdum cheesy pizza!</div>
    <div class="tags rise" style="--d:1.2s"><b>Pizza</b><b>Garlic bread</b><b>Pockets</b><b>Fries</b></div></div>
    <div class="pzw"><div class="pz3"><div class="plate"></div><img src="img/hero-pizza.webp" alt=""></div><div class="orbit">${ING.slice(0,8).map(s=>`<img src="${s}" alt="">`).join('')}</div></div>`},
@@ -359,7 +392,7 @@ const SLIDES0=[
    imgs.forEach((im,i)=>{const a=t*.45+i/n*Math.PI*2,x=Math.cos(a)*470,z=Math.sin(a),y=Math.sin(a)*170-40+Math.sin(t*1.3+i)*30,s=.7+(z+1)*.35;
     im.style.transform=`translate(${cx+x-75}px,${cy+y-75}px) scale(${s.toFixed(3)}) rotate(${(a*60+i*40)%360}deg)`;im.style.zIndex=z>0?3:0;im.style.opacity=Math.min(1,t*1.2)})}},
  {k:'pull',t:9,make(){return`<div class="rays" style="--rx:1370px;--ry:560px;--ra:.18"></div><div class="bigword anton">Stretch it</div>${sparkles(5,1100,1800,160,900)}
-   <div class="copy"><div class="kick rise" style="--d:.1s;color:#7a4300">The cheese pull</div><div class="h1 anton">${letters('Pull a')}<br>${letters('slice!')}</div>
+   <div class="copy"><div class="kick rise" style="--d:.1s;color:#7a4300">${KK('pull','The cheese pull')}</div><div class="h1 anton">${TT('pull',letters('Pull a')+'<br>'+letters('slice!'))}</div>
    <div class="sub script rise" style="--d:1s">Watch that cheese stretch.</div></div>
    <div class="pullw"><div class="pull-stage"><div class="pull-plate"></div><img class="pull-pz" src="img/hero-pizza.webp" alt="">
    <svg class="pull-svg" viewBox="0 0 100 100" preserveAspectRatio="none"><defs><linearGradient id="pullg" x1="0" x2="1"><stop offset="0" stop-color="#e2a93a"/><stop offset=".35" stop-color="#fff0b0"/><stop offset=".65" stop-color="#f7d670"/><stop offset="1" stop-color="#d49a2c"/></linearGradient></defs><g fill="url(#pullg)"></g><g class="pull-hi" fill="none" stroke="#fffbe6" stroke-linecap="round"></g></svg>
@@ -369,7 +402,7 @@ const SLIDES0=[
    const c=(t-1.2)%3.9,p=t<1.2?0:Math.min(1,c/3.2);st.style.setProperty('--lift',Math.min(1,Math.max(0,(p-.12)*1.6)).toFixed(3));
    st.style.setProperty('--snap',Math.min(1,Math.max(0,(p-.8)*8)).toFixed(3));st.classList.toggle('up',p>.35&&p<.85);pullDraw(st,p)}},
  {k:'ring',t:13,make(){const it=homeItems();this.items=it;const n=it.length,r=Math.max(520,n*105);this.r=r;
-   return`<div class="bigword anton">Ekdum cheesy</div><div class="head"><div class="kick rise" style="--d:.1s">Our signature six</div><div class="h1 anton">${letters('Ekdum cheesy')}</div></div>
+   return`<div class="bigword anton">Ekdum cheesy</div><div class="head"><div class="kick rise" style="--d:.1s">${KK('ring','Our signature six')}</div><div class="h1 anton">${TT('ring',letters('Ekdum cheesy'))}</div></div>
    <div class="ringw"><div class="ring">${it.map((m,i)=>`<div class="card" style="transform:rotateY(${i*360/n}deg) translateZ(${r}px)">${m.best?'<span class="badge">Best seller</span>':''}<div class="ph${isPng(m)?' png':''}" style="background-image:url('${photo(m)}')"></div><div class="tx"><h3>${esc(m.name)}</h3><div class="price">${priceOf(m)}</div></div></div>`).join('')}</div></div>
    <div class="now"></div>`},
   enter(el){this.step=-1},
@@ -380,44 +413,87 @@ const SLIDES0=[
  {k:'pizza',t:11,make(){return build('pizza')},tick(el,t){buildTick(el,t,[1.5,3.8,6.1,8.4,10.7])}},
  {k:'garlic',t:11,make(){return build('garlic')},tick(el,t){buildTick(el,t,[1.5,3.8,6.1,8.4,10.7])}},
  {k:'best',t:10,ok:()=>bestItems().length,make(){const b=bestItems();return`<div class="bigword anton">Best sellers</div>
-   <div class="head"><div class="kick rise" style="--d:.1s">Everyone's favourites</div><div class="h1 anton">${letters('Our best sellers')}</div></div>
+   <div class="head"><div class="kick rise" style="--d:.1s">${KK('best',"Everyone's favourites")}</div><div class="h1 anton">${TT('best',letters('Our best sellers'))}</div></div>
    <div class="grid" style="--n:${b.length}">${b.map((m,i)=>`<div class="bcard" style="--i:${i}"><div class="ph${isPng(m)?' png':''}" style="background-image:url('${photo(m)}')"><span class="rib">Best seller</span></div><div class="tx"><h3>${esc(m.name)}</h3><p>${esc(m.desc||'')}</p><div class="price">${priceOf(m)}</div></div></div>`).join('')}</div>`}},
  {k:'offers',t:10,ok:()=>todayOffers().length,make(){const o=todayOffers(),codes=(D.offers||[]).filter(x=>x.active!==false&&x.type==='code'&&!x.firstOnly&&!x.once).slice(0,2);
-   return`<div class="bigword anton">Today only</div><div class="head"><div class="kick rise" style="--d:.1s;color:#ffd76a">${esc(new Date().toLocaleDateString('en-IN',{weekday:'long'}))} deals</div><div class="h1 anton">${letters("Today's offers")}</div></div>
+   return`<div class="bigword anton">Today only</div><div class="head"><div class="kick rise" style="--d:.1s;color:#ffd76a">${KK('offers',esc(new Date().toLocaleDateString('en-IN',{weekday:'long'}))+' deals')}</div><div class="h1 anton">${TT('offers',letters("Today's offers"))}</div></div>
    <div class="offs">${o.map((x,i)=>`<div class="off" style="--i:${i}"><div class="coin">${x.big}</div><h3>${esc(x.name)}</h3><p>${esc(x.line)}</p></div>`).join('')}</div>
    ${codes.length?`<div class="codes rise" style="--d:1.6s">Use code ${codes.map(c=>`<b>${esc(c.code)}</b>`).join(' or ')} when you order online</div>`:''}`}},
  {k:'combos',t:10,ok:()=>combos().length,make(){const c=combos(),byId=id=>(D.menu||[]).find(m=>m.id===id)||{};
-   return`<div class="bigword anton">Combos</div><div class="head"><div class="kick rise" style="--d:.1s">Bring friends</div><div class="h1 anton">${letters('Combo meals')}</div></div>
+   return`<div class="bigword anton">Combos</div><div class="head"><div class="kick rise" style="--d:.1s">${KK('combos','Bring friends')}</div><div class="h1 anton">${TT('combos',letters('Combo meals'))}</div></div>
    <div class="combos" style="--n:${c.length}">${c.map((x,i)=>{const pics=[...Array(x.pizzas||1)].map((_,j)=>IMG(['margherita','veggieparadise','cheesyspecial'][j%3])).concat((x.extras||[]).map(byId).filter(m=>m.img).map(m=>IMG(m.img)));
     return`<div class="cmb" style="--i:${i}"><div class="stk">${pics.slice(0,4).map(s=>`<img src="${s}" alt="">`).join('')}</div><h3>${esc(x.name)}</h3><p>${esc(x.desc||'')}</p><div class="price">₹${x.price}</div></div>`}).join('')}</div>`}},
  {k:'hours',t:9,make(){const[o,c]=hours();return`<div class="rays" style="--rx:1380px;--ry:520px;--ra:.22"></div><div class="bigword anton">Open daily</div>
-   <div class="copy"><div class="kick rise" style="--d:.1s;color:#7a4300">Come say kem cho</div><div class="h1 anton">${letters('Open')}<br>${letters('every day')}</div>
+   <div class="copy"><div class="kick rise" style="--d:.1s;color:#7a4300">${KK('hours','Come say kem cho')}</div><div class="h1 anton">${TT('hours',letters('Open')+'<br>'+letters('every day'))}</div>
    <div class="sub rise" style="--d:1s">${hrText(o)} to ${hrText(c)}</div><div class="rise" style="--d:1.3s"><span class="pill hp"></span></div></div>
    <div class="discw"><div class="disc"><div><div class="anton">${hr12(o)} to ${hr12(c)}</div><small>Monday to Sunday</small></div></div></div>
    ${['slice-veggie','cold-drink','garlic-stick','tomato-slice','basil','olive'].map((n,i)=>`<img class="fl" src="img/ing/${n}.webp" alt="" style="--d:${i*.4}s;left:${[1000,1680,1080,1720,1300,1500][i]}px;top:${[180,170,800,760,120,880][i]}px">`).join('')}`},
   enter(el){const p=el.querySelector('.hp'),s=openState();p.className='pill hp'+(s.open?'':' shut');p.textContent=s.text}},
  {k:'order',t:10,make(){const o=outlet(),rays='<div class="rays" style="--rx:1500px;--ry:520px"></div>'+bokeh(8),url=location.origin.replace(/^http:\/\/(localhost|127\.)[^/]*/,'https://cheesypizza.online');
-   return`${rays}<div class="copy"><div class="kick rise" style="--d:.1s">Skip the queue</div><div class="h1 anton">${letters('Order')}<br><em>${letters('online')}</em></div>
+   return`${rays}<div class="copy"><div class="kick rise" style="--d:.1s">${KK('order','Skip the queue')}</div><div class="h1 anton">${TT('order',letters('Order')+'<br><em>'+letters('online')+'</em>')}</div>
    <div class="url rise" style="--d:1s">${esc(url.replace(/^https?:\/\//,''))}</div>
    <div class="sub rise" style="--d:1.2s">Scan the code, pick your pizza, pay by UPI${o.phone?` · Call ${esc(o.phone)}`:''}</div></div>
    <div class="qrw"><div class="qr"><div class="code" data-qr="${esc(url)}">${esc(url)}</div><div class="scan"></div><p>Scan to order</p></div></div>`},
   enter(el){const c=el.querySelector('.code');if(c.dataset.done||!window.QRCode)return;c.innerHTML='';try{new QRCode(c,{text:c.dataset.qr,width:460,height:460,colorDark:'#0b3a43',correctLevel:QRCode.CorrectLevel.M});c.dataset.done=1}catch(e){}}},
- {k:'play',t:12,make(){return`<div class="head"><div class="kick rise" style="--d:.1s">Play zone</div><div class="h1 anton" style="font-size:110px;color:#fff">${letters('Come play with your food')}</div></div>
+ {k:'play',t:12,make(){return`<div class="head"><div class="kick rise" style="--d:.1s">${KK('play','Play zone')}</div><div class="h1 anton" style="font-size:110px;color:#fff">${TT('play',letters('Come play with your food'))}</div></div>
    <div class="pbig anton">${letters('Really cheesy')}</div><canvas class="pcv" width="1920" height="1010"></canvas><p class="hint script rise" style="--d:1.6s">Psst… try it on our website!</p>`},
   enter(el){playReset(el)},tick(el,t){playStep(el,t)}},
+
+ {k:'address',t:10,make(){const o=outlet(),a=o.area&&o.area!=='Set your address'?o.area:'B/H Gopi Cinema, Maniyani Khad, Anand, Gujarat',[h1,h2]=hours();
+   const url='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent('Cheesy Pizza, '+a);
+   return`<div class="rays" style="--rx:1370px;--ry:490px;--ra:.07"></div>${bokeh(8)}
+   <div class="copy"><div class="kick rise" style="--d:.1s">${KK('address','Come visit us')}</div><div class="h1 anton">${TT('address',letters('Find us')+'<br>'+letters('here'))}</div>
+   <div class="addr rise" style="--d:.9s">${esc(a)}</div><div class="ph rise" style="--d:1.1s">${o.phone?'Call '+esc(o.phone)+' · ':''}${hrText(h1)} to ${hrText(h2)}</div>
+   <div class="dir rise" style="--d:1.4s"><div class="mq" data-qr="${esc(url)}"></div><b>Scan for<br>directions</b></div></div>
+   <div class="mapw"><div class="mapc">${visitMap()}
+   ${[['Pizza',24,30],['Garlic bread',78,22],['Cold drinks',82,60],['French fries',18,72],['Paneer pockets',60,84],['Dips',88,40]].map(([l,x,y],i)=>`<span class="mlab" style="left:${x}%;top:${y}%;--i:${i}">${l}</span>`).join('')}
+   <div class="mhere"><b>Ahiyā!</b><small>Cheesy Pizza</small></div><img class="mpin" src="img/cheesy-pin.png" alt=""></div></div>`},
+  enter(el){const c=el.querySelector('.mq');if(c.dataset.done||!window.QRCode)return;c.innerHTML='';try{new QRCode(c,{text:c.dataset.qr,width:146,height:146,colorDark:'#0b3a43',correctLevel:QRCode.CorrectLevel.M});c.dataset.done=1}catch(e){}}},
 ];
+// The same drawn map as the home page's visit section (same seed, so the same streets)
+let VISIT_MAP=null;
+function visitMap(){
+  if(VISIT_MAP)return VISIT_MAP;
+  let seed=11;const rnd=()=>(seed=(seed*1103515245+12345)>>>0)/4294967296,f=n=>n.toFixed(1);
+  const W=800,H=560,main=x=>352-x*.12+Math.sin(x/110)*14,canal=x=>178+Math.sin(x/150)*42+x*.05;
+  const sides=[[120,-20,90,600],[300,-20,330,600],[520,-20,470,600],[660,120,760,600],[0,250,240,230],[560,470,800,430],[240,560,330,352]];
+  const near=(x,y)=>Math.abs(y-main(x))<26||Math.abs(y-canal(x))<22||sides.some(([x1,y1,x2,y2])=>{const t=Math.max(0,Math.min(1,((x-x1)*(x2-x1)+(y-y1)*(y2-y1))/((x2-x1)**2+(y2-y1)**2)));return Math.hypot(x-(x1+t*(x2-x1)),y-(y1+t*(y2-y1)))<18});
+  let blocks='';
+  for(let y=14;y<H;y+=24)for(let x=10;x<W;x+=26){
+    const bx=x+rnd()*8,by=y+rnd()*8,w=10+rnd()*12,h=8+rnd()*10;
+    if(rnd()<.18||near(bx+w/2,by+h/2)||Math.hypot(bx-430,by-322)<46)continue;
+    blocks+=`<rect x="${f(bx)}" y="${f(by)}" width="${f(w)}" height="${f(h)}" transform="rotate(${f((rnd()-.5)*24)} ${f(bx+w/2)} ${f(by+h/2)})"/>`;
+  }
+  const path=fn=>{let d='';for(let x=-10;x<=W+10;x+=10)d+=(d?'L':'M')+x+' '+f(fn(x));return d};
+  return VISIT_MAP=`<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <rect width="${W}" height="${H}" fill="#FFF8EC"/>
+    <path d="${path(canal)}" fill="none" stroke="#2BA3B5" stroke-width="10" stroke-linecap="round"/><path d="${path(canal)}" fill="none" stroke="#9ED8E0" stroke-width="3"/>
+    <g fill="#FCE3A6" stroke="#B2533A" stroke-width="1.4">${blocks}</g>
+    <g fill="none" stroke="#B2533A" stroke-linecap="round">${sides.map(([a,b,c,d])=>`<path d="M${a} ${b}L${c} ${d}" stroke-width="3"/>`).join('')}</g>
+    <path d="${path(main)}" fill="none" stroke="#B2533A" stroke-width="9" stroke-linecap="round"/><path d="${path(main)}" fill="none" stroke="#F2B632" stroke-width="2.2" stroke-dasharray="10 9"/>
+    <ellipse cx="430" cy="${f(main(430)+6)}" rx="46" ry="15" fill="none" stroke="#E2432A" stroke-width="3" opacity=".55"/>
+  </svg>`;
+}
+
 // one full-screen spotlight after every couple of sections, each on a different item
 const SPOT_BG=['radial-gradient(circle at 72% 48%,#e85a4f,#a5241b 70%)','radial-gradient(circle at 72% 48%,#2bb3c8,#0d5f6d 70%)','radial-gradient(circle at 72% 48%,#ffcf5a,#d48f12 72%)','radial-gradient(circle at 72% 48%,#1f8a8a,#0b3a43 70%)'];
-const spotSlide=i=>({k:'spot',t:7,ok:()=>homeItems().length>i,make(){const m=homeItems()[i],long=m.name.length>13;
+const spotItem=i=>{const id=(CFG().spots||[])[i];return(id&&live().find(m=>m.id===id))||homeItems()[i]};
+const spotSlide=i=>({k:'spot',key:'spot'+i,t:7,ok:()=>!!spotItem(i),make(){const m=spotItem(i),long=m.name.length>13;
   return`<div class="rays" style="--rx:1550px;--ry:520px;--ra:.14"></div>${bokeh(9)}
-   <div class="copy"><div class="kick rise" style="--d:.1s;color:#fff">${m.best?'Best seller':['Must try','Ekdum cheesy','Fresh and hot','Our favourite'][i%4]}</div>
+   <div class="copy"><div class="kick rise" style="--d:.1s;color:#fff">${KK('spot'+i,m.best?'Best seller':['Must try','Ekdum cheesy','Fresh and hot','Our favourite'][i%4])}</div>
    <div class="h1 anton" style="--fs:${long?120:170}px">${m.name.split(' ').map(w=>`<span style="display:inline-block;white-space:nowrap">${letters(w)}</span>`).join(' ')}</div>
    <div class="desc rise" style="--d:1s">${esc(m.desc||'')}</div><div class="cta">Order now at the counter</div></div>
    <div class="spotw"><div class="spot"><img class="${m.img?'':'png'}" src="${photo(m)}" alt=""></div><div class="steam">${[0,1,2].map(j=>`<i style="left:${35+j*12}%;animation-delay:${j*.6}s"></i>`).join('')}</div></div>
    ${sparkles(6,1050,1820,120,900)}
    <div class="star"><svg viewBox="0 0 100 100"><polygon fill="${i%4===2?'#d23f35':'#F2B632'}" stroke="#fff" stroke-width="2.5" points="${starPts()}"/></svg><b style="${i%4===2?'color:#fff':''}">${m.prices?`<small>from</small>₹${Math.min(...Object.values(m.prices).map(Number))}`:`₹${m.price}`}</b></div>`},
   enter(el){el.style.setProperty('--bg',SPOT_BG[i%SPOT_BG.length])}});
-const SLIDES=[];SLIDES0.forEach(s=>{SLIDES.push(s);const at={hero:0,ring:1,garlic:2,combos:3}[s.k];if(at!=null)SLIDES.push(spotSlide(at))});
+const customSlide=c=>({k:'custom',key:'c_'+c.id,make(){const t=c.title||'';
+  return`<div class="rays" style="--rx:${c.img?1550:960}px;--ry:520px;--ra:.14"></div>${bokeh(9)}
+   <div class="copy"${c.img?'':' style="width:1680px;text-align:center;top:300px"'}><div class="kick rise" style="--d:.1s;color:#fff">${esc(c.kick||'')}</div>
+   <div class="h1 anton" style="--fs:${t.length>13&&c.img?120:170}px">${WORDS(t)}</div><div class="desc rise" style="--d:1s;${c.img?'':'max-width:none'}">${esc(c.text||'')}</div></div>
+   ${c.img?`<div class="spotw"><div class="spot"><img src="${esc(c.img)}" alt=""></div></div>`:''}${sparkles(6,c.img?1050:200,1820,120,900)}`},
+  enter(el){el.style.setProperty('--bg',SPOT_BG[(+c.bg||0)%SPOT_BG.length])}});
+const SLIDES=[];SLIDES0.forEach(s=>{s.key=s.key||s.k;SLIDES.push(s);const at={hero:0,ring:1,garlic:2,combos:3}[s.k];if(at!=null)SLIDES.push(spotSlide(at))});
 function starPts(){let p=[];for(let i=0;i<24;i++){const r=i%2?40:50,a=i/24*Math.PI*2;p.push((50+Math.cos(a)*r).toFixed(1)+','+(50+Math.sin(a)*r).toFixed(1))}return p.join(' ')}
 function sparkles(n,x0,x1,y0,y1){return[...Array(n)].map((_,i)=>`<i class="spk" style="left:${x0+Math.random()*(x1-x0)|0}px;top:${y0+Math.random()*(y1-y0)|0}px;--z:${30+Math.random()*40|0}px;--d:${(i*.37).toFixed(2)}s"></i>`).join('')}
 function bokeh(n){return[...Array(n)].map((_,i)=>{const z=60+Math.random()*180|0;return`<i class="bokeh" style="width:${z}px;height:${z}px;left:${Math.random()*1800|0}px;top:${Math.random()*900|0}px;--t:${6+Math.random()*6|0}s;--d:-${Math.random()*6|0}s;--bx:${(Math.random()*200-100)|0}px"></i>`}).join('')}
@@ -441,7 +517,7 @@ const BUILD={
   layers:['dough','sauce','cheese','toppings'].map(k=>`<img class="ly" src="img/build/${k}.webp" alt="">`).join('')+`<img class="ly baked" src="img/hero-pizza.webp" alt="">`},
  garlic:{title:'Garlic bread',steps:['Fresh dough','Garlic butter','Loads of cheese','Baked and sliced','Hot to your table'],
   layers:['dough','butter','cheese','baked'].map(k=>`<img class="ly" src="img/build/gb-${k}.webp" alt="">`).join('')+`<img class="drop" src="img/build/drop-butter.webp" alt="" style="width:46%"><img class="drop" src="img/build/drop-cheese.webp" alt="" style="width:50%;top:10%">`}};
-function build(k){const b=BUILD[k];return`<div class="copy"><div class="kick rise" style="--d:.1s">Watch us make it</div><div class="h1 anton">${letters(b.title)}</div>
+function build(k){const b=BUILD[k];return`<div class="copy"><div class="kick rise" style="--d:.1s">${KK(k,'Watch us make it')}</div><div class="h1 anton">${TT(k,letters(b.title))}</div>
   <ol class="steps">${b.steps.map((s,i)=>`<li><b>${i+1}</b>${esc(s)}</li>`).join('')}</ol></div>
   <div class="bw"><div class="b3${k==='garlic'?' gbw':''}"><div class="plate"></div>${b.layers}<div class="steam">${[0,1,2,3,4].map(i=>`<i style="left:${24+i*12}%;animation-delay:${i*.45}s"></i>`).join('')}</div></div></div>
   <div class="done">${k==='pizza'?'Ready to eat!':'Hot and cheesy!'}</div>`}
@@ -496,7 +572,7 @@ function playStep(el,t){if(!PL.eng||!window.Matter){if(window.Matter&&!PL.eng)pl
     x.save();x.translate(b.position.x,b.position.y);x.rotate(b.angle);x.shadowColor='rgba(0,0,0,.4)';x.shadowBlur=18;x.shadowOffsetY=9;x.drawImage(s,-w/2,-h/2+dy,w,h);x.restore()})}
 
 /* ---------- 3D transitions between slides ---------- */
-const E='cubic-bezier(.65,0,.35,1)',DUR=4000,SHOW=15; // a change takes 4s; each slide stays 15s
+const E='cubic-bezier(.65,0,.35,1)';let DUR=4000,SHOW=15; // set from the owner's settings in rebuild()
 const FX=[
  // cube turning left
  [[{transformOrigin:'100% 50%',transform:'translateX(0) rotateY(0)'},{transformOrigin:'100% 50%',transform:'translateX(-100%) rotateY(-90deg)',filter:'brightness(.4)'}],
@@ -515,24 +591,33 @@ const FX=[
 const deck=$('#deck'),bar=$('#bar'),dots=$('#dots');
 let order=[],idx=-1,leaving=null,leaveAt=0,startAt=0,paused=false,timer=0,fxN=0,needsRebuild=true;
 
-function rebuild(){needsRebuild=false;deck.innerHTML='';
-  order=SLIDES.filter(s=>!s.ok||s.ok());
-  order.forEach(s=>{const el=document.createElement('section');el.className='sl s-'+s.k+(s.k==='pizza'||s.k==='garlic'?' s-build':'')+(s.k==='garlic'?' gb':'');el.innerHTML=s.make();s.el=el;deck.appendChild(el)});
+function rebuild(){needsRebuild=false;
+  // the slide on screen stays until it has moved away, so a change from Admin never cuts the picture
+  const keep=deck.querySelector('.sl.on');deck.innerHTML='';if(keep){deck.appendChild(keep);setTimeout(()=>keep.remove(),12000)}const c=CFG(),hide=c.hide||{},ord=c.order||[];
+  SHOW=Math.min(120,Math.max(5,+c.show||15));DUR=Math.min(10,Math.max(.5,+c.change||4))*1000;
+  const all=[...SLIDES.filter(s=>s.key!=='address'),...(c.custom||[]).map(customSlide),...SLIDES.filter(s=>s.key==='address')],pos=s=>{const i=ord.indexOf(s.key);return i<0?1000+all.indexOf(s):i};
+  order=all.filter(s=>!hide[s.key]&&(!s.ok||s.ok())).sort((a,b)=>pos(a)-pos(b));
+  if(!order.length)order=[SLIDES[0]];
+  order.forEach(s=>{const el=document.createElement('section');el.className='sl s-'+s.k+(s.k==='pizza'||s.k==='garlic'?' s-build':'')+(s.k==='garlic'?' gb':'')+(s.k==='custom'?' s-spot':'');el.innerHTML=s.make();s.el=el;deck.appendChild(el)});
+  document.querySelector('.ticker').style.display=c.ticker===false?'none':'';$('#bar').style.bottom=c.ticker===false?'0':'';
   dots.innerHTML=order.map(()=>'<i></i>').join('');
   const tk=live().map(m=>`<span>${esc(m.name)} <em>₹${m.prices?Math.min(...Object.values(m.prices)):m.price}</em></span>`).join('');
-  $('#tk').innerHTML=tk+tk;$('#tk').style.setProperty('--tkd',Math.max(40,live().length*4.5)+'s')}
+  const msg=c.tickerMsg&&c.tickerMsg.trim()?`<span>★ ${esc(c.tickerMsg.trim())} ★</span>`:'';
+  $('#tk').innerHTML=msg+tk+msg+tk;$('#tk').style.setProperty('--tkd',Math.max(40,live().length*4.5)+'s')}
 
 function rain(){const r=$('#rain');r.innerHTML=ING.map(()=>`<img src="${ING[Math.random()*ING.length|0]}" alt="" style="left:${Math.random()*1800}px;animation-delay:${(Math.random()*.4).toFixed(2)}s;--r:${(Math.random()*720-360)|0}deg;width:${80+Math.random()*90|0}px">`).join('');setTimeout(()=>r.innerHTML='',2200)}
 
 function go(n){
-  const prev=order[idx];
-  if(n>=order.length||n<0){n=(n+order.length)%order.length;if(n===0&&needsRebuild){rebuild();idx=-1}}
+  const prev=order[idx],pe=prev&&prev.el; // the element on screen now, even if a rebuild replaces it
+  if(needsRebuild){rebuild();n=0;idx=-1}
+  else if(n>=order.length||n<0)n=(n+order.length)%order.length;
   const next=order[n];if(!next)return;idx=n;
-  const curtain=fxN%3===2&&prev&&prev!==next,fx=FX[fxN++%FX.length],opt={duration:DUR,easing:E,fill:'none'};
+  const moving=pe&&pe.isConnected&&pe!==next.el;
+  const curtain=fxN%3===2&&moving,fx=FX[fxN++%FX.length],opt={duration:DUR,easing:E,fill:'none'};
   if(curtain){ // cheese drips down over the screen, the slide changes behind it, and it slides away
-    leaving=prev;leaveAt=startAt;drip();setTimeout(()=>{if(prev.el)prev.el.classList.remove('on');if(leaving===prev)leaving=null;show(next,n,null)},DUR*.49);startAt=performance.now()+DUR*.49;return}
-  if(prev&&prev.el&&prev.el.isConnected&&prev!==next){const pe=prev.el;leaving=prev;leaveAt=startAt;pe.classList.add('out');
-    pe.animate(fx[0],opt).onfinish=()=>{pe.classList.remove('out');if(order[idx]!==prev)pe.classList.remove('on');if(leaving===prev)leaving=null}}
+    leaving=prev;leaveAt=startAt;drip();setTimeout(()=>{if(pe!==next.el)pe.classList.remove('on');if(leaving===prev)leaving=null;show(next,n,null)},DUR*.49);startAt=performance.now()+DUR*.49;return}
+  if(moving){leaving=prev;leaveAt=startAt;pe.classList.add('out');
+    pe.animate(fx[0],opt).onfinish=()=>{pe.classList.remove('out');if(order[idx].el!==pe)pe.classList.remove('on');if(leaving===prev)leaving=null}}
   show(next,n,fx[1])}
 function show(next,n,fxIn){const opt={duration:DUR,easing:E,fill:'none'};
   const el=next.el;el._s=null;el.classList.remove('on');void el.offsetWidth;el.classList.add('on');
@@ -563,7 +648,9 @@ function clock(){const n=new Date();$('#time').textContent=n.toLocaleTimeString(
 function fit(){const s=Math.min(innerWidth/1920,innerHeight/1080);$('#stage').style.transform=`scale(${s})`}
 
 async function load(){try{const r=await fetch('/api/state',{cache:'no-store'});if(!r.ok)throw 0;const j=await r.json(),st=j.state||j;
-  if(st&&Array.isArray(st.menu)&&st.menu.length){D={...FALLBACK,...st,config:{...FALLBACK.config,...(st.config||{})}};needsRebuild=true}}catch(e){}}
+  if(st&&Array.isArray(st.menu)&&st.menu.length){const sig=JSON.stringify([st.menu,st.sizes,st.offers,st.combos,st.outlets,st.config]);
+    if(sig!==load.sig){load.sig=sig;D={...FALLBACK,...st,config:{...FALLBACK.config,...(st.config||{})}};needsRebuild=true}}}catch(e){}}
+async function poll(){try{const r=await fetch('/api/version',{cache:'no-store'});const v=(await r.json()).version;if(v!==poll.v){poll.v=v;await load()}}catch(e){}}
 
 addEventListener('resize',fit);fit();
 addEventListener('keydown',e=>{if(e.key==='ArrowRight')go(idx+1);else if(e.key==='ArrowLeft')go(idx-1);else if(e.key===' '){paused=!paused;e.preventDefault()}else if(e.key==='f')full()});
@@ -576,7 +663,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)wake()});
 
 (async()=>{rebuild();clock();setInterval(clock,15000);await Promise.race([load(),new Promise(r=>setTimeout(r,2500))]);
   if(needsRebuild)rebuild();go(0);requestAnimationFrame(loop);wake();
-  setInterval(load,10*60*1000)})();
+  setInterval(poll,30000)})();
 </script>
 </body>
 </html>
