@@ -188,6 +188,7 @@ body.idle{cursor:none}
 .coin small{display:block;font-size:34px}
 .on .coin{animation:coin 3.6s 1.2s ease-in-out infinite}
 @keyframes coin{0%,60%{transform:rotateY(0)}80%,100%{transform:rotateY(360deg)}}
+.offimg{position:absolute;right:-22px;top:-34px;width:104px;height:104px;border-radius:50%;object-fit:cover;border:8px solid #fff;box-shadow:0 14px 24px rgba(0,0,0,.3)}
 .off h3{font-size:50px;font-weight:800;line-height:1.05}
 .off p{font-size:30px;margin-top:10px;color:#7a3a2a}
 .s-offers .codes{position:absolute;left:0;right:0;bottom:130px;text-align:center;font-size:36px;font-weight:700}
@@ -206,6 +207,9 @@ body.idle{cursor:none}
 .cmb .stk img{width:150px;height:150px;border-radius:50%;object-fit:cover;border:6px solid #fff;margin-right:-40px;box-shadow:0 10px 20px rgba(0,0,0,.3)}
 .cmb h3{font-size:54px;font-weight:800;color:#fff}
 .cmb p{font-size:28px;color:#bfe1e7;line-height:1.3;margin-top:6px;min-height:74px}
+.cmb-save{position:absolute;right:-14px;top:-18px;background:var(--red);color:#fff;font-weight:800;font-size:26px;padding:8px 20px 4px;border-radius:99px;rotate:8deg;box-shadow:0 10px 20px rgba(0,0,0,.3)}
+.on .cmb-save{animation:pop .6s calc(1.4s + var(--i) * .25s) cubic-bezier(.3,2,.5,1) both}
+.cmb .price s{font-size:.5em;opacity:.6;margin-left:8px;text-decoration:line-through}
 .cmb .price{font-size:64px;color:var(--gold);margin-top:16px;font-family:Anton,sans-serif;font-weight:400}
 
 /* 9 hours */
@@ -349,7 +353,7 @@ body.idle{cursor:none}
 const Q=new URLSearchParams(location.search),SPEED=Math.max(.3,+Q.get('sec')||1);
 const $=(s,r=document)=>r.querySelector(s),esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const IMG=n=>/[\/:]/.test(n)?n:'img/'+n+'.jpg';
-const ING=['basil','capsicum','corn','olive','onion','mushroom','tomato-slice','slice-veggie','cheese','garlic-stick'].map(n=>'img/ing/'+n+'.webp');
+const ING=['basil','capsicum','corn','olive','onion','tomato-slice','slice-veggie','cheese','garlic-stick'].map(n=>'img/ing/'+n+'.webp');
 const hr12=h=>h%12||12,hrText=h=>hr12(h)+' '+(h===12?'noon':h<12||h===24?'am':'pm');
 const letters=t=>[...t].map((c,i)=>c===' '?' ':`<span style="--i:${i}">${esc(c)}</span>`).join('');
 
@@ -369,7 +373,9 @@ let D=FALLBACK;
 const priceOf=m=>{if(m.prices){const sz=(D.sizes||[]).map(s=>s.id).filter(id=>m.prices[id]!=null);
   return sz.map(id=>`<span>₹${m.prices[id]}<s> ${esc(((D.sizes||[]).find(s=>s.id===id)||{}).label||id+'"')}</s></span>`).join(' ')}
   return m.price!=null?`<span>₹${m.price}</span>`:''};
-const photo=m=>m.img?IMG(m.img):m.cat==='pizza'?'img/hero-pizza.webp':m.cat==='bread'?'img/build/gb-baked.webp':'img/logo-badge.png';
+// Only the photo saved with the item in Admin; an item without one shows the shop badge, never another item's picture
+const photo=m=>m.img?IMG(m.img):'img/logo-badge.png';
+const sizeLbl=id=>((D.sizes||[]).find(s=>s.id===id)||{}).label||(id+'"');
 const isPng=m=>!m.img;
 const outlet=()=>{const o=D.outlets||[];return o.find(x=>x.id===Q.get('outlet'))||o[0]||{}};
 const hours=()=>{const o=outlet();return[+o.openHour||+D.config.openHour||12,+o.closeHour||+D.config.closeHour||22]};
@@ -417,12 +423,12 @@ const SLIDES0=[
    <div class="grid" style="--n:${b.length}">${b.map((m,i)=>`<div class="bcard" style="--i:${i}"><div class="ph${isPng(m)?' png':''}" style="background-image:url('${photo(m)}')"><span class="rib">Best seller</span></div><div class="tx"><h3>${esc(m.name)}</h3><p>${esc(m.desc||'')}</p><div class="price">${priceOf(m)}</div></div></div>`).join('')}</div>`}},
  {k:'offers',t:10,ok:()=>todayOffers().length,make(){const o=todayOffers(),codes=(D.offers||[]).filter(x=>x.active!==false&&x.type==='code'&&!x.firstOnly&&!x.once).slice(0,2);
    return`<div class="bigword anton">Today only</div><div class="head"><div class="kick rise" style="--d:.1s;color:#ffd76a">${KK('offers',esc(new Date().toLocaleDateString('en-IN',{weekday:'long'}))+' deals')}</div><div class="h1 anton">${TT('offers',letters("Today's offers"))}</div></div>
-   <div class="offs">${o.map((x,i)=>`<div class="off" style="--i:${i}"><div class="coin">${x.big}</div><h3>${esc(x.name)}</h3><p>${esc(x.line)}</p></div>`).join('')}</div>
+   <div class="offs">${o.map((x,i)=>`<div class="off" style="--i:${i}"><div class="coin">${x.big}</div>${x.img?`<img class="offimg" src="${x.img}" alt="">`:''}<h3>${esc(x.name)}</h3><p>${esc(x.line)}</p></div>`).join('')}</div>
    ${codes.length?`<div class="codes rise" style="--d:1.6s">Use code ${codes.map(c=>`<b>${esc(c.code)}</b>`).join(' or ')} when you order online</div>`:''}`}},
  {k:'combos',t:10,ok:()=>combos().length,make(){const c=combos(),byId=id=>(D.menu||[]).find(m=>m.id===id)||{};
    return`<div class="bigword anton">Combos</div><div class="head"><div class="kick rise" style="--d:.1s">${KK('combos','Bring friends')}</div><div class="h1 anton">${TT('combos',letters('Combo meals'))}</div></div>
-   <div class="combos" style="--n:${c.length}">${c.map((x,i)=>{const pics=[...Array(x.pizzas||1)].map((_,j)=>IMG(['margherita','veggieparadise','cheesyspecial'][j%3])).concat((x.extras||[]).map(byId).filter(m=>m.img).map(m=>IMG(m.img)));
-    return`<div class="cmb" style="--i:${i}"><div class="stk">${pics.slice(0,4).map(s=>`<img src="${s}" alt="">`).join('')}</div><h3>${esc(x.name)}</h3><p>${esc(x.desc||'')}</p><div class="price">₹${x.price}</div></div>`}).join('')}</div>`}},
+   <div class="combos" style="--n:${c.length}">${c.map((x,i)=>{const{pics,worth}=comboPics(x),save=worth-(+x.price||0);
+    return`<div class="cmb" style="--i:${i}">${save>0?`<span class="cmb-save">Save ₹${save}</span>`:''}<div class="stk">${(pics.length?pics:['img/logo-badge.png']).map(s=>`<img src="${s}" alt="">`).join('')}</div><h3>${esc(x.name)}</h3><p>${esc(x.desc||'')}</p><div class="price">₹${x.price}${save>0?` <s>₹${worth}</s>`:''}</div></div>`}).join('')}</div>`}},
  {k:'hours',t:9,make(){const[o,c]=hours();return`<div class="rays" style="--rx:1380px;--ry:520px;--ra:.22"></div><div class="bigword anton">Open daily</div>
    <div class="copy"><div class="kick rise" style="--d:.1s;color:#7a4300">${KK('hours','Come say kem cho')}</div><div class="h1 anton">${TT('hours',letters('Open')+'<br>'+letters('every day'))}</div>
    <div class="sub rise" style="--d:1s">${hrText(o)} to ${hrText(c)}</div><div class="rise" style="--d:1.3s"><span class="pill hp"></span></div></div>
@@ -502,12 +508,21 @@ function homeItems(){const L=live(),picked=L.filter(m=>m.home).slice(0,6);if(pic
   const pz=L.filter(m=>m.cat==='pizza'),sig=[...pz.filter(m=>m.img),...pz.filter(m=>!m.img)];
   return[...sig.slice(0,4),...L.filter(m=>m.cat!=='pizza'&&m.img).filter((m,i,a)=>a.findIndex(x=>x.img===m.img)===i)].slice(0,6)}
 function bestItems(){return live().filter(m=>m.best).sort((a,b)=>!!b.img-!!a.img).slice(0,4)}
+// Today's offers come from Admin → Offers: active, and set for today's day (or every day). Day-specific ones lead.
 function todayOffers(){const d=new Date().getDay(),L=D.menu||[];
-  return(D.offers||[]).filter(x=>x.active!==false&&['day','bogo','item'].includes(x.type)&&(!x.days||!x.days.length||x.days.includes(d))).map(x=>{
+  return(D.offers||[]).filter(x=>x.active!==false&&['day','bogo','item'].includes(x.type)&&(!x.days||!x.days.length||x.days.includes(d)))
+   .sort((a,b)=>(b.days&&b.days.length?1:0)-(a.days&&a.days.length?1:0)).slice(0,4).map(x=>{
    if(x.type==='day')return{name:x.name,big:`${x.pct}%<small>off</small>`,line:`${x.pct}% off ${x.scope==='pizza'?'every pizza':'your whole order'}${x.min?` above ₹${x.min}`:''}`};
-   if(x.type==='bogo')return{name:x.name,big:`1+1<small>free</small>`,line:`Buy one ${x.size&&x.size!=='any'?x.size+'" ':''}pizza, get one free`};
-   const m=L.find(y=>y.id===x.itemId)||{};return{name:x.name,big:x.kind==='flat'?`₹${x.value}`:`${x.value}%<small>off</small>`,line:`${m.name||'Selected item'}${x.size&&x.size!=='any'?` (${x.size}")`:''}${x.kind==='flat'?` for just ₹${x.value}`:` at ${x.value}% off`}`}}).slice(0,3)}
-function combos(){return(D.combos||[]).filter(c=>c.active!==false).slice(0,3)}
+   if(x.type==='bogo')return{name:x.name,big:`1+1<small>free</small>`,line:`Buy any ${x.size&&x.size!=='any'?sizeLbl(x.size)+' ':''}pizza, get the second one free`};
+   const m=L.find(y=>y.id===x.itemId)||{};return{name:x.name,img:m.img?IMG(m.img):'',big:x.kind==='flat'?`₹${x.value}`:`${x.value}%<small>off</small>`,line:`${m.name||'Selected item'}${x.size&&x.size!=='any'?` (${sizeLbl(x.size)})`:''}${x.kind==='flat'?` for just ₹${x.value}`:` at ${x.value}% off`}`}})}
+// Combos come from Admin → Combos with their own name, details and price
+function combos(){return(D.combos||[]).filter(c=>c.active!==false).slice(0,4)}
+// Pictures for a combo: real photos of pizzas that fit it (that size, up to its price limit) and of its sides
+function comboPics(c){const L=live(),sz=c.size||'7',tier=+c.tier||1e9;
+  const pz=L.filter(m=>m.cat==='pizza'&&m.img&&m.prices&&+m.prices[sz]&&+m.prices[sz]<=tier).sort((a,b)=>+b.prices[sz]-+a.prices[sz]);
+  const ex=(c.extras||[]).map(id=>(D.menu||[]).find(m=>m.id===id)).filter(Boolean);
+  return{pics:[...[...Array(c.pizzas||1)].map((_,j)=>pz[j%Math.max(1,pz.length)]).filter(Boolean),...ex.filter(m=>m.img)].slice(0,4).map(m=>IMG(m.img)),
+    worth:(+((pz[0]||{}).prices||{})[sz]||0)*(c.pizzas||1)+ex.reduce((s,m)=>s+(+m.price||0),0),ex}}
 function openState(){const[o,c]=hours(),n=new Date(),h=n.getHours()+n.getMinutes()/60;
   return h>=o&&h<c?{open:1,text:`Open now · till ${hrText(c)}`}:{open:0,text:`Opens at ${hrText(o)}`}}
 
