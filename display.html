@@ -25,10 +25,11 @@ html,body{height:100%;background:#061e23;overflow:hidden;color:#fff;font-family:
 body.idle{cursor:none}
 #stage{position:absolute;left:50%;top:50%;width:1920px;height:1080px;translate:-50% -50%;overflow:hidden;background:var(--teal);transform-origin:50% 50%}
 .deck{position:absolute;inset:0;perspective:2600px;perspective-origin:50% 45%}
-.sl{position:absolute;inset:0;overflow:hidden;visibility:hidden;backface-visibility:hidden;transform-style:preserve-3d}
-.sl.on,.sl.out{visibility:visible}
-.sl.on{z-index:2}.sl.on.out{z-index:1}
-.sl.out{will-change:transform,opacity}
+.sl{position:absolute;inset:0;overflow:hidden;visibility:hidden;transform-style:preserve-3d}
+/* the slide on screen, the one leaving and the one coming next each keep their own GPU layer the whole
+   time, so the TV never has to build or repaint a layer at the moment a slide changes (that was the flicker) */
+.sl.on,.sl.out,.sl.pre{visibility:visible;backface-visibility:hidden;will-change:transform,opacity}
+.sl.on{z-index:2}.sl.on.out{z-index:1}.sl.pre{z-index:0}
 .anton{font-family:Anton,Impact,sans-serif;font-weight:400;letter-spacing:.01em;text-transform:uppercase;line-height:.9}
 .script{font-family:Courgette,cursive}
 
@@ -590,21 +591,26 @@ function playStep(el,t){if(!PL.eng||!window.Matter){if(window.Matter&&!PL.eng)pl
 const E='cubic-bezier(.65,0,.35,1)';let DUR=4000,SHOW=15; // set from the owner's settings in rebuild()
 const FX=[
  // cube turning left
- [[{transformOrigin:'100% 50%',transform:'translateX(0) rotateY(0)'},{transformOrigin:'100% 50%',transform:'translateX(-100%) rotateY(-90deg)',filter:'brightness(.4)'}],
-  [{transformOrigin:'0% 50%',transform:'translateX(100%) rotateY(90deg)',filter:'brightness(.4)'},{transformOrigin:'0% 50%',transform:'translateX(0) rotateY(0)',filter:'brightness(1)'}]],
+ [[{transformOrigin:'100% 50%',transform:'translateX(0) rotateY(0)'},{transformOrigin:'100% 50%',transform:'translateX(-100%) rotateY(-90deg)'}],
+  [{transformOrigin:'0% 50%',transform:'translateX(100%) rotateY(90deg)'},{transformOrigin:'0% 50%',transform:'translateX(0) rotateY(0)'}]],
  // zoom through
- [[{transform:'scale(1)',opacity:1},{transform:'scale(1.8) translateZ(400px)',opacity:0,filter:'blur(12px)'}],
+ [[{transform:'scale(1)',opacity:1},{transform:'scale(1.8) translateZ(400px)',opacity:0}],
   [{transform:'translateZ(-1800px) rotateX(25deg) rotateZ(-8deg)',opacity:0},{transform:'none',opacity:1}]],
  // cube rolling up
- [[{transformOrigin:'50% 0%',transform:'translateY(0) rotateX(0)'},{transformOrigin:'50% 0%',transform:'translateY(-100%) rotateX(90deg)',filter:'brightness(.4)'}],
-  [{transformOrigin:'50% 100%',transform:'translateY(100%) rotateX(-90deg)',filter:'brightness(.4)'},{transformOrigin:'50% 100%',transform:'translateY(0) rotateX(0)',filter:'brightness(1)'}]],
+ [[{transformOrigin:'50% 0%',transform:'translateY(0) rotateX(0)'},{transformOrigin:'50% 0%',transform:'translateY(-100%) rotateX(90deg)'}],
+  [{transformOrigin:'50% 100%',transform:'translateY(100%) rotateX(-90deg)'},{transformOrigin:'50% 100%',transform:'translateY(0) rotateX(0)'}]],
  // door swing
  [[{transformOrigin:'0% 50%',transform:'rotateY(0)'},{transformOrigin:'0% 50%',transform:'rotateY(-100deg)',opacity:0}],
   [{transform:'translateZ(-900px) rotateY(50deg)',opacity:0},{transform:'none',opacity:1}]],
 ];
 
 const deck=$('#deck'),bar=$('#bar'),dots=$('#dots');
-let order=[],idx=-1,leaving=null,leaveAt=0,startAt=0,paused=false,timer=0,fxN=0,needsRebuild=true;
+let order=[],idx=-1,leaving=null,leaveAt=0,startAt=0,paused=false,timer=0,fxN=0,needsRebuild=true,preEl=null;
+// a second before a change, lay the next slide ready behind the current one and decode its photos,
+// so its first frame on screen is already painted
+function prep(s){if(!s||!s.el||s.el===preEl||s.el.classList.contains('on'))return;unprep();preEl=s.el;preEl.classList.add('pre');
+  preEl.querySelectorAll('img').forEach(i=>{if(i.decode)i.decode().catch(()=>{})})}
+function unprep(){if(preEl)preEl.classList.remove('pre');preEl=null}
 
 function rebuild(){needsRebuild=false;
   // the slide on screen stays until it has moved away, so a change from Admin never cuts the picture
@@ -624,7 +630,7 @@ function rain(){const r=$('#rain');r.innerHTML=ING.map(()=>`<img src="${ING[Math
 
 function go(n){
   const prev=order[idx],pe=prev&&prev.el; // the element on screen now, even if a rebuild replaces it
-  if(needsRebuild){rebuild();n=0;idx=-1}
+  if(needsRebuild){unprep();rebuild();n=0;idx=-1}
   else if(n>=order.length||n<0)n=(n+order.length)%order.length;
   const next=order[n];if(!next)return;idx=n;
   const moving=pe&&pe.isConnected&&pe!==next.el;
@@ -632,10 +638,11 @@ function go(n){
   if(curtain){ // cheese drips down over the screen, the slide changes behind it, and it slides away
     leaving=prev;leaveAt=startAt;drip();setTimeout(()=>{if(pe!==next.el)pe.classList.remove('on');if(leaving===prev)leaving=null;show(next,n,null)},DUR*.49);startAt=performance.now()+DUR*.49;return}
   if(moving){leaving=prev;leaveAt=startAt;pe.classList.add('out');
-    pe.animate(fx[0],opt).onfinish=()=>{pe.classList.remove('out');if(order[idx].el!==pe)pe.classList.remove('on');if(leaving===prev)leaving=null}}
+    pe.getAnimations().forEach(a=>a.cancel());const a=pe.animate(fx[0],{...opt,fill:'forwards'});
+    a.onfinish=()=>{if(order[idx].el!==pe)pe.classList.remove('on');pe.classList.remove('out');if(leaving===prev)leaving=null;a.cancel()}}
   show(next,n,fx[1])}
 function show(next,n,fxIn){const opt={duration:DUR,easing:E,fill:'none'};
-  const el=next.el;el._s=null;el.classList.remove('on');void el.offsetWidth;el.classList.add('on');
+  const el=next.el;el._s=null;el.getAnimations().forEach(a=>a.cancel());if(preEl&&preEl!==el)unprep();preEl=null;el.classList.remove('on','pre','out');void el.offsetWidth;el.classList.add('on');
   // clear what the last pass built so it plays again from the start
   el.querySelectorAll('.go,.fade,.front').forEach(x=>x.classList.remove('go','fade','front'));
   if(fxIn)el.animate(fxIn,opt);if(next.enter)next.enter(el);
@@ -655,6 +662,7 @@ function loop(now){requestAnimationFrame(loop);const s=order[idx];if(!s)return;
   if(s.tick)s.tick(s.el,t);
   // the slide that is leaving keeps moving until it is out of sight, so nothing freezes mid-turn
   if(leaving&&leaving!==s&&leaving.tick)leaving.tick(leaving.el,(now-leaveAt)/1000/SPEED);
+  if(!paused&&!leaving&&!needsRebuild&&t>=dur-1.2&&order.length>1)prep(order[(idx+1)%order.length]);
   if(t>=dur&&!paused)go(idx+1)}
 
 function clock(){const n=new Date();$('#time').textContent=n.toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'});
