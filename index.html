@@ -2322,9 +2322,10 @@ const I={
  trips:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>',
 staff:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>',
  review:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.3 6.4 20.2l1.1-6.2L3 9.6l6.2-.9z"/></svg>',
+ display:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg>',
  outlet:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l2-5h14l2 5M4 9v11h16V9M3 9h18M9 20v-6h6v6"/></svg>',
 };
-const TABS=[['new','New order'],['kitchen','Kitchen'],['counter','Counter'],['orders','Orders'],['sales','Day sale'],['offers','Offers'],['cust','Customers'],['menu','Menu & sizes'],['home','Home page'],['outlet','Outlets'],['staff','Staff'],['review','Reviews'],['trips','Deliveries']];
+const TABS=[['new','New order'],['kitchen','Kitchen'],['counter','Counter'],['orders','Orders'],['sales','Day sale'],['offers','Offers'],['cust','Customers'],['menu','Menu & sizes'],['home','Home page'],['display','Shop display'],['outlet','Outlets'],['staff','Staff'],['review','Reviews'],['trips','Deliveries']];
 
 const app=document.getElementById('app');
 function render(){
@@ -3333,7 +3334,7 @@ function renderPOS(){
       `<button data-act="pos-more" ${more.some(([t])=>t===U.pos.tab)?'aria-current="page"':''}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="5" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="19" cy="12" r="1.4"/></svg><span>${esc((more.find(([t])=>t===U.pos.tab)||[0,'More'])[1])}</span></button>`};
   U.posMore=()=>showModal(`<div class="mh"><h3>All sections</h3><button class="x" data-act="close" aria-label="Close">×</button></div><div class="mb"><div class="moregrid">${allowed.map(([t,n])=>`<button data-act="tab" data-v="${t}" ${U.pos.tab===t?'aria-current="page"':''}>${I[t]}<span>${n}</span></button>`).join('')}</div>
     <div class="row small muted"><span class="grow">Signed in as <b>${esc(su.name)}</b> · ${ROLES[su.role]}</span>${CAP?'<button class="btn sm" data-act="perms">Alerts & location</button>':''}<button class="btn sm" data-act="lock">Lock screen</button></div></div>`);
-  const views={new:vNew,kitchen:vKitchen,counter:vCounter,orders:vOrders,sales:vSales,offers:vOffers,cust:vCust,menu:vMenu,home:vHomeAdm,outlet:vOutlets,staff:vStaff,review:vReview,trips:vTrips};
+  const views={new:vNew,kitchen:vKitchen,counter:vCounter,orders:vOrders,sales:vSales,offers:vOffers,cust:vCust,menu:vMenu,home:vHomeAdm,display:vDisplayAdm,outlet:vOutlets,staff:vStaff,review:vReview,trips:vTrips};
   return `<div class="pos"><nav class="side" aria-label="POS sections" data-ks="side">${nav()}
     <div class="side-foot small muted"><span>Signed in as <b>${esc(su.name)}</b> · ${ROLES[su.role]}</span>${CAP?'<button class="btn sm" data-act="perms">Alerts & location</button>':''}<button class="btn sm" data-act="lock">Lock screen</button>${su.role==='owner'?'<span class="sdemo">Example orders are loaded for testing.</span><button class="btn sm" data-act="reset">Reset demo data</button>':''}</div></nav>
   <section class="main">${U.pos.tab!=='kitchen'&&U.pos.tab!=='trips'&&su.role!=='kitchen'&&su.role!=='rider'?onlineBanner():''}${views[U.pos.tab]()}</section></div>
@@ -4108,6 +4109,76 @@ function vHomeAdm(){
       <td><label class="switch"><input type="checkbox" data-bs="${m.id}" ${m.best?'checked':''} aria-label="${esc(m.name)} is a best seller"><span></span></label></td></tr>`).join('')}
     </tbody></table></div>`;
 }
+/* Admin → Shop display (owner only): what the TV in the shop plays at /display. Kept on each outlet as
+   o.display = {show, change, ticker, tickerMsg, hide:{key:true}, order:[keys], text:{key:{kick,title}},
+   spots:[item ids], custom:[{id,kick,title,text,img,bg}]}. display.html reads the same keys. */
+const DSP_SLIDES=[['hero','Welcome','Fresh from our oven','Cheesy'],['spot0','Spotlight 1'],['pull','Cheese pull','The cheese pull','Pull a|slice!'],
+  ['ring','Ekdum cheesy carousel','Our signature six','Ekdum cheesy'],['spot1','Spotlight 2'],['pizza','Pizza being made','Watch us make it','Made fresh'],
+  ['garlic','Garlic bread being made','Watch us make it','Garlic bread'],['spot2','Spotlight 3'],['best','Best sellers',"Everyone's favourites",'Our best sellers'],
+  ['offers',"Today's offers (shows only when there are offers today)",'(day) deals',"Today's offers"],['combos','Combo meals','Bring friends','Combo meals'],['spot3','Spotlight 4'],
+  ['hours','Opening hours','Come say kem cho','Open|every day'],['order','Order online with QR code','Skip the queue','Order|online'],['play','Play zone','Play zone','Come play with your food'],['address','Address and map (last slide)','Come visit us','Find us|here']];
+const DSP_BG=['Red','Sea blue','Cheese yellow','Teal'];
+function dspSlides(o){const d=o.display||{},ord=d.order||[];
+  const std=DSP_SLIDES.map(([key,name,kick,title])=>({key,name,kick,title})),all=[...std.filter(x=>x.key!=='address'),...(d.custom||[]).map(c=>({key:'c_'+c.id,name:'Your slide: '+(c.title||'no heading yet'),c})),...std.filter(x=>x.key==='address')];
+  const pos=k=>{const i=ord.indexOf(k);return i<0?1000+all.findIndex(s=>s.key===k):i};return all.sort((a,b)=>pos(a.key)-pos(b.key))}
+function vDisplayAdm(){
+  if(staff()?.role!=='owner')return '<div class="ph1"><h2>Shop display</h2><span class="muted small">Only the owner can change the shop display.</span></div>';
+  const o=cur(),d=o.display||{},all=dspSlides(o),link=location.origin+'/display'+(S.outlets.length>1?'?outlet='+o.id:'');
+  const opt=(f,list,v)=>`<select class="inp" data-dsp="${f}">${list.map(x=>`<option value="${x}" ${x===v?'selected':''}>${x} seconds</option>`).join('')}</select>`;
+  return `<div class="ph1"><h2>Shop display</h2><span class="muted small">What the TV in ${esc(o.name)} plays. Only the owner can change it. Changes reach the TV within a minute.</span></div>
+  <div class="card" style="padding:14px;margin-bottom:12px;display:flex;flex-direction:column;gap:12px">
+    <div class="grp-h">TV link</div>
+    <div class="row"><a class="btn pri" href="${esc(link)}" target="_blank" rel="noopener">Open the display ↗</a><span class="small num" style="word-break:break-all">${esc(link)}</span></div>
+    <span class="small muted">Open this link on the shop TV and tap once for full screen.${S.outlets.length>1?' Switch outlet at the top to set up the other branch.':''}</span>
+    <div class="grp-h">Timing</div>
+    <div class="row" style="gap:12px"><div class="field"><label>Each slide stays</label>${opt('show',[8,10,12,15,20,25,30,45,60],+d.show||15)}</div><div class="field"><label>Change to the next slide takes</label>${opt('change',[1,2,3,4,5,6,8],+d.change||4)}</div></div>
+    <div class="grp-h">Price strip</div>
+    <label class="row small" style="cursor:pointer"><span class="switch"><input type="checkbox" data-dspc="ticker" ${d.ticker!==false?'checked':''}><span></span></span>Show the moving price strip at the bottom</label>
+    <div class="field"><label for="dsp-msg">Your message in the strip</label><input class="inp" id="dsp-msg" data-dspt="tickerMsg" value="${esc(d.tickerMsg||'')}" placeholder="For example: Free cheesy dip on orders above ₹499" maxlength="90"></div>
+  </div>
+  <div class="card" style="padding:14px;margin-bottom:12px;display:flex;flex-direction:column;gap:10px">
+    <div class="grp-h">Slides, in the order they play</div>
+    <span class="small muted">Turn slides on or off, move them up or down, and change their words. An empty box keeps the words shown in grey. In a big heading, type | to start a new line.</span>
+    ${all.map((x,i)=>dspRow(o,x,i,all.length)).join('')}
+    <div class="row"><button class="btn pri" data-act="dsp-add">+ Add your own slide</button><button class="btn" data-act="dsp-reset">Back to the standard show</button></div>
+  </div>`;
+}
+function dspRow(o,x,i,n){
+  const d=o.display||{},t=(d.text||{})[x.key]||{},on=!(d.hide||{})[x.key],c=x.c,spot=/^spot\d$/.test(x.key);
+  const inp=(k,f,v,ph,max)=>`<div class="field grow" style="min-width:180px"><label>${f==='kick'?'Small heading':f==='title'?'Big heading':'Text'}</label><input class="inp" ${k} data-f="${f}" value="${esc(v||'')}" placeholder="${esc(ph||'')}" maxlength="${max||40}"></div>`;
+  let body;
+  if(c)body=`${inp(`data-dcu="${c.id}"`,'kick',c.kick,'For example: New',40)}${inp(`data-dcu="${c.id}"`,'title',c.title,'For example: Mango cheese pizza',40)}${inp(`data-dcu="${c.id}"`,'text',c.text,'One or two lines about it',140)}
+    <div class="field"><label>Colour</label><select class="inp" data-dcu="${c.id}" data-f="bg">${DSP_BG.map((b,j)=>`<option value="${j}" ${(+c.bg||0)===j?'selected':''}>${b}</option>`).join('')}</select></div>
+    <div class="row" style="gap:8px;align-items:center">${c.img?`<span class="mthumb"><img src="${esc(IMG(c.img))}" alt=""></span>`:''}<label class="btn sm">${c.img?'Change photo':'Add a photo'}<input type="file" accept="image/*" data-dcimg="${c.id}" hidden></label>${c.img?`<button class="btn sm" data-act="dsp-noimg" data-id="${c.id}">Remove photo</button>`:''}<button class="btn sm bad" data-act="dsp-del" data-id="${c.id}">Delete slide</button></div>`;
+  else if(spot){const v=(d.spots||[])[+x.key.slice(4)]||'';body=`<div class="field grow" style="min-width:220px"><label>Item to show</label><select class="inp" data-dspot="${x.key.slice(4)}"><option value="">Automatic (your Ekdum cheesy picks)</option>${S.menu.filter(m=>!m.off).map(m=>`<option value="${m.id}" ${m.id===v?'selected':''}>${esc(m.name)}</option>`).join('')}</select></div>${inp(`data-dtx="${x.key}"`,'kick',t.kick,'Must try')}`}
+  else body=`${inp(`data-dtx="${x.key}"`,'kick',t.kick,x.kick)}${inp(`data-dtx="${x.key}"`,'title',t.title,x.title)}`;
+  return `<div class="card" style="padding:10px 12px;display:flex;flex-direction:column;gap:8px;${on?'':'opacity:.55'}">
+    <div class="row" style="gap:10px;flex-wrap:nowrap"><span class="chip num">${i+1}</span><label class="switch"><input type="checkbox" data-dsph="${x.key}" ${on?'checked':''} aria-label="Show ${esc(x.name)}"><span></span></label><b class="grow">${esc(x.name)}</b>
+    <button class="btn sm" data-act="dsp-mv" data-k="${x.key}" data-v="-1" ${i?'':'disabled'} aria-label="Move up">↑</button><button class="btn sm" data-act="dsp-mv" data-k="${x.key}" data-v="1" ${i<n-1?'':'disabled'} aria-label="Move down">↓</button></div>
+    <div class="row" style="gap:10px;align-items:flex-end">${body}</div></div>`;
+}
+// Settings change only for the owner; boxes save as you type, switches and lists save at once
+const dspOwner=()=>{if(staff()?.role==='owner')return true;toast('Only the owner can change the shop display');return false};
+const dspCfg=()=>{const o=cur();return o.display||(o.display={})};
+document.addEventListener('input',e=>{const t=e.target,d=t.dataset||{};if(t.tagName==='SELECT'||!(d.dtx||d.dspt||d.dcu)||staff()?.role!=='owner')return;
+  const D=dspCfg();
+  if(d.dtx){D.text=D.text||{};const x=D.text[d.dtx]=D.text[d.dtx]||{};x[d.f]=t.value}
+  if(d.dspt)D[d.dspt]=t.value;
+  if(d.dcu){const c=(D.custom||[]).find(x=>x.id===d.dcu);if(c)c[d.f]=t.value}
+  save()});
+document.addEventListener('change',e=>{const t=e.target,d=t.dataset||{};
+  if(!(d.dsp||d.dspc||d.dsph||d.dspot!=null||d.dcimg||(d.dcu&&t.tagName==='SELECT')))return;
+  if(!dspOwner()){render();return}
+  const D=dspCfg();
+  if(d.dcimg){const f=t.files&&t.files[0],c=(D.custom||[]).find(x=>x.id===d.dcimg);if(!f||!c)return;toast('Uploading photo…');
+    shrinkImage(f).then(data=>api('/api/images',{data})).then(r=>{c.img=r.url;save();render();toast('Photo added to your slide')},er=>toast('Photo not saved: '+er.message));return}
+  if(d.dsp)D[d.dsp]=+t.value;
+  if(d.dspc)D[d.dspc]=t.checked;
+  if(d.dsph){D.hide=D.hide||{};if(t.checked)delete D.hide[d.dsph];else D.hide[d.dsph]=true}
+  if(d.dspot!=null){D.spots=D.spots||[];D.spots[+d.dspot]=t.value||null}
+  if(d.dcu){const c=(D.custom||[]).find(x=>x.id===d.dcu);if(c)c.bg=+t.value}
+  save();render();toast('Shop display updated')});
+
 function vOutlets(){const own=staff()?.role==='owner';
   return `<div class="ph1"><h2>Outlets</h2><span class="muted small">Each outlet has its own order numbers, kitchen, counter, riders and day sale</span></div>
   <div class="grid">${S.outlets.map(o=>{const t=S.orders.filter(x=>x.outletId===o.id&&x.date===today()&&x.status!=='cancelled');return `<div class="card" style="padding:14px;display:flex;flex-direction:column;gap:8px">
@@ -4258,6 +4329,12 @@ document.addEventListener('click',e=>{
     case 'lp-edit':U.editLine=+el.dataset.i;render();{const i=document.getElementById('lp-'+el.dataset.i);if(i){i.focus();i.select()}}break;
     case 'pos-clear':P.cart=[];P.addTo=null;render();break;
     case 'pos-pay':openPay();break;
+    case 'dsp-mv':{if(!dspOwner())break;const o=cur(),keys=dspSlides(o).map(x=>x.key),i=keys.indexOf(el.dataset.k),j=i+ +el.dataset.v;if(i<0||j<0||j>=keys.length)break;
+      [keys[i],keys[j]]=[keys[j],keys[i]];dspCfg().order=keys;save();render();break}
+    case 'dsp-add':{if(!dspOwner())break;const D=dspCfg();D.custom=D.custom||[];const nid='s'+Date.now().toString(36);D.custom.push({id:nid,kick:'',title:'',text:'',bg:D.custom.length%4});if(D.order){const at=D.order.indexOf('address');D.order.splice(at<0?D.order.length:at,0,'c_'+nid)}save();render();toast('Slide added before the address. Type its words and add a photo.');break}
+    case 'dsp-noimg':{if(!dspOwner())break;const c=(dspCfg().custom||[]).find(x=>x.id===el.dataset.id);if(c){delete c.img;save();render()}break}
+    case 'dsp-del':{if(!dspOwner())break;const id=el.dataset.id;askConfirm('Delete this slide?','It will stop showing on the shop TV.','Delete',()=>{const D=dspCfg();D.custom=(D.custom||[]).filter(c=>c.id!==id);D.order=(D.order||[]).filter(k=>k!=='c_'+id);save();render();toast('Slide deleted')});break}
+    case 'dsp-reset':{if(!dspOwner())break;askConfirm('Go back to the standard show?','Timing, order, on/off, words and spotlight picks go back to normal. Your own slides are kept.','Reset',()=>{const o=cur(),keep=(o.display||{}).custom;o.display=keep&&keep.length?{custom:keep}:{};save();render();toast('Shop display reset')});break}
     case 'gst-rate':{const o=S.outlets.find(x=>x.id===el.dataset.o);if(!o)break;if(staff()?.role!=='owner'){toast('Only the owner can change GST settings');break}o.gstRate=+el.dataset.v;save();render();toast('Tax set to '+(o.gstRate?o.gstRate+'%':'none')+' for '+o.name);break}
     case 'pos-opts':P.opts=1;render();break;
     case 'lrm':P.cart.splice(+el.dataset.i,1);render();break;
@@ -4586,7 +4663,7 @@ function startPolling(){setInterval(async()=>{
 
 /* ================= v4: accounts, wallet, staff login, fun ================= */
 const ROLES={owner:'Owner',manager:'Manager',cashier:'Cashier',kitchen:'Kitchen',rider:'Rider'};
-const ROLE_TABS={owner:TABS.map(t=>t[0]),manager:TABS.map(t=>t[0]).filter(k=>k!=='staff'&&k!=='review'),cashier:['new','counter','orders','cust'],kitchen:['kitchen','counter'],rider:['trips']};
+const ROLE_TABS={owner:TABS.map(t=>t[0]),manager:TABS.map(t=>t[0]).filter(k=>k!=='staff'&&k!=='review'&&k!=='display'),cashier:['new','counter','orders','cust'],kitchen:['kitchen','counter'],rider:['trips']};
 function ensureCust(ph,name){const c=S.customers[ph]||(S.customers[ph]={phone:ph,name:name||'',due:0,coins:0});
   c.wallet=c.wallet||0;c.tx=c.tx||[];c.myCodes=c.myCodes||[];c.ref=c.ref||('CP'+ph.slice(-5));if(name&&!c.name)c.name=name;return c}
 function migrate(){
