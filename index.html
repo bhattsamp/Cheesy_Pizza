@@ -1149,6 +1149,12 @@ body.drawer-open{overflow:hidden}
 .hx-card b{display:block;font-family:var(--display);font-size:19px;font-weight:600;line-height:1.15}
 .hx-card span{font-size:13px;color:rgba(255,255,255,.7)}
 .hx-card .btn{margin-left:auto;padding:8px 14px;font-size:14px}
+.nm-badge{position:absolute;z-index:4;width:clamp(96px,10vw,140px);aspect-ratio:1;pointer-events:none;filter:drop-shadow(0 12px 16px rgba(0,0,0,.35))}
+.nm-badge .nm-ring{position:absolute;inset:0;width:100%;height:100%;animation:nmspin 14s linear infinite}
+.nm-badge .nm-core{position:absolute;inset:15%;border-radius:50%;background:#fff;border:clamp(4px,.45vw,6px) solid #d23f35;display:grid;place-items:center;animation:nmbeat 2.4s ease-in-out infinite}
+.nm-badge .nm-core svg{width:78%;height:78%}
+@keyframes nmspin{to{transform:rotate(360deg)}}
+@keyframes nmbeat{0%,60%,100%{transform:scale(1) rotate(0)}70%{transform:scale(1.14) rotate(-8deg)}80%{transform:scale(.96) rotate(5deg)}90%{transform:scale(1.05) rotate(-2deg)}}
 .hx-badge{position:absolute;left:3%;top:8%;z-index:3;width:clamp(96px,11vw,128px);aspect-ratio:1;border-radius:50%;display:grid;place-items:center;text-align:center;background:var(--gold);color:#3a2800;box-shadow:0 18px 40px rgba(0,0,0,.4);transform:rotate(-10deg) translate(calc(var(--mx)*12px),calc(var(--my)*10px))}
 .hx-badge b{font-family:var(--display);font-size:clamp(22px,2.6vw,30px);line-height:.95;font-weight:700;display:block}
 .hx-badge small{font-size:10.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
@@ -1688,6 +1694,7 @@ html.lenis,html.lenis body{height:auto}
 .hx2 .hx-f{width:calc(var(--w) * 1.3)}
 .hx2 .hx-f svg{filter:drop-shadow(0 22px 20px rgba(4,40,48,.4))}
 .hx2 .hx-steam{display:block}
+.hx2 .nm-badge{right:0;bottom:27%}
 .hx2 .hx-badge{left:auto;right:clamp(16px,7vw,130px);top:clamp(80px,14vh,150px);transform:rotate(-12deg) translate(calc(var(--mx) * 12px),calc(var(--my) * 10px));z-index:4;width:clamp(100px,10vw,140px)}
 .hx2 .hx-bl{position:absolute;left:clamp(16px,3vw,44px);bottom:clamp(22px,3.4vw,44px);z-index:3;max-width:min(460px,33vw);transform:translateY(calc(var(--sp) * -40px));opacity:calc(1 - var(--sp) * 1.3)}
 .hx2 h1{margin:0;text-shadow:0 4px 18px rgba(4,40,48,.45);font-family:"Anton",Impact,sans-serif;font-weight:400;text-transform:uppercase;font-size:clamp(36px,3.5vw,60px);line-height:.98;letter-spacing:.01em;color:#fff}
@@ -1714,6 +1721,7 @@ html.lenis,html.lenis body{height:auto}
   .hx-giant{position:relative;top:auto;translate:none;font-size:31.5vw;margin:8px -16px 0}
   .hx2 .hx-stage{position:relative;left:auto;top:auto;translate:none;width:min(88vw,470px);margin:-22vw auto 0}
   .hx2 .hx-badge{right:10px;top:34vw;width:96px}
+  .hx2 .nm-badge{right:-2%;bottom:-6%;width:92px}
   .hx2 .hx-bl,.hx2 .hx-br{position:static;max-width:none;width:100%;opacity:1;transform:none}
   .hx2 .hx-bl{margin-top:6px}
   .hx2 h1{font-size:clamp(38px,11vw,56px)}
@@ -2511,6 +2519,9 @@ function renderPublic(){
 
 /* ===== HOME: cinematic landing page ===== */
 // Everything shown comes from the shop's data (menu, offers, combos, outlets, settings); the only
+// "No Mayonnaise" stamp (same as on the shop TV): the words circle a crossed out mayo jar
+function nmBadge(){return`<div class="nm-badge" role="img" aria-label="No mayonnaise in any product"><svg class="nm-ring" viewBox="0 0 230 230" aria-hidden="true"><circle cx="115" cy="115" r="113" fill="#d23f35"/><circle cx="115" cy="115" r="104" fill="none" stroke="#ffd76a" stroke-width="3" stroke-dasharray="6 7"/><defs><path id="nmc" d="M115 115m-86 0a86 86 0 1 1 172 0a86 86 0 1 1-172 0"/></defs><text font-family="'Baloo Bhai 2',sans-serif" font-weight="800" font-size="24" fill="#fff"><textPath href="#nmc" textLength="528" lengthAdjust="spacingAndGlyphs">NO MAYONNAISE ★ NO MAYONNAISE ★</textPath></text></svg>
+  <div class="nm-core" aria-hidden="true"><svg viewBox="0 0 120 120"><rect x="36" y="22" width="48" height="14" rx="4" fill="#e7a91e"/><path d="M33 40h54a6 6 0 0 1 6 6v50a10 10 0 0 1-10 10H37a10 10 0 0 1-10-10V46a6 6 0 0 1 6-6z" fill="#fff6d8" stroke="#3a2800" stroke-width="4"/><rect x="34" y="58" width="52" height="24" rx="5" fill="#f2b632"/><text x="60" y="76" text-anchor="middle" font-family="'Baloo Bhai 2',sans-serif" font-weight="800" font-size="17" fill="#3a2800">MAYO</text><circle cx="60" cy="60" r="54" fill="none" stroke="#d23f35" stroke-width="10"/><path d="M22 22L98 98" stroke="#d23f35" stroke-width="10" stroke-linecap="round"/></svg></div></div>`}
 // fixed text is the shop's own poster wording (fresh dough, no mayonnaise, the counter board).
 const PRIVACY_URL='https://github.com/bhattsamp/Cheesy_Pizza/blob/main/PRIVACY.md';
 const SHOP_ADDR='B/H Gopi Cinema, Maniyani Khad, Anand, Gujarat';
@@ -2591,7 +2602,7 @@ function renderHome(){
     <img class="hx-logo" src="img/logo-badge.png" alt="Cheesy Pizza · Really Cheesy...!" width="804" height="824">
     <p class="hx-hint" aria-hidden="true"><span class="m">Grab the food and throw it ↗</span><span class="t">Drag the food around ↗</span></p>
     <div class="hx-giant" aria-hidden="true">${[...'CHEESY'].map((c,j)=>`<span style="--j:${j};--k:${[-140,90,-60,160,-110,70][j]};--r:${[-14,8,-6,12,-10,6][j]};--b:${[-7,5,-3,8,-6,4][j]}"><b>${c}</b></span>`).join('')}</div>
-    <div class="hx-stage">
+    <div class="hx-stage">${nmBadge()}
       <div class="hx-tilt" aria-hidden="true"><div class="hx-glow"></div><div class="hx-plate"></div>
         <div class="hx-pz"><div class="hx-spin" style="animation-delay:-${(Date.now()/1000%140).toFixed(1)}s">${heroPizza()}</div></div>
         <div class="hx-steam"><i style="--l:0px;--dl:0s"></i><i style="--l:30px;--dl:1.7s"></i><i style="--l:-26px;--dl:3.3s"></i></div>${floaters}</div>
