@@ -4110,7 +4110,7 @@ function vHomeAdm(){
     </tbody></table></div>`;
 }
 /* Admin → Shop display (owner only): what the TV in the shop plays at /display. Kept on each outlet as
-   o.display = {show, change, ticker, tickerMsg, hide:{key:true}, order:[keys], text:{key:{kick,title}},
+   o.display = {show, change, ticker, tickerMsg, nomayo, hide:{key:true}, order:[keys], text:{key:{kick,title}},
    spots:[item ids], custom:[{id,kick,title,text,img,bg}]}. display.html reads the same keys. */
 const DSP_SLIDES=[['hero','Welcome','Fresh from our oven','Cheesy'],['spot0','Spotlight 1'],['pull','Cheese pull','The cheese pull','Pull a|slice!'],
   ['ring','Ekdum cheesy carousel','Our signature six','Ekdum cheesy'],['spot1','Spotlight 2'],['pizza','Pizza being made','Watch us make it','Made fresh'],
@@ -4135,6 +4135,8 @@ function vDisplayAdm(){
     <div class="grp-h">Price strip</div>
     <label class="row small" style="cursor:pointer"><span class="switch"><input type="checkbox" data-dspc="ticker" ${d.ticker!==false?'checked':''}><span></span></span>Show the moving price strip at the bottom</label>
     <div class="field"><label for="dsp-msg">Your message in the strip</label><input class="inp" id="dsp-msg" data-dspt="tickerMsg" value="${esc(d.tickerMsg||'')}" placeholder="For example: Free cheesy dip on orders above ₹499" maxlength="90"></div>
+    <div class="grp-h">Badge</div>
+    <label class="row small" style="cursor:pointer"><span class="switch"><input type="checkbox" data-dspc="nomayo" ${d.nomayo!==false?'checked':''}><span></span></span>Show the spinning "No Mayonnaise" badge on every slide</label>
   </div>
   <div class="card" style="padding:14px;margin-bottom:12px;display:flex;flex-direction:column;gap:10px">
     <div class="grp-h">Slides, in the order they play</div>
