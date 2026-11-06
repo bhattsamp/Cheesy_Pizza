@@ -26,9 +26,10 @@ body.idle{cursor:none}
 #stage{position:absolute;left:50%;top:50%;width:1920px;height:1080px;translate:-50% -50%;overflow:hidden;background:var(--teal);transform-origin:50% 50%}
 .deck{position:absolute;inset:0;perspective:2600px;perspective-origin:50% 45%}
 .sl{position:absolute;inset:0;overflow:hidden;visibility:hidden;transform-style:preserve-3d}
-/* the slide on screen, the one leaving and the one coming next each keep their own GPU layer the whole
-   time, so the TV never has to build or repaint a layer at the moment a slide changes (that was the flicker) */
-.sl.on,.sl.out,.sl.pre{visibility:visible;backface-visibility:hidden;will-change:transform,opacity}
+/* only the slide that is leaving gets its own GPU layer: phones and TVs have little graphics memory, and when it
+   runs out they skip drawing parts of the screen for a frame, which shows as flicker */
+.sl.on,.sl.out,.sl.pre{visibility:visible;backface-visibility:hidden}
+.sl.out{will-change:transform,opacity}
 .sl.on{z-index:2}.sl.on.out{z-index:1}.sl.pre{z-index:0}
 .anton{font-family:Anton,Impact,sans-serif;font-weight:400;letter-spacing:.01em;text-transform:uppercase;line-height:.9}
 .script{font-family:Courgette,cursive}
@@ -273,15 +274,14 @@ body.idle{cursor:none}
 /* moving light behind the food, and sparkles that twinkle on it */
 .rays{position:absolute;left:var(--rx,50%);top:var(--ry,50%);width:3200px;height:3200px;margin:-1600px 0 0 -1600px;pointer-events:none;
   background:repeating-conic-gradient(rgba(255,255,255,var(--ra,.09)) 0 5deg,transparent 5deg 15deg);
-  -webkit-mask-image:radial-gradient(closest-side,#000 10%,transparent 75%);mask-image:radial-gradient(closest-side,#000 10%,transparent 75%);animation:spin 50s linear infinite}
+  -webkit-mask-image:radial-gradient(closest-side,#000 10%,transparent 75%);mask-image:radial-gradient(closest-side,#000 10%,transparent 75%)}
 .spk{position:absolute;width:var(--z,46px);height:var(--z,46px);background:#fff;pointer-events:none;z-index:4;
-  clip-path:polygon(50% 0,61% 39%,100% 50%,61% 61%,50% 100%,39% 61%,0 50%,39% 39%);filter:drop-shadow(0 0 10px #fff6c8);animation:twinkle 1.8s var(--d,0s) ease-in-out infinite}
+  clip-path:polygon(50% 0,61% 39%,100% 50%,61% 61%,50% 100%,39% 61%,0 50%,39% 39%);animation:twinkle 1.8s var(--d,0s) ease-in-out infinite}
 @keyframes twinkle{0%,100%{transform:scale(0) rotate(0)}50%{transform:scale(1) rotate(90deg)}}
 .bokeh{position:absolute;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.35),transparent 70%);pointer-events:none;animation:bokeh var(--t,9s) var(--d,0s) ease-in-out infinite alternate}
 @keyframes bokeh{to{transform:translate(var(--bx,80px),-120px) scale(1.4)}}
 .shine{position:relative;display:inline-block}
-.shine::after{content:"";position:absolute;inset:-10% -5%;background:linear-gradient(105deg,transparent 40%,rgba(255,255,255,.75) 50%,transparent 60%) no-repeat;background-size:250% 100%;mix-blend-mode:overlay;animation:shine 3.2s 1.4s ease-in-out infinite;pointer-events:none}
-@keyframes shine{from{background-position:150% 0}60%,to{background-position:-60% 0}}
+/* (the light sweep over the hero word used a blend mode that made the whole slide redraw every frame: removed) */
 
 /* spotlight: one item fills the screen */
 .s-spot{background:var(--bg)}
