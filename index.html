@@ -945,12 +945,18 @@ html:has(#modalRoot:not(:empty)),html:has(#boardRoot:not(:empty)),html:has(#choo
 .paidok svg{width:84px;height:84px}
 .paidok circle{fill:var(--ok);transform-origin:50% 50%;animation:paidPop .45s cubic-bezier(.2,1.4,.4,1) both}
 .paidok path{fill:none;stroke:#fff;stroke-width:6;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:60;stroke-dashoffset:60;animation:paidTick .4s .3s ease-out forwards}
+.paidok.big svg{width:150px;height:150px;overflow:visible}
+.paidok.big b{font-size:34px}
+.paidok .ring{fill:none;stroke:var(--ok);stroke-width:3;transform-origin:50% 50%;animation:paidRing 1.2s .35s ease-out 2 both}
+@keyframes paidRing{from{transform:scale(1);opacity:.7}to{transform:scale(1.5);opacity:0}}
+.qrpay{display:flex;flex-direction:column;gap:12px}
+.qrpay .paidok{margin:18px 0 10px}
 .paidok b{font-family:var(--display);font-size:26px;color:var(--ok);animation:paidUp .4s .45s ease-out both}
 .paidok .small{animation:paidUp .4s .55s ease-out both}
 @keyframes paidPop{from{transform:scale(0)}to{transform:scale(1)}}
 @keyframes paidTick{to{stroke-dashoffset:0}}
 @keyframes paidUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-@media (prefers-reduced-motion:reduce){.paidok circle,.paidok path,.paidok b,.paidok .small{animation:none;stroke-dashoffset:0}}
+@media (prefers-reduced-motion:reduce){.paidok .ring{display:none}.paidok circle,.paidok path,.paidok b,.paidok .small{animation:none;stroke-dashoffset:0}}
 .paystat .k{display:flex;align-items:center;gap:6px}
 .splitpay{display:flex;flex-direction:column;gap:8px;background:var(--surface2);border-radius:14px;padding:14px}
 .splitpay .sprow{display:grid;grid-template-columns:minmax(70px,1fr) minmax(0,1.4fr) auto;gap:8px;align-items:center}
@@ -3718,7 +3724,7 @@ function openPay(){
     ${P.pay==='due'?(P.phone.length===10||(run&&run.customer.phone)?`<div class="small muted">${rs(t)} goes to ${esc(P.name||(run&&run.customer.name)||'this customer')}'s baki account.</div>`:'<div class="msg-bad">Add the mobile number to keep a baki amount.</div>'):''}
     ${P.pay==='zomato'?'<div class="small muted">Paid through Zomato.</div>':''}
     ${P.pay==='split'?splitHtml(t,P.splits||(P.splits={}),spKeys,'sp'):''}
-    ${P.pay==='upi'||P.pay==='split'?`<div id="utr-wrap" ${P.pay==='split'&&!(+(P.splits||{}).upi>0)?'hidden':''}>${utrField('pos-utr',P.utr)}</div>`:''}
+    ${P.pay==='upi'||P.pay==='split'?`<div id="utr-wrap" ${P.pay==='split'&&!(+(P.splits||{}).upi>0)?'hidden':''}>${P.pay==='split'?'<button class="btn sm" data-act="pos-qr" style="margin-bottom:8px">Show QR for the UPI part</button>':''}${utrField('pos-utr',P.utr)}</div>`:''}
     <div class="acts2"><button class="btn pri lg" data-act="pos-go" data-v="billprint">Bill & Print</button><button class="btn lg" data-act="pos-go" data-v="bill">Bill only</button></div>
     ${(P.pay==='cash'||P.pay==='split'&&+(P.splits||{}).cash>0)&&btp()&&btGet()&&btGet().drawer!==false?'<div class="small muted" style="text-align:center">The cash drawer opens when you bill.</div>':''}
   </div>`,{
@@ -3844,6 +3850,27 @@ function posGo(kind){
   save();Object.assign(U.pos,JSON.parse(JSON.stringify(POS_BLANK)));render();
   if(kind==='kot'){const txt=kotText(o,run?round:null);printText(txt);toast((run?'New items for '+o.no:o.no)+' sent to kitchen')}
   else{openDone(o);const cash=mode==='cash'||!!(splits&&splits.some(x=>x.mode==='cash'));if(kind==='billprint')printText(billText(o),{drawer:cash});else if(cash)openDrawer()}
+}
+// UPI QR for the customer to scan (the UPI part only, on a split bill). When the money shows in
+// the shop's UPI app, the counter taps Payment received and the QR turns into a big Paid screen.
+function openQr(paid){
+  const {P,t}=posCalc();const amt=P.pay==='split'?r2(+(P.splits||{}).upi||0):t;
+  if(!(amt>0)){toast('Type the UPI amount in the split first');openPay();return}
+  const head=`<div class="mh"><h3>${paid?'Payment received':'Scan to pay · <span class="num">'+rs(amt)+'</span>'}</h3><button class="x" data-act="close" aria-label="Close">×</button></div>`;
+  showModal(head+(paid?`<div class="mb qrpay">
+    <div class="paidok big" role="status"><svg viewBox="0 0 84 84" aria-hidden="true"><circle class="ring" cx="42" cy="42" r="40"/><circle cx="42" cy="42" r="40"/><path d="M25 43l11 11 23-24"/></svg><b>Paid ${rs(amt)}</b><span class="small muted">GPay / UPI${P.utr?' · UTR <span class="num">'+esc(fmtUtr(P.utr))+'</span>':''}</span>${P.pay==='split'?`<span class="chip c">Also take: ${esc(splitList(P.splits||{},[...COUNTER_MODES,'due']).filter(x=>x.mode!=='upi').map(x=>modeName(x.mode)+' '+rs(x.amt)).join(' + ')||'nothing')}</span>`:''}</div>
+    <div class="acts2"><button class="btn pri lg" data-act="pos-go" data-v="billprint">Bill & Print</button><button class="btn lg" data-act="pos-go" data-v="bill">Bill only</button></div></div>`
+  :`<div class="mb qrpay"><div class="qr"><div data-qr="${esc(upiLink(cur(),amt))}"></div><b class="num">${rs(amt)} · ${esc(cur().upi)}</b></div>
+    ${utrField('pos-utr',P.utr)}
+    <button class="btn ok solid lg block" data-act="qr-paid">✓ Payment received</button>
+    <button class="btn block" data-act="qr-back">Back to payment</button>
+    <div class="small muted" style="text-align:center">Tap Payment received once the money shows in your UPI app.</div></div>`),{
+    onAct:(act,el)=>{
+      if(act==='qr-paid'){const bad=utrBad(P.utr);if(bad){toast(bad);return true}openQr(true);return true}
+      if(act==='qr-back'){openPay();return true}
+      if(act==='pos-go'){closeModal();posGo(el.dataset.v);return true}
+      return false},
+    onInput:e=>{if(e.target.id==='pos-utr')P.utr=utrClean(e.target.value)}});
 }
 function openDone(o){
   showModal(`<div class="mh"><h3>Order ${o.paid?'billed':'saved'}</h3><button class="x" data-act="close" aria-label="Close">×</button></div>
@@ -4585,7 +4612,7 @@ document.addEventListener('click',e=>{
     case 'pos-edit':openCustomizer(P.cart[+el.dataset.i].itemId,'pos',+el.dataset.i);break;
     case 'pub-edit':openCustomizer(U.cart[+el.dataset.i].itemId,'pub',+el.dataset.i);break;
     case 'pc-apply':P.code=(document.getElementById('pc-code').value||'').trim().toUpperCase();render();break;
-    case 'pos-qr':{const amt=P.total||0;showModal(`<div class="mh"><h3>Scan to pay · ${rs(amt)}</h3><button class="x" data-act="close" aria-label="Close">×</button></div><div class="mb"><div class="qr"><div data-qr="upi://pay?pa=${encodeURIComponent(cur().upi)}&pn=${encodeURIComponent('Cheesy Pizza')}&am=${amt}&cu=INR"></div><b class="num">${rs(amt)} · ${esc(cur().upi)}</b></div><button class="btn pri lg block" data-act="close">Done</button></div>`);break}
+    case 'pos-qr':openQr(false);break;
     case 'collect-open':openCollect(find(el.dataset.id));break;
     case 'pay-detail':openModeDetail(el.dataset.v);break;
     case 'collect':{const o=find(el.dataset.id);if(o.paid){closeModal();render();break}
