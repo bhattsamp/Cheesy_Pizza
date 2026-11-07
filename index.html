@@ -972,6 +972,7 @@ html:has(#modalRoot:not(:empty)),html:has(#boardRoot:not(:empty)),html:has(#choo
 .cs-amt{font-size:clamp(48px,7vw,104px);font-weight:800;color:#f2b632;line-height:1.1}
 .cs-hint{font-size:clamp(18px,2.2vw,30px);opacity:.92}.cs-upi{font-size:clamp(16px,1.8vw,24px);opacity:.75}
 .cs-done .paidok svg{width:min(26vh,220px);height:min(26vh,220px)}
+.cathead{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:18px 0 8px}.cathead b{font-size:18px}
 .lowstock{display:flex;gap:8px;align-items:center;width:100%;text-align:left;padding:10px 14px;margin-bottom:12px;border:1px solid var(--bad);background:color-mix(in srgb,var(--bad) 8%,var(--surface));color:var(--ink);font:inherit;cursor:pointer}
 .lowrow td{background:color-mix(in srgb,var(--bad) 6%,transparent)}
 .repsec{padding:0;margin-top:10px;overflow:hidden}.repsec>summary{cursor:pointer;padding:12px 14px;list-style:none;display:flex;gap:8px;align-items:center}
@@ -2174,6 +2175,17 @@ const DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 /* Lookup lists and settings come from the database (see applyConfig) */
 let CATS=[],GU={},TYPES={},PAY={},PAYCOL={},COOK=[],ORDER_CHIPS=[],SEGS=[];
 let PREP_MIN=15,RIDE_MIN=20,COIN_RATE=0.05,OPEN_H=12,CLOSE_H=22;
+/* Menu categories: the built-in ones from the server's config, then the ones the owner adds (S.cats).
+   S.cats also remembers when the owner switched a whole category off for the day. */
+function mergeCats(){const base=(S.config&&S.config.categories)||[],own=(S.cats||[]).filter(c=>c.label&&!base.some(b=>b.id===c.id)).sort((a,b)=>(a.pos||0)-(b.pos||0));
+  CATS=[...base.map(x=>[x.id,x.label]),...own.map(x=>[x.id,x.label])];GU=Object.fromEntries([...base,...own].map(x=>[x.id,x.labelGu||'']))}
+const catRec=k=>(S.cats||[]).find(c=>c.id===k);
+const catOff=k=>!!catRec(k)?.off;
+const isOwnCat=k=>!((S.config&&S.config.categories)||[]).some(b=>b.id===k);
+// Switching a category off turns off each of its items that is on, and remembers which, so switching it
+// back on brings back exactly those (an item the owner had switched off by itself stays off)
+function setCatOff(k,off){S.cats=S.cats||[];let r=catRec(k);if(!r){r={id:k};S.cats.push(r)}r.off=off;
+  S.menu.filter(m=>m.cat===k).forEach(m=>{if(off){if(!m.off){m.off=true;m.offByCat=true}}else if(m.offByCat){delete m.off;delete m.offByCat}});save();render()}
 function applyConfig(c){
   CATS=c.categories.map(x=>[x.id,x.label]);GU=Object.fromEntries(c.categories.map(x=>[x.id,x.labelGu||'']));
   TYPES=Object.fromEntries(c.orderTypes.map(x=>[x.id,x.label]));
@@ -2247,7 +2259,7 @@ const APP_LINK='https://github.com/bhattsamp/Cheesy_Pizza/releases/download/andr
 const APP_ROLE=(/CheesyApp\/(customer|admin)/.exec(navigator.userAgent)||[])[1]||null;
 const LKEY='cheesy_local_v1';
 const LOCAL_KEYS=['cur','mode','me','staffId'];
-const SYNCED=['sizes','outlets','menu','addons','offers','combos','extras','users','customers','orders'];
+const SYNCED=['sizes','outlets','menu','addons','offers','combos','extras','cats','users','customers','orders'];
 const MAPS={addons:1,customers:1};
 let S,VER=0,SNAP={},pendingFlush=null,inFlight=0,syncQ=Promise.resolve();
 const today=(d=new Date())=>d.toLocaleDateString('en-CA');
@@ -2558,7 +2570,7 @@ const TABS=[['new','New order'],['kitchen','Kitchen'],['counter','Counter'],['or
 const app=document.getElementById('app');
 function render(){
   if(CS_MODE){renderCS();return}
-  syncHours();
+  mergeCats();syncHours();
   if(APP_ROLE){S.mode=APP_ROLE==='admin'?'pos':'public';document.body.classList.add('app-'+APP_ROLE)}
   document.getElementById('m-pub').setAttribute('aria-pressed',S.mode==='public');
   document.getElementById('m-pos').setAttribute('aria-pressed',S.mode==='pos');
@@ -4743,13 +4755,20 @@ function vMenu(){
     </tbody></table></div>
   </div>
   ${extrasEditor(sz)}
-  ${CATS.map(([cat,cn])=>{const items=S.menu.filter(m=>m.cat===cat);return `<div class="card tw" style="margin-bottom:12px"><table class="stk"><thead><tr><th>${cn}</th><th>Short description</th>${cat==='pizza'?sz.map(s=>`<th class="r">${esc(s.label)}</th>`).join(''):'<th class="r">Price</th>'}<th>On</th><th></th></tr></thead><tbody>
+  ${CATS.map(([cat,cn])=>{const items=S.menu.filter(m=>m.cat===cat),off=catOff(cat),own=isOwnCat(cat);return `<div class="cathead${off?' off':''}"><label class="switch"><input type="checkbox" data-catoff="${cat}" ${off?'':'checked'} aria-label="${esc(cn)} available"><span></span></label>
+    ${own?`<input class="inp" data-catname="${cat}" value="${esc(cn)}" aria-label="Category name" style="max-width:240px;font-weight:700"><input class="inp" data-catgu="${cat}" value="${esc(GU[cat]||'')}" placeholder="Gujarati name (optional)" aria-label="Gujarati name" style="max-width:220px">`:`<b>${esc(cn)}</b>`}
+    <span class="small ${off?'':'muted'}" style="${off?'color:var(--bad);font-weight:700':''}">${off?'Switched off: hidden from customers and the till':items.length+' item'+(items.length===1?'':'s')}</span><span class="grow"></span>
+    ${own?`<button class="btn sm bad" data-act="cat-del" data-v="${cat}">Remove</button>`:''}</div>
+  <div class="card tw" style="margin-bottom:12px${off?';opacity:.6':''}"><table class="stk"><thead><tr><th>${cn}</th><th>Short description</th>${cat==='pizza'?sz.map(s=>`<th class="r">${esc(s.label)}</th>`).join(''):'<th class="r">Price</th>'}<th>On</th><th></th></tr></thead><tbody>
   ${items.map(m=>`<tr><td style="min-width:150px"><div class="row" style="gap:8px;flex-wrap:nowrap"><button class="mthumb" data-act="mi-edit" data-id="${m.id}" title="Change photos">${m.img?`<img src="${esc(IMG(m.img))}" alt="">${photosOf(m).length>1?`<span class="n">${photosOf(m).length}</span>`:''}`:'<span>+ Photo</span>'}</button><b>${esc(m.name)}</b></div>${cat!=='pizza'&&itemOpts(m).length?`<div class="small muted">${itemOpts(m).map(esc).join(' · ')}</div>`:''}</td>
    <td style="min-width:240px"><textarea class="inp desc-in" rows="2" data-desc="${m.id}" aria-label="${esc(m.name)} description">${esc(m.desc)}</textarea></td>
    ${cat==='pizza'?sz.map(s=>`<td class="r"><input class="lp-in num" type="number" data-mi="${m.id}" data-s="${s.id}" value="${m.prices[s.id]??''}" placeholder="—" aria-label="${esc(m.name)} ${esc(s.label)}"></td>`).join(''):`<td class="r"><input class="lp-in num" type="number" data-mi="${m.id}" data-s="" value="${m.price}" aria-label="${esc(m.name)} price"></td>`}
    <td><label class="switch"><input type="checkbox" data-av="${m.id}" ${m.off?'':'checked'} aria-label="${esc(m.name)} available"><span></span></label></td><td>${dd(m)}</td></tr>`).join('')}
    <tr><td colspan="${cat==='pizza'?sz.length+4:5}"><button class="btn sm" data-act="add-item" data-v="${cat}">+ Add ${esc(cn)}</button></td></tr>
-  </tbody></table></div>`}).join('')}`;
+  </tbody></table></div>`}).join('')}
+  <div class="card" style="padding:14px;display:flex;flex-direction:column;gap:10px"><div class="grp-h">New category</div>
+   <div class="row" style="gap:8px;flex-wrap:wrap"><input class="inp" id="nc-name" placeholder="e.g. Burgers, Pasta, Shakes" style="max-width:280px"><input class="inp" id="nc-gu" placeholder="Gujarati name (optional)" style="max-width:240px"><button class="btn pri" data-act="cat-add">+ Add category</button></div>
+   <div class="small muted">Then add items to it with photos, details and price, the same as other categories. It shows on the menu, the till and the shop TV.</div></div>`;
 }
 // Shrink a chosen photo in the browser so uploads stay small (max 1200px, JPEG)
 function shrinkImage(file){return new Promise((ok,bad)=>{
@@ -5153,6 +5172,12 @@ document.addEventListener('click',e=>{
     case 'edit-offer':openOfferForm(el.dataset.id);break;
     case 'edit-combo':openComboForm(el.dataset.id);break;
     case 'add-item':openItemForm(null,el.dataset.v);break;
+    case 'cat-add':{const nm=(document.getElementById('nc-name')?.value||'').trim(),gu=(document.getElementById('nc-gu')?.value||'').trim();if(!nm){toast('Type the category name');break}
+      if(CATS.some(([,n])=>n.toLowerCase()===nm.toLowerCase())){toast('There is already a category called '+nm);break}
+      S.cats=S.cats||[];const id='c_'+(nm.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'cat')+'_'+Math.random().toString(36).slice(2,5);
+      S.cats.push({id,label:nm,labelGu:gu,pos:Date.now()});save();render();toast(nm+' added. Now add its items.');break}
+    case 'cat-del':{const k=el.dataset.v,n=S.menu.filter(m=>m.cat===k).length;if(n){toast('Move or remove its '+n+' item'+(n===1?'':'s')+' first');break}
+      askConfirm('Remove this category?','It has no items. You can add it again later.','Remove',()=>{S.cats=(S.cats||[]).filter(c=>c.id!==k);save();render()});break}
     case 'mdd':U.menuDD=U.menuDD===el.dataset.id?null:el.dataset.id;render();break;
     case 'mi-edit':U.menuDD=null;render();openItemForm(el.dataset.id);break;
     case 'mi-move':moveItem(el.dataset.id,+el.dataset.v);render();break;
@@ -5241,6 +5266,8 @@ document.addEventListener('change',e=>{
   if(t.dataset.spin&&staff()?.role==='owner'){let r=S.offers.find(o=>o.type==='spin');if(!r){r={id:'spinrules',type:'spin',name:'Spin & win rules',active:false};S.offers.push(r)}
     const k=t.dataset.spin;if(k==='w'){r.w={...(r.w||{}),[t.dataset.i]:+t.value}}else r[k]=t.type==='checkbox'?t.checked:+t.value;r.active=false;save();render();toast('Spin & win updated')}
   if(t.dataset.st){const x=stockOf().find(y=>y.id===t.dataset.st);if(x){const f=t.dataset.f;stockSet(x,f,f==='name'||f==='unit'?t.value.trim():Math.max(0,+t.value||0))}}
+  if(t.dataset.catoff){setCatOff(t.dataset.catoff,!t.checked);toast(t.checked?'Category is on again':'Category switched off for now');}
+  if(t.dataset.catname||t.dataset.catgu){const r=catRec(t.dataset.catname||t.dataset.catgu);if(r){if(t.dataset.catname){const v=t.value.trim();if(v)r.label=v}else r.labelGu=t.value.trim();save();render()}}
   if(t.dataset.autolock&&staff()?.role==='owner'){cur().autoLock=+t.value;save();toast(+t.value?'Till locks after '+t.value+' minutes idle':'Auto lock off');render()}
   if(t.dataset.coin&&staff()?.role==='owner'){const v=+t.value;if(!(v>=0)||(t.dataset.coin!=='per100'&&!(v>0))){toast('Enter a number above 0');render();return}
     let r=S.offers.find(o=>o.type==='coins');if(!r){r={id:'coinrules',type:'coins',name:'Cheese Coins rules',active:false};S.offers.push(r)}
@@ -5255,7 +5282,7 @@ document.addEventListener('change',e=>{
   if((t.id==='rep-from'||t.id==='rep-to')&&t.value){const R=repU(),[a,b]=repRange(R);R.from=a;R.to=b;R[t.id==='rep-from'?'from':'to']=t.value;R.p='custom';render()}
   if(t.dataset.mi){const m=menuItem(t.dataset.mi);const v=t.value===''?'':Math.max(0,+t.value||0);if(t.dataset.s)m.prices[t.dataset.s]=v;else m.price=+v||0;save();toast(m.name+' price saved')}
   if(t.dataset.ad){S.addons[t.dataset.ad].prices[t.dataset.s]=t.value===''?'':Math.max(0,+t.value||0);save();toast('Price saved')}
-  if(t.dataset.av){const m=menuItem(t.dataset.av);m.off=!t.checked;save();toast(m.name+(m.off?' hidden':' available'))}
+  if(t.dataset.av){const m=menuItem(t.dataset.av);m.off=!t.checked;delete m.offByCat;save();toast(m.name+(m.off?' hidden':' available'))}
   if(t.dataset.toggle){const [k,id]=t.dataset.toggle.split(':');const x=(k==='c'?S.combos:S.offers).find(o=>o.id===id);x.active=t.checked;save();render()}
   if(t.dataset.desc)toast('Description saved');
   if(t.dataset.szc){const sz=S.sizes.find(x=>x.id===t.dataset.szc);sz.color=t.value;save();toast(sz.label+' colour saved')}

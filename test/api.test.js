@@ -98,3 +98,12 @@ test('menu photos are stored and served', () => withServer(async ({ post, base }
 test('unknown collections are rejected', () => withServer(async ({ post }) => {
   assert.equal((await post('/api/sync', { upsert: { secrets: [] } })).status, 400);
 }));
+
+test('categories the owner adds are saved and read back after the built-in ones', () => withServer(async ({ get, post }) => {
+  assert.deepEqual((await get('/api/state')).state.cats, []);
+  await post('/api/sync', { upsert: { cats: [{ id: 'c_burgers', label: 'Burgers', labelGu: '', pos: 1 }, { id: 'pizza', off: true }] } });
+  const { state } = await get('/api/state');
+  assert.deepEqual(state.cats.map(c => c.id), ['c_burgers', 'pizza']);
+  assert.equal(state.cats[1].off, true);
+  assert.deepEqual(state.config.categories.map(c => c.id), ['pizza', 'pockets', 'bread', 'fries', 'dessert', 'dip']);
+}));
