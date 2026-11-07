@@ -2443,6 +2443,10 @@ const isMainOutlet=o=>!!o&&S.outlets[0]&&o.id===S.outlets[0].id;
 const isLive=o=>!!o&&(isMainOutlet(o)||o.active!==false&&o.visible!==false);
 const liveOutlets=()=>S.outlets.filter(isLive);
 const cur=()=>S.outlets.find(o=>o.id===S.cur&&isLive(o))||liveOutlets()[0]||S.outlets[0];
+// Delivery is off until the owner turns it on for an outlet (Outlets screen). While it is off,
+// delivery is hidden from the customer site, POS order types, Counter lanes and the Deliveries tab.
+const delOn=(o=cur())=>!!(o&&o.deliveryOn);
+const typesOn=()=>Object.entries(TYPES).filter(([k])=>k!=='delivery'||delOn());
 const outletOf=o=>S.outlets.find(x=>x.id===o.outletId)||cur();
 const fmtTime=ts=>ts?new Date(ts).toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'}):'';
 const fmtDate=ds=>new Date(ds+'T12:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
@@ -2755,7 +2759,7 @@ function renderHome2(){
 
     <div class="hm-boxes">
       <div class="hm-box"><div class="hm-bh">Available on</div><div class="hm-zomato">zomato</div></div>
-      <div class="hm-box"><div class="hm-bh">Delivery available</div><div class="hm-bb"><svg viewBox="0 0 64 40" width="84" aria-hidden="true"><circle cx="14" cy="32" r="6" fill="none" stroke="var(--ink)" stroke-width="3"/><circle cx="50" cy="32" r="6" fill="none" stroke="var(--ink)" stroke-width="3"/><path d="M14 32h22l6-12h10l-2 12" fill="none" stroke="var(--cheese)" stroke-width="4" stroke-linejoin="round"/><rect x="40" y="6" width="16" height="12" rx="2" fill="var(--teal)"/><circle cx="30" cy="10" r="5" fill="var(--bad)"/></svg><small class="muted">Charges apply</small></div></div>
+      ${delOn()?`<div class="hm-box"><div class="hm-bh">Delivery available</div><div class="hm-bb"><svg viewBox="0 0 64 40" width="84" aria-hidden="true"><circle cx="14" cy="32" r="6" fill="none" stroke="var(--ink)" stroke-width="3"/><circle cx="50" cy="32" r="6" fill="none" stroke="var(--ink)" stroke-width="3"/><path d="M14 32h22l6-12h10l-2 12" fill="none" stroke="var(--cheese)" stroke-width="4" stroke-linejoin="round"/><rect x="40" y="6" width="16" height="12" rx="2" fill="var(--teal)"/><circle cx="30" cy="10" r="5" fill="var(--bad)"/></svg><small class="muted">Charges apply</small></div></div>`:''}
       <div class="hm-box"><div class="hm-bh">Follow us</div><div class="hm-bb"><a class="btn sm" href="https://wa.me/91${esc(ph)}" target="_blank" rel="noopener">WhatsApp</a><span class="small muted">Instagram · Facebook · X</span></div></div>
     </div>
 
@@ -3395,7 +3399,7 @@ function slots(){
 }
 const liveCodes=()=>activeOffers(new Date().getDay()).filter(o=>o.type==='code');
 function openPubCart(){
-  const o=cur();const pm=payModes(o);if(!pm.includes(pubForm.pay))pubForm.pay=pm[0]||'counter';const mm=me();if(mm){pubForm.phone=mm.phone;if(!pubForm.name)pubForm.name=mm.name;if(!pubForm.address&&mm.addr)pubForm.address=mm.addr}
+  const o=cur();const pm=payModes(o);if(pubForm.type==='delivery'&&!delOn(o))pubForm.type='takeaway';if(!pm.includes(pubForm.pay))pubForm.pay=pm[0]||'counter';const mm=me();if(mm){pubForm.phone=mm.phone;if(!pubForm.name)pubForm.name=mm.name;if(!pubForm.address&&mm.addr)pubForm.address=mm.addr}
   const coins=pubForm.phone.length===10?coinsOf(pubForm.phone):0;
   const b=computeBill(U.cart,null,{code:pubForm.code,coins:pubForm.useCoins?coins:0,phone:pubForm.phone});
   const wal=mm?walletOf(mm.phone):0;const wUse=pubForm.useWallet?Math.min(wal,b.total):0;const due=b.total-wUse;
@@ -3419,7 +3423,7 @@ function openPubCart(){
     ${b.saved?`<div class="savings num">You're saving ${rs(b.saved)} on this order</div>`:''}
     <div class="small muted num"><span class="coin sm" style="display:inline-grid;vertical-align:middle">C</span> You'll earn ${b.earn} Cheese Coins with this order</div>
     <div class="grp-h">How do you want it?</div>
-    <div class="types" style="grid-template-columns:repeat(3,1fr)">${['delivery','takeaway','dine'].map(k=>`<button data-act="pf-type" data-v="${k}" aria-pressed="${pubForm.type===k}">${TYPES[k]}</button>`).join('')}</div>
+    <div class="types" style="grid-template-columns:repeat(${delOn()?3:2},1fr)">${['delivery','takeaway','dine'].filter(k=>k!=='delivery'||delOn()).map(k=>`<button data-act="pf-type" data-v="${k}" aria-pressed="${pubForm.type===k}">${TYPES[k]}</button>`).join('')}</div>
     ${pubForm.type==='delivery'?`<div class="field"><label for="pf-addr">Delivery address</label><textarea class="inp" id="pf-addr" rows="2">${esc(pubForm.address)}</textarea>
       <div class="row" style="gap:8px;align-items:center;flex-wrap:wrap"><button class="btn sm" data-act="pf-geo">📍 ${pubForm.geo?'Update my location':'Use my current location'}</button><span class="small ${pubForm.geo?'msg-ok':'muted'}">${pubForm.geo?'Location added. The rider will see it on the map.':'Helps the rider find you.'}</span></div></div>`:''}
     <div class="field"><label for="pf-note">Instructions for the kitchen & delivery</label><textarea class="inp" id="pf-note" rows="2" maxlength="200" placeholder="e.g. make it extra crispy, less spicy for kids">${esc(pubForm.note||'')}</textarea><div class="codes">${ORDER_CHIPS.map(c=>`<button data-act="pf-chip" data-v="${esc(c)}" style="font-family:inherit">+ ${esc(c)}</button>`).join('')}</div></div>
@@ -3530,7 +3534,7 @@ function openTrackFind(){
 /* ===== POS SHELL ===== */
 function renderPOS(){
   const su=staff();if(!su)return renderLogin();
-  const allowed=TABS.filter(([k])=>ROLE_TABS[su.role].includes(k));if(!allowed.some(([k])=>k===U.pos.tab))U.pos.tab=allowed[0][0];
+  const allowed=TABS.filter(([k])=>ROLE_TABS[su.role].includes(k)&&(k!=='trips'||delOn()||su.role==='rider'));if(!allowed.some(([k])=>k===U.pos.tab))U.pos.tab=allowed[0][0];
   const mine=liveOrders();
   const k=mine.filter(o=>o.status==='placed'||o.status==='preparing').length;
   const c=mine.filter(o=>o.status==='ready'||o.status==='out').length;
@@ -3635,6 +3639,7 @@ function tablePicker(P){
 function posCalc(){
   const P=U.pos;
   const run=P.addTo&&S.orders.find(o=>o.id===P.addTo);if(P.addTo&&!run)P.addTo=null;
+  if(P.type==='delivery'&&!delOn())P.type='takeaway';
   const coins=P.phone.length===10?coinsOf(P.phone):0;
   const b=run?computeBill([...run.items,...P.cart],run.date,{...(run.extra||{}),...(P.code?{code:P.code}:{}),phone:run.customer.phone}):computeBill(P.cart,null,{code:P.code,coins:P.useCoins?coins:0,phone:P.phone});
   const t=b.total;P.total=t;
@@ -3670,7 +3675,7 @@ function vNew(){
     ${P.cart.length?`<button class="tkjump" data-act="to-ticket"><b class="num">${n} item${n>1?'s':''} · ${rs(t)}</b><span>View order ↓</span></button>`:''}
     <aside class="card ticket order" id="ticket" data-ks="ticket">
       <div class="tkhead">
-        <div class="types">${Object.entries(TYPES).map(([k,nm])=>`<button data-act="pos-type" data-v="${k}" aria-pressed="${P.type===k}">${nm}</button>`).join('')}</div>
+        <div class="types" style="grid-template-columns:repeat(${typesOn().length},minmax(0,1fr))">${typesOn().map(([k,nm])=>`<button data-act="pos-type" data-v="${k}" aria-pressed="${P.type===k}">${nm}</button>`).join('')}</div>
       </div>
       <div class="sec tkcust">
         ${zom?`<div class="field"><label for="pos-zid">Zomato order ID</label><input class="inp num" id="pos-zid" value="${esc(P.zid)}" placeholder="e.g. 5123456789"></div>`:''}
@@ -4018,17 +4023,17 @@ function vCounter(){
     ${o.zomatoId?`<div class="small">Zomato ID <b class="num">${esc(o.zomatoId)}</b></div>`:''}
     <div class="small muted">${o.items.map(l=>l.qty+'× '+esc(l.name)+(l.size?' '+sizeLabel(l.size):'')).join(', ')} · <b class="num">${rs(o.total)}</b></div>
     <div class="row">${payTag(o)}${o.paid?`<span class="small muted">${esc(payName(o))}</span>`:''}</div>${collectRow(o)}${o.note?`<div class="knote">${esc(o.note)}</div>`:''}${body}</div>`;
-  return `<div class="ph1"><h2>Counter</h2><span class="muted small">Hand over pickups, dispatch deliveries, track riders</span><button class="btn ink" data-act="board">Open customer display</button></div>
+  return `<div class="ph1"><h2>Counter</h2><span class="muted small">${delOn()?'Hand over pickups, dispatch deliveries, track riders':'Hand over pickups and dine-in orders'}</span><button class="btn ink" data-act="board">Open customer display</button></div>
   <div class="counter">
     <div class="lane"><div class="lane-h"><h3>Pickup & dine-in</h3><span class="n num">${pick.length}</span></div>
       ${pick.map(o=>ct(o,'ready',`<button class="btn ok" data-act="handover" data-id="${o.id}">${o.type==='dine'?'Served to table':o.type==='zomato'?'Given to Zomato rider':'Handed to customer'}</button>`)).join('')||'<div class="empty small">Ready orders appear here after the kitchen double-taps them.</div>'}</div>
-    <div class="lane"><div class="lane-h"><h3>Delivery dispatch</h3><span class="n num">${del.length}</span></div>
+    ${delOn()||del.length||out.length?`<div class="lane"><div class="lane-h"><h3>Delivery dispatch</h3><span class="n num">${del.length}</span></div>
       ${del.map(o=>ct(o,o.status==='ready'?'ready':'prep',o.status==='ready'?`<div class="row"><select class="inp grow" id="rs-${o.id}" aria-label="Rider">${riders.map(r=>`<option value="${esc(r.name)}">${esc(r.name)}${busy.has(r.name)?' (on a trip)':''}</option>`).join('')}</select><button class="btn pri" data-act="dispatch" data-id="${o.id}" ${riders.length?'':'disabled'}>Send out</button></div>${riders.length?'':'<div class="small muted">Add riders on the Outlets screen.</div>'}`:'<div class="small muted">In the kitchen…</div>')).join('')||'<div class="empty small">No delivery orders waiting.</div>'}</div>
     <div class="lane"><div class="lane-h"><h3>Out for delivery</h3><span class="n num">${out.length}</span></div>
       ${out.map(o=>{const m=Math.floor((Date.now()-(o.times.out||Date.now()))/60000);return ct(o,'out',`<div class="small">Rider <b>${esc(o.rider?.name||'—')}</b> · left ${m} min ago · ETA ${Math.max(1,RIDE_MIN-m)} min</div><div class="row"><button class="btn ok grow" data-act="delivered" data-id="${o.id}">Mark delivered</button><button class="btn" data-act="track" data-id="${o.id}">Live view</button></div>`)}).join('')||'<div class="empty small">No riders on the road.</div>'}
       <div class="grp-h" style="margin-top:6px">Riders</div>
       <div class="row">${riders.map(r=>`<span class="chip ${busy.has(r.name)?'out':'ready'}">${esc(r.name)} · ${busy.has(r.name)?'on trip':'free'}</span>`).join('')||'<span class="small muted">None added</span>'}</div>
-    </div>
+    </div>`:''}
   </div>`;
 }
 function renderBoard(){
@@ -4525,9 +4530,11 @@ function vOutlets(){const own=staff()?.role==='owner';
     <div class="grp-h">Payment options for online orders</div>
     ${[['payUpi','GPay / UPI'+(o.upi?'':' (add a UPI ID first)')],['payCash','Cash on delivery / pay at counter']].map(([f,n])=>`<label class="row small" style="cursor:pointer"><span class="switch"><input type="checkbox" data-paysw="${o.id}" data-f="${f}" ${o[f]!==false?'checked':''} ${own?'':'disabled'}><span></span></span>${n}</label>`).join('')}
     <div class="field"><label for="otb-${o.id}">Dine-in tables</label><input class="inp num" type="number" min="0" id="otb-${o.id}" data-ou="${o.id}" data-f="tables" value="${o.tables||0}" style="max-width:120px"></div>
-    <div class="grp-h">Delivery riders</div>
+    <div class="grp-h">Delivery</div>
+    <label class="row small" style="cursor:pointer"><span class="switch"><input type="checkbox" data-delsw="${o.id}" ${o.deliveryOn?'checked':''} ${own?'':'disabled'}><span></span></span>Take delivery orders${o.deliveryOn?'':' <span class="muted">(off: hidden on the customer site, POS and Counter)</span>'}</label>
+    ${o.deliveryOn?`<div class="grp-h">Delivery riders</div>
     <div class="row">${(o.riders||[]).map((r,i)=>`<span class="chip t">${esc(r.name)} · <span class="num">${fmtPhone(r.phone)}</span><button class="x" style="width:20px;height:20px;font-size:13px" data-act="del-rider" data-o="${o.id}" data-i="${i}" aria-label="Remove ${esc(r.name)}">×</button></span>`).join('')||'<span class="small muted">No riders yet</span>'}</div>
-    <div class="row"><input class="inp grow" id="rn-${o.id}" placeholder="Rider name" style="width:auto" aria-label="Rider name"><input class="inp num grow" id="rp-${o.id}" placeholder="Mobile" inputmode="numeric" maxlength="10" style="width:auto" aria-label="Rider mobile"><button class="btn" data-act="add-rider" data-o="${o.id}">Add</button></div>
+    <div class="row"><input class="inp grow" id="rn-${o.id}" placeholder="Rider name" style="width:auto" aria-label="Rider name"><input class="inp num grow" id="rp-${o.id}" placeholder="Mobile" inputmode="numeric" maxlength="10" style="width:auto" aria-label="Rider mobile"><button class="btn" data-act="add-rider" data-o="${o.id}">Add</button></div>`:''}
     ${staff()?.role==='owner'?alertBox(o):''}
     <div class="field"><label for="oow-${o.id}">Owner WhatsApp (for day reports)</label><input class="inp num" id="oow-${o.id}" data-ou="${o.id}" data-f="ownerPhone" value="${esc(o.ownerPhone||'')}" inputmode="numeric" maxlength="10" placeholder="10 digit mobile" ${own?'':'readonly'}></div>
     <div class="small muted num">Today: ${t.length} orders · ${rs(t.reduce((a,b)=>a+b.total,0))}</div>
@@ -4766,6 +4773,7 @@ document.addEventListener('change',e=>{
     if(staff()?.role!=='owner')return toast('Only the owner can change GST settings');
     if(t.dataset.f==='gstRate'){const r=Math.round((+t.value||0)*100)/100;if(r<0||r>28){toast('Tax rate should be between 0 and 28%');render();return}o.gstRate=r}else o[t.dataset.f]=t.value;
     save();render();toast('Tax setting saved for '+o.name);return}
+  if(e.target.dataset.delsw){const o=S.outlets.find(x=>x.id===e.target.dataset.delsw);if(!o||staff()?.role!=='owner')return;o.deliveryOn=e.target.checked;save();toast('Delivery '+(o.deliveryOn?'on':'off')+' for '+o.name);render();return}
   if(e.target.dataset.paysw){const t=e.target,o=S.outlets.find(x=>x.id===t.dataset.paysw);if(!o)return;
     if(staff()?.role!=='owner'){t.checked=o[t.dataset.f]!==false;return toast('Only the owner can change payment options')}
     const prev=o[t.dataset.f];o[t.dataset.f]=t.checked;
