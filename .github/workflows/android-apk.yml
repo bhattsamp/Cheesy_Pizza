@@ -68,12 +68,29 @@ jobs:
           npx cap sync android
           node scripts/admin-config.js
 
-      - name: Build debug APKs (Cheesy Pizza and Cheesy Pizza Admin)
+      # Published APKs are release builds signed with the shop's upload key: a debug build
+      # (debuggable, signed with a public test key) is what Play Protect flags as harmful.
+      # Pull requests, and repos without the key, still get debug builds.
+      - name: Build APKs (Cheesy Pizza and Cheesy Pizza Admin)
         working-directory: mobile/android
+        env:
+          KS: ${{ github.event_name != 'pull_request' && secrets.ANDROID_UPLOAD_KEYSTORE || '' }}
+          UPLOAD_KEY_PASSWORD: ${{ github.event_name != 'pull_request' && secrets.UPLOAD_KEY_PASSWORD || '' }}
         run: |
-          ./gradlew assembleDebug -PversionCode=${{ github.run_number }} --no-daemon
-          cp app/build/outputs/apk/customer/debug/app-customer-debug.apk ../../cheesy-pizza.apk
-          cp app/build/outputs/apk/admin/debug/app-admin-debug.apk ../../cheesy-pizza-admin.apk
+          if [ -n "$KS" ] && [ -n "$UPLOAD_KEY_PASSWORD" ]; then
+            export UPLOAD_KEYSTORE_FILE="$RUNNER_TEMP/upload.jks"
+            echo "$KS" | base64 -d > "$UPLOAD_KEYSTORE_FILE"
+            ./gradlew assembleRelease -PversionCode=${{ github.run_number }} --no-daemon
+            rm -f "$UPLOAD_KEYSTORE_FILE"
+            cp app/build/outputs/apk/customer/release/app-customer-release.apk ../../cheesy-pizza.apk
+            cp app/build/outputs/apk/admin/release/app-admin-release.apk ../../cheesy-pizza-admin.apk
+            echo "Built release APKs signed with the upload key"
+          else
+            echo "::warning::No upload key: building debug APKs, which Play Protect may flag"
+            ./gradlew assembleDebug -PversionCode=${{ github.run_number }} --no-daemon
+            cp app/build/outputs/apk/customer/debug/app-customer-debug.apk ../../cheesy-pizza.apk
+            cp app/build/outputs/apk/admin/debug/app-admin-debug.apk ../../cheesy-pizza-admin.apk
+          fi
 
       - name: Check each app knows which one it is
         working-directory: .
