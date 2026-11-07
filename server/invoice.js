@@ -33,7 +33,11 @@ function invoicePage(o, outlet, { sizes = [], addons = {} } = {}) {
     ...(disc.length ? [['Item Total', rs(itemTotal)], ...disc.map(d => [d.name, '−' + rs(d.amt)])] : []),
     ...(rate ? [['Sub Total', rs(taxable)], [`SGST (${rate / 2}%)`, rs(half)], [`CGST (${rate / 2}%)`, rs(half)], ...(roundOff ? [['Round off Amount:', (roundOff > 0 ? '₹+' : '₹') + money(roundOff)]] : [])] : []),
   ].map(([k, v]) => `<div class="s"><span>${esc(k)}</span><span>${esc(v)}</span></div>`).join('');
-  const pay = o.status === 'cancelled' ? 'Order cancelled' : o.paid ? `Payment mode (Paid via ${esc(PAY[o.pay && o.pay.mode] || 'Cash')})` : 'Payment mode (Not paid yet)';
+  // A split bill lists each part, e.g. "Cash ₹100 + UPI ₹170"
+  const splits = o.pay && o.pay.mode === 'split' && Array.isArray(o.pay.splits) ? o.pay.splits : null;
+  const via = splits ? splits.map(x => (PAY[x.mode] || x.mode) + ' ' + rs(x.amt)).join(' + ') : PAY[o.pay && o.pay.mode] || 'Cash';
+  const utr = o.pay && o.pay.utr ? ' · UPI ref ' + o.pay.utr : '';
+  const pay = o.status === 'cancelled' ? 'Order cancelled' : o.paid ? `Payment mode (Paid via ${esc(via + utr)})` : 'Payment mode (Not paid yet)';
   const shop = outlet.legal || 'CHEESY PIZZA';
   const token = String(o.no || '').replace(/^\D+/, '').replace(/^0+(?=\d)/, '');
   const cell = (k, v) => `<div class="g"><div class="k">${k}</div><div class="v">${esc(v)}</div></div>`;

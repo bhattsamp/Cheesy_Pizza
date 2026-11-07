@@ -937,6 +937,26 @@ html:has(#modalRoot:not(:empty)),html:has(#boardRoot:not(:empty)),html:has(#choo
 .paysheet .calc .big{font-size:32px}
 .paysheet .quick button{padding:10px 14px;font-size:15px}
 .acts2{display:grid;grid-template-columns:1.3fr 1fr;gap:8px}.acts2 .btn{padding:16px 8px;font-size:17px}
+.paystat{text-align:left;font:inherit;color:inherit;cursor:pointer;width:100%}
+.paystat .more{margin-left:auto;font-size:18px;line-height:1;color:var(--teal);font-weight:800}
+.paystat:hover{border-color:var(--teal)}
+.utrf .inp{font-size:18px;font-weight:700;letter-spacing:1px}
+.paidok{display:flex;flex-direction:column;align-items:center;gap:6px;margin:4px 0 6px}
+.paidok svg{width:84px;height:84px}
+.paidok circle{fill:var(--ok);transform-origin:50% 50%;animation:paidPop .45s cubic-bezier(.2,1.4,.4,1) both}
+.paidok path{fill:none;stroke:#fff;stroke-width:6;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:60;stroke-dashoffset:60;animation:paidTick .4s .3s ease-out forwards}
+.paidok b{font-family:var(--display);font-size:26px;color:var(--ok);animation:paidUp .4s .45s ease-out both}
+.paidok .small{animation:paidUp .4s .55s ease-out both}
+@keyframes paidPop{from{transform:scale(0)}to{transform:scale(1)}}
+@keyframes paidTick{to{stroke-dashoffset:0}}
+@keyframes paidUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.paidok circle,.paidok path,.paidok b,.paidok .small{animation:none;stroke-dashoffset:0}}
+.paystat .k{display:flex;align-items:center;gap:6px}
+.splitpay{display:flex;flex-direction:column;gap:8px;background:var(--surface2);border-radius:14px;padding:14px}
+.splitpay .sprow{display:grid;grid-template-columns:minmax(70px,1fr) minmax(0,1.4fr) auto;gap:8px;align-items:center}
+.splitpay .sprow label{font-weight:700}
+.splitpay .sprow .inp{font-size:20px;font-weight:700}
+.splitpay .spleft{font-weight:700;text-align:right;font-size:15px}
 @media (max-width:760px){
   .mbar{flex-wrap:wrap;padding:6px}
   .mbar .cats{flex:1 1 100%;order:2}
@@ -953,6 +973,40 @@ html:has(#modalRoot:not(:empty)),html:has(#boardRoot:not(:empty)),html:has(#choo
   .lpr{min-width:52px}
   .lrm{width:26px}
   .paybig b{font-size:26px}
+}
+/* ===== POS layout: sections in one bar across the top that scrolls sideways; on wider
+   screens the item categories sit in a column on the right of the menu ===== */
+:root{--navh:0px}
+html:has(body:not(.pubmode) .pos){scroll-padding-top:calc(env(safe-area-inset-top,0px) + var(--toph,61px) + var(--navh) + 8px)}
+.pos{display:block;max-width:none}
+.pos .side{display:flex;height:auto;align-self:auto;position:sticky;top:calc(env(safe-area-inset-top,0px) + var(--toph,61px));z-index:8;flex-direction:row;align-items:center;gap:4px;padding:6px 10px;border-right:0;border-bottom:1px solid var(--line);overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain;scrollbar-width:thin;-webkit-overflow-scrolling:touch;box-shadow:0 4px 14px -12px rgba(0,0,0,.35)}
+.pos .side button{flex:none;flex-direction:row;justify-content:flex-start;gap:7px;padding:9px 13px;font-size:14px;line-height:1.2;white-space:nowrap;text-align:left;position:relative}
+.pos .side button svg{width:18px;height:18px}
+.pos .side .cnt{position:static;margin:0 0 0 2px;font-size:11px;padding:0 7px}
+.pos .side-foot{flex:none;flex-direction:row;align-items:center;margin:0 0 0 auto;padding:0 0 0 14px;gap:6px;white-space:nowrap}
+.pos .side-foot>span{display:inline}
+.pos .side-foot .sdemo{display:none}
+.pos .side-foot .btn.sm{font-size:12px;padding:6px 10px;white-space:nowrap}
+.mobnav{display:none!important}
+.mbar{top:calc(env(safe-area-inset-top,0px) + var(--toph,61px) + var(--navh))}
+.catrail{display:none}
+@media (max-width:760px){
+  .pos .side{padding:6px 8px}
+  .pos .side button{padding:8px 11px;font-size:13px}
+  .pos .side-foot>span{display:none}
+  .main{padding-bottom:24px}
+}
+@media (min-width:761px){
+  .menucol{display:grid;grid-template-columns:minmax(0,1fr) clamp(118px,11vw,150px);gap:10px;align-items:start}
+  .menucol>.mbar{grid-column:1/-1;margin-bottom:0}
+  .menucol>.mbar .cats{display:none}
+  .menucol>.mbar .msearch{flex:1 1 auto}
+  .catrail{display:flex;flex-direction:column;gap:3px;padding:6px;position:sticky;top:calc(var(--toph,61px) + var(--navh) + 70px);max-height:calc(100vh - var(--toph,61px) - var(--navh) - 84px);overflow-y:auto;overscroll-behavior:contain}
+  .catrail button{border:0;background:transparent;text-align:left;padding:10px 12px;border-radius:10px;font-weight:700;color:var(--muted);line-height:1.2}
+  .catrail button[aria-pressed="true"]{background:var(--teal-soft);color:var(--teal)}
+}
+@media (min-width:761px) and (min-height:540px){
+  .pos .ticket.order{top:calc(var(--toph,61px) + var(--navh) + 12px);max-height:var(--tkh,calc(100vh - var(--toph,61px) - var(--navh) - 24px))}
 }
 #printRoot{display:none}
 @media print{body>*:not(#printRoot){display:none!important}#printRoot{display:block!important}#printRoot pre{font:12px/1.3 "Courier New",monospace;margin:0;white-space:pre}@page{margin:4mm}}
@@ -2073,10 +2127,33 @@ function applyConfig(c){
   // Older databases don't have these yet
   if(!PAY.bank){PAY.bank='Bank / Cheque';PAYCOL.bank='#56727a'}
   PAY.pending='Not paid yet';PAYCOL.pending='#d23f35';
+  PAY.split='Split';PAYCOL.split='#7a5ad2';
   WAITS=c.waitTimes||[15,20,30,40];
 }
 let WAITS=[15,20,30,40];
 const COUNTER_MODES=['cash','upi','card','bank'];
+// Split payment: one bill paid in parts, e.g. ₹100 cash and the rest by UPI.
+// Saved as pay:{mode:'split',splits:[{mode,amt}]}. A 'due' part goes to the customer's baki account.
+const paySplits=o=>o&&o.pay&&o.pay.mode==='split'&&Array.isArray(o.pay.splits)?o.pay.splits:null;
+const modeName=k=>k==='due'?'Baki':PAY[k]||k;
+const payName=o=>{const sp=paySplits(o);return sp?sp.map(x=>modeName(x.mode)+' '+rs(x.amt)).join(' + '):PAY[o.pay&&o.pay.mode]||''};
+const dueOf=o=>!o||!o.pay?0:o.pay.mode==='due'?o.total:(paySplits(o)||[]).filter(x=>x.mode==='due').reduce((a,x)=>a+x.amt,0);
+const r2=n=>Math.round(n*100)/100;
+const splitList=(v,keys)=>keys.map(k=>({mode:k,amt:Math.max(0,r2(+v[k]||0))})).filter(x=>x.amt>0);
+const splitSum=l=>r2(l.reduce((a,x)=>a+x.amt,0));
+const splitLeft=left=>left>0.004?`<span style="color:var(--bad)">Still to take ${rs(left)}</span>`:left<-0.004?`<span style="color:var(--bad)">${rs(-left)} more than the bill</span>`:'<span style="color:var(--ok)">All covered ✓</span>';
+function splitHtml(t,v,keys,pre){
+  return `<div class="splitpay"><div class="small muted">Type how much comes in each way. Tap Rest to put what is left there.</div>${keys.map(k=>`<div class="sprow"><label for="${pre}-${k}">${modeName(k)}</label><input class="inp num" id="${pre}-${k}" data-sp="${k}" type="number" inputmode="decimal" min="0" value="${esc(v[k]||'')}" placeholder="0"><button class="btn sm" data-act="sp-rest" data-v="${k}">Rest</button></div>`).join('')}
+  <div class="spleft" id="${pre}-left">${splitLeft(t-splitSum(splitList(v,keys)))}</div></div>`;
+}
+// "Rest": this way of paying takes whatever the other parts leave
+function splitRest(v,keys,t,k){const others=splitSum(splitList(v,keys.filter(x=>x!==k)));v[k]=String(Math.max(0,r2(t-others)))}
+function splitInput(e,v,keys,t,pre){const k=e.target.dataset.sp;if(!k)return;v[k]=e.target.value;const el=document.getElementById(pre+'-left');if(el)el.innerHTML=splitLeft(t-splitSum(splitList(v,keys)))}
+// UPI reference number (12-digit UTR) typed at the counter, saved on the order
+const utrClean=v=>String(v||'').replace(/\D/g,'').slice(0,12);
+const utrField=(id,v)=>`<div class="field utrf"><label for="${id}">UPI reference no. (UTR)</label><input class="inp num" id="${id}" inputmode="numeric" maxlength="14" value="${esc(fmtUtr(v))}" placeholder="12 digits from the UPI app" autocomplete="off"><span class="small muted">Find it in the customer's payment screen or your UPI app.</span></div>`;
+const utrBad=v=>v&&utrClean(v).length!==12?'UPI reference number should be 12 digits':'';
+function splitProblem(list,t){if(!list.length)return 'Type the amount for each way of paying';const sm=splitSum(list);if(Math.abs(sm-t)>0.004)return sm<t?'Split is short by '+rs(t-sm):'Split is '+rs(sm-t)+' more than the bill';return ''}
 // Extra choices for non-pizza items (owners can change them per item on the Menu screen)
 const ITEM_OPTS={pockets:['Spicy','No spicy','Less paneer','Less onion','Less capsicum'],bread:['Spicy','No spicy','Less onion','Extra crispy']};
 const itemOpts=m=>m.options||ITEM_OPTS[m.cat]||[];
@@ -2325,7 +2402,7 @@ function commitOrder(o){
   o.times=o.times||{};o.times.placed=o.times.placed||o.ts;if(o.status==='preparing')o.times.preparing=o.times.preparing||o.ts;
   S.orders.push(o);
   const ph=(o.customer.phone||'').replace(/\D/g,'');
-  if(ph){const c=S.customers[ph]||{phone:ph,name:'',due:0};c.name=o.customer.name||c.name;c.coins=Math.max(0,(c.coins||0)-(o.coinsUsed||0)+(o.coinsEarned||0));if(o.extra&&o.extra.code&&c.myCodes){const pc=c.myCodes.find(x=>x.code===o.extra.code.toUpperCase());if(pc)pc.used=true}if(o.pay.mode==='due'&&o.status!=='cancelled')c.due+=o.total;S.customers[ph]=c}
+  if(ph){const c=S.customers[ph]||{phone:ph,name:'',due:0};c.name=o.customer.name||c.name;c.coins=Math.max(0,(c.coins||0)-(o.coinsUsed||0)+(o.coinsEarned||0));if(o.extra&&o.extra.code&&c.myCodes){const pc=c.myCodes.find(x=>x.code===o.extra.code.toUpperCase());if(pc)pc.used=true}if(dueOf(o)&&o.status!=='cancelled')c.due+=dueOf(o);S.customers[ph]=c}
   return o;
 }
 function setStatus(o,st){o.status=st;o.times=o.times||{};o.times[st]=Date.now();save()}
@@ -2344,7 +2421,13 @@ const isNewCust=o=>{const ph=o.customer?.phone;if(!ph)return false;const first=S
 const rs=n=>'₹'+Math.round(n).toLocaleString('en-IN');
 const rs2=n=>'₹'+(+n).toFixed(2).replace(/\.00$/,'');
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const cur=()=>S.outlets.find(o=>o.id===S.cur)||S.outlets[0];
+// Outlets: the first one is the main outlet and is always on. Others can be made inactive
+// (active:false, listed under the Inactive tab only) and then deleted from there, which hides
+// them everywhere (visible:false) but keeps the record so old orders and reports still find it.
+const isMainOutlet=o=>!!o&&S.outlets[0]&&o.id===S.outlets[0].id;
+const isLive=o=>!!o&&(isMainOutlet(o)||o.active!==false&&o.visible!==false);
+const liveOutlets=()=>S.outlets.filter(isLive);
+const cur=()=>S.outlets.find(o=>o.id===S.cur&&isLive(o))||liveOutlets()[0]||S.outlets[0];
 const outletOf=o=>S.outlets.find(x=>x.id===o.outletId)||cur();
 const fmtTime=ts=>ts?new Date(ts).toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'}):'';
 const fmtDate=ds=>new Date(ds+'T12:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
@@ -2356,7 +2439,7 @@ const isOpen=()=>{const h=new Date().getHours();return h>=OPEN_H&&h<CLOSE_H};
 const doneLabel=t=>t==='delivery'?'Delivered':t==='dine'?'Served':t==='zomato'?'Picked by Zomato':'Picked up';
 const statusName=(s,t)=>({placed:'Waiting to accept',preparing:'Preparing',ready:'Ready',out:'Out for delivery',done:doneLabel(t),cancelled:'Cancelled'}[s]);
 
-const U={pubCat:'all',pubQ:'',pubF:{},pubView:'home',accTab:'orders',spin:{deg:0,busy:false,result:null},topup:500,cart:[],pos:{tab:'new',cat:'pizza',q:'',cart:[],phone:'',name:'',table:'',address:'',note:'',type:'takeaway',zid:'',pay:'cash',given:'',code:'',useCoins:false,wait:null,addTo:null},
+const U={pubCat:'all',pubQ:'',pubF:{},pubView:'home',accTab:'orders',spin:{deg:0,busy:false,result:null},topup:500,cart:[],pos:{tab:'new',cat:'pizza',q:'',cart:[],phone:'',name:'',table:'',address:'',note:'',type:'takeaway',zid:'',pay:'cash',given:'',splits:{},utr:'',code:'',useCoins:false,wait:null,addTo:null},
   ordersDate:null,ordersQ:'',ordersScope:'outlet',ordersNew:false,salesDate:null,salesScope:'outlet',custQ:'',lastTap:{},trackId:null,editLine:null,confirmCancel:null,board:false};
 
 const I={
@@ -2383,27 +2466,34 @@ function render(){
   if(APP_ROLE){S.mode=APP_ROLE==='admin'?'pos':'public';document.body.classList.add('app-'+APP_ROLE)}
   document.getElementById('m-pub').setAttribute('aria-pressed',S.mode==='public');
   document.getElementById('m-pos').setAttribute('aria-pressed',S.mode==='pos');
-  document.getElementById('outletSel').innerHTML=S.outlets.map(o=>`<option value="${o.id}" ${o.id===S.cur?'selected':''}>${esc(o.name)}</option>`).join('');
+  document.getElementById('outletSel').innerHTML=liveOutlets().map(o=>`<option value="${o.id}" ${o.id===cur().id?'selected':''}>${esc(o.name)}</option>`).join('');
   document.body.classList.toggle('pubmode',S.mode==='public');
   const th=document.querySelector('.top')?.offsetHeight;if(th)document.documentElement.style.setProperty('--toph',th+'px');
   const vk=S.mode+'|'+(S.mode==='public'?U.pubView+'|'+(U.accTab||''):'');U.enter=vk!==U.lastView;U.lastView=vk;
   // Keep the scroll position of panes that scroll on their own (POS menu, order ticket) across re-renders
-  const ks={};app.querySelectorAll('[data-ks]').forEach(el=>{ks[el.dataset.ks]=el.scrollTop});
+  const ks={};app.querySelectorAll('[data-ks]').forEach(el=>{ks[el.dataset.ks]=[el.scrollTop,el.scrollLeft]});
   app.innerHTML=S.mode==='public'?pubNav()+(U.pubView==='account'&&me()?renderAccount():U.pubView==='auth'&&!me()?renderAuth():U.pubView==='home'?renderHome():renderPublic()):renderPOS();renderAcct();
-  app.querySelectorAll('[data-ks]').forEach(el=>{const v=ks[el.dataset.ks];if(v)el.scrollTop=v});
-  renderChrome();renderBoard();renderRing();afterRender();navTrack();fitTicket();
+  app.querySelectorAll('[data-ks]').forEach(el=>{const v=ks[el.dataset.ks];if(v){el.scrollTop=v[0];el.scrollLeft=v[1]}});
+  renderChrome();renderBoard();renderRing();afterRender();navTrack();sideBar();fitTicket();
 }
 // POS terminals and tablets: the order ticket fills the space from its top to the bottom of the
 // screen, so totals and the Bill buttons stay in view while the menu scrolls beside it
+// Height of the POS section bar, so sticky panes sit below it; keeps the current section in view
+function sideBar(){
+  const sd=app.querySelector('.pos .side');document.documentElement.style.setProperty('--navh',(sd?sd.offsetHeight:0)+'px');
+  const on=sd&&sd.querySelector('[aria-current="page"]');if(!on||U.sideFor===U.pos.tab)return;U.sideFor=U.pos.tab;
+  const l=on.offsetLeft,r=l+on.offsetWidth;if(l<sd.scrollLeft||r>sd.scrollLeft+sd.clientWidth)sd.scrollLeft=Math.max(0,l-sd.clientWidth/2+on.offsetWidth/2);
+}
 function fitTicket(){
   const tk=document.getElementById('ticket');if(!tk)return;
   if(getComputedStyle(tk).position!=='sticky'){tk.style.removeProperty('--tkh');return}
   const th=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--toph'))||60;
-  const top=Math.max(tk.getBoundingClientRect().top,th+12);
+  const nh=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--navh'))||0;
+  const top=Math.max(tk.getBoundingClientRect().top,th+nh+12);
   tk.style.setProperty('--tkh',Math.max(320,Math.floor(window.innerHeight-top-12))+'px');
 }
 let fitRaf=0;const fitSoon=()=>{if(!fitRaf)fitRaf=requestAnimationFrame(()=>{fitRaf=0;fitTicket()})};
-window.addEventListener('scroll',fitSoon,{passive:true});window.addEventListener('resize',()=>{const th=document.querySelector('.top')?.offsetHeight;if(th)document.documentElement.style.setProperty('--toph',th+'px');fitSoon()});
+window.addEventListener('scroll',fitSoon,{passive:true});window.addEventListener('resize',()=>{const th=document.querySelector('.top')?.offsetHeight;if(th)document.documentElement.style.setProperty('--toph',th+'px');sideBar();fitSoon()});
 // Android Back button (MainActivity calls cpBack): closes an open panel first, then goes back
 // one screen at a time to the home screen; there it answers 'home' and the app asks to close
 const NAV=[];
@@ -2873,7 +2963,7 @@ function renderDrawer(){
   root.innerHTML=`<div class="drw-scrim" data-act="drawer"></div><aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-label="Menu">
     <div class="drw-h">${brandWord}<button class="drw-x" data-act="drawer" aria-label="Close menu">×</button></div>
     <nav class="drw-nav" aria-label="Site">${items.map(([k,n,sub,on],i)=>`<button style="--i:${i}" data-act="pn" data-v="${k}" ${on?'aria-current="page"':''}>${n}${sub?`<small>${sub}</small>`:''}</button>`).join('')}</nav>
-    ${S.outlets.length>1?`<div class="drw-sec"><h3>Order from</h3><div class="drw-outs">${S.outlets.map(x=>`<button data-act="use-outlet" data-id="${x.id}" aria-pressed="${x.id===S.cur}"><span>${esc(x.name)}${x.area&&x.area!=='Set your address'?`<br><small>${esc(x.area)}</small>`:''}</span>${x.id===S.cur?'<small>Selected</small>':''}</button>`).join('')}</div></div>`:''}
+    ${liveOutlets().length>1?`<div class="drw-sec"><h3>Order from</h3><div class="drw-outs">${liveOutlets().map(x=>`<button data-act="use-outlet" data-id="${x.id}" aria-pressed="${x.id===S.cur}"><span>${esc(x.name)}${x.area&&x.area!=='Set your address'?`<br><small>${esc(x.area)}</small>`:''}</span>${x.id===S.cur?'<small>Selected</small>':''}</button>`).join('')}</div></div>`:''}
     ${o.phone?`<div class="drw-sec"><h3>Talk to us</h3><div class="drw-row"><a class="btn num" href="tel:+91${esc(o.phone)}">Call ${esc(fmtPhone(o.phone))}</a><a class="btn" href="https://wa.me/91${esc(o.phone)}" target="_blank" rel="noopener">WhatsApp</a></div></div>`:''}
     <div class="drw-foot"><button data-act="mode" data-v="pos">Staff login</button><a href="${PRIVACY_URL}" target="_blank" rel="noopener">Privacy policy</a></div>
   </aside>`;
@@ -3403,7 +3493,7 @@ function openTrack(){
     <div class="card" style="padding:12px 14px;display:flex;flex-direction:column;gap:4px">
       ${o.items.map(l=>`<div class="bl"><span>${l.qty} × ${esc(l.name)} <span class="muted small">${esc(addonText(l))}</span>${noteText(l)?`<span class="small cook"> · ${esc(noteText(l))}</span>`:''}</span><span class="num">${rs(l.unit*l.qty)}</span></div>`).join('')}${o.note?`<div class="small cook">Kitchen note: ${esc(o.note)}</div>`:''}
       <div style="border-top:1px dashed var(--line);margin:6px 0"></div>${billLines({subtotal:o.subtotal,discounts:o.discounts,total:o.total,gst:o.gst})}
-      <div class="small muted">${upiPending(o)?`UPI payment being checked by the outlet · UTR ${esc(fmtUtr(o.pay.utr))}`:o.pay&&o.pay.check==='failed'?'<b style="color:var(--bad)">We could not find your UPI payment. Please pay cash on '+(del?'delivery':'pickup')+' or call us.</b>':o.paid?'Paid by '+PAY[o.pay.mode]+(o.pay.check==='ok'?' · confirmed ✓':''):'Pay on '+(del?'delivery':'pickup')}${o.coinsEarned?` · <b style="color:var(--cheese-ink)">+${o.coinsEarned} Cheese Coins</b>`:''}</div>
+      <div class="small muted">${upiPending(o)?`UPI payment being checked by the outlet · UTR ${esc(fmtUtr(o.pay.utr))}`:o.pay&&o.pay.check==='failed'?'<b style="color:var(--bad)">We could not find your UPI payment. Please pay cash on '+(del?'delivery':'pickup')+' or call us.</b>':o.paid?'Paid by '+payName(o)+(o.pay.check==='ok'?' · confirmed ✓':''):'Pay on '+(del?'delivery':'pickup')}${o.coinsEarned?` · <b style="color:var(--cheese-ink)">+${o.coinsEarned} Cheese Coins</b>`:''}</div>
     </div>
     ${o.status==='done'?(o.rating?`<div class="rate"><b>Thanks! You rated this order</b><div style="font-size:26px;color:var(--cheese)">${'★'.repeat(o.rating)}${'☆'.repeat(5-o.rating)}</div></div>`:`<div class="rate"><b>How was your pizza?</b><div class="stars">${[1,2,3,4,5].map(n=>`<button data-act="rate" data-id="${o.id}" data-v="${n}" aria-label="${n} star${n>1?'s':''}">★</button>`).join('')}</div></div>`):''}
     ${scratchBlock(o)}
@@ -3514,7 +3604,7 @@ function custBox(ci){
 }
 const priceLabel=m=>m.cat==='pizza'?S.sizes.filter(s=>+m.prices[s.id]).map(s=>rs(m.prices[s.id])).join(' / '):rs(m.price);
 
-const POS_BLANK={opts:0,cart:[],phone:'',name:'',table:'',address:'',note:'',type:'takeaway',zid:'',pay:'cash',given:'',code:'',useCoins:false,wait:null,addTo:null};
+const POS_BLANK={opts:0,cart:[],phone:'',name:'',table:'',address:'',note:'',type:'takeaway',zid:'',pay:'cash',given:'',splits:{},utr:'',code:'',useCoins:false,wait:null,addTo:null};
 // A dine-in table is busy while its order is cooking, or served but not paid yet
 function tableState(t){
   const run=S.orders.find(o=>o.outletId===S.cur&&o.type==='dine'&&String(o.table)===t&&o.ts>Date.now()-16*3600e3&&o.status!=='cancelled'&&(o.status!=='done'||!o.paid));
@@ -3534,7 +3624,7 @@ function posCalc(){
   const b=run?computeBill([...run.items,...P.cart],run.date,{...(run.extra||{}),...(P.code?{code:P.code}:{}),phone:run.customer.phone}):computeBill(P.cart,null,{code:P.code,coins:P.useCoins?coins:0,phone:P.phone});
   const t=b.total;P.total=t;
   const zom=P.type==='zomato';
-  const modes=zom?['zomato']:[...COUNTER_MODES,...(t>0&&walletOf(P.phone)>=t?['wallet']:[]),'due'];
+  const modes=zom?['zomato']:[...COUNTER_MODES,...(t>0?['split']:[]),...(t>0&&walletOf(P.phone)>=t?['wallet']:[]),'due'];
   if(!modes.includes(P.pay))P.pay=modes[0];
   return {P,run,coins,b,t,zom,modes,can:!!(P.cart.length||run)};
 }
@@ -3560,6 +3650,7 @@ function vNew(){
         <label class="msearch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input class="inp" id="pos-q" placeholder="Search menu" value="${esc(P.q)}" aria-label="Search menu"></label>
       </div>
       <div class="tiles">${items.map(posTile).join('')||'<div class="empty">No items</div>'}</div>
+      <nav class="card catrail" aria-label="Item categories" data-ks="catrail"><button data-act="poscat" data-v="combo" aria-pressed="${P.cat==='combo'&&!P.q}">Combos</button>${CATS.map(([k,nm])=>`<button data-act="poscat" data-v="${k}" aria-pressed="${P.cat===k&&!P.q}">${nm}</button>`).join('')}</nav>
     </div>
     ${P.cart.length?`<button class="tkjump" data-act="to-ticket"><b class="num">${n} item${n>1?'s':''} · ${rs(t)}</b><span>View order ↓</span></button>`:''}
     <aside class="card ticket order" id="ticket" data-ks="ticket">
@@ -3605,6 +3696,7 @@ function vNew(){
 function openPay(){
   const {P,t,modes,can,run}=posCalc();if(!can){closeModal();return}
   const g=+P.given||0,ch=g-t;
+  const spKeys=[...COUNTER_MODES,...(P.phone.length===10||(run&&run.customer.phone)?['due']:[])];
   showModal(`<div class="mh"><h3>Pay <span class="num">${rs(t)}</span></h3><button class="x" data-act="close" aria-label="Close">×</button></div>
   <div class="mb paysheet">
     <div class="paymodes ${modes.length>=5?'five':''}">${modes.map(k=>`<button data-act="pos-pm" data-v="${k}" aria-pressed="${P.pay===k}">${k==='due'?'Baki':PAY[k]}</button>`).join('')}</div>
@@ -3616,15 +3708,20 @@ function openPay(){
     ${P.pay==='upi'?`<div class="small muted">Customer pays ${rs(t)} to ${esc(cur().upi)}. <button class="btn sm" data-act="pos-qr">Show QR</button></div>`:''}
     ${P.pay==='due'?(P.phone.length===10||(run&&run.customer.phone)?`<div class="small muted">${rs(t)} goes to ${esc(P.name||(run&&run.customer.name)||'this customer')}'s baki account.</div>`:'<div class="msg-bad">Add the mobile number to keep a baki amount.</div>'):''}
     ${P.pay==='zomato'?'<div class="small muted">Paid through Zomato.</div>':''}
+    ${P.pay==='split'?splitHtml(t,P.splits||(P.splits={}),spKeys,'sp'):''}
+    ${P.pay==='upi'||P.pay==='split'?`<div id="utr-wrap" ${P.pay==='split'&&!(+(P.splits||{}).upi>0)?'hidden':''}>${utrField('pos-utr',P.utr)}</div>`:''}
     <div class="acts2"><button class="btn pri lg" data-act="pos-go" data-v="billprint">Bill & Print</button><button class="btn lg" data-act="pos-go" data-v="bill">Bill only</button></div>
-    ${P.pay==='cash'&&btp()&&btGet()&&btGet().drawer!==false?'<div class="small muted" style="text-align:center">The cash drawer opens when you bill.</div>':''}
+    ${(P.pay==='cash'||P.pay==='split'&&+(P.splits||{}).cash>0)&&btp()&&btGet()&&btGet().drawer!==false?'<div class="small muted" style="text-align:center">The cash drawer opens when you bill.</div>':''}
   </div>`,{
     onAct:(act,el)=>{
       if(act==='pos-pm'){P.pay=el.dataset.v;render();openPay();return true}
       if(act==='pos-gv'){P.given=el.dataset.v;openPay();return true}
+      if(act==='sp-rest'){splitRest(P.splits||(P.splits={}),spKeys,t,el.dataset.v);openPay();return true}
       if(act==='pos-go'){closeModal();posGo(el.dataset.v);return true}
       return false},
-    onInput:e=>{const tg=e.target;if(tg.id!=='pos-given')return;P.given=tg.value;const gg=+tg.value||0,c=gg-t;const el=document.getElementById('chg');if(el){el.textContent=gg?(c<0?'Short '+rs(-c):rs(c)):'—';el.style.color=c<0&&gg?'var(--bad)':'var(--ok)'}}
+    onInput:e=>{const tg=e.target;if(tg.id==='pos-utr'){P.utr=utrClean(tg.value);return}
+      if(tg.dataset.sp){splitInput(e,P.splits||(P.splits={}),spKeys,t,'sp');const w=document.getElementById('utr-wrap');if(w)w.hidden=!(+P.splits.upi>0);return}
+      if(tg.id!=='pos-given')return;P.given=tg.value;const gg=+tg.value||0,c=gg-t;const el=document.getElementById('chg');if(el){el.textContent=gg?(c<0?'Short '+rs(-c):rs(c)):'—';el.style.color=c<0&&gg?'var(--bad)':'var(--ok)'}}
   });
   if(P.pay==='cash')setTimeout(()=>document.getElementById('pos-given')?.focus(),50);
 }// Cashiers must enter the customer's mobile, so every bill can be checked later
@@ -3679,13 +3776,15 @@ function recalcOrder(o){
   const c=S.customers[o.customer.phone];if(c)c.coins=Math.max(0,(c.coins||0)+o.coinsEarned-o.coinsUsed-before);
 }
 // Take payment for an order: at billing, or later at the counter
-function settleOrder(o,mode,given){
+// splits: for mode 'split', the parts [{mode,amt}] that add up to the bill
+function settleOrder(o,mode,given,splits,utr){
   const ph=o.customer.phone;const c=S.customers[ph];
-  if(o.pay?.mode==='due'&&c&&mode!=='due')c.due=Math.max(0,(c.due||0)-o.total); // was on the baki account
+  const was=dueOf(o);if(was&&c)c.due=Math.max(0,(c.due||0)-was); // was on the baki account
   const g=mode==='cash'?(+given||o.total):0;
-  o.pay={mode,given:g,change:mode==='cash'?Math.max(0,g-o.total):0};
+  o.pay=mode==='split'?{mode,splits:splits.map(x=>({mode:x.mode,amt:x.amt})),given:0,change:0}:{mode,given:g,change:mode==='cash'?Math.max(0,g-o.total):0};
   o.paid=mode!=='due'&&mode!=='pending';
-  if(mode==='due'&&ph)ensureCust(ph,o.customer.name).due=(S.customers[ph].due||0)+o.total;
+  if(utr)o.pay.utr=utr;
+  const owe=dueOf(o);if(owe&&ph)ensureCust(ph,o.customer.name).due=(S.customers[ph].due||0)+owe;
   if(mode==='wallet'){o.walletUsed=o.total;walletAdd(ph,-o.total,'Paid for '+o.no+' at counter')}
   if(o.paid){o.paidAt=Date.now();o.paidBy=staff()?.name||''}
 }
@@ -3700,11 +3799,19 @@ function posGo(kind){
     if(P.type==='delivery'&&!P.address.trim()){toast('Add the delivery address');return}
     if(P.type==='dine'&&!P.table){toast('Pick a table');return}
   }
-  const bill=kind!=='kot';const mode=P.type==='zomato'?'zomato':P.pay;
+  const bill=kind!=='kot';let mode=P.type==='zomato'?'zomato':P.pay,splits=null;
+  const pre=()=>run?computeBill([...run.items,...P.cart],run.date,{...(run.extra||{}),...(P.code?{code:P.code}:{}),phone:run.customer.phone}).total:computeBill(P.cart,null,{code:P.code,coins:P.useCoins?coinsOf(P.phone):0,phone:P.phone}).total;
+  if(bill&&mode==='split'){
+    const hasPh=P.phone.length===10||!!(run&&run.customer.phone);
+    splits=splitList(P.splits||{},[...COUNTER_MODES,...(hasPh?['due']:[])]);
+    const bad=splitProblem(splits,pre());if(bad){toast(bad);openPay();return}
+    if(splits.length===1){mode=splits[0].mode;splits=null} // only one way after all
+  }
   if(bill&&mode==='due'&&P.phone.length!==10&&!(run&&run.customer.phone)){toast('Add the mobile number to keep a baki amount');return}
-  if(bill&&mode==='cash'&&+P.given){
-    const pre=run?computeBill([...run.items,...P.cart],run.date,{...(run.extra||{}),...(P.code?{code:P.code}:{}),phone:run.customer.phone}).total:computeBill(P.cart,null,{code:P.code,coins:P.useCoins?coinsOf(P.phone):0,phone:P.phone}).total;
-    if(+P.given<pre){toast('Customer gave less than '+rs(pre));return}
+  const utr=bill&&(mode==='upi'||(splits||[]).some(x=>x.mode==='upi'))?utrClean(P.utr):'';
+  if(bill&&utrBad(utr)){toast(utrBad(utr));openPay();setTimeout(()=>document.getElementById('pos-utr')?.focus(),60);return}
+  if(bill&&mode==='cash'&&+P.given&&P.pay==='cash'){
+    const tot=pre();if(+P.given<tot){toast('Customer gave less than '+rs(tot));return}
   }
   let o,round=1;
   if(run){
@@ -3723,17 +3830,18 @@ function posGo(kind){
     if(P.type==='dine'&&cur().holds?.[P.table]){delete cur().holds[P.table]}
   }
   if(bill){
-    settleOrder(o,mode,+P.given||0);
+    settleOrder(o,mode,P.pay==='cash'?+P.given||0:0,splits,utr);
   }
   save();Object.assign(U.pos,JSON.parse(JSON.stringify(POS_BLANK)));render();
   if(kind==='kot'){const txt=kotText(o,run?round:null);printText(txt);toast((run?'New items for '+o.no:o.no)+' sent to kitchen')}
-  else{openDone(o);const cash=mode==='cash';if(kind==='billprint')printText(billText(o),{drawer:cash});else if(cash)openDrawer()}
+  else{openDone(o);const cash=mode==='cash'||!!(splits&&splits.some(x=>x.mode==='cash'));if(kind==='billprint')printText(billText(o),{drawer:cash});else if(cash)openDrawer()}
 }
 function openDone(o){
   showModal(`<div class="mh"><h3>Order ${o.paid?'billed':'saved'}</h3><button class="x" data-act="close" aria-label="Close">×</button></div>
   <div class="mb" style="text-align:center">
+    ${o.paid?`<div class="paidok" role="status"><svg viewBox="0 0 84 84" aria-hidden="true"><circle cx="42" cy="42" r="40"/><path d="M25 43l11 11 23-24"/></svg><b>Paid ${rs(o.total)}</b><span class="small muted">${esc(payName(o))}${o.pay.utr?' · UTR <span class="num">'+esc(fmtUtr(o.pay.utr))+'</span>':''}</span></div>`:''}
     <div class="muted small">Order number</div><div class="bignum num">${o.no}</div>
-    <div>${TYPES[o.type]}${o.table?' · Table '+esc(o.table):''} · ${PAY[o.pay.mode]} · <b class="num">${rs(o.total)}</b>${o.pay.mode==='cash'&&o.pay.change>0?` · <b style="color:var(--ok)" class="num">Return ${rs(o.pay.change)}</b>`:''}</div>
+    <div>${TYPES[o.type]}${o.table?' · Table '+esc(o.table):''} · ${esc(payName(o))} · <b class="num">${rs(o.total)}</b>${o.pay.mode==='cash'&&o.pay.change>0?` · <b style="color:var(--ok)" class="num">Return ${rs(o.pay.change)}</b>`:''}</div>
     <div class="row" style="justify-content:center">
       <button class="btn" data-act="bill" data-id="${o.id}">Bill & Print</button>
       <button class="btn" data-act="kot" data-id="${o.id}">KOT Print</button>
@@ -3755,7 +3863,10 @@ function billText(o){
   o.items.forEach(l=>{L.push(pad(l.qty+' x '+l.name.slice(0,20),String(l.unit*l.qty)));const a=addonText(l);if(a)L.push('   '+a.slice(0,29))});
   L.push(hr,pad('Item total','Rs '+o.subtotal));(o.discounts||[]).forEach(d=>L.push(pad(d.name.slice(0,22),'-'+d.amt)));
   if(o.gst){const h=(o.gst.tax/2).toFixed(2);L.push(pad(`SGST ${o.gst.rate/2}%`+(o.gst.mode==='incl'?' (incl)':''),h),pad(`CGST ${o.gst.rate/2}%`+(o.gst.mode==='incl'?' (incl)':''),h));const ro=o.gst.mode==='excl'&&o.gst.net!=null?Math.round((o.total-o.gst.net-2*h)*100)/100:0;if(ro)L.push(pad('Round off',(ro>0?'+':'')+ro.toFixed(2)))}
-  L.push(pad('TOTAL','Rs '+o.total),o.paid?pad('Paid by',PAY[o.pay.mode]):pad('Payment','BAKI '+(o.pay.mode==='due'?'(on account)':'(not paid)')));if(o.walletUsed&&o.pay.mode!=='wallet')L.push(pad('From wallet','Rs '+o.walletUsed));if(o.coinsEarned)L.push(pad('Cheese Coins earned','+'+o.coinsEarned));
+  const sp=paySplits(o);
+  if(sp){L.push(pad('TOTAL','Rs '+o.total));sp.forEach(x=>L.push(pad(x.mode==='due'?'Baki (on account)':'Paid by '+PAY[x.mode],'Rs '+x.amt)))}
+  else L.push(pad('TOTAL','Rs '+o.total),o.paid?pad('Paid by',PAY[o.pay.mode]):pad('Payment','BAKI '+(o.pay.mode==='due'?'(on account)':'(not paid)')));if(o.walletUsed&&o.pay.mode!=='wallet')L.push(pad('From wallet','Rs '+o.walletUsed));if(o.coinsEarned)L.push(pad('Cheese Coins earned','+'+o.coinsEarned));
+  if(o.pay.utr&&!o.pay.app)L.push(pad('UPI ref (UTR)',o.pay.utr));
   if(o.pay.mode==='cash'&&o.pay.given)L.push(pad('Given','Rs '+o.pay.given),pad('Return','Rs '+o.pay.change));
   if(o.status==='cancelled')L.push(hr,center('*** CANCELLED ***'));
   L.push(hr,center('Thank you! Visit again'),center('No Mayonnaise Products'));
@@ -3840,9 +3951,24 @@ function openWait(o){
   draw();
 }
 function openCollect(o){
+  const sp=U.colSp&&U.colSp.id===o.id?U.colSp:(U.colSp={id:o.id,on:false,v:{}});
   showModal(`<div class="mh"><h3>Collect ${rs(o.total)} · ${o.no}</h3><button class="x" data-act="close" aria-label="Close">×</button></div>
   <div class="mb"><div class="small muted">${esc(o.customer.name||'Walk-in')} ${o.customer.phone?'· '+fmtPhone(o.customer.phone):''}${o.pay.mode==='due'?' · on baki account':''}</div>
-  <div class="paymodes">${COUNTER_MODES.map(k=>`<button data-act="collect" data-id="${o.id}" data-v="${k}">${PAY[k]}</button>`).join('')}</div></div>`);
+  <div class="paymodes">${COUNTER_MODES.map(k=>`<button data-act="collect" data-id="${o.id}" data-v="${k}">${PAY[k]}</button>`).join('')}<button data-act="col-split" aria-pressed="${sp.on}">Split</button></div>
+  ${sp.on?splitHtml(o.total,sp.v,COUNTER_MODES,'csp'):''}
+  ${utrField('col-utr',sp.utr)}
+  ${sp.on?`<button class="btn pri lg block" data-act="col-split-go">Take ${rs(o.total)}</button>`:''}</div>`,{
+    onAct:(act,el)=>{
+      if(act==='col-split'){sp.on=!sp.on;openCollect(o);return true}
+      if(act==='sp-rest'){splitRest(sp.v,COUNTER_MODES,o.total,el.dataset.v);openCollect(o);return true}
+      if(act==='col-split-go'){
+        if(o.paid){closeModal();render();return true}
+        let list=splitList(sp.v,COUNTER_MODES);const bad=splitProblem(list,o.total)||(list.some(x=>x.mode==='upi')?utrBad(sp.utr):'');if(bad){toast(bad);return true}
+        const utr=list.some(x=>x.mode==='upi')?utrClean(sp.utr):'';
+        if(list.length===1)settleOrder(o,list[0].mode,0,null,utr);else settleOrder(o,'split',0,list,utr);
+        save();closeModal();toast(o.no+' · '+rs(o.total)+' paid by '+payName(o));render();if(list.some(x=>x.mode==='cash'))openDrawer();return true}
+      return false},
+    onInput:e=>{if(e.target.id==='col-utr'){sp.utr=utrClean(e.target.value);return}splitInput(e,sp.v,COUNTER_MODES,o.total,'csp')}});
 }
 function vCounter(){
   const mine=liveOrders();
@@ -3855,7 +3981,7 @@ function vCounter(){
     ${o.address?`<div class="small muted">${esc(o.address)}</div>`:''}
     ${o.zomatoId?`<div class="small">Zomato ID <b class="num">${esc(o.zomatoId)}</b></div>`:''}
     <div class="small muted">${o.items.map(l=>l.qty+'× '+esc(l.name)+(l.size?' '+sizeLabel(l.size):'')).join(', ')} · <b class="num">${rs(o.total)}</b></div>
-    <div class="row">${payTag(o)}${o.paid?`<span class="small muted">${PAY[o.pay.mode]}</span>`:''}</div>${collectRow(o)}${o.note?`<div class="knote">${esc(o.note)}</div>`:''}${body}</div>`;
+    <div class="row">${payTag(o)}${o.paid?`<span class="small muted">${esc(payName(o))}</span>`:''}</div>${collectRow(o)}${o.note?`<div class="knote">${esc(o.note)}</div>`:''}${body}</div>`;
   return `<div class="ph1"><h2>Counter</h2><span class="muted small">Hand over pickups, dispatch deliveries, track riders</span><button class="btn ink" data-act="board">Open customer display</button></div>
   <div class="counter">
     <div class="lane"><div class="lane-h"><h3>Pickup & dine-in</h3><span class="n num">${pick.length}</span></div>
@@ -3895,7 +4021,7 @@ function vOrders(){
     <td>${esc(o.customer.name||'—')} ${isNewCust(o)?'<span class="chip c">New</span>':''}<div class="small muted num">${esc(o.customer.phone)}</div></td>
     <td>${TYPES[o.type]}${o.table?' · T'+esc(o.table):''}${o.source==='online'?' <span class="chip t">online</span>':''}${o.zomatoId?`<div class="small muted num">ID ${esc(o.zomatoId)}</div>`:''}</td>
     <td class="small">${o.items.map(l=>l.qty+'× '+esc(l.name)+(l.size?' '+sizeLabel(l.size):'')).join(', ')}</td><td class="r num"><b>${rs(o.total)}</b>${o.subtotal>o.total?`<div class="small" style="color:var(--ok)">−${rs(o.subtotal-o.total)}</div>`:''}</td>
-    <td>${o.status==='cancelled'?PAY[o.pay.mode]:o.paid?`<span class="chip ready">Done</span> <span class="small">${PAY[o.pay.mode]}</span>`:`<span class="chip r">Baki</span>${o.pay.mode==='due'?' <span class="small">on account</span>':''} <button class="btn sm" data-act="collect-open" data-id="${o.id}">Collect</button>`}</td>
+    <td>${o.status==='cancelled'?esc(payName(o)):o.paid?`<span class="chip ready">Done</span> <span class="small">${esc(payName(o))}</span>${o.pay.utr?`<div class="small muted num">UTR ${esc(fmtUtr(o.pay.utr))}</div>`:''}`:`<span class="chip r">Baki</span>${o.pay.mode==='due'?' <span class="small">on account</span>':''} <button class="btn sm" data-act="collect-open" data-id="${o.id}">Collect</button>`}</td>
     <td class="st"><span class="chip ${o.status}">${statusName(o.status,o.type)}</span>${isActive(o)?`<div class="small num" style="font-weight:700;color:${minsLeft(o)<0?'var(--bad)':'var(--warn)'}">${leftText(minsLeft(o))}</div><button class="btn sm" data-act="set-wait" data-id="${o.id}" title="Change waiting time">⏱ wait ${waitOf(o)} min</button>`:''}</td>
     <td class="small">${o.source==='online'?'Customer site':esc(o.by||'—')}</td>
     <td style="white-space:nowrap">${U.confirmCancel===o.id?`<span class="small">Cancel ${o.no}?</span> <button class="btn sm bad solid" data-act="cancel-yes" data-id="${o.id}">Yes, cancel</button> <button class="btn sm" data-act="cancel-no">Keep</button>`:
@@ -3906,7 +4032,7 @@ function vOrders(){
 
 function salesFor(date,scope){
   const list=S.orders.filter(o=>o.date===date&&o.status!=='cancelled'&&(scope==='all'||o.outletId===S.cur));
-  const by={cash:0,upi:0,card:0,bank:0,wallet:0,zomato:0,due:0,pending:0};list.forEach(o=>{const w=o.walletUsed||0;by.wallet+=w;by[o.pay.mode]=(by[o.pay.mode]||0)+o.total-w});
+  const by={cash:0,upi:0,card:0,bank:0,wallet:0,zomato:0,due:0,pending:0};list.forEach(o=>{const w=o.walletUsed||0;by.wallet+=w;const sp=paySplits(o);if(sp)sp.forEach(x=>by[x.mode]=(by[x.mode]||0)+x.amt);else by[o.pay.mode]=(by[o.pay.mode]||0)+o.total-w});
   const tot=list.reduce((s,o)=>s+o.total,0);const disc=list.reduce((s,o)=>s+((o.subtotal||o.total)-o.total),0);
   const types={};list.forEach(o=>types[o.type]=(types[o.type]||0)+o.total);
   const items={};list.forEach(o=>o.items.forEach(l=>{items[l.name]=(items[l.name]||0)+l.qty}));
@@ -3917,16 +4043,56 @@ function salesFor(date,scope){
   const hours={};list.forEach(o=>{const h=new Date(o.ts).getHours();hours[h]=(hours[h]||0)+o.total});
   return {list,by,tot,types,items,canc,disc,offers,rating,ratedN:rated.length,prep,hours};
 }
+// How much of an order came in through one payment mode (split bills count each part)
+function amtIn(o,k){const w=o.walletUsed||0;if(k==='wallet')return w;const sp=paySplits(o);if(sp)return sp.filter(x=>x.mode===k).reduce((a,x)=>a+x.amt,0);return o.pay.mode===k?o.total-w:0}
+const SALE_COLS=['cash','upi','card','bank','wallet','zomato','due','pending'];
+const scopeName=sc=>sc==='all'?'All outlets':cur().name;
+function modeOrders(s,k){return s.list.map(o=>({o,a:amtIn(o,k)})).filter(x=>x.a>0)}
+function salesText(s,d,sc){
+  const L=[`Cheesy Pizza · ${scopeName(sc)} · ${fmtDate(d)}`,`Total sale: ${rs(s.tot)} (${s.list.length} orders)`,''];
+  SALE_COLS.forEach(k=>{const n=modeOrders(s,k).length;if(n||s.by[k])L.push(`${PAY[k]}: ${rs(s.by[k])} · ${n} order${n===1?'':'s'}`)});
+  const sp=s.list.filter(o=>paySplits(o)).length;if(sp)L.push(`(${sp} split bill${sp===1?'':'s'} counted in each mode)`);
+  L.push('',`Offer discounts: ${rs(s.disc)}`,`Cancelled: ${s.canc}`);
+  return L.join('\n');
+}
+function modeText(s,k,d,sc){
+  const rows=modeOrders(s,k);const L=[`Cheesy Pizza · ${scopeName(sc)} · ${fmtDate(d)}`,`${PAY[k]}: ${rs(s.by[k])} · ${rows.length} order${rows.length===1?'':'s'}`,''];
+  rows.slice(0,80).forEach(({o,a})=>L.push(`${o.no} · ${fmtTime(o.ts)} · ${o.customer.name||'Walk-in'} · ${rs(a)}${paySplits(o)?' (split of '+rs(o.total)+')':''}`));
+  if(rows.length>80)L.push(`…and ${rows.length-80} more`);
+  return L.join('\n');
+}
+// WhatsApp link to the outlet owner's number (set on the Outlets screen), or the share sheet if none
+const ownerWa=(txt,o=cur())=>{const ph=String(o&&o.ownerPhone||'').replace(/\D/g,'').slice(-10);return `https://wa.me/${ph.length===10?'91'+ph:''}?text=${encodeURIComponent(txt)}`};
+const ownerBtn=txt=>`<a class="btn pri" target="_blank" rel="noopener" href="${ownerWa(txt)}">Send to owner</a>`;
+function openModeDetail(k){
+  const d=U.salesDate||today(),sc=U.salesScope;const s=salesFor(d,sc);const rows=modeOrders(s,k);
+  const types={};rows.forEach(({o,a})=>types[o.type]=(types[o.type]||0)+a);
+  const nsplit=rows.filter(x=>paySplits(x.o)).length;
+  showModal(`<div class="mh"><h3><span class="sw" style="background:${PAYCOL[k]}"></span> ${esc(PAY[k])} · ${fmtDate(d)}</h3><button class="x" data-act="close" aria-label="Close">×</button></div>
+  <div class="mb">
+    <div class="stats" style="margin:0">
+      <div class="card stat"><div class="k">Total</div><div class="v num">${rs(s.by[k])}</div><div class="d muted num">${rows.length} order${rows.length===1?'':'s'}</div></div>
+      <div class="card stat"><div class="k">Average</div><div class="v num">${rows.length?rs(Math.round(s.by[k]/rows.length)):'—'}</div><div class="d muted num">${s.tot?Math.round(s.by[k]/s.tot*100):0}% of the day</div></div>
+      <div class="card stat"><div class="k">Split bills</div><div class="v num">${nsplit}</div><div class="d muted num">only their ${esc(PAY[k])} part counts</div></div>
+    </div>
+    <div class="row small" style="gap:12px">${Object.keys(TYPES).filter(t=>types[t]).map(t=>`<span>${TYPES[t]} <b class="num">${rs(types[t])}</b></span>`).join('')}</div>
+    <div class="card tw"><table class="stk ordtbl"><thead><tr><th>No.</th><th>Time</th><th>Customer</th><th class="r">${esc(PAY[k])}</th><th>Paid as</th></tr></thead><tbody>
+    ${rows.map(({o,a})=>`<tr><td><b class="num">${o.no}</b></td><td class="num">${fmtTime(o.ts)}</td><td>${esc(o.customer.name||'Walk-in')}<div class="small muted num">${esc(o.customer.phone||'')}</div></td><td class="r num"><b>${rs(a)}</b></td><td class="small">${esc(payName(o))}</td></tr>`).join('')||`<tr><td colspan="5" class="empty">No ${esc(PAY[k])} orders on ${fmtDate(d)}.</td></tr>`}
+    </tbody></table></div>
+    <div class="row" style="justify-content:flex-end">${ownerBtn(modeText(s,k,d,sc))}</div>
+  </div>`);
+}
 function vSales(){
   const d=U.salesDate||today(),sc=U.salesScope;const s=salesFor(d,sc),p=salesFor(addDays(d,-1),sc);const diff=s.tot-p.tot;
   const days=[...Array(7)].map((_,i)=>addDays(d,i-6)).map(x=>({d:x,t:salesFor(x,sc).tot}));const mx=Math.max(1,...days.map(x=>x.t));
-  const top=Object.entries(s.items).sort((a,b)=>b[1]-a[1]).slice(0,6);const cols=['cash','upi','card','bank','wallet','zomato','due','pending'];
+  const top=Object.entries(s.items).sort((a,b)=>b[1]-a[1]).slice(0,6);const cols=SALE_COLS;
   return `<div class="ph1"><h2>Whole day sale</h2>
     <input class="inp" type="date" id="sd-date" value="${d}" style="width:auto" aria-label="Date">
-    <div class="seg"><button data-act="scope" data-v="outlet" aria-pressed="${sc==='outlet'}">${esc(cur().name)}</button><button data-act="scope" data-v="all" aria-pressed="${sc==='all'}">All outlets</button></div><a class="btn" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(`Cheesy Pizza · ${sc==='all'?'All outlets':cur().name} · ${fmtDate(d)}\nTotal sale: ${rs(s.tot)} (${s.list.length} orders)\n`+cols.map(k=>`${PAY[k]}: ${rs(s.by[k])}`).join('\n')+`\nOffer discounts: ${rs(s.disc)}\nCancelled: ${s.canc}`)}">Share report on WhatsApp</a></div>
+    <div class="seg"><button data-act="scope" data-v="outlet" aria-pressed="${sc==='outlet'}">${esc(cur().name)}</button><button data-act="scope" data-v="all" aria-pressed="${sc==='all'}">All outlets</button></div>${ownerBtn(salesText(s,d,sc))}<a class="btn" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(salesText(s,d,sc))}">Share on WhatsApp</a></div>
+  ${cur().ownerPhone?'':`<div class="small muted" style="margin:-4px 0 10px">Add the owner's WhatsApp number on the Outlets screen so Send to owner goes straight to them.</div>`}
   <div class="stats">
     <div class="card stat hero"><div class="k">Total sale · ${fmtDate(d)}</div><div class="v num">${rs(s.tot)}</div><div class="d num">${s.list.length} orders · ${diff>=0?'▲':'▼'} ${rs(Math.abs(diff))} vs previous day (${rs(p.tot)})</div></div>
-    ${cols.map(k=>`<div class="card stat"><div class="k"><span class="sw" style="background:${PAYCOL[k]}"></span>${PAY[k]}</div><div class="v num">${rs(s.by[k])}</div><div class="d muted num">prev day ${rs(p.by[k])}</div></div>`).join('')}
+    ${cols.map(k=>`<button class="card stat paystat" data-act="pay-detail" data-v="${k}" title="See ${PAY[k]} orders"><div class="k"><span class="sw" style="background:${PAYCOL[k]}"></span>${PAY[k]}<span class="more" aria-hidden="true">›</span></div><div class="v num">${rs(s.by[k])}</div><div class="d muted num">${modeOrders(s,k).length} orders · prev day ${rs(p.by[k])}</div></button>`).join('')}
     <div class="card stat"><div class="k">Offer discounts</div><div class="v num" style="color:var(--ok)">${rs(s.disc)}</div><div class="d muted num">prev day ${rs(p.disc)}</div></div>
     <div class="card stat"><div class="k">Avg rating</div><div class="v num" style="color:var(--cheese-ink)">${s.ratedN?s.rating.toFixed(1)+' ★':'—'}</div><div class="d muted num">${s.ratedN} rated orders</div></div>
     <div class="card stat"><div class="k">Avg prep time</div><div class="v num">${s.prep?Math.round(s.prep)+' min':'—'}</div><div class="d muted num">target ${PREP_MIN} min</div></div>
@@ -4188,7 +4354,7 @@ function alertBox(o){const c=alertCfg(o);return `<div class="grp-h">New order al
 function vReview(){
   const sample=o=>({id:'SAMPLE',outletId:o.id,customer:{name:'Customer',phone:''},total:450,ts:Date.now()});
   return `<div class="ph1"><h2>Reviews</h2><span class="muted small">Only you (the owner) can see this. The link goes at the end of the WhatsApp invoice message.</span></div>
-  <div class="grid">${S.outlets.map(o=>{const ok=reviewUrl(o),bad=(o.review||'').trim()&&!ok;return `<div class="card" style="padding:14px;display:flex;flex-direction:column;gap:8px">
+  <div class="grid">${liveOutlets().map(o=>{const ok=reviewUrl(o),bad=(o.review||'').trim()&&!ok;return `<div class="card" style="padding:14px;display:flex;flex-direction:column;gap:8px">
     <div class="row"><b class="grow">${esc(o.name)}</b>${ok?'<span class="chip ready">Link on</span>':'<span class="chip">No link</span>'}</div>
     <div class="field"><label for="orv-${o.id}">Review link for this branch</label><input class="inp" id="orv-${o.id}" data-ou="${o.id}" data-f="review" value="${esc(o.review||'')}" placeholder="https://g.page/r/…/review" inputmode="url" autocapitalize="off" autocomplete="off" spellcheck="false">
       <span class="small ${bad?'':'muted'}" style="${bad?'color:var(--bad)':''}">${bad?'This doesn\'t look like a web link. It must start with https://':'Leave empty to send the invoice without a review link.'}</span></div>
@@ -4209,7 +4375,7 @@ function vHomeAdm(){
   return `<div class="ph1"><h2>Home page</h2><span class="muted small">What customers see on the home page. Changes show on the site straight away.</span></div>
   <div class="card" style="padding:14px;margin-bottom:12px;display:flex;flex-direction:column;gap:12px">
     <div class="grp-h">Address and timing</div>
-    ${S.outlets.map(o=>`<div class="row" style="align-items:flex-end;gap:10px"><div class="field grow" style="min-width:220px"><label for="ha-${o.id}">${esc(o.name)} · address</label><input class="inp" id="ha-${o.id}" data-ou="${o.id}" data-f="area" value="${esc(o.area)}" ${own?'':'readonly'}></div>
+    ${liveOutlets().map(o=>`<div class="row" style="align-items:flex-end;gap:10px"><div class="field grow" style="min-width:220px"><label for="ha-${o.id}">${esc(o.name)} · address</label><input class="inp" id="ha-${o.id}" data-ou="${o.id}" data-f="area" value="${esc(o.area)}" ${own?'':'readonly'}></div>
       <div class="field"><label>Opens at</label>${hr(o,'openHour',+o.openHour||S.config.openHour||12)}</div><div class="field"><label>Closes at</label>${hr(o,'closeHour',+o.closeHour||S.config.closeHour||22)}</div></div>`).join('')}
   </div>
   <div class="card tw" style="margin-bottom:12px"><div class="grp-h" style="padding:14px 14px 0">Ekdum cheesy gallery · <span class="num">${n}</span> of ${HOME_MAX} picked</div>
@@ -4234,13 +4400,13 @@ function dspSlides(o){const d=o.display||{},ord=d.order||[];
   const pos=k=>{const i=ord.indexOf(k);return i<0?1000+all.findIndex(s=>s.key===k):i};return all.sort((a,b)=>pos(a.key)-pos(b.key))}
 function vDisplayAdm(){
   if(staff()?.role!=='owner')return '<div class="ph1"><h2>Shop display</h2><span class="muted small">Only the owner can change the shop display.</span></div>';
-  const o=cur(),d=o.display||{},all=dspSlides(o),link=location.origin+'/display'+(S.outlets.length>1?'?outlet='+o.id:'');
+  const o=cur(),d=o.display||{},all=dspSlides(o),link=location.origin+'/display'+(liveOutlets().length>1?'?outlet='+o.id:'');
   const opt=(f,list,v)=>`<select class="inp" data-dsp="${f}">${list.map(x=>`<option value="${x}" ${x===v?'selected':''}>${x} seconds</option>`).join('')}</select>`;
   return `<div class="ph1"><h2>Shop display</h2><span class="muted small">What the TV in ${esc(o.name)} plays. Only the owner can change it. Changes reach the TV within a minute.</span></div>
   <div class="card" style="padding:14px;margin-bottom:12px;display:flex;flex-direction:column;gap:12px">
     <div class="grp-h">TV link</div>
     <div class="row"><a class="btn pri" href="${esc(link)}" target="_blank" rel="noopener">Open the display ↗</a><span class="small num" style="word-break:break-all">${esc(link)}</span></div>
-    <span class="small muted">Open this link on the shop TV and tap once for full screen.${S.outlets.length>1?' Switch outlet at the top to set up the other branch.':''}</span>
+    <span class="small muted">Open this link on the shop TV and tap once for full screen.${liveOutlets().length>1?' Switch outlet at the top to set up the other branch.':''}</span>
     <div class="grp-h">Timing</div>
     <div class="row" style="gap:12px"><div class="field"><label>Each slide stays</label>${opt('show',[8,10,12,15,20,25,30,45,60],+d.show||15)}</div><div class="field"><label>Change to the next slide takes</label>${opt('change',[1,2,3,4,5,6,8],+d.change||4)}</div></div>
     <div class="grp-h">Price strip</div>
@@ -4293,9 +4459,17 @@ document.addEventListener('change',e=>{const t=e.target,d=t.dataset||{};
   save();render();toast('Shop display updated')});
 
 function vOutlets(){const own=staff()?.role==='owner';
-  return `<div class="ph1"><h2>Outlets</h2><span class="muted small">Each outlet has its own order numbers, kitchen, counter, riders and day sale</span></div>
-  <div class="grid">${S.outlets.map(o=>{const t=S.orders.filter(x=>x.outletId===o.id&&x.date===today()&&x.status!=='cancelled');return `<div class="card" style="padding:14px;display:flex;flex-direction:column;gap:8px">
-    <div class="row"><span class="chip t num">Code ${esc(o.code)}</span>${o.id===S.cur?'<span class="chip ready">Current</span>':''}</div>
+  const off=S.outlets.filter(o=>!isLive(o)&&o.visible!==false);const tab=U.outTab==='inactive'?'inactive':'active';
+  const head=`<div class="ph1"><h2>Outlets</h2><div class="seg"><button data-act="out-tab" data-v="active" aria-pressed="${tab==='active'}">Active · ${liveOutlets().length}</button><button data-act="out-tab" data-v="inactive" aria-pressed="${tab==='inactive'}">Inactive · ${off.length}</button></div><span class="muted small">Each outlet has its own order numbers, kitchen, counter, riders and day sale</span></div>`;
+  if(tab==='inactive')return head+`<div class="grid">${off.map(o=>{const n=S.orders.filter(x=>x.outletId===o.id).length;return `<div class="card" style="padding:14px;display:flex;flex-direction:column;gap:8px">
+    <div class="row"><span class="chip t num">Code ${esc(o.code)}</span><span class="chip">Inactive</span></div>
+    <b>${esc(o.name)}</b><span class="small muted">${esc(o.area||'')}</span>
+    <span class="small muted num">${n} past order${n===1?'':'s'} kept in history and reports</span>
+    ${own?`<div class="row"><button class="btn pri" data-act="outlet-on" data-id="${o.id}">Make active again</button><button class="btn bad" data-act="del-outlet" data-id="${o.id}">Delete</button></div>`:'<span class="small muted">Only the owner can change this.</span>'}
+  </div>`}).join('')||'<div class="empty card">No inactive outlets. Use "Make inactive" on an outlet to move it here.</div>'}</div>`;
+  return head+`
+  <div class="grid">${liveOutlets().map(o=>{const t=S.orders.filter(x=>x.outletId===o.id&&x.date===today()&&x.status!=='cancelled');return `<div class="card" style="padding:14px;display:flex;flex-direction:column;gap:8px">
+    <div class="row"><span class="chip t num">Code ${esc(o.code)}</span>${isMainOutlet(o)?'<span class="chip c">Main</span>':''}${o.id===cur().id?'<span class="chip ready">Current</span>':''}</div>
     <div class="field"><label for="on-${o.id}">Name</label><input class="inp" id="on-${o.id}" data-ou="${o.id}" data-f="name" value="${esc(o.name)}"></div>
     <div class="field"><label for="oa-${o.id}">Full address (shown on bills)</label><input class="inp" id="oa-${o.id}" data-ou="${o.id}" data-f="area" value="${esc(o.area)}" ${own?'':'readonly'}></div>
     <div class="row"><div class="field grow"><label for="op-${o.id}">Phone</label><input class="inp num" id="op-${o.id}" data-ou="${o.id}" data-f="phone" value="${esc(o.phone)}"></div>
@@ -4319,8 +4493,10 @@ function vOutlets(){const own=staff()?.role==='owner';
     <div class="row">${(o.riders||[]).map((r,i)=>`<span class="chip t">${esc(r.name)} · <span class="num">${fmtPhone(r.phone)}</span><button class="x" style="width:20px;height:20px;font-size:13px" data-act="del-rider" data-o="${o.id}" data-i="${i}" aria-label="Remove ${esc(r.name)}">×</button></span>`).join('')||'<span class="small muted">No riders yet</span>'}</div>
     <div class="row"><input class="inp grow" id="rn-${o.id}" placeholder="Rider name" style="width:auto" aria-label="Rider name"><input class="inp num grow" id="rp-${o.id}" placeholder="Mobile" inputmode="numeric" maxlength="10" style="width:auto" aria-label="Rider mobile"><button class="btn" data-act="add-rider" data-o="${o.id}">Add</button></div>
     ${staff()?.role==='owner'?alertBox(o):''}
+    <div class="field"><label for="oow-${o.id}">Owner WhatsApp (for day reports)</label><input class="inp num" id="oow-${o.id}" data-ou="${o.id}" data-f="ownerPhone" value="${esc(o.ownerPhone||'')}" inputmode="numeric" maxlength="10" placeholder="10 digit mobile" ${own?'':'readonly'}></div>
     <div class="small muted num">Today: ${t.length} orders · ${rs(t.reduce((a,b)=>a+b.total,0))}</div>
-    ${o.id!==S.cur?`<button class="btn pri" data-act="use-outlet" data-id="${o.id}">Switch to this outlet</button>`:''}
+    ${o.id!==cur().id?`<button class="btn pri" data-act="use-outlet" data-id="${o.id}">Switch to this outlet</button>`:''}
+    ${own&&!isMainOutlet(o)?`<button class="btn bad" data-act="outlet-off" data-id="${o.id}">Make inactive</button>`:''}
   </div>`}).join('')}
   <button class="card btn" style="min-height:180px;border-style:dashed" data-act="add-outlet">+ Add outlet</button></div>`;
 }
@@ -4380,7 +4556,8 @@ document.addEventListener('click',e=>{
   if(mh.onAct&&mroot.contains(el)&&mh.onAct(act,el))return;
   const P=U.pos;const find=id=>S.orders.find(o=>o.id===id);
   switch(act){
-    case 'scrim':case 'close':closeModal();render();break;
+    case 'scrim':break; // a tap outside a popup does not close it; use × or Esc
+    case 'close':closeModal();render();break;
     case 'mode':if(APP_ROLE)break;S.mode=el.dataset.v;U.board=false;save();closeModal();render();try{history.replaceState(null,'','#'+S.mode)}catch(_){}window.scrollTo(0,0);break;
     case 'scroll':document.getElementById(el.dataset.v)?.scrollIntoView({behavior:'smooth'});break;
     case 'pubcat':U.pubCat=el.dataset.v;render();break;
@@ -4401,7 +4578,10 @@ document.addEventListener('click',e=>{
     case 'pc-apply':P.code=(document.getElementById('pc-code').value||'').trim().toUpperCase();render();break;
     case 'pos-qr':{const amt=P.total||0;showModal(`<div class="mh"><h3>Scan to pay · ${rs(amt)}</h3><button class="x" data-act="close" aria-label="Close">×</button></div><div class="mb"><div class="qr"><div data-qr="upi://pay?pa=${encodeURIComponent(cur().upi)}&pn=${encodeURIComponent('Cheesy Pizza')}&am=${amt}&cu=INR"></div><b class="num">${rs(amt)} · ${esc(cur().upi)}</b></div><button class="btn pri lg block" data-act="close">Done</button></div>`);break}
     case 'collect-open':openCollect(find(el.dataset.id));break;
-    case 'collect':{const o=find(el.dataset.id);if(o.paid){closeModal();render();break}settleOrder(o,el.dataset.v,0);save();closeModal();toast(o.no+' · '+rs(o.total)+' paid by '+PAY[el.dataset.v]);render();if(el.dataset.v==='cash')openDrawer();break}
+    case 'pay-detail':openModeDetail(el.dataset.v);break;
+    case 'collect':{const o=find(el.dataset.id);if(o.paid){closeModal();render();break}
+      const cu=el.dataset.v==='upi'&&U.colSp&&U.colSp.id===o.id?utrClean(U.colSp.utr):'';if(utrBad(cu)){toast(utrBad(cu));break}
+      settleOrder(o,el.dataset.v,0,null,cu);save();closeModal();toast(o.no+' · '+rs(o.total)+' paid by '+PAY[el.dataset.v]);render();if(el.dataset.v==='cash')openDrawer();break}
     case 'kitem':{const o=find(el.dataset.id);const l=o.items[+el.dataset.i];l.kdone=!l.kdone;save();render();break}
     case 'kready':{const o=find(el.dataset.id);if(o.status==='preparing'){setStatus(o,'ready');toast(o.no+' ready → counter');render()}break}
     case 'od-scope':U.ordersScope=el.dataset.v;render();break;
@@ -4466,7 +4646,7 @@ document.addEventListener('click',e=>{
     case 'board-x':U.board=false;renderBoard();break;
     case 'cancel':U.confirmCancel=el.dataset.id;render();break;
     case 'cancel-no':U.confirmCancel=null;render();break;
-    case 'cancel-yes':{const o=find(el.dataset.id);refundOrder(o);const c=S.customers[o.customer.phone];if(o.pay.mode==='due'&&c)c.due=Math.max(0,c.due-o.total);if(c)c.coins=Math.max(0,(c.coins||0)+(o.coinsUsed||0)-(o.coinsEarned||0));setStatus(o,'cancelled');U.confirmCancel=null;toast(o.no+' cancelled');render();break}
+    case 'cancel-yes':{const o=find(el.dataset.id);refundOrder(o);const c=S.customers[o.customer.phone];if(dueOf(o)&&c)c.due=Math.max(0,c.due-dueOf(o));if(c)c.coins=Math.max(0,(c.coins||0)+(o.coinsUsed||0)-(o.coinsEarned||0));setStatus(o,'cancelled');U.confirmCancel=null;toast(o.no+' cancelled');render();break}
     case 'del':S.orders=S.orders.filter(o=>o.id!==el.dataset.id);save();toast('Deleted from history');render();break;
     case 'scope':U.salesScope=el.dataset.v;render();break;
     case 'settle':{const c=S.customers[el.dataset.ph];c.due=0;S.orders.filter(o=>o.customer.phone===c.phone&&o.pay.mode==='due').forEach(o=>o.paid=true);save();toast('Baki cleared');render();break}
@@ -4489,7 +4669,15 @@ document.addEventListener('click',e=>{
     case 'del-size':{const id=el.dataset.id;S.sizes=S.sizes.filter(s=>s.id!==id);save();render();break}
     case 'qr-save':{const o=S.outlets.find(x=>x.id===el.dataset.o);if(o)qrPoster(o);break}
     case 'use-outlet':S.cur=el.dataset.id;save();render();break;
-    case 'add-outlet':{const code=String.fromCharCode(65+S.outlets.length);S.outlets.push({id:uid('o'),code,name:'Outlet '+code,area:'Set your address',phone:'',upi:'',riders:[]});save();render();break}
+    case 'out-tab':U.outTab=el.dataset.v;render();break;
+    case 'outlet-off':{const o=S.outlets.find(x=>x.id===el.dataset.id);if(!o||staff()?.role!=='owner')break;if(isMainOutlet(o)){toast('The main outlet cannot be made inactive');break}
+      askConfirm('Make '+o.name+' inactive?','It leaves the outlet list, POS and customer site. You can turn it back on, or delete it, from the Inactive tab.','Make inactive',()=>{
+        o.active=false;if(S.cur===o.id){S.cur=cur().id;U.pos.cart=[]}save();pushOutlet();toast(o.name+' is inactive');render()});break}
+    case 'outlet-on':{const o=S.outlets.find(x=>x.id===el.dataset.id);if(!o||staff()?.role!=='owner')break;o.active=true;o.visible=true;save();toast(o.name+' is active again');U.outTab='active';render();break}
+    case 'del-outlet':{const o=S.outlets.find(x=>x.id===el.dataset.id);if(!o||staff()?.role!=='owner'||isMainOutlet(o)||o.active!==false)break;
+      askConfirm('Delete '+o.name+'?','It is hidden everywhere. Its past orders stay in history and reports.','Delete',()=>{
+        o.visible=false;save();toast(o.name+' deleted');render()});break}
+    case 'add-outlet':{const used=new Set(S.outlets.map(x=>x.code));let i=0;while(used.has(String.fromCharCode(65+i)))i++;const code=String.fromCharCode(65+i);S.outlets.push({id:uid('o'),code,name:'Outlet '+code,area:'Set your address',phone:'',upi:'',riders:[]});save();render();break}
     case 'test-ring':{const o=S.outlets.find(x=>x.id===el.dataset.o);audioCtx();playTone(o);break}
     case 'mute-ring':clearInterval(ringTimer);ringTimer=null;if(ringAudio){ringAudio.pause();ringAudio=null}renderRing();render();break;
     case 'hide-ring':stopRing();break;
@@ -4522,9 +4710,10 @@ document.addEventListener('input',e=>{
     if(!UPI_RE.test(v)){if(hint)hint.innerHTML='<span style="color:var(--bad)">Enter a UPI ID like name@okaxis. Not saved yet.</span>';return}
     const had=!!o.upi;o.upi=v;save();if(hint)hint.textContent='Saved. Customers of this branch now pay to '+v+'.';
     if(!had)return render();const q=document.querySelector(`#oqr-${o.id}`);if(q){const d=q.querySelector('[data-qr]');d.dataset.qr=shopQr(o);drawQr(d);q.querySelector('.num').textContent=v}return}
-  if(t.dataset.ou&&['legal','gstin','fssai','area','review'].includes(t.dataset.f)&&staff()?.role!=='owner')return;
+  if(t.dataset.ou&&['legal','gstin','fssai','area','review','ownerPhone'].includes(t.dataset.f)&&staff()?.role!=='owner')return;
   if(t.dataset.ou&&t.dataset.f==='gstin'){t.value=t.value.toUpperCase().replace(/[^0-9A-Z]/g,'')}
-  if(t.dataset.ou){const o=S.outlets.find(x=>x.id===t.dataset.ou);o[t.dataset.f]=t.value;save();document.getElementById('outletSel').innerHTML=S.outlets.map(o=>`<option value="${o.id}" ${o.id===S.cur?'selected':''}>${esc(o.name)}</option>`).join('')}
+  if(t.dataset.ou&&t.dataset.f==='ownerPhone'){t.value=t.value.replace(/\D/g,'').slice(0,10)}
+  if(t.dataset.ou){const o=S.outlets.find(x=>x.id===t.dataset.ou);o[t.dataset.f]=t.value;save();document.getElementById('outletSel').innerHTML=liveOutlets().map(o=>`<option value="${o.id}" ${o.id===cur().id?'selected':''}>${esc(o.name)}</option>`).join('')}
   if(t.dataset.desc){menuItem(t.dataset.desc).desc=t.value;save()}
 });
 // Review link: refresh the status and message preview once the owner leaves the box
@@ -4783,7 +4972,7 @@ function migrate(){
   Object.keys(S.customers).forEach(ph=>ensureCust(ph));
   if(!S.users.some(u=>u.id===S.staffId))S.staffId=null;
   if(S.me&&!S.customers[S.me])S.me=null;
-  if(!S.outlets.some(o=>o.id===S.cur))S.cur=S.outlets[0]&&S.outlets[0].id;
+  if(!S.outlets.some(o=>o.id===S.cur&&isLive(o)))S.cur=(liveOutlets()[0]||S.outlets[0]||{}).id;
   save();
 }
 const me=()=>S.me&&S.customers[S.me]&&S.customers[S.me].pin?S.customers[S.me]:null;
