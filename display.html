@@ -248,17 +248,13 @@ body.idle{cursor:none}
 /* 10 order online */
 .s-order{background:radial-gradient(circle at 70% 50%,#14606e,#0b3a43 60%)}
 /* the shop's printed menu card, shown as it is */
-.s-poster{background:radial-gradient(circle at 70% 50%,#1b8a9c,#0b3a43 70%)}
-.s-poster .copy{position:absolute;left:110px;top:250px;width:760px;z-index:3}
-.s-poster .h1{font-size:170px;color:#fff}
-.s-poster .h1 em{font-style:normal;color:var(--gold)}
-.s-poster .sub{font-size:44px;font-weight:800;margin-top:26px;color:#fff;background:var(--red);display:inline-block;padding:10px 26px 6px;border-radius:16px}
-.s-poster .ph{font-size:48px;font-weight:800;color:var(--gold);margin-top:26px}
-.pstw{position:absolute;left:900px;top:110px;width:628px;height:870px;z-index:2;perspective:1600px}
-.pst{width:100%;height:100%;border-radius:22px;overflow:hidden;background:#fff;box-shadow:0 40px 80px rgba(0,0,0,.5)}
+.s-poster{background:radial-gradient(circle at 50% 45%,#1b8a9c,#0b3a43 75%)}
+/* the printed menu card on its own, as big as the screen allows above the price strip */
+.pstw{position:absolute;left:604px;top:14px;width:711px;height:984px;z-index:2;perspective:1600px}
+.pst{width:100%;height:100%;border-radius:18px;overflow:hidden;background:#fff;box-shadow:0 30px 70px rgba(0,0,0,.5)}
 .pst img{display:block;width:100%;height:100%;object-fit:contain}
-.on .pst{animation:pst 15s ease-out both}
-@keyframes pst{0%{transform:rotateY(-40deg) translateZ(-300px);opacity:0}12%{transform:rotateY(4deg);opacity:1}40%{transform:rotateY(-2deg)}100%{transform:rotateY(0)}}
+.on .pst{animation:pst 1.4s ease-out both}
+@keyframes pst{0%{transform:scale(.92);opacity:0}100%{transform:none;opacity:1}}
 .s-order .copy{position:absolute;left:120px;top:230px;width:900px}
 .s-order .h1{font-size:190px;color:#fff}
 .s-order .h1 em{font-style:normal;color:var(--gold)}
@@ -451,11 +447,7 @@ const SLIDES0=[
    el.querySelector('.now').innerHTML=`<span class="nw">${esc(m.desc||m.name)}</span>`}},
  {k:'pizza',t:11,make(){return build('pizza')},tick(el,t){buildTick(el,t,[1.5,3.8,6.1,8.4,10.7])}},
  {k:'garlic',t:11,make(){return build('garlic')},tick(el,t){buildTick(el,t,[1.5,3.8,6.1,8.4,10.7])}},
- {k:'poster',t:12,make(){const o=outlet(),ph=o.phone||'77780 43066';
-   return`<div class="rays" style="--rx:1214px;--ry:545px;--ra:.16"></div>${bokeh(7)}<div class="copy"><div class="kick rise" style="--d:.1s;color:#ffd76a">${KK('poster','Our menu card')}</div>
-   <div class="h1 anton">${TT('poster',letters('Pick your')+'<br><em>'+letters('pizza')+'</em>')}</div>
-   <div class="rise" style="--d:1s"><span class="sub">No mayonnaise in any product</span></div><div class="ph rise" style="--d:1.3s">Call ${esc(ph)} to book</div></div>
-   <div class="pstw"><div class="pst"><img src="img/menu-poster.jpg" alt="Cheesy Pizza menu card"></div></div>`}},
+ {k:'poster',t:12,make(){return`<div class="pstw"><div class="pst"><img src="img/menu-poster.jpg" alt="Cheesy Pizza menu card"></div></div>`}},
  {k:'best',t:10,ok:()=>bestItems().length,make(){const b=bestItems();return`<div class="bigword anton">Best sellers</div>
    <div class="head"><div class="kick rise" style="--d:.1s">${KK('best',"Everyone's favourites")}</div><div class="h1 anton">${TT('best',letters('Our best sellers'))}</div></div>
    <div class="grid" style="--n:${b.length}">${b.map((m,i)=>`<div class="bcard" style="--i:${i}"><div class="ph${isPng(m)?' png':''}" style="background-image:url('${photo(m)}')"><span class="rib">Best seller</span></div><div class="tx"><h3>${esc(m.name)}</h3><p>${esc(m.desc||'')}</p><div class="price">${priceOf(m)}</div></div></div>`).join('')}</div>`}},
