@@ -702,6 +702,7 @@ html:has(#modalRoot:not(:empty)),html:has(#boardRoot:not(:empty)),html:has(#choo
 .thist{padding:14px;display:flex;flex-direction:column;gap:10px}
 .tord{border:1px solid var(--line);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:6px}
 .tord.cx{opacity:.55}
+.cxrow{padding:6px 0;border-top:1px dashed var(--line)}
 .tround{display:flex;flex-direction:column;gap:2px;padding-left:8px;border-left:3px solid var(--line)}
 .addto{background:var(--cheese-soft);color:var(--cheese-ink);border-radius:10px;padding:8px 10px;font-weight:700;font-size:13px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .kt{--h:130;border-color:hsl(var(--h) 65% 42%);background:hsl(var(--h) 70% 45% / .10)}
@@ -4135,6 +4136,38 @@ function vTables(){
   <div class="tables tgrid">${[...Array(n)].map((_,i)=>card(String(i+1))).join('')}</div>
   ${sel?hist(sel):'<div class="small muted" style="margin-top:10px">Tap a table to see what it was served that day.</div>'}`;
 }
+/* Cancelling an order. A sheet (not an inline button where the Cancel button was, so a double
+   tap can't cancel) that asks why, warns when the money was already taken, and keeps who
+   cancelled it, when and why on the order. Cancelled orders stay in history and Day sale lists them. */
+const CANCEL_WHY=['Billed twice / made again','Wrong items or bill','Customer left','Kitchen could not make it'];
+const cancelNote=o=>o&&o.cancel?[o.cancel.by?'by '+o.cancel.by:'',o.cancel.at?fmtTime(o.cancel.at):'',o.cancel.why||''].filter(Boolean).join(' · '):'';
+function openCancel(o){
+  if(!o||o.status==='cancelled')return;
+  const paid=paidSoFar(o);let why='';
+  const draw=()=>showModal(`<div class="mh"><h3>Cancel ${esc(o.no)}?</h3><button class="x" data-act="close" aria-label="Close">×</button></div>
+  <div class="mb">
+    <div class="small">${fmtTime(o.ts)} · ${esc(o.customer.name||'Walk-in')} · ${o.items.map(l=>l.qty+'× '+esc(l.name)).join(', ')} · <b class="num">${rs(o.total)}</b></div>
+    ${paid>0?`<div class="notice"><b>${rs(paid)} was already paid by ${esc(payName(o))}${o.pay.utr?' (UTR '+esc(fmtUtr(o.pay.utr))+')':''}.</b> Once cancelled it leaves the day sale. Cancel only if the money was given back, or the same order was billed again.</div>`:''}
+    <div class="field"><label>Why cancel?</label><div class="filters">${CANCEL_WHY.map(w=>`<button data-act="cx-why" data-v="${esc(w)}" aria-pressed="${why===w}">${esc(w)}</button>`).join('')}</div>
+      <input class="inp" id="cx-why" placeholder="Or type the reason" value="${CANCEL_WHY.includes(why)?'':esc(why)}" autocomplete="off"></div>
+    <div class="row" style="gap:8px"><button class="btn lg grow" data-act="close">Keep order</button><button class="btn bad solid lg grow" data-act="cx-yes">Cancel ${esc(o.no)}</button></div>
+  </div>`,{onAct:(act,el)=>{
+    if(act==='cx-why'){why=el.dataset.v;draw();return true}
+    if(act!=='cx-yes')return false;
+    if(!why.trim()){toast('Pick or type why you are cancelling');document.getElementById('cx-why')?.focus();return true}
+    refundOrder(o);const c=S.customers[o.customer.phone];if(dueOf(o)&&c)c.due=Math.max(0,c.due-dueOf(o));if(c)c.coins=Math.max(0,(c.coins||0)+(o.coinsUsed||0)-(o.coinsEarned||0));
+    const su=staff();o.cancel={by:su?.name||'',role:su?.role||'',why:why.trim(),at:Date.now(),paid};
+    setStatus(o,'cancelled');closeModal();toast(o.no+' cancelled');render();return true},
+    onInput:e=>{if(e.target.id==='cx-why'){why=e.target.value;document.querySelectorAll('[data-act="cx-why"]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===why))}}});
+  draw();
+}
+function openDelete(o){
+  if(!o)return;
+  showModal(`<div class="mh"><h3>Delete ${esc(o.no)} from history?</h3><button class="x" data-act="close" aria-label="Close">×</button></div>
+  <div class="mb"><div class="small">This cancelled order (${rs(o.total)}${cancelNote(o)?', cancelled '+esc(cancelNote(o)):''}) will no longer show anywhere. This can't be undone.</div>
+    <div class="row" style="gap:8px"><button class="btn lg grow" data-act="close">Keep it</button><button class="btn bad solid lg grow" data-act="del-yes">Delete</button></div></div>`,
+  {onAct:act=>{if(act!=='del-yes')return false;S.orders=S.orders.filter(x=>x.id!==o.id);save();closeModal();toast('Deleted from history');render();return true}});
+}
 function vOrders(){
   const q=U.ordersQ.trim().toLowerCase();const day=U.ordersDate||today();const all=U.ordersScope==='all';
   const list=S.orders.filter(o=>(all||o.outletId===S.cur)&&o.date===day&&(!q||o.no.toLowerCase().includes(q)||o.customer.phone.includes(q)||(o.customer.name||'').toLowerCase().includes(q)||(o.zomatoId||'').includes(q))&&(!U.ordersNew||isNewCust(o))).sort((a,b)=>b.ts-a.ts);
@@ -4151,10 +4184,9 @@ function vOrders(){
     <td>${TYPES[o.type]}${o.table?' · T'+esc(o.table):''}${o.source==='online'?' <span class="chip t">online</span>':''}${o.zomatoId?`<div class="small muted num">ID ${esc(o.zomatoId)}</div>`:''}</td>
     <td class="small">${o.items.map(l=>l.qty+'× '+esc(l.name)+(l.size?' '+sizeLabel(l.size):'')).join(', ')}</td><td class="r num"><b>${rs(o.total)}</b>${o.subtotal>o.total?`<div class="small" style="color:var(--ok)">−${rs(o.subtotal-o.total)}</div>`:''}</td>
     <td>${o.status==='cancelled'?esc(payName(o)):o.paid?`<span class="chip ready">Done</span> <span class="small">${esc(payName(o))}</span>${o.pay.utr?`<div class="small muted num">UTR ${esc(fmtUtr(o.pay.utr))}</div>`:''}`:`<span class="chip r">${partPaid(o)?rs(balanceOf(o))+' left':'Baki'}</span>${o.pay.mode==='due'?' <span class="small">on account</span>':partPaid(o)?` <span class="small">${esc(payName(o))} paid</span>`:''} <button class="btn sm" data-act="collect-open" data-id="${o.id}">Collect</button>`}</td>
-    <td class="st"><span class="chip ${o.status}">${statusName(o.status,o.type)}</span>${isActive(o)?`<div class="small num" style="font-weight:700;color:${minsLeft(o)<0?'var(--bad)':'var(--warn)'}">${leftText(minsLeft(o))}</div><button class="btn sm" data-act="set-wait" data-id="${o.id}" title="Change waiting time">⏱ wait ${waitOf(o)} min</button>`:''}</td>
+    <td class="st"><span class="chip ${o.status}">${statusName(o.status,o.type)}</span>${o.status==='cancelled'&&cancelNote(o)?`<div class="small muted">${esc(cancelNote(o))}</div>`:''}${isActive(o)?`<div class="small num" style="font-weight:700;color:${minsLeft(o)<0?'var(--bad)':'var(--warn)'}">${leftText(minsLeft(o))}</div><button class="btn sm" data-act="set-wait" data-id="${o.id}" title="Change waiting time">⏱ wait ${waitOf(o)} min</button>`:''}</td>
     <td class="small">${o.source==='online'?'Customer site':esc(o.by||'—')}</td>
-    <td style="white-space:nowrap">${U.confirmCancel===o.id?`<span class="small">Cancel ${o.no}?</span> <button class="btn sm bad solid" data-act="cancel-yes" data-id="${o.id}">Yes, cancel</button> <button class="btn sm" data-act="cancel-no">Keep</button>`:
-      `<button class="btn sm" data-act="bill" data-id="${o.id}">Bill</button> <button class="btn sm" data-act="kot" data-id="${o.id}">KOT</button> <button class="btn sm" data-act="track" data-id="${o.id}">Track</button> ${o.status==='cancelled'?`<button class="btn sm bad" data-act="del" data-id="${o.id}">Delete</button>`:`<button class="btn sm bad" data-act="cancel" data-id="${o.id}">Cancel</button>`}`}</td></tr>`).join('')||`<tr><td colspan="10" class="empty">No orders on ${fmtDate(day)}${all?'':' at '+esc(cur().name)}.</td></tr>`}
+    <td style="white-space:nowrap">${`<button class="btn sm" data-act="bill" data-id="${o.id}">Bill</button> <button class="btn sm" data-act="kot" data-id="${o.id}">KOT</button> <button class="btn sm" data-act="track" data-id="${o.id}">Track</button> ${o.status==='cancelled'?`<button class="btn sm bad" data-act="del" data-id="${o.id}">Delete</button>`:`<button class="btn sm bad" data-act="cancel" data-id="${o.id}">Cancel</button>`}`}</td></tr>`).join('')||`<tr><td colspan="10" class="empty">No orders on ${fmtDate(day)}${all?'':' at '+esc(cur().name)}.</td></tr>`}
   </tbody></table></div>
   <p class="small muted">This list updates by itself. Cancelled orders are removed from the day sale. Delete removes a cancelled order from history.</p>`;
 }
@@ -4166,11 +4198,11 @@ function salesFor(date,scope){
   const types={};list.forEach(o=>types[o.type]=(types[o.type]||0)+o.total);
   const items={};list.forEach(o=>o.items.forEach(l=>{items[l.name]=(items[l.name]||0)+l.qty}));
   const offers={};list.forEach(o=>(o.discounts||[]).forEach(d=>offers[d.name]=(offers[d.name]||0)+d.amt));
-  const canc=S.orders.filter(o=>o.date===date&&o.status==='cancelled'&&(scope==='all'||o.outletId===S.cur)).length;
+  const cancL=S.orders.filter(o=>o.date===date&&o.status==='cancelled'&&(scope==='all'||o.outletId===S.cur)).sort((a,b)=>a.ts-b.ts),canc=cancL.length;
   const rated=list.filter(o=>o.rating);const rating=rated.length?rated.reduce((a,o)=>a+o.rating,0)/rated.length:0;
   const pt=list.filter(o=>o.times&&o.times.ready&&o.times.preparing&&o.times.ready>o.times.preparing).map(o=>(o.times.ready-o.times.preparing)/60000);const prep=pt.length?pt.reduce((a,b)=>a+b,0)/pt.length:0;
   const hours={};list.forEach(o=>{const h=new Date(o.ts).getHours();hours[h]=(hours[h]||0)+o.total});
-  return {list,by,tot,types,items,canc,disc,offers,rating,ratedN:rated.length,prep,hours};
+  return {list,by,tot,types,items,canc,cancL,disc,offers,rating,ratedN:rated.length,prep,hours};
 }
 // How much of an order came in through one payment mode (split bills count each part)
 function amtIn(o,k){const w=o.walletUsed||0;if(k==='wallet')return w;const sp=paySplits(o);if(sp)return sp.filter(x=>x.mode===k).reduce((a,x)=>a+x.amt,0)+(k==='pending'&&!o.paid?balanceOf(o):0);return o.pay.mode===k?o.total-w:0}
@@ -4181,7 +4213,7 @@ function salesText(s,d,sc){
   const L=[`Cheesy Pizza · ${scopeName(sc)} · ${fmtDate(d)}`,`Total sale: ${rs(s.tot)} (${s.list.length} orders)`,''];
   SALE_COLS.forEach(k=>{const n=modeOrders(s,k).length;if(n||s.by[k])L.push(`${PAY[k]}: ${rs(s.by[k])} · ${n} order${n===1?'':'s'}`)});
   const sp=s.list.filter(o=>paySplits(o)).length;if(sp)L.push(`(${sp} split bill${sp===1?'':'s'} counted in each mode)`);
-  L.push('',`Offer discounts: ${rs(s.disc)}`,`Cancelled: ${s.canc}`);
+  L.push('',`Offer discounts: ${rs(s.disc)}`,`Cancelled: ${s.canc}`);s.cancL.forEach(o=>L.push(`  ${o.no} ${rs(o.total)}${o.paid?' (was paid '+payName(o)+')':''}${cancelNote(o)?' · '+cancelNote(o):''}`));
   return L.join('\n');
 }
 function modeText(s,k,d,sc){
@@ -4239,7 +4271,8 @@ function vSales(){
       ${Object.keys(TYPES).map(k=>`<div class="row" style="padding:5px 0;border-bottom:1px solid var(--line)"><span class="grow">${TYPES[k]}</span><b class="num">${rs(s.types[k]||0)}</b></div>`).join('')}
       <div class="grp-h" style="margin:14px 0 6px">Top items</div>
       ${top.map(([n,q])=>`<div class="row" style="padding:4px 0"><span class="grow">${esc(n)}</span><span class="num muted">${q} sold</span></div>`).join('')||'<div class="muted small">No sales</div>'}
-      <div class="small muted" style="margin-top:10px">${s.canc} cancelled order${s.canc===1?'':'s'} not counted.</div></div>
+      <div class="small muted" style="margin-top:10px">${s.canc} cancelled order${s.canc===1?'':'s'} not counted.</div>
+      ${s.cancL.map(o=>`<div class="cxrow small"><b class="num">${esc(o.no)}</b> ${fmtTime(o.ts)} · ${esc(o.customer.name||'Walk-in')} · <b class="num">${rs(o.total)}</b>${o.paid?` <span class="chip r">was paid ${esc(payName(o))}</span>`:''}<div class="muted">${esc(cancelNote(o)||'Cancelled')}</div></div>`).join('')}</div>
   </div>`;
 }
 
@@ -4780,10 +4813,8 @@ document.addEventListener('click',e=>{
     case 'dispatch':{const o=find(el.dataset.id);const nm=document.getElementById('rs-'+o.id).value;o.rider=(cur().riders||[]).find(r=>r.name===nm);setStatus(o,'out');toast(o.no+' out with '+nm);render();break}
     case 'board':U.board=true;renderBoard();break;
     case 'board-x':U.board=false;renderBoard();break;
-    case 'cancel':U.confirmCancel=el.dataset.id;render();break;
-    case 'cancel-no':U.confirmCancel=null;render();break;
-    case 'cancel-yes':{const o=find(el.dataset.id);refundOrder(o);const c=S.customers[o.customer.phone];if(dueOf(o)&&c)c.due=Math.max(0,c.due-dueOf(o));if(c)c.coins=Math.max(0,(c.coins||0)+(o.coinsUsed||0)-(o.coinsEarned||0));setStatus(o,'cancelled');U.confirmCancel=null;toast(o.no+' cancelled');render();break}
-    case 'del':S.orders=S.orders.filter(o=>o.id!==el.dataset.id);save();toast('Deleted from history');render();break;
+    case 'cancel':openCancel(find(el.dataset.id));break;
+    case 'del':openDelete(find(el.dataset.id));break;
     case 'scope':U.salesScope=el.dataset.v;render();break;
     case 'settle':{const c=S.customers[el.dataset.ph];c.due=0;S.orders.filter(o=>o.customer.phone===c.phone&&o.pay.mode==='due').forEach(o=>o.paid=true);save();toast('Baki cleared');render();break}
     case 'new-offer':openOfferForm(null,el.dataset.v);break;
