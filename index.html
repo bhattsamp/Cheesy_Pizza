@@ -951,6 +951,9 @@ html:has(#modalRoot:not(:empty)),html:has(#boardRoot:not(:empty)),html:has(#choo
 .paysheet .paymodes.five{grid-template-columns:repeat(auto-fit,minmax(90px,1fr))}
 .paysheet .calc .big{font-size:32px}
 .paysheet .quick button{padding:10px 14px;font-size:15px}
+.repsec{padding:0;margin-top:10px;overflow:hidden}.repsec>summary{cursor:pointer;padding:12px 14px;list-style:none;display:flex;gap:8px;align-items:center}
+.repsec>summary::after{content:"›";margin-left:auto;transition:transform .2s;font-size:20px;color:var(--muted)}.repsec[open]>summary::after{transform:rotate(90deg)}
+.repsec .tw{border-top:1px solid var(--line);max-height:520px;overflow:auto}.reptbl td,.reptbl th{white-space:nowrap}.reptbl td:nth-child(7){white-space:normal;min-width:220px}
 .acts2{display:grid;grid-template-columns:1.3fr 1fr;gap:8px}.acts2 .btn{padding:16px 8px;font-size:17px}
 .acts2 .btn.wa{background:#25d366;border-color:#25d366;color:#fff}
 .paystat{text-align:left;font:inherit;color:inherit;cursor:pointer;width:100%}
@@ -2321,7 +2324,15 @@ const menuItem=id=>S.menu.find(m=>m.id===id);
 
 /* ===== OFFERS ENGINE ===== */
 function dayOK(o,dow){return !o.days||!o.days.length||o.days.includes(dow)}
-function activeOffers(dow){return S.offers.filter(o=>o.active&&dayOK(o,dow))}
+// Cheese Coins rules, set by the owner in Offers: what one coin is worth, how many a bill earns, how much of a bill they can pay.
+// Kept as a hidden record in offers (never active) so it syncs to every till and phone.
+const COIN_DEF={value:1,per100:5,maxPct:20};
+function coinRules(){const r=(S.offers||[]).find(o=>o.type==='coins')||{};const v=+r.value>0?+r.value:COIN_DEF.value;
+  return{value:v,per100:+r.per100>=0&&r.per100!==''&&r.per100!=null?+r.per100:Math.round(COIN_RATE*100)||COIN_DEF.per100,maxPct:+r.maxPct>0?Math.min(100,+r.maxPct):COIN_DEF.maxPct}}
+const coinRs=n=>{const x=Math.round(n*100)/100;return '₹'+(Number.isInteger(x)?x.toLocaleString('en-IN'):x.toFixed(2))};
+const coinValTxt=()=>{const v=coinRules().value;return v<1?Math.round(v*100)+' paisa':coinRs(v)};
+const coinLine=()=>{const c=coinRules();return `Get ${c.per100} coin${c.per100===1?'':'s'} for every ₹100 you spend. Use them to pay up to ${c.maxPct}% of your next bill. 1 coin = ${coinValTxt()}.`};
+function activeOffers(dow){return S.offers.filter(o=>o.active&&o.type!=='coins'&&dayOK(o,dow))}
 function computeBill(items,dateStr,extra){
   extra=extra||{};
   const dow=new Date((dateStr||today())+'T12:00:00').getDay();
@@ -2358,14 +2369,14 @@ function computeBill(items,dateStr,extra){
     else{const left=subtotal-discount;let a=cd.kind==='pct'?Math.round(left*cd.value/100):+cd.value;if(cd.kind==='pct'&&cd.cap)a=Math.min(a,cd.cap);a=Math.max(0,Math.min(a,left));
       if(a>0){disc.push({name:'Code '+cd.code,amt:a});discount+=a;codeOk=true;codeMsg=`${cd.code} applied · you save ${rs(a)}`}}
   }
-  const coinsMax=Math.floor(Math.max(0,subtotal-discount)*0.2);let coinsUsed=0;
-  if(extra.coins>0){coinsUsed=Math.min(Math.floor(extra.coins),coinsMax);if(coinsUsed>0){disc.push({name:`Cheese Coins (${coinsUsed})`,amt:coinsUsed});discount+=coinsUsed}}
+  const CR=coinRules(),coinsMax=Math.floor(Math.max(0,subtotal-discount)*CR.maxPct/100/CR.value+1e-9);let coinsUsed=0;
+  if(extra.coins>0){coinsUsed=Math.min(Math.floor(extra.coins),coinsMax);if(coinsUsed>0){const amt=Math.round(coinsUsed*CR.value*100)/100;disc.push({name:`Cheese Coins (${coinsUsed})`,amt});discount+=amt}}
   const comboSave=items.filter(l=>l.combo).reduce((s,l)=>s+Math.max(0,(l.worth||0)-l.unit)*l.qty,0);
   const net=Math.max(0,subtotal-discount);
   // GST (owner sets it per outlet): included in menu prices, or added on top of the bill
   const g=gstOf(S.outlets.find(x=>x.id===(extra.outletId||S.cur)));let tax=0,total=net,gst=null;
   if(g){tax=g.mode==='excl'?Math.round(net*g.rate)/100:Math.round((net-net/(1+g.rate/100))*100)/100;if(g.mode==='excl')total=Math.round(net+tax);gst={rate:g.rate,mode:g.mode,tax,net}}
-  return {subtotal,discounts:disc,discount,net,gst,total,hint,saved:discount+comboSave,codeMsg,codeOk,coinsUsed,coinsMax,earn:Math.floor(total*COIN_RATE)};
+  return {subtotal,discounts:disc,discount,net,gst,total,hint,saved:discount+comboSave,codeMsg,codeOk,coinsUsed,coinsMax,coinsAmt:Math.round(coinsUsed*CR.value*100)/100,earn:Math.floor(total*CR.per100/100)};
 }
 /* GST applies only once the outlet has a GSTIN and a rate; mode 'incl' = prices include GST, 'excl' = added on top */
 const gstOf=o=>o&&o.gstin&&+o.gstRate>0?{rate:+o.gstRate,mode:o.gstMode==='excl'?'excl':'incl'}:null;
@@ -2496,6 +2507,7 @@ const I={
  counter:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="17" r="3"/><circle cx="18" cy="17" r="3"/><path d="M9 17h6l-2-7H8M13 10h3l2 7M6 10h3"/></svg>',
  orders:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg>',
  sales:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>',
+ reports:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/></svg>',
  offers:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12V4h8l10 10-8 8z"/><circle cx="7.5" cy="8.5" r="1.5"/></svg>',
  cust:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>',
  menu:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2 21h20z"/><circle cx="11" cy="14" r="1.2"/><circle cx="14" cy="17" r="1.2"/></svg>',
@@ -2505,7 +2517,7 @@ staff:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="
  display:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg>',
  outlet:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l2-5h14l2 5M4 9v11h16V9M3 9h18M9 20v-6h6v6"/></svg>',
 };
-const TABS=[['new','New order'],['kitchen','Kitchen'],['counter','Counter'],['orders','Orders'],['tables','Tables'],['sales','Day sale'],['offers','Offers'],['cust','Customers'],['menu','Menu & sizes'],['home','Home page'],['display','Shop display'],['outlet','Outlets'],['staff','Staff'],['review','Reviews'],['trips','Deliveries']];
+const TABS=[['new','New order'],['kitchen','Kitchen'],['counter','Counter'],['orders','Orders'],['tables','Tables'],['sales','Day sale'],['reports','Reports'],['offers','Offers'],['cust','Customers'],['menu','Menu & sizes'],['home','Home page'],['display','Shop display'],['outlet','Outlets'],['staff','Staff'],['review','Reviews'],['trips','Deliveries']];
 
 const app=document.getElementById('app');
 function render(){
@@ -2635,7 +2647,7 @@ function matchFilter(m,dow){
 // while the mouse is over it or a finger is on it, so customers can read it.
 function offerTicker(){
   const dow=new Date().getDay();
-  const tick=[...activeOffers(dow).map(x=>`<span><b>${x.type==='code'?'CODE '+esc(x.code):'TODAY'}</b> ${esc(x.name)}: ${esc(offerText(x))}</span>`),...S.combos.filter(c=>c.active).map(c=>`<span><b>COMBO</b> ${esc(c.name)} at ${rs(c.price)}</span>`),'<span><b>CHEESE COINS</b> 5% back on every order</span>','<span><b>PURE VEG</b> No mayonnaise products</span>'];
+  const tick=[...activeOffers(dow).map(x=>`<span><b>${x.type==='code'?'CODE '+esc(x.code):'TODAY'}</b> ${esc(x.name)}: ${esc(offerText(x))}</span>`),...S.combos.filter(c=>c.active).map(c=>`<span><b>COMBO</b> ${esc(c.name)} at ${rs(c.price)}</span>`),'<span><b>CHEESE COINS</b> ${coinRules().per100} coins per ₹100 · 1 coin = ${coinValTxt()}</span>','<span><b>PURE VEG</b> No mayonnaise products</span>'];
   const secs=Math.max(45,Math.round(tick.join('').replace(/<[^>]+>/g,'').length*.32));
   // the delay keeps its place when the page re-renders, instead of starting over
   return `<div class="ticker${U.tickHold?' hold':''}" aria-label="Offers" title="Hold to pause"><div class="tk" style="animation-duration:${secs}s;animation-delay:-${(Date.now()/1000%secs).toFixed(1)}s">${tick.join('')}${tick.join('')}</div></div>`;
@@ -2681,7 +2693,7 @@ function renderPublic(){
       <div class="stack">${[...Array(c.pizzas)].map((_,i)=>`<img src="${IMG(['margherita','veggieparadise','cheesyspecial'][i%3])}" alt="">`).join('')}${ex.map(m=>m.img?`<img src="${IMG(m.img)}" alt="">`:'<span class="pzs"></span>').join('')}</div>
       <div><h3 style="font-size:20px">${esc(c.name)}</h3><div class="small muted">${esc(c.desc)}</div>
       <div class="row" style="margin-top:6px"><span class="price num">${rs(c.price)}</span><s class="num">${rs(comboWorth(c))}</s><span class="grow"></span><button class="btn pri" data-act="combo-add" data-id="${c.id}" data-t="pub">Add</button></div></div></article>`}).join('')}</div></section>`:''}
-  <div class="coins-band"><div class="coin">C</div><div class="grow"><h3>Cheese Coins</h3><div class="small muted">Get 5% back as coins on every order. Use them to pay up to 20% of your next bill. 1 coin = ₹1.</div></div><button class="btn" data-act="pub-track-find">Check my coins</button></div>
+  <div class="coins-band"><div class="coin">C</div><div class="grow"><h3>Cheese Coins</h3><div class="small muted">${coinLine()}</div></div><button class="btn" data-act="pub-track-find">Check my coins</button></div>
   <div id="menu" style="scroll-margin-top:60px"></div>
   <div class="sec-h"><h2>Menu</h2><span class="gu">મેનુ</span></div>
   <div class="filters"><input class="inp" id="pub-q" placeholder="Search paneer, cheese, spicy…" value="${esc(U.pubQ)}" aria-label="Search menu">
@@ -2884,7 +2896,7 @@ function renderHome(){if(HOME2)return renderHome2();
         <p data-sx style="--n:${p1.n}">${p1.html}</p>
         <p data-sx style="--n:${p2a.n+p2b.n}"><strong>${p2a.html}</strong> ${p2b.html.replace(/--i:(\d+)/g,(m,d)=>'--i:'+(+d+p2a.n))}</p>
         <ul class="craft">${['Fresh dough','Hand stretched','Soft base','Live pizza'].map((t,i)=>`<li><span>0${i+1}</span>${t}</li>`).join('')}</ul>
-        <div class="st-stats"><div><b class="num">${pizzas.length}</b><span>Pizzas</span></div>${minPz?`<div><b class="num">${rs(minPz)}</b><span>Pizzas from</span></div>`:''}<div><b class="num">${Math.round(COIN_RATE*100)}%</b><span>Back in coins</span></div></div>
+        <div class="st-stats"><div><b class="num">${pizzas.length}</b><span>Pizzas</span></div>${minPz?`<div><b class="num">${rs(minPz)}</b><span>Pizzas from</span></div>`:''}<div><b class="num">${Math.round(coinRules().per100*coinRules().value)}%</b><span>Back in coins</span></div></div>
       </div>
     </div>
   </div></section>
@@ -2916,7 +2928,7 @@ function renderHome(){if(HOME2)return renderHome2();
       <div class="stack">${[...Array(c.pizzas)].map((_,i)=>`<img src="${IMG(['margherita','veggieparadise','cheesyspecial'][i%3])}" alt="" loading="lazy">`).join('')}${ex.map(m=>m.img?`<img src="${IMG(m.img)}" alt="" loading="lazy">`:'<span class="pzs"></span>').join('')}</div>
       <h3>${esc(c.name)}</h3><p>${esc(c.desc)}</p>
       <div class="cmb-ft"><span class="price num">${rs(c.price)}</span>${worth>c.price?`<s class="num">${rs(worth)}</s>`:''}<button class="btn pri" data-act="combo-add" data-id="${c.id}" data-t="pub" aria-label="Add ${esc(c.name)} combo">Add combo</button></div></article>`}).join('')}</div>`:''}
-    <div class="coins-x"><div class="coin" aria-hidden="true">C</div><div class="grow"><h3>Cheese Coins</h3><div class="muted">Get ${Math.round(COIN_RATE*100)}% back as coins on every order. Use them to pay up to 20% of your next bill. 1 coin = ₹1.</div></div><button class="btn" data-act="pub-track-find">Check my coins</button></div>
+    <div class="coins-x"><div class="coin" aria-hidden="true">C</div><div class="grow"><h3>Cheese Coins</h3><div class="muted">${coinLine()}</div></div><button class="btn" data-act="pub-track-find">Check my coins</button></div>
   </div></section>
 
   ${best.length?`<section class="sx" id="favourites"><div class="sx-in">
@@ -3445,7 +3457,7 @@ function openPubCart(){
     <div class="grp-h">Your details</div>
     <div class="row"><div class="field grow"><label for="pf-name">Name</label><input class="inp" id="pf-name" value="${esc(pubForm.name)}" autocomplete="name"></div>
     <div class="field grow"><label for="pf-phone">Mobile number</label><input class="inp num" id="pf-phone" inputmode="numeric" maxlength="10" value="${esc(pubForm.phone)}" autocomplete="tel" ${mm?'disabled':''}></div></div>
-    ${coins?`<label class="opt"><input type="checkbox" id="pf-coins" ${pubForm.useCoins?'checked':''}><span class="coin sm">C</span> Use my Cheese Coins <span class="small muted num">(${coins} available)</span><span class="p num">${pubForm.useCoins?'−'+rs(b.coinsUsed):'up to '+rs(Math.min(coins,b.coinsMax))}</span></label>`:''}
+    ${coins?`<label class="opt"><input type="checkbox" id="pf-coins" ${pubForm.useCoins?'checked':''}><span class="coin sm">C</span> Use my Cheese Coins <span class="small muted num">(${coins} available)</span><span class="p num">${pubForm.useCoins?'−'+coinRs(b.coinsAmt):'up to '+coinRs(Math.min(coins,b.coinsMax)*coinRules().value)}</span></label>`:''}
     ${wal?`<label class="opt"><input type="checkbox" id="pf-wallet" ${pubForm.useWallet?'checked':''}> Pay from Cheesy Wallet <span class="small muted num">(balance ${rs(wal)})</span><span class="p num">${pubForm.useWallet?'−'+rs(wUse):''}</span></label>`:''}
     <div style="display:flex;flex-direction:column;gap:4px">${billLines(b)}${wUse?`<div class="bl disc"><span>From wallet</span><span class="num">−${rs(wUse)}</span></div><div class="tot" style="font-size:20px"><span>Balance to pay</span><span class="num">${rs(due)}</span></div>`:''}</div>
     ${b.saved?`<div class="savings num">You're saving ${rs(b.saved)} on this order</div>`:''}
@@ -3573,7 +3585,7 @@ function renderPOS(){
       `<button data-act="pos-more" ${more.some(([t])=>t===U.pos.tab)?'aria-current="page"':''}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="5" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="19" cy="12" r="1.4"/></svg><span>${esc((more.find(([t])=>t===U.pos.tab)||[0,'More'])[1])}</span></button>`};
   U.posMore=()=>showModal(`<div class="mh"><h3>All sections</h3><button class="x" data-act="close" aria-label="Close">×</button></div><div class="mb"><div class="moregrid">${allowed.map(([t,n])=>`<button data-act="tab" data-v="${t}" ${U.pos.tab===t?'aria-current="page"':''}>${I[t]}<span>${n}</span></button>`).join('')}</div>
     <div class="row small muted"><span class="grow">Signed in as <b>${esc(su.name)}</b> · ${ROLES[su.role]}</span>${CAP?'<button class="btn sm" data-act="perms">Alerts & location</button>':''}<button class="btn sm" data-act="lock">Lock screen</button></div></div>`);
-  const views={new:vNew,kitchen:vKitchen,counter:vCounter,orders:vOrders,tables:vTables,sales:vSales,offers:vOffers,cust:vCust,menu:vMenu,home:vHomeAdm,display:vDisplayAdm,outlet:vOutlets,staff:vStaff,review:vReview,trips:vTrips};
+  const views={new:vNew,kitchen:vKitchen,counter:vCounter,orders:vOrders,tables:vTables,sales:vSales,reports:vReports,offers:vOffers,cust:vCust,menu:vMenu,home:vHomeAdm,display:vDisplayAdm,outlet:vOutlets,staff:vStaff,review:vReview,trips:vTrips};
   return `<div class="pos"><nav class="side" aria-label="POS sections" data-ks="side">${nav()}
     <div class="side-foot small muted"><span>Signed in as <b>${esc(su.name)}</b> · ${ROLES[su.role]}</span>${CAP?'<button class="btn sm" data-act="perms">Alerts & location</button>':''}<button class="btn sm" data-act="lock">Lock screen</button></div></nav>
   <section class="main">${U.pos.tab!=='kitchen'&&U.pos.tab!=='trips'&&su.role!=='kitchen'&&su.role!=='rider'?onlineBanner():''}${views[U.pos.tab]()}</section></div>
@@ -4281,6 +4293,117 @@ function vSales(){
   </div>`;
 }
 
+/* ===== Reports: sales over a date range (today, a week, a month or any dates), with every detail,
+   saved as Excel or PDF. Built from the same orders as Day sale. ===== */
+const REP_P=[['today','Today'],['yday','Yesterday'],['week','This week'],['lweek','Last week'],['month','This month'],['lmonth','Last month'],['custom','Custom']];
+function repRange(R){const t=today(),d=new Date(t+'T12:00:00'),dow=(d.getDay()+6)%7,mStart=t.slice(0,8)+'01';
+  const lmEnd=addDays(mStart,-1),lmStart=lmEnd.slice(0,8)+'01';
+  switch(R.p){case 'yday':return[addDays(t,-1),addDays(t,-1)];case 'week':return[addDays(t,-dow),t];case 'lweek':return[addDays(t,-dow-7),addDays(t,-dow-1)];
+   case 'month':return[mStart,t];case 'lmonth':return[lmStart,lmEnd];case 'custom':{const a=R.from||t,b=R.to||t;return a<=b?[a,b]:[b,a]}default:return[t,t]}}
+const repU=()=>U.rep||(U.rep={p:'today',from:'',to:'',sc:'outlet'});
+const r2s=n=>Math.round(n*100)/100;
+const orderWho=o=>o.paidBy||o.by||'';
+function repData(){const R=repU(),[from,to]=repRange(R),sc=R.sc;
+  const inR=o=>o.date>=from&&o.date<=to&&(sc==='all'||o.outletId===S.cur);
+  const all=S.orders.filter(inR).sort((a,b)=>(a.ts||0)-(b.ts||0)),list=all.filter(o=>o.status!=='cancelled'),canc=all.filter(o=>o.status==='cancelled');
+  const sumBy=(arr,f)=>arr.reduce((s,o)=>s+(+f(o)||0),0);
+  const by={};SALE_COLS.forEach(k=>by[k]=sumBy(list,o=>amtIn(o,k)));
+  const gross=sumBy(list,o=>o.subtotal||o.total),tot=sumBy(list,o=>o.total),disc=gross-tot;
+  const collected=SALE_COLS.filter(k=>k!=='due'&&k!=='pending').reduce((s,k)=>s+by[k],0);
+  // day by day
+  const days=[];for(let d=from;d<=to;d=addDays(d,1)){const L=list.filter(o=>o.date===d),C=canc.filter(o=>o.date===d);const row={d,n:L.length,tot:sumBy(L,o=>o.total),disc:sumBy(L,o=>(o.subtotal||o.total)-o.total),cn:C.length,ca:sumBy(C,o=>o.total)};SALE_COLS.forEach(k=>row[k]=sumBy(L,o=>amtIn(o,k)));days.push(row);if(days.length>400)break}
+  // items, categories, order types, cashiers, hours
+  const items={},cats={},types={},who={},hours={};
+  list.forEach(o=>{types[o.type]=types[o.type]||{n:0,a:0};types[o.type].n++;types[o.type].a+=o.total;
+    const w=orderWho(o)||'Online / not recorded';const c=who[w]||(who[w]={n:0,a:0,cash:0,upi:0,other:0});c.n++;c.a+=o.total;c.cash+=amtIn(o,'cash');c.upi+=amtIn(o,'upi');
+    const h=new Date(o.ts).getHours();hours[h]=hours[h]||{n:0,a:0};hours[h].n++;hours[h].a+=o.total;
+    (o.items||[]).forEach(l=>{const nm=l.name+(l.size?' ('+sizeLabel(l.size)+')':''),amt=(+l.unit||0)*(+l.qty||0);const it=items[nm]||(items[nm]={cat:l.cat||'',q:0,a:0});it.q+=+l.qty||0;it.a+=amt;
+      const cn=(CATS.find(x=>x[0]===l.cat)||[0,l.combo?'Combos':(l.cat||'Other')])[1];const ct=cats[cn]||(cats[cn]={q:0,a:0});ct.q+=+l.qty||0;ct.a+=amt})});
+  Object.values(who).forEach(c=>c.other=c.a-c.cash-c.upi);
+  const offers={};list.forEach(o=>(o.discounts||[]).forEach(x=>{const f=offers[x.name]||(offers[x.name]={n:0,a:0});f.n++;f.a+=x.amt}));
+  const unpaid=list.filter(o=>!o.paid);
+  return{from,to,sc,all,list,canc,by,gross,tot,disc,collected,days,items,cats,types,who,hours,offers,unpaid,
+    cancA:sumBy(canc,o=>o.total),cancPaid:canc.filter(o=>o.paid),avg:list.length?tot/list.length:0,dayN:days.length}}
+const repTitle=r=>`Cheesy Pizza sales report · ${scopeName(r.sc)} · ${r.from===r.to?fmtDate(r.from):fmtDate(r.from)+' to '+fmtDate(r.to)}`;
+function repTables(r,cur){const C=cur||rs;// shared by the screen, Excel and PDF
+  const pm=SALE_COLS.filter(k=>r.by[k]||r.list.some(o=>amtIn(o,k)>0));
+  return{
+   summary:{h:['Item','Value'],rows:[['Total sale (after discounts)',C(r.tot)],['Orders',r.list.length],['Average order',C(r.avg)],['Gross before discounts',C(r.gross)],['Offer discounts',C(r.disc)],
+     ['Money received (cash, UPI, card, bank, wallet, Zomato)',C(r.collected)],['Kept as baki (due)',C(r.by.due||0)],['Not paid yet',C(r.by.pending||0)+' · '+r.unpaid.length+' orders'],
+     ['Cancelled',r.canc.length+' orders · '+C(r.cancA)],['Cancelled after being paid',r.cancPaid.length+' orders · '+C(r.cancPaid.reduce((s,o)=>s+o.total,0))]]},
+   pay:{h:['Payment','Amount','Orders','Share'],rows:pm.map(k=>[PAY[k]||k,C(r.by[k]),modeOrders(r,k).length,(r.tot?Math.round(r.by[k]/r.tot*100):0)+'%'])},
+   days:{h:['Date','Orders',...pm.map(k=>PAY[k]||k),'Discount','Total','Cancelled orders','Cancelled amount'],rows:r.days.map(x=>[fmtDate(x.d),x.n,...pm.map(k=>C(x[k])),C(x.disc),C(x.tot),x.cn,C(x.ca)])},
+   items:{h:['Item','Category','Qty','Amount'],rows:Object.entries(r.items).sort((a,b)=>b[1].a-a[1].a).map(([n,x])=>[n,(CATS.find(c=>c[0]===x.cat)||[0,x.cat||''])[1],x.q,C(x.a)])},
+   cats:{h:['Category','Qty','Amount'],rows:Object.entries(r.cats).sort((a,b)=>b[1].a-a[1].a).map(([n,x])=>[n,x.q,C(x.a)])},
+   types:{h:['Order type','Orders','Amount'],rows:Object.entries(r.types).map(([k,x])=>[TYPES[k]||k,x.n,C(x.a)])},
+   who:{h:['Billed by','Orders','Total','Cash','UPI','Other'],rows:Object.entries(r.who).sort((a,b)=>b[1].a-a[1].a).map(([n,x])=>[n,x.n,C(x.a),C(x.cash),C(x.upi),C(x.other)])},
+   offers:{h:['Offer','Times used','Discount given'],rows:Object.entries(r.offers).map(([n,x])=>[n,x.n,C(x.a)])},
+   hours:{h:['Hour','Orders','Amount'],rows:Object.keys(r.hours).map(Number).sort((a,b)=>a-b).map(h=>[`${h%12||12}${h<12?'am':'pm'} to ${(h+1)%12||12}${h+1<12||h+1===24?'am':'pm'}`,r.hours[h].n,C(r.hours[h].a)])},
+   canc:{h:['No.','Date','Time','Customer','Amount','Was paid','Cancelled by, time, reason'],rows:r.canc.map(o=>[o.no,fmtDate(o.date),fmtTime(o.ts),o.customer.name||'Walk-in',C(o.total),o.paid?payName(o):'No',cancelNote(o)||''])},
+   unpaid:{h:['No.','Date','Customer','Phone','Amount','Status'],rows:r.unpaid.map(o=>[o.no,fmtDate(o.date),o.customer.name||'Walk-in',o.customer.phone||'',C(balanceOf(o)||o.total),o.pay.mode==='due'?'Baki':'Not paid'])},
+   orders:{h:['No.','Date','Time','Type','Customer','Phone','Items','Subtotal','Discount','Total','Payment','UTR','Billed by','Status'],rows:r.all.map(o=>[o.no,fmtDate(o.date),fmtTime(o.ts),TYPES[o.type]||o.type,o.customer.name||'Walk-in',o.customer.phone||'',
+     (o.items||[]).map(l=>l.qty+' x '+l.name+(l.size?' '+sizeLabel(l.size):'')).join(', '),C(o.subtotal||o.total),C((o.subtotal||o.total)-o.total),C(o.total),o.paid?payName(o):(o.pay.mode==='due'?'Baki':'Not paid'),o.pay.utr||'',orderWho(o),o.status==='cancelled'?'Cancelled':o.paid?'Paid':'Unpaid'])}}}
+const REP_SECS=[['summary','Summary'],['pay','By payment mode'],['days','Day by day'],['items','Item-wise sale'],['cats','Category-wise sale'],['types','By order type'],['who','By cashier (who billed)'],['offers','Offers used'],['hours','By hour'],['unpaid','Unpaid and baki orders'],['canc','Cancelled orders'],['orders','All orders in detail']];
+function repTbl(t,max){const rows=max?t.rows.slice(0,max):t.rows;
+  return `<div class="tw"><table class="stk ordtbl reptbl"><thead><tr>${t.h.map((h,i)=>{const c=t.rows[0]?.[i];return `<th${i&&(typeof c==='number'||/^₹/.test(String(c)))?' class="r"':''}>${esc(h)}</th>`}).join('')}</tr></thead><tbody>
+  ${rows.map(r=>`<tr>${r.map((c,i)=>`<td class="${i&&(typeof c==='number'||/^₹/.test(String(c)))?'r num':''}">${esc(String(c))}</td>`).join('')}</tr>`).join('')||`<tr><td colspan="${t.h.length}" class="empty">Nothing in this period.</td></tr>`}
+  </tbody></table></div>${max&&t.rows.length>max?`<div class="small muted" style="padding:6px 2px">Showing ${max} of ${t.rows.length}. The Excel and PDF have all of them.</div>`:''}`}
+function vReports(){const R=repU(),r=repData(),T=repTables(r);const cols=SALE_COLS.filter(k=>r.by[k]);
+  return `<div class="ph1"><h2>Sales reports</h2><span class="muted small">Pick a period, then save it as Excel or PDF.</span></div>
+  <div class="card" style="padding:12px;display:flex;flex-direction:column;gap:10px;margin-bottom:12px">
+    <div class="seg repseg" style="flex-wrap:wrap;border-radius:16px">${REP_P.map(([k,n])=>`<button data-act="rep-p" data-v="${k}" aria-pressed="${R.p===k}">${n}</button>`).join('')}</div>
+    <div class="row" style="gap:10px;flex-wrap:wrap;align-items:flex-end">
+      <div class="field"><label for="rep-from">From</label><input class="inp" type="date" id="rep-from" value="${r.from}"></div>
+      <div class="field"><label for="rep-to">To</label><input class="inp" type="date" id="rep-to" value="${r.to}"></div>
+      ${S.outlets.length>1?`<div class="seg"><button data-act="rep-sc" data-v="outlet" aria-pressed="${R.sc==='outlet'}">${esc(cur().name)}</button><button data-act="rep-sc" data-v="all" aria-pressed="${R.sc==='all'}">All outlets</button></div>`:''}
+      <span class="grow"></span>
+      <button class="btn pri" data-act="rep-xls">Save as Excel</button><button class="btn" data-act="rep-pdf">Save as PDF</button>
+    </div></div>
+  <div class="stats">
+    <div class="card stat hero"><div class="k">Total sale · ${r.from===r.to?fmtDate(r.from):fmtDate(r.from)+' to '+fmtDate(r.to)}</div><div class="v num">${rs(r.tot)}</div><div class="d num">${r.list.length} orders · average ${rs(r.avg)} · ${r.dayN} day${r.dayN===1?'':'s'}</div></div>
+    ${cols.map(k=>`<div class="card stat"><div class="k"><span class="sw" style="background:${PAYCOL[k]}"></span>${PAY[k]}</div><div class="v num">${rs(r.by[k])}</div><div class="d muted num">${modeOrders(r,k).length} orders</div></div>`).join('')}
+    <div class="card stat"><div class="k">Offer discounts</div><div class="v num" style="color:var(--ok)">${rs(r.disc)}</div><div class="d muted num">gross ${rs(r.gross)}</div></div>
+    <div class="card stat"><div class="k">Cancelled</div><div class="v num" style="color:var(--bad)">${r.canc.length}</div><div class="d muted num">${rs(r.cancA)}${r.cancPaid.length?' · '+r.cancPaid.length+' were paid':''}</div></div>
+  </div>
+  ${REP_SECS.filter(([k])=>k!=='summary').map(([k,n])=>`<details class="card repsec" ${['pay','days','items','who'].includes(k)?'open':''}><summary><b>${n}</b> <span class="muted small num">${T[k].rows.length}</span></summary>${repTbl(T[k],k==='orders'?150:0)}</details>`).join('')}`}
+// a script from cdnjs, once
+const LIBS={};function loadLib(u){return LIBS[u]||(LIBS[u]=new Promise((ok,bad)=>{const s=document.createElement('script');s.src=u;s.onload=ok;s.onerror=()=>{delete LIBS[u];bad(new Error('lib'))};document.head.appendChild(s)}))}
+// hands a made file to the person: the share sheet on phones, a download on computers
+async function saveFile(blob,name,mime){
+  const file=new File([blob],name,{type:mime});
+  if(navigator.canShare&&navigator.canShare({files:[file]})&&/Android|iPhone|iPad/i.test(navigator.userAgent)){try{await navigator.share({files:[file],title:name});return}catch(e){if(e.name==='AbortError')return}}
+  if(CAP){toast('Saving files works on the website. Open cheesypizza.online in Chrome, sign in and save the report there.');return}
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000);toast('Report saved: '+name)}
+const repName=(r,ext)=>`cheesy-pizza-sales-${r.from}${r.to!==r.from?'-to-'+r.to:''}.${ext}`;
+async function repExcel(){const r=repData();toast('Making the Excel file…');
+  try{await loadLib('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js')}catch(e){toast('Could not load the Excel maker. Check the internet and try again.');return}
+  const T=repTables(r,n=>r2s(n)),wb=XLSX.utils.book_new();
+  REP_SECS.forEach(([k,n])=>{const t=T[k],aoa=[[repTitle(r)],[n],[],t.h,...t.rows];const ws=XLSX.utils.aoa_to_sheet(aoa);
+    ws['!cols']=t.h.map((h,i)=>({wch:Math.min(60,Math.max(String(h).length,...t.rows.map(x=>String(x[i]??'').length))+2)}));
+    XLSX.utils.book_append_sheet(wb,ws,n.replace(/[\\/?*[\]:]/g,'').slice(0,31))});
+  const out=XLSX.write(wb,{bookType:'xlsx',type:'array'});
+  await saveFile(new Blob([out],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),repName(r,'xlsx'),'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')}
+async function repPdf(){const r=repData();toast('Making the PDF…');
+  try{await loadLib('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');await loadLib('https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js')}catch(e){toast('Could not load the PDF maker. Check the internet and try again.');return}
+  // the PDF's built in font has no rupee sign, so amounts read "Rs 1,234"
+  const T=repTables(r,n=>'Rs '+Math.round(n).toLocaleString('en-IN')),doc=new jspdf.jsPDF({orientation:'landscape',unit:'pt',format:'a4'});
+  const W=doc.internal.pageSize.getWidth(),ascii=s=>String(s).replace(/₹/g,'Rs ').replace(/ · /g,' - ').replace(/[^\x20-\x7E]/g,'');
+  doc.setFontSize(16);doc.setTextColor(11,58,67);doc.text(ascii(repTitle(r)),40,44);doc.setFontSize(9);doc.setTextColor(110);doc.text('Made '+new Date().toLocaleString('en-IN')+(staff()?' by '+ascii(staff().name):''),40,60);
+  let y=74;REP_SECS.forEach(([k,n])=>{const t=T[k];if(!t.rows.length&&k!=='summary')return;
+    if(y>doc.internal.pageSize.getHeight()-80){doc.addPage();y=40}
+    doc.setFontSize(12);doc.setTextColor(11,58,67);doc.text(n,40,y+6);
+    doc.autoTable({startY:y+12,head:[t.h.map(ascii)],body:t.rows.map(x=>x.map(ascii)),margin:{left:40,right:40},styles:{fontSize:k==='orders'?7:8.5,cellPadding:3,overflow:'linebreak'},
+      headStyles:{fillColor:[11,58,67],textColor:255},alternateRowStyles:{fillColor:[244,248,249]},columnStyles:k==='orders'?{6:{cellWidth:170}}:{}});
+    y=doc.lastAutoTable.finalY+22});
+  const pages=doc.internal.getNumberOfPages();for(let i=1;i<=pages;i++){doc.setPage(i);doc.setFontSize(8);doc.setTextColor(140);doc.text(`Page ${i} of ${pages}`,W-90,doc.internal.pageSize.getHeight()-18)}
+  await saveFile(doc.output('blob'),repName(r,'pdf'),'application/pdf')}
+
+// The owner sets what a Cheese Coin is worth and how coins are earned and used
+function coinBox(){const own=staff()?.role==='owner',c=coinRules();
+  const f=(k,lbl,v,step,help)=>`<div class="field grow"><label for="cr-${k}">${lbl}</label><input class="inp num" type="number" id="cr-${k}" data-coin="${k}" value="${v}" step="${step}" min="0" ${own?'':'disabled'}><span class="small muted">${help}</span></div>`;
+  return `<div class="card" style="padding:14px;margin-top:14px;display:flex;flex-direction:column;gap:10px"><div class="row"><div class="coin">C</div><div class="grow"><h3 style="font-size:20px">Cheese Coins</h3><div class="small muted">${esc(coinLine())}</div></div></div>
+   <div class="row" style="gap:12px;flex-wrap:wrap;align-items:flex-start">${f('value','1 coin is worth ₹',c.value,'0.05','0.25 = 25 paisa, 0.5 = 50 paisa, 1 = ₹1')}${f('per100','Coins earned per ₹100 of bill',c.per100,'1','On every paid order with a mobile number')}${f('maxPct','Coins can pay up to % of a bill',c.maxPct,'1','The rest is paid normally')}</div>
+   <div class="small muted">${own?`A customer earns about ${Math.round(c.per100*c.value*100)/100}% back. Coins already earned keep their number; the new value applies from now on.`:'Only the owner can change these.'}</div></div>`}
 function vOffers(){
   const dow=new Date().getDay();
   const card=(o,isCombo)=>`<div class="card" style="padding:12px;display:flex;flex-direction:column;gap:10px">${coupon(o,dow,isCombo)}
@@ -4290,7 +4413,8 @@ function vOffers(){
   ${canSend?`<button class="card bcast-cta" data-act="bcast"><span aria-hidden="true">📣</span><span class="grow"><b>Send a notification to customers</b><span class="small muted">Tell everyone with the app about a deal, a new pizza or a festival offer.</span></span><span aria-hidden="true">›</span></button>`:''}
   <div class="row" style="margin-bottom:12px"><button class="btn pri" data-act="new-offer" data-v="day">+ Day-wise % offer</button><button class="btn pri" data-act="new-offer" data-v="bogo">+ BOGO offer</button><button class="btn pri" data-act="new-offer" data-v="item">+ Specific pizza offer</button><button class="btn pri" data-act="new-offer" data-v="code">+ Coupon code</button><button class="btn chz" data-act="edit-combo" data-id="">+ Combo</button></div>
   <div class="sec-h" style="margin-top:6px"><h2 style="font-size:22px">Offers</h2></div>
-  <div class="ogrid">${S.offers.map(o=>card(o,false)).join('')||'<div class="empty card">No offers yet.</div>'}</div>
+  <div class="ogrid">${S.offers.filter(o=>o.type!=='coins').map(o=>card(o,false)).join('')||'<div class="empty card">No offers yet.</div>'}</div>
+  ${coinBox()}
   <div class="sec-h"><h2 style="font-size:22px">Combos</h2></div>
   <div class="ogrid">${S.combos.map(c=>card(c,true)).join('')||'<div class="empty card">No combos yet.</div>'}</div>`;
 }
@@ -4821,6 +4945,10 @@ document.addEventListener('click',e=>{
     case 'cancel':openCancel(find(el.dataset.id));break;
     case 'del':openDelete(find(el.dataset.id));break;
     case 'scope':U.salesScope=el.dataset.v;render();break;
+    case 'rep-p':repU().p=el.dataset.v;if(el.dataset.v==='custom'){const[a,b]=repRange({p:'today'});repU().from=repU().from||a;repU().to=repU().to||b}render();break;
+    case 'rep-sc':repU().sc=el.dataset.v;render();break;
+    case 'rep-xls':repExcel();break;
+    case 'rep-pdf':repPdf();break;
     case 'settle':{const c=S.customers[el.dataset.ph];c.due=0;S.orders.filter(o=>o.customer.phone===c.phone&&o.pay.mode==='due').forEach(o=>o.paid=true);save();toast('Baki cleared');render();break}
     case 'new-offer':openOfferForm(null,el.dataset.v);break;
     case 'edit-offer':openOfferForm(el.dataset.id);break;
@@ -4911,6 +5039,9 @@ document.addEventListener('change',e=>{
   if(mh.onChange&&mroot.contains(e.target)){mh.onChange(e);return}
   const t=e.target;
   if(t.id==='pc-coins'){U.pos.useCoins=t.checked;render()}
+  if(t.dataset.coin&&staff()?.role==='owner'){const v=+t.value;if(!(v>=0)||(t.dataset.coin!=='per100'&&!(v>0))){toast('Enter a number above 0');render();return}
+    let r=S.offers.find(o=>o.type==='coins');if(!r){r={id:'coinrules',type:'coins',name:'Cheese Coins rules',active:false};S.offers.push(r)}
+    r[t.dataset.coin]=t.dataset.coin==='maxPct'?Math.min(100,v):v;r.active=false;save();render();toast('Cheese Coins updated')}
   if(t.dataset.al&&staff()?.role==='owner'){const o=S.outlets.find(x=>x.id===t.dataset.al);const c=alertCfg(o);c[t.dataset.f]=t.type==='checkbox'?t.checked:t.dataset.f==='vol'?+t.value:t.value;o.alert=c;save();render();if(t.dataset.f!=='loop')playTone(o);toast('Alert saved')}
   if(t.dataset.alsnd&&t.files[0]&&staff()?.role==='owner'){const o=S.outlets.find(x=>x.id===t.dataset.alsnd),f=t.files[0];
     if(f.size>1048576){toast('That sound is over 1 MB. Pick a shorter one.')}else{const r=new FileReader();r.onload=()=>{o.alertSound=r.result;o.alert={...alertCfg(o),tone:'custom'};save();render();playTone(o);toast('Ringtone saved')};r.readAsDataURL(f)}}
@@ -4918,6 +5049,7 @@ document.addEventListener('change',e=>{
   if(t.id==='od-date'&&t.value){U.ordersDate=t.value===today()?null:t.value;render()}
   if(t.id==='tb-date'&&t.value){U.tblDate=t.value>=today()?null:t.value;render()}
   if(t.id==='sd-date'&&t.value){U.salesDate=t.value===today()?null:t.value;render()}
+  if((t.id==='rep-from'||t.id==='rep-to')&&t.value){const R=repU(),[a,b]=repRange(R);R.from=a;R.to=b;R[t.id==='rep-from'?'from':'to']=t.value;R.p='custom';render()}
   if(t.dataset.mi){const m=menuItem(t.dataset.mi);const v=t.value===''?'':Math.max(0,+t.value||0);if(t.dataset.s)m.prices[t.dataset.s]=v;else m.price=+v||0;save();toast(m.name+' price saved')}
   if(t.dataset.ad){S.addons[t.dataset.ad].prices[t.dataset.s]=t.value===''?'':Math.max(0,+t.value||0);save();toast('Price saved')}
   if(t.dataset.av){const m=menuItem(t.dataset.av);m.off=!t.checked;save();toast(m.name+(m.off?' hidden':' available'))}
@@ -5342,7 +5474,7 @@ function renderAccount(){
         <button class="btn chz lg" data-act="spin" ${can&&!U.spin.busy?'':'disabled'}>${can?'Spin now':'Come back tomorrow'}</button></div>
       <div class="card panel"><h3 style="font-size:22px">My coupons</h3>
         ${codes.map(x=>`<div class="coupon k-code"><div class="stub">${x.kind==='pct'?x.value+'%':'₹'+x.value}<small>${x.personal||c.myCodes.includes(x)?'YOURS':'CODE'}</small></div><div class="ct"><b>${esc(x.name)}</b><span class="codechip">${esc(x.code)}</span><span>${x.kind==='pct'?x.value+'% off'+(x.cap?' up to '+rs(x.cap):''):rs(x.value)+' off'}${x.min?' above '+rs(x.min):''}${x.until?' · till '+fmtDate(x.until):''}</span></div></div>`).join('')||'<div class="empty">No coupons right now. Spin the wheel!</div>'}</div>
-      <div class="card panel"><h3 style="font-size:22px">Cheese Coins</h3><div class="row"><div class="coin">C</div><div><b class="num" style="font-size:28px;font-family:var(--display)">${Math.floor(c.coins||0)}</b><div class="small muted">1 coin = ₹1 · use up to 20% of a bill</div></div></div>
+      <div class="card panel"><h3 style="font-size:22px">Cheese Coins</h3><div class="row"><div class="coin">C</div><div><b class="num" style="font-size:28px;font-family:var(--display)">${Math.floor(c.coins||0)}</b><div class="small muted">1 coin = ${coinValTxt()} · worth ${coinRs(Math.floor(c.coins||0)*coinRules().value)} · use up to ${coinRules().maxPct}% of a bill</div></div></div>
         ${c.tx.filter(t=>t.kind==='coins').slice(0,6).map(t=>`<div class="tx"><span>${esc(t.note)}</span><span class="num ${t.amt>=0?'pos':'neg'}">${t.amt>=0?'+':''}${t.amt}</span></div>`).join('')}</div>
       <div class="card panel"><h3 style="font-size:22px">Invite friends</h3><div class="refcard"><div class="grow"><div class="small muted">Your referral code</div><div class="refcode">${esc(c.ref)}</div></div><button class="btn sm" data-act="copyref" data-t="${esc(refTxt)}">Copy</button><a class="btn sm pri" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(refTxt)}">Share on WhatsApp</a></div><div class="small muted">You and your friend each get 50 Cheese Coins when they sign up with your code.</div></div>
     </div>
