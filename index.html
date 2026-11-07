@@ -930,6 +930,15 @@ html:has(#modalRoot:not(:empty)),html:has(#boardRoot:not(:empty)),html:has(#choo
 .msearch svg{position:absolute;left:10px;top:50%;width:18px;height:18px;transform:translateY(-50%);color:var(--muted);pointer-events:none}
 .msearch .inp{padding-left:34px;max-width:none!important;width:100%}
 .pos .tiles{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+/* Till tiles are text only (no photos) so the ticket and payment side get the room */
+.pos .tiles{grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:8px}
+.pos .tile{min-height:76px!important;justify-content:space-between}
+.pos .tile b{min-height:3em!important;padding:18px 8px 8px!important;font-size:14px!important;font-weight:700}
+.pos .tile .tpr{font-size:13px;padding:5px 8px}
+.pos .tile .tg{z-index:1;font-size:9px;top:4px;left:4px}.pos .tile .tg+.tg,.pos .tile .tgc+.tg{left:auto;right:4px}
+.pos .tile .tgc{background:var(--plum,#6a4fc9)}
+@media (min-width:1280px){.pos .neworder{grid-template-columns:minmax(0,1fr) 440px}}
+@media (min-width:761px) and (max-width:1279px){.pos .neworder{grid-template-columns:minmax(0,1fr) clamp(340px,42vw,440px)}}
 .pos .tile{padding:0;gap:0;overflow:hidden;min-height:0;text-align:center;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
 .tph{display:block;position:relative;aspect-ratio:4/3;background:var(--surface2);overflow:hidden}
 .tph>img{width:100%;height:100%;object-fit:cover;display:block}
@@ -3476,7 +3485,7 @@ function openCustomizer(id,target,edit){
     const vizHtml=pizzaViz(m,st.size,[...st.addons,...(st.tops.length?['veg']:[])],st.ex,prevShown);
     showModal(`<div class="mh"><h3>${esc(m.name)}</h3><button class="x" data-act="close" aria-label="Close">×</button></div>
     <div class="mb">
-      <div class="vizwrap">${vizHtml}</div><div class="vizcap num">${esc(sizeLabel(st.size))} · ${(S.sizes.find(x=>x.id===st.size)||{}).pcs||''} slices${st.addons.map(a=>' · '+S.addons[a].name).join('')}${nEx?' · '+nEx+' extra'+(nEx>1?'s':''):''}</div>
+      ${target==='pos'?'':`<div class="vizwrap">${vizHtml}</div>`}<div class="vizcap num"${target==='pos'?' hidden':''}>${esc(sizeLabel(st.size))} · ${(S.sizes.find(x=>x.id===st.size)||{}).pcs||''} slices${st.addons.map(a=>' · '+S.addons[a].name).join('')}${nEx?' · '+nEx+' extra'+(nEx>1?'s':''):''}</div>
       <div class="muted small">${esc(m.desc)}</div>
       ${tags.length?`<div class="row">${tags.map(t=>`<span class="chip r">${esc(t)}</span>`).join('')}<span class="small muted">applied in cart</span></div>`:''}
       <div class="grp-h">${step++} · Size</div>
@@ -3830,7 +3839,7 @@ function posCalc(){
   return {P,run,coins,b,t,zom,modes,can:!!(P.cart.length||run)};
 }
 const posTile=m=>`<button class="tile" data-act="${m.combo?'combo-add':'pos-add'}" data-id="${m.id}" data-t="pos" ${m.off?'disabled':''}>
-  <span class="tph">${m.combo?`<span class="tcombo">COMBO</span>`:thumb(m.m)}${m.tag?'<span class="tg">Offer</span>':''}</span>
+  ${m.combo?'<span class="tg tgc">Combo</span>':''}${m.tag?'<span class="tg">Offer</span>':''}
   <b>${esc(m.name)}</b><span class="tpr num">${m.off?'Not available':m.label}</span></button>`;
 function vNew(){
   const {P,run,coins,b,t,zom,can}=posCalc();const dow=new Date().getDay();
