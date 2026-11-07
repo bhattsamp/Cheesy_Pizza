@@ -975,7 +975,7 @@ html:has(#modalRoot:not(:empty)),html:has(#boardRoot:not(:empty)),html:has(#choo
   .paybig b{font-size:26px}
 }
 /* ===== POS layout: sections in one bar across the top that scrolls sideways; on wider
-   screens the item categories sit in a column on the right of the menu ===== */
+   screens the item categories sit in a column on the left of the menu ===== */
 :root{--navh:0px}
 html:has(body:not(.pubmode) .pos){scroll-padding-top:calc(env(safe-area-inset-top,0px) + var(--toph,61px) + var(--navh) + 8px)}
 .pos{display:block;max-width:none}
@@ -997,7 +997,7 @@ html:has(body:not(.pubmode) .pos){scroll-padding-top:calc(env(safe-area-inset-to
   .main{padding-bottom:24px}
 }
 @media (min-width:761px){
-  .menucol{display:grid;grid-template-columns:minmax(0,1fr) clamp(118px,11vw,150px);gap:10px;align-items:start}
+  .menucol{display:grid;grid-template-columns:clamp(118px,11vw,150px) minmax(0,1fr);gap:10px;align-items:start}
   .menucol>.mbar{grid-column:1/-1;margin-bottom:0}
   .menucol>.mbar .cats{display:none}
   .menucol>.mbar .msearch{flex:1 1 auto}
@@ -1007,6 +1007,15 @@ html:has(body:not(.pubmode) .pos){scroll-padding-top:calc(env(safe-area-inset-to
 }
 @media (min-width:761px) and (min-height:540px){
   .pos .ticket.order{top:calc(var(--toph,61px) + var(--navh) + 12px);max-height:var(--tkh,calc(100vh - var(--toph,61px) - var(--navh) - 24px))}
+}
+/* Customer Menu page on tablets and computers: the categories are a column on the left;
+   phones keep the row across the top */
+.menusecs{min-width:0}
+@media (min-width:761px){
+  .pubmode .menulay{display:grid;grid-template-columns:clamp(170px,17vw,220px) minmax(0,1fr);gap:22px;align-items:start}
+  .pubmode .menulay>.cats{flex-direction:column;gap:4px;overflow-x:visible;overflow-y:auto;position:sticky;top:calc(var(--toph,64px) + 14px);max-height:calc(100vh - var(--toph,64px) - 28px);padding:10px;margin:0;border:1px solid var(--line);border-radius:18px;background:var(--surface);backdrop-filter:none;-webkit-backdrop-filter:none;box-shadow:var(--shadow,0 4px 18px -12px rgba(0,0,0,.3))}
+  .pubmode .menulay>.cats button{width:100%;text-align:left;border:0;border-radius:12px;padding:11px 14px;white-space:normal}
+  .pubmode .menulay .menusecs>section:first-child,.pubmode .menulay .menusecs>*:first-child{margin-top:0}
 }
 #printRoot{display:none}
 @media print{body>*:not(#printRoot){display:none!important}#printRoot{display:block!important}#printRoot pre{font:12px/1.3 "Courier New",monospace;margin:0;white-space:pre}@page{margin:4mm}}
@@ -2639,11 +2648,11 @@ function renderPublic(){
   <div class="sec-h"><h2>Menu</h2><span class="gu">મેનુ</span></div>
   <div class="filters"><input class="inp" id="pub-q" placeholder="Search paneer, cheese, spicy…" value="${esc(U.pubQ)}" aria-label="Search menu">
     ${[['jain','Jain'],['spicy','Spicy'],['offer','On offer']].map(([k,n])=>`<button data-act="pubf" data-v="${k}" aria-pressed="${!!U.pubF[k]}">${n}</button>`).join('')}</div>
-  <nav class="cats" aria-label="Menu categories">
+  <div class="menulay"><nav class="cats" aria-label="Menu categories">
     <button data-act="pubcat" data-v="all" aria-pressed="${U.pubCat==='all'}">All</button>
     ${CATS.map(([k,n])=>`<button data-act="pubcat" data-v="${k}" aria-pressed="${U.pubCat===k}">${n}</button>`).join('')}
   </nav>
-  ${sections}${!shown?`<div class="empty card">Nothing matches${filtered?' these filters':''}. <button class="btn sm" data-act="pubclear">Clear filters</button></div>`:''}
+  <div class="menusecs">${sections}${!shown?`<div class="empty card">Nothing matches${filtered?' these filters':''}. <button class="btn sm" data-act="pubclear">Clear filters</button></div>`:''}</div></div>
   </main>
   ${siteFooter()}
   ${cartN?`<div class="cartbar${cartN>(U.lastCartN||0)?' bump':''}"><div class="in"><div class="grow"><b class="num">${cartN} item${cartN>1?'s':''} · ${rs(b.total)}</b>${b.saved?` <span class="chip ready num">You save ${rs(b.saved)}</span>`:''}<div class="small muted">${b.hint?esc(b.hint):esc(o.name)}</div></div><button class="btn chz lg" data-act="pub-cart">View cart</button></div></div>`:''}`;
@@ -3649,8 +3658,8 @@ function vNew(){
         <nav class="cats poscats" aria-label="Categories"><button data-act="poscat" data-v="combo" aria-pressed="${P.cat==='combo'&&!P.q}">Combos</button>${CATS.map(([k,nm])=>`<button data-act="poscat" data-v="${k}" aria-pressed="${P.cat===k&&!P.q}">${nm}</button>`).join('')}</nav>
         <label class="msearch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input class="inp" id="pos-q" placeholder="Search menu" value="${esc(P.q)}" aria-label="Search menu"></label>
       </div>
-      <div class="tiles">${items.map(posTile).join('')||'<div class="empty">No items</div>'}</div>
       <nav class="card catrail" aria-label="Item categories" data-ks="catrail"><button data-act="poscat" data-v="combo" aria-pressed="${P.cat==='combo'&&!P.q}">Combos</button>${CATS.map(([k,nm])=>`<button data-act="poscat" data-v="${k}" aria-pressed="${P.cat===k&&!P.q}">${nm}</button>`).join('')}</nav>
+      <div class="tiles">${items.map(posTile).join('')||'<div class="empty">No items</div>'}</div>
     </div>
     ${P.cart.length?`<button class="tkjump" data-act="to-ticket"><b class="num">${n} item${n>1?'s':''} · ${rs(t)}</b><span>View order ↓</span></button>`:''}
     <aside class="card ticket order" id="ticket" data-ks="ticket">
