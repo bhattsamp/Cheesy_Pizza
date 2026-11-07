@@ -721,6 +721,11 @@ html:has(#modalRoot:not(:empty)),html:has(#boardRoot:not(:empty)),html:has(#choo
   background-image:radial-gradient(circle at 50% 38%,color-mix(in srgb,var(--teal) 9%,transparent) 0 26%,transparent 26.5%)}
 .hm-head{display:grid;grid-template-columns:auto 1fr auto;gap:16px;align-items:center}
 .hm-logo{display:flex;flex-direction:column;align-items:center;gap:2px;text-align:center}.hm-logo svg{width:52px;height:62px}.hm-logo small{font-size:11px;color:var(--muted);line-height:1.2}
+/* Home 2 keeps its own poster lettering inside the customer site's newer theme */
+.pubmode .hm{--display:"Baloo Bhai 2","Trebuchet MS",system-ui,sans-serif}
+.pubmode .hm :is(h1,h2,h3,h4){font-family:var(--display);font-variation-settings:normal}
+.hm-title{position:relative;padding-right:clamp(96px,11vw,150px)}
+.hm-title .nm-badge{right:0;top:50%;translate:0 -50%;width:clamp(84px,10vw,140px)}
 .hm-title h1{font-size:clamp(34px,7vw,72px);font-weight:800;color:var(--teal);letter-spacing:.02em;line-height:1}
 .hm-title sup{font-size:.35em}
 .hm-nomayo{margin:6px 0 0;font-family:var(--display);font-weight:800;font-size:clamp(20px,3.6vw,34px);color:var(--bad)}
@@ -2610,7 +2615,56 @@ function visitMap(){
   </svg>`;
 }
 
-function renderHome(){
+// Home 2: the earlier poster style home page, kept unlinked at /home2 (or ?home=2). It runs inside this same app,
+// so the menu, offers, cart, photos and payments there are always the current ones.
+const HOME2=/^\/home2\/?$/.test(location.pathname)||new URLSearchParams(location.search).get('home')==='2';
+function renderHome2(){
+  const o=cur();const ph=o.phone||'7778043066';const open=isOpen();
+  const addr=o.area&&o.area!=='Set your address'?o.area:'B/H Gopi Cinema, Maniyani Khad, Anand, Gujarat';
+  const col=(price,label,list,note)=>`<div class="hm-col"><h3><span class="hm-slice" aria-hidden="true"></span>${label}</h3>${note?`<div class="hm-note">${note}</div>`:''}<span class="hm-badge num">${price}<small>Rs</small></span><ol class="${note?'':'plain'}">${list.map(x=>`<li>${x}</li>`).join('')}</ol></div>`;
+  return `${offerTicker()}<main class="pub hm">
+  <section class="hm-card">
+    <div class="hm-head">
+      <div class="hm-logo"><svg viewBox="0 0 40 48" aria-hidden="true"><path d="M20 47C20 47 3 29 3 18a17 17 0 0 1 34 0c0 11-17 29-17 29z" fill="var(--teal)"/><circle cx="20" cy="18" r="10" fill="var(--surface)"/><text x="20" y="23" text-anchor="middle" font-family="Baloo Bhai 2, sans-serif" font-weight="800" font-size="14" fill="var(--teal)">C</text></svg><small>Really Cheesy…!<br>ચીઝી પિઝ્ઝા</small></div>
+      <div class="hm-title"><h1>CHEESY PIZZA<sup>™</sup></h1><p class="hm-nomayo">(No Mayonnaise Products)</p>${nmBadge()}</div>
+      <div class="hm-contact"><span class="hm-veg"><span class="veg"></span> PURE VEG.</span>
+        <a class="hm-phone num" href="tel:+91${esc(ph)}">☎ ${esc(fmtPhone(ph))}</a>
+        <div class="hm-time"><b>TIME</b>${hr12(OPEN_H)}:00 NOON to ${hr12(CLOSE_H)}:00 PM</div>
+        <span class="chip ${open?'ready':'cancelled'}">${open?'Open now':'Closed now'}</span></div>
+    </div>
+    <div class="hm-feat"><span>FRESH DOUGH</span><span>LIVE PIZZA</span><span>SOFT BASE</span><span>HAND STRETCHED</span></div>
+
+    <h2 class="hm-sec"><span class="hm-slice" aria-hidden="true"></span>Pizza</h2>
+    <div class="hm-tops">
+      ${col(70,'Single topping',['Onion','Capsicum','Tomato'])}
+      ${col(90,'Single topping',['Corn','Jalapeno','Olive'])}
+      ${col(110,'Double toppings',['Onion','Capsicum','Tomato','Corn','Jalapeno','Olive','Paneer'],'Choose any two')}
+      <div class="hm-bev"><h3>Beverages <small>(250 ml)</small></h3>
+        <div class="hm-bevl">${['Thums Up','Coca Cola','Sprite','Fanta'].map(n=>`<span>${n}</span><b class="num">20<small>Rs</small></b>`).join('')}</div></div>
+    </div>
+    <div class="hm-cta"><button class="btn chz lg" data-act="pn" data-v="menu">See full menu & order</button><a class="btn lg" href="tel:+91${esc(ph)}">Call to book</a></div>
+
+    <div class="hm-cats">${CATS.map(([,n])=>`<span>${esc(n)}</span>`).join('')}</div>
+    <div class="hm-banner">☞ We Don't Use Mayonnaise In Any Product.</div>
+    <div class="hm-addr"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s-7-7.5-7-13a7 7 0 0 1 14 0c0 5.5-7 13-7 13z" fill="none" stroke="var(--cheese)" stroke-width="2"/><circle cx="12" cy="9" r="2.5" fill="var(--cheese)"/></svg><b>${esc(addr.toUpperCase())}</b></div>
+
+    <div class="hm-boxes">
+      <div class="hm-box"><div class="hm-bh">Available on</div><div class="hm-zomato">zomato</div></div>
+      <div class="hm-box"><div class="hm-bh">Delivery available</div><div class="hm-bb"><svg viewBox="0 0 64 40" width="84" aria-hidden="true"><circle cx="14" cy="32" r="6" fill="none" stroke="var(--ink)" stroke-width="3"/><circle cx="50" cy="32" r="6" fill="none" stroke="var(--ink)" stroke-width="3"/><path d="M14 32h22l6-12h10l-2 12" fill="none" stroke="var(--cheese)" stroke-width="4" stroke-linejoin="round"/><rect x="40" y="6" width="16" height="12" rx="2" fill="var(--teal)"/><circle cx="30" cy="10" r="5" fill="var(--bad)"/></svg><small class="muted">Charges apply</small></div></div>
+      <div class="hm-box"><div class="hm-bh">Follow us</div><div class="hm-bb"><a class="btn sm" href="https://wa.me/91${esc(ph)}" target="_blank" rel="noopener">WhatsApp</a><span class="small muted">Instagram · Facebook · X</span></div></div>
+    </div>
+
+    <div class="hm-bottom">
+      <ul class="hm-steps">${['Save our number to book order…','We accept order on phone call…','Pay first to confirm order…','Book your order to avoid waiting…','Wait minimum 20 minutes after order'].map(t=>`<li>☞ ${t}</li>`).join('')}</ul>
+      <img src="${IMG('veggieparadise')}" alt="Veggie pizza" class="hm-pz">
+    </div>
+    <div class="hm-flow"><span>Save our number</span>→<span>Call us</span>→<span>Book order</span>→<span>Pay first</span>→<span>Confirm order</span></div>
+  </section>
+  <div class="hm-staff"><button class="btn sm ghost" data-act="mode" data-v="pos">Staff login</button></div>
+  </main>`;
+}
+
+function renderHome(){if(HOME2)return renderHome2();
   const o=cur(),ph=o.phone||'7778043066',open=isOpen(),dow=new Date().getDay(),addr=shopAddr(o),mapUrl='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent('Cheesy Pizza, '+addr);
   const pizzas=S.menu.filter(m=>m.cat==='pizza'&&!m.off);
   const lead=leadOffer(dow);const live=S.offers.filter(x=>x.active).sort((a,b)=>dayOK(b,dow)-dayOK(a,dow));

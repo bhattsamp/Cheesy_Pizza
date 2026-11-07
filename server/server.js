@@ -201,7 +201,8 @@ function createApp(store) {
   app.use('/img', express.static(path.join(ROOT, 'img')));
   app.get('/', (req, res) => res.sendFile(path.join(ROOT, 'index.html')));
   // The previous home page, kept for reference; nothing on the site links to it
-  app.get('/home2', (req, res) => res.sendFile(path.join(ROOT, 'home2.html')));
+  // Home 2 is the earlier home page design inside the current app (index.html picks it from the path); kept out of search
+  app.get('/home2', (req, res) => { res.set('X-Robots-Tag', 'noindex'); res.sendFile(path.join(ROOT, 'index.html')); });
   // Full-screen slideshow for the TV in the shop; nothing on the site links to it
   app.get('/display', (req, res) => res.sendFile(path.join(ROOT, 'display.html')));
 
