@@ -37,7 +37,7 @@ function invoicePage(o, outlet, { sizes = [], addons = {} } = {}) {
   const splits = o.pay && o.pay.mode === 'split' && Array.isArray(o.pay.splits) ? o.pay.splits : null;
   const via = splits ? splits.map(x => (PAY[x.mode] || x.mode) + ' ' + rs(x.amt)).join(' + ') : PAY[o.pay && o.pay.mode] || 'Cash';
   const utr = o.pay && o.pay.utr ? ' · UPI ref ' + o.pay.utr : '';
-  const pay = o.status === 'cancelled' ? 'Order cancelled' : o.paid ? `Payment mode (Paid via ${esc(via + utr)})` : 'Payment mode (Not paid yet)';
+  const pay = o.status === 'cancelled' ? 'Order cancelled' : o.paid ? `Payment mode (Paid via ${esc(via + utr)})` : splits ? `Paid so far: ${esc(via + utr)} · Balance due ${rs(Math.max(0, total - (Number(o.walletUsed) || 0) - splits.reduce((a, x) => a + (Number(x.amt) || 0), 0)))}` : 'Payment mode (Not paid yet)';
   const shop = outlet.legal || 'CHEESY PIZZA';
   const token = String(o.no || '').replace(/^\D+/, '').replace(/^0+(?=\d)/, '');
   const cell = (k, v) => `<div class="g"><div class="k">${k}</div><div class="v">${esc(v)}</div></div>`;

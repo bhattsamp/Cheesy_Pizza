@@ -2167,6 +2167,18 @@ function splitInput(e,v,keys,t,pre){const k=e.target.dataset.sp;if(!k)return;v[k
 const utrClean=v=>String(v||'').replace(/\D/g,'').slice(0,12);
 const utrField=(id,v)=>`<div class="field utrf"><label for="${id}">UPI reference no. (UTR)</label><input class="inp num" id="${id}" inputmode="numeric" maxlength="14" value="${esc(fmtUtr(v))}" placeholder="12 digits from the UPI app" autocomplete="off"><span class="small muted">Find it in the customer's payment screen or your UPI app.</span></div>`;
 const utrBad=v=>v&&utrClean(v).length!==12?'UPI reference number should be 12 digits':'';
+// Part paid orders: a table pays for its first items, then orders more and pays the rest later.
+// What was paid is kept as pay:{mode:'split',splits:[...]} with paid:false; the balance is what is left.
+function paidSoFar(o){if(!o||!o.pay)return 0;const sp=paySplits(o);if(sp)return splitSum(sp);return o.paid&&o.pay.mode!=='due'&&o.pay.mode!=='pending'?r2(o.total-(o.walletUsed||0)):0}
+const balanceOf=o=>Math.max(0,r2(o.total-(o.walletUsed||0)-paidSoFar(o)));
+const partPaid=o=>!o.paid&&!!paySplits(o)&&paidSoFar(o)>0;
+// Before adding items to a paid order: keep what was paid as fixed parts, and mark the order unpaid
+function keepPaidParts(o){
+  if(!o.paid||!o.pay)return;const sp=paySplits(o);
+  const parts=sp?sp.map(x=>({...x})):[{mode:o.pay.mode,amt:r2(o.total-(o.walletUsed||0))}].filter(x=>x.amt>0&&x.mode!=='wallet');
+  o.pay={mode:'split',splits:parts,given:0,change:0,...(o.pay.utr?{utr:o.pay.utr}:{}),...(o.pay.app?{app:o.pay.app}:{})};o.paid=false;
+}
+function mergeParts(a,b){const m={};[...a,...b].forEach(x=>m[x.mode]=r2((m[x.mode]||0)+x.amt));return Object.entries(m).map(([mode,amt])=>({mode,amt})).filter(x=>x.amt>0)}
 function splitProblem(list,t){if(!list.length)return 'Type the amount for each way of paying';const sm=splitSum(list);if(Math.abs(sm-t)>0.004)return sm<t?'Split is short by '+rs(t-sm):'Split is '+rs(sm-t)+' more than the bill';return ''}
 // Extra choices for non-pizza items (owners can change them per item on the Menu screen)
 const ITEM_OPTS={pockets:['Spicy','No spicy','Less paneer','Less onion','Less capsicum'],bread:['Spicy','No spicy','Less onion','Extra crispy']};
@@ -3641,9 +3653,9 @@ function posCalc(){
   if(P.type==='delivery'&&!delOn())P.type='takeaway';
   const coins=P.phone.length===10?coinsOf(P.phone):0;
   const b=run?computeBill([...run.items,...P.cart],run.date,{...(run.extra||{}),...(P.code?{code:P.code}:{}),phone:run.customer.phone}):computeBill(P.cart,null,{code:P.code,coins:P.useCoins?coins:0,phone:P.phone});
-  const t=b.total;P.total=t;
+  const already=run?r2(paidSoFar(run)+(run.walletUsed||0)):0;const t=Math.max(0,r2(b.total-already));P.total=t;P.already=already;P.full=b.total;
   const zom=P.type==='zomato';
-  const modes=zom?['zomato']:[...COUNTER_MODES,...(t>0?['split']:[]),...(t>0&&walletOf(P.phone)>=t?['wallet']:[]),'due'];
+  const modes=zom?['zomato']:[...COUNTER_MODES,...(t>0?['split']:[]),...(t>0&&!(run&&paidSoFar(run))&&walletOf(P.phone)>=t?['wallet']:[]),'due'];
   if(!modes.includes(P.pay))P.pay=modes[0];
   return {P,run,coins,b,t,zom,modes,can:!!(P.cart.length||run)};
 }
@@ -3682,7 +3694,7 @@ function vNew(){
         <div class="field grow"><label for="pos-nm">Name${zom?' (optional)':''}</label><input class="inp" id="pos-nm" value="${esc(P.name)}" placeholder="Customer name"></div></div>
         <div id="custbox">${custBox(ci)}</div>
         ${P.type==='dine'?tablePicker(P):''}
-        ${run?`<div class="addto">Adding to ${run.no} · Table ${esc(run.table)} · ${rs(run.total)} so far${run.paid?'':' · not paid'}<span class="grow"></span><button class="btn sm" data-act="addto-x">New order instead</button></div>
+        ${run?`<div class="addto">Adding to ${run.no} · Table ${esc(run.table)} · ${rs(run.total)} so far${run.paid?' · paid':paidSoFar(run)?' · '+rs(paidSoFar(run))+' paid, '+rs(balanceOf(run))+' left':' · not paid'}<span class="grow"></span><button class="btn sm" data-act="addto-x">New order instead</button></div>
           <div class="small muted">${run.items.map(l=>l.qty+'× '+esc(l.name)+(l.size?' '+sizeLabel(l.size):'')).join(', ')}</div>`:''}
         ${P.type==='delivery'?`<input class="inp" id="pos-ad" placeholder="Delivery address" value="${esc(P.address)}" aria-label="Delivery address">`:''}
       </div>
@@ -3704,7 +3716,7 @@ function vNew(){
       </div>
       <div class="tkpay">
         ${b.hint?`<div class="hint">${esc(b.hint)}</div>`:''}
-        <div class="tksum">${b.subtotal!==t||(b.discounts||[]).length?`<div class="bl"><span>Item total</span><span class="num">${rs(b.subtotal)}</span></div>`:''}${(b.discounts||[]).map(d=>`<div class="bl disc"><span>${esc(d.name)}</span><span class="num">−${rs(d.amt)}</span></div>`).join('')}${b.gst&&b.gst.mode==='excl'?`<div class="bl"><span>GST ${b.gst.rate}%</span><span class="num">+${rs2(b.gst.tax)}</span></div>`:''}</div>
+        <div class="tksum">${b.subtotal!==t||(b.discounts||[]).length?`<div class="bl"><span>Item total</span><span class="num">${rs(b.subtotal)}</span></div>`:''}${(b.discounts||[]).map(d=>`<div class="bl disc"><span>${esc(d.name)}</span><span class="num">−${rs(d.amt)}</span></div>`).join('')}${b.gst&&b.gst.mode==='excl'?`<div class="bl"><span>GST ${b.gst.rate}%</span><span class="num">+${rs2(b.gst.tax)}</span></div>`:''}${P.already?`<div class="bl disc"><span>Paid earlier</span><span class="num">−${rs(P.already)}</span></div>`:''}</div>
         <button class="paybig" data-act="pos-pay" ${can?'':'disabled'}><span>Pay${n?` <small class="num">· ${n} item${n>1?'s':''}</small>`:''}</span><b class="num">${rs(t)}</b></button>
         <div class="tkrow"><button class="btn chz" data-act="pos-go" data-v="kot" ${P.cart.length?'':'disabled'}>KOT Print</button>${btp()&&btGet()?'<button class="btn" data-act="drawer-open">Open drawer</button>':''}<button class="btn" data-act="pos-clear" ${P.cart.length||run?'':'disabled'}>Clear</button></div>
       </div>
@@ -3716,7 +3728,7 @@ function openPay(){
   const {P,t,modes,can,run}=posCalc();if(!can){closeModal();return}
   const g=+P.given||0,ch=g-t;
   const spKeys=[...COUNTER_MODES,...(P.phone.length===10||(run&&run.customer.phone)?['due']:[])];
-  showModal(`<div class="mh"><h3>Pay <span class="num">${rs(t)}</span></h3><button class="x" data-act="close" aria-label="Close">×</button></div>
+  showModal(`<div class="mh"><h3>Pay <span class="num">${rs(t)}</span>${P.already?` <small class="muted" style="font-size:14px;font-weight:600">· bill ${rs(P.full)}, ${rs(P.already)} paid earlier</small>`:''}</h3><button class="x" data-act="close" aria-label="Close">×</button></div>
   <div class="mb paysheet">
     <div class="paymodes ${modes.length>=5?'five':''}">${modes.map(k=>`<button data-act="pos-pm" data-v="${k}" aria-pressed="${P.pay===k}">${k==='due'?'Baki':PAY[k]}</button>`).join('')}</div>
     ${P.pay==='cash'?`<div class="calc">
@@ -3799,9 +3811,19 @@ function recalcOrder(o){
 function settleOrder(o,mode,given,splits,utr){
   const ph=o.customer.phone;const c=S.customers[ph];
   const was=dueOf(o);if(was&&c)c.due=Math.max(0,(c.due||0)-was); // was on the baki account
+  const prior=!o.paid&&paySplits(o)?paySplits(o).map(x=>({...x})):null,oldUtr=o.pay&&o.pay.utr;
+  if(prior&&mode!=='pending'){
+    // Earlier payments stay; this payment covers the balance
+    const bal=balanceOf(o);const now=mode==='split'?splits.map(x=>({mode:x.mode,amt:x.amt})):[{mode,amt:bal}];
+    const all=mergeParts(prior,now);const g=mode==='cash'?(+given||bal):0;
+    o.pay=all.length===1?{mode:all[0].mode,given:g,change:mode==='cash'?Math.max(0,g-bal):0}:{mode:'split',splits:all,given:g,change:mode==='cash'?Math.max(0,g-bal):0};
+    o.paid=!(all.length===1&&all[0].mode==='due');
+    if(oldUtr&&!utr)o.pay.utr=oldUtr;
+  }else{
   const g=mode==='cash'?(+given||o.total):0;
   o.pay=mode==='split'?{mode,splits:splits.map(x=>({mode:x.mode,amt:x.amt})),given:0,change:0}:{mode,given:g,change:mode==='cash'?Math.max(0,g-o.total):0};
   o.paid=mode!=='due'&&mode!=='pending';
+  }
   if(utr)o.pay.utr=utr;
   const owe=dueOf(o);if(owe&&ph)ensureCust(ph,o.customer.name).due=(S.customers[ph].due||0)+owe;
   if(mode==='wallet'){o.walletUsed=o.total;walletAdd(ph,-o.total,'Paid for '+o.no+' at counter')}
@@ -3819,7 +3841,7 @@ function posGo(kind){
     if(P.type==='dine'&&!P.table){toast('Pick a table');return}
   }
   const bill=kind!=='kot';let mode=P.type==='zomato'?'zomato':P.pay,splits=null;
-  const pre=()=>run?computeBill([...run.items,...P.cart],run.date,{...(run.extra||{}),...(P.code?{code:P.code}:{}),phone:run.customer.phone}).total:computeBill(P.cart,null,{code:P.code,coins:P.useCoins?coinsOf(P.phone):0,phone:P.phone}).total;
+  const pre=()=>run?Math.max(0,r2(computeBill([...run.items,...P.cart],run.date,{...(run.extra||{}),...(P.code?{code:P.code}:{}),phone:run.customer.phone}).total-paidSoFar(run)-(run.walletUsed||0))):computeBill(P.cart,null,{code:P.code,coins:P.useCoins?coinsOf(P.phone):0,phone:P.phone}).total;
   if(bill&&mode==='split'){
     const hasPh=P.phone.length===10||!!(run&&run.customer.phone);
     splits=splitList(P.splits||{},[...COUNTER_MODES,...(hasPh?['due']:[])]);
@@ -3835,6 +3857,7 @@ function posGo(kind){
   let o,round=1;
   if(run){
     o=run;
+    if(P.cart.length)keepPaidParts(o); // a paid table ordering more: keep what it paid, the rest is due
     if(P.cart.length){round=Math.max(1,...o.items.map(l=>l.round||1))+1;P.cart.forEach(l=>o.items.push({...l,round}));
       if(['ready','done'].includes(o.status)){o.status='preparing';o.times.preparing=Date.now();delete o.times.ready;delete o.times.done}}
     if(P.code)o.extra={...(o.extra||{}),code:P.code};
@@ -3848,7 +3871,7 @@ function posGo(kind){
       extra:{code:b.codeOk?P.code:'',coins:b.coinsUsed},pay:{mode:'pending',given:0,change:0},paid:false}));
     if(P.type==='dine'&&cur().holds?.[P.table]){delete cur().holds[P.table]}
   }
-  if(bill){
+  if(bill&&!(run&&o.paid&&!P.cart.length)){
     settleOrder(o,mode,P.pay==='cash'?+P.given||0:0,splits,utr);
   }
   save();Object.assign(U.pos,JSON.parse(JSON.stringify(POS_BLANK)));render();
@@ -3904,7 +3927,7 @@ function billText(o){
   L.push(hr,pad('Item total','Rs '+o.subtotal));(o.discounts||[]).forEach(d=>L.push(pad(d.name.slice(0,22),'-'+d.amt)));
   if(o.gst){const h=(o.gst.tax/2).toFixed(2);L.push(pad(`SGST ${o.gst.rate/2}%`+(o.gst.mode==='incl'?' (incl)':''),h),pad(`CGST ${o.gst.rate/2}%`+(o.gst.mode==='incl'?' (incl)':''),h));const ro=o.gst.mode==='excl'&&o.gst.net!=null?Math.round((o.total-o.gst.net-2*h)*100)/100:0;if(ro)L.push(pad('Round off',(ro>0?'+':'')+ro.toFixed(2)))}
   const sp=paySplits(o);
-  if(sp){L.push(pad('TOTAL','Rs '+o.total));sp.forEach(x=>L.push(pad(x.mode==='due'?'Baki (on account)':'Paid by '+PAY[x.mode],'Rs '+x.amt)))}
+  if(sp){L.push(pad('TOTAL','Rs '+o.total));sp.forEach(x=>L.push(pad(x.mode==='due'?'Baki (on account)':'Paid by '+PAY[x.mode],'Rs '+x.amt)));if(!o.paid&&balanceOf(o))L.push(pad('BALANCE DUE','Rs '+balanceOf(o)))}
   else L.push(pad('TOTAL','Rs '+o.total),o.paid?pad('Paid by',PAY[o.pay.mode]):pad('Payment','BAKI '+(o.pay.mode==='due'?'(on account)':'(not paid)')));if(o.walletUsed&&o.pay.mode!=='wallet')L.push(pad('From wallet','Rs '+o.walletUsed));if(o.coinsEarned)L.push(pad('Cheese Coins earned','+'+o.coinsEarned));
   if(o.pay.utr&&!o.pay.app)L.push(pad('UPI ref (UTR)',o.pay.utr));
   if(o.pay.mode==='cash'&&o.pay.given)L.push(pad('Given','Rs '+o.pay.given),pad('Return','Rs '+o.pay.change));
@@ -3951,6 +3974,7 @@ function payTag(o){
   // Customer paid by UPI QR: staff check the UTR in their UPI app, then confirm
   if(upiPending(o))return `<span class="upichk"><span class="chip amber paid-chip">UPI ${rs(o.total-(o.walletUsed||0))} to check · UTR <b class="num">${esc(fmtUtr(o.pay.utr))}</b></span><button class="btn sm ok" data-act="upi-ok" data-id="${o.id}">Received</button><button class="btn sm bad" data-act="upi-no" data-id="${o.id}">Not received</button></span>`;
   if(o.paid&&o.pay&&o.pay.app)return `<span class="chip ready paid-chip">UPI paid in app${o.pay.utr?` · UTR <b class="num">${esc(fmtUtr(o.pay.utr))}</b>`:''}</span>`;
+  if(partPaid(o))return `<span class="chip amber paid-chip">${rs(paidSoFar(o))} paid · ${rs(balanceOf(o))} left</span>`;
   return o.paid?'<span class="chip ready paid-chip">Payment done</span>':`<span class="chip r paid-chip">Baki ${rs(o.total)}</span>`}
 function vKitchen(){
   const list=liveOrders().filter(o=>o.status==='placed'||o.status==='preparing').sort((a,b)=>a.ts-b.ts);
@@ -3975,7 +3999,7 @@ function vKitchen(){
   <div class="kds">${pr.map(card).join('')||'<div class="empty card">No orders in the oven.</div>'}</div>`;
 }
 
-function collectRow(o){return o.paid||upiPending(o)?'':`<div class="small" style="font-weight:700;color:var(--bad)">Collect ${rs(o.total)}${o.pay.mode==='due'?' (on baki account)':''}:</div><div class="row" style="gap:4px">${COUNTER_MODES.map(k=>`<button class="btn sm" data-act="collect" data-id="${o.id}" data-v="${k}">${PAY[k]}</button>`).join('')}</div>`}
+function collectRow(o){return o.paid||upiPending(o)?'':`<div class="small" style="font-weight:700;color:var(--bad)">Collect ${rs(balanceOf(o))}${o.pay.mode==='due'?' (on baki account)':partPaid(o)?' (rest of the bill)':''}:</div><div class="row" style="gap:4px">${COUNTER_MODES.map(k=>`<button class="btn sm" data-act="collect" data-id="${o.id}" data-v="${k}">${PAY[k]}</button>`).join('')}</div>`}
 // Change the waiting time told to the customer after the order is made
 function openWait(o){
   const draw=()=>showModal(`<div class="mh"><h3>Waiting time · #${o.no}</h3><button class="x" data-act="close" aria-label="Close">×</button></div>
@@ -3992,23 +4016,23 @@ function openWait(o){
 }
 function openCollect(o){
   const sp=U.colSp&&U.colSp.id===o.id?U.colSp:(U.colSp={id:o.id,on:false,v:{}});
-  showModal(`<div class="mh"><h3>Collect ${rs(o.total)} · ${o.no}</h3><button class="x" data-act="close" aria-label="Close">×</button></div>
+  showModal(`<div class="mh"><h3>Collect ${rs(balanceOf(o))} · ${o.no}</h3><button class="x" data-act="close" aria-label="Close">×</button></div>
   <div class="mb"><div class="small muted">${esc(o.customer.name||'Walk-in')} ${o.customer.phone?'· '+fmtPhone(o.customer.phone):''}${o.pay.mode==='due'?' · on baki account':''}</div>
   <div class="paymodes">${COUNTER_MODES.map(k=>`<button data-act="collect" data-id="${o.id}" data-v="${k}">${PAY[k]}</button>`).join('')}<button data-act="col-split" aria-pressed="${sp.on}">Split</button></div>
-  ${sp.on?splitHtml(o.total,sp.v,COUNTER_MODES,'csp'):''}
+  ${sp.on?splitHtml(balanceOf(o),sp.v,COUNTER_MODES,'csp'):''}
   ${utrField('col-utr',sp.utr)}
-  ${sp.on?`<button class="btn pri lg block" data-act="col-split-go">Take ${rs(o.total)}</button>`:''}</div>`,{
+  ${sp.on?`<button class="btn pri lg block" data-act="col-split-go">Take ${rs(balanceOf(o))}</button>`:''}</div>`,{
     onAct:(act,el)=>{
       if(act==='col-split'){sp.on=!sp.on;openCollect(o);return true}
-      if(act==='sp-rest'){splitRest(sp.v,COUNTER_MODES,o.total,el.dataset.v);openCollect(o);return true}
+      if(act==='sp-rest'){splitRest(sp.v,COUNTER_MODES,balanceOf(o),el.dataset.v);openCollect(o);return true}
       if(act==='col-split-go'){
         if(o.paid){closeModal();render();return true}
-        let list=splitList(sp.v,COUNTER_MODES);const bad=splitProblem(list,o.total)||(list.some(x=>x.mode==='upi')?utrBad(sp.utr):'');if(bad){toast(bad);return true}
+        let list=splitList(sp.v,COUNTER_MODES);const bad=splitProblem(list,balanceOf(o))||(list.some(x=>x.mode==='upi')?utrBad(sp.utr):'');if(bad){toast(bad);return true}
         const utr=list.some(x=>x.mode==='upi')?utrClean(sp.utr):'';
         if(list.length===1)settleOrder(o,list[0].mode,0,null,utr);else settleOrder(o,'split',0,list,utr);
-        save();closeModal();toast(o.no+' · '+rs(o.total)+' paid by '+payName(o));render();if(list.some(x=>x.mode==='cash'))openDrawer();return true}
+        save();closeModal();toast(o.no+' · paid by '+payName(o));render();if(list.some(x=>x.mode==='cash'))openDrawer();return true}
       return false},
-    onInput:e=>{if(e.target.id==='col-utr'){sp.utr=utrClean(e.target.value);return}splitInput(e,sp.v,COUNTER_MODES,o.total,'csp')}});
+    onInput:e=>{if(e.target.id==='col-utr'){sp.utr=utrClean(e.target.value);return}splitInput(e,sp.v,COUNTER_MODES,balanceOf(o),'csp')}});
 }
 function vCounter(){
   const mine=liveOrders();
@@ -4061,7 +4085,7 @@ function vOrders(){
     <td>${esc(o.customer.name||'—')} ${isNewCust(o)?'<span class="chip c">New</span>':''}<div class="small muted num">${esc(o.customer.phone)}</div></td>
     <td>${TYPES[o.type]}${o.table?' · T'+esc(o.table):''}${o.source==='online'?' <span class="chip t">online</span>':''}${o.zomatoId?`<div class="small muted num">ID ${esc(o.zomatoId)}</div>`:''}</td>
     <td class="small">${o.items.map(l=>l.qty+'× '+esc(l.name)+(l.size?' '+sizeLabel(l.size):'')).join(', ')}</td><td class="r num"><b>${rs(o.total)}</b>${o.subtotal>o.total?`<div class="small" style="color:var(--ok)">−${rs(o.subtotal-o.total)}</div>`:''}</td>
-    <td>${o.status==='cancelled'?esc(payName(o)):o.paid?`<span class="chip ready">Done</span> <span class="small">${esc(payName(o))}</span>${o.pay.utr?`<div class="small muted num">UTR ${esc(fmtUtr(o.pay.utr))}</div>`:''}`:`<span class="chip r">Baki</span>${o.pay.mode==='due'?' <span class="small">on account</span>':''} <button class="btn sm" data-act="collect-open" data-id="${o.id}">Collect</button>`}</td>
+    <td>${o.status==='cancelled'?esc(payName(o)):o.paid?`<span class="chip ready">Done</span> <span class="small">${esc(payName(o))}</span>${o.pay.utr?`<div class="small muted num">UTR ${esc(fmtUtr(o.pay.utr))}</div>`:''}`:`<span class="chip r">${partPaid(o)?rs(balanceOf(o))+' left':'Baki'}</span>${o.pay.mode==='due'?' <span class="small">on account</span>':partPaid(o)?` <span class="small">${esc(payName(o))} paid</span>`:''} <button class="btn sm" data-act="collect-open" data-id="${o.id}">Collect</button>`}</td>
     <td class="st"><span class="chip ${o.status}">${statusName(o.status,o.type)}</span>${isActive(o)?`<div class="small num" style="font-weight:700;color:${minsLeft(o)<0?'var(--bad)':'var(--warn)'}">${leftText(minsLeft(o))}</div><button class="btn sm" data-act="set-wait" data-id="${o.id}" title="Change waiting time">⏱ wait ${waitOf(o)} min</button>`:''}</td>
     <td class="small">${o.source==='online'?'Customer site':esc(o.by||'—')}</td>
     <td style="white-space:nowrap">${U.confirmCancel===o.id?`<span class="small">Cancel ${o.no}?</span> <button class="btn sm bad solid" data-act="cancel-yes" data-id="${o.id}">Yes, cancel</button> <button class="btn sm" data-act="cancel-no">Keep</button>`:
@@ -4072,7 +4096,7 @@ function vOrders(){
 
 function salesFor(date,scope){
   const list=S.orders.filter(o=>o.date===date&&o.status!=='cancelled'&&(scope==='all'||o.outletId===S.cur));
-  const by={cash:0,upi:0,card:0,bank:0,wallet:0,zomato:0,due:0,pending:0};list.forEach(o=>{const w=o.walletUsed||0;by.wallet+=w;const sp=paySplits(o);if(sp)sp.forEach(x=>by[x.mode]=(by[x.mode]||0)+x.amt);else by[o.pay.mode]=(by[o.pay.mode]||0)+o.total-w});
+  const by={cash:0,upi:0,card:0,bank:0,wallet:0,zomato:0,due:0,pending:0};list.forEach(o=>{const w=o.walletUsed||0;by.wallet+=w;const sp=paySplits(o);if(sp){sp.forEach(x=>by[x.mode]=(by[x.mode]||0)+x.amt);if(!o.paid)by.pending+=balanceOf(o)}else by[o.pay.mode]=(by[o.pay.mode]||0)+o.total-w});
   const tot=list.reduce((s,o)=>s+o.total,0);const disc=list.reduce((s,o)=>s+((o.subtotal||o.total)-o.total),0);
   const types={};list.forEach(o=>types[o.type]=(types[o.type]||0)+o.total);
   const items={};list.forEach(o=>o.items.forEach(l=>{items[l.name]=(items[l.name]||0)+l.qty}));
@@ -4084,7 +4108,7 @@ function salesFor(date,scope){
   return {list,by,tot,types,items,canc,disc,offers,rating,ratedN:rated.length,prep,hours};
 }
 // How much of an order came in through one payment mode (split bills count each part)
-function amtIn(o,k){const w=o.walletUsed||0;if(k==='wallet')return w;const sp=paySplits(o);if(sp)return sp.filter(x=>x.mode===k).reduce((a,x)=>a+x.amt,0);return o.pay.mode===k?o.total-w:0}
+function amtIn(o,k){const w=o.walletUsed||0;if(k==='wallet')return w;const sp=paySplits(o);if(sp)return sp.filter(x=>x.mode===k).reduce((a,x)=>a+x.amt,0)+(k==='pending'&&!o.paid?balanceOf(o):0);return o.pay.mode===k?o.total-w:0}
 const SALE_COLS=['cash','upi','card','bank','wallet','zomato','due','pending'];
 const scopeName=sc=>sc==='all'?'All outlets':cur().name;
 function modeOrders(s,k){return s.list.map(o=>({o,a:amtIn(o,k)})).filter(x=>x.a>0)}
@@ -4623,7 +4647,7 @@ document.addEventListener('click',e=>{
     case 'pay-detail':openModeDetail(el.dataset.v);break;
     case 'collect':{const o=find(el.dataset.id);if(o.paid){closeModal();render();break}
       const cu=el.dataset.v==='upi'&&U.colSp&&U.colSp.id===o.id?utrClean(U.colSp.utr):'';if(utrBad(cu)){toast(utrBad(cu));break}
-      settleOrder(o,el.dataset.v,0,null,cu);save();closeModal();toast(o.no+' · '+rs(o.total)+' paid by '+PAY[el.dataset.v]);render();if(el.dataset.v==='cash')openDrawer();break}
+      const amt=balanceOf(o);settleOrder(o,el.dataset.v,0,null,cu);save();closeModal();toast(o.no+' · '+rs(amt)+' paid by '+PAY[el.dataset.v]);render();if(el.dataset.v==='cash')openDrawer();break}
     case 'kitem':{const o=find(el.dataset.id);const l=o.items[+el.dataset.i];l.kdone=!l.kdone;save();render();break}
     case 'kready':{const o=find(el.dataset.id);if(o.status==='preparing'){setStatus(o,'ready');toast(o.no+' ready → counter');render()}break}
     case 'od-scope':U.ordersScope=el.dataset.v;render();break;
