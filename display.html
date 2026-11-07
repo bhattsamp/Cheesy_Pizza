@@ -247,6 +247,18 @@ body.idle{cursor:none}
 
 /* 10 order online */
 .s-order{background:radial-gradient(circle at 70% 50%,#14606e,#0b3a43 60%)}
+/* the shop's printed menu card, shown as it is */
+.s-poster{background:radial-gradient(circle at 70% 50%,#1b8a9c,#0b3a43 70%)}
+.s-poster .copy{position:absolute;left:110px;top:250px;width:760px;z-index:3}
+.s-poster .h1{font-size:170px;color:#fff}
+.s-poster .h1 em{font-style:normal;color:var(--gold)}
+.s-poster .sub{font-size:44px;font-weight:800;margin-top:26px;color:#fff;background:var(--red);display:inline-block;padding:10px 26px 6px;border-radius:16px}
+.s-poster .ph{font-size:48px;font-weight:800;color:var(--gold);margin-top:26px}
+.pstw{position:absolute;left:900px;top:110px;width:628px;height:870px;z-index:2;perspective:1600px}
+.pst{width:100%;height:100%;border-radius:22px;overflow:hidden;background:#fff;box-shadow:0 40px 80px rgba(0,0,0,.5)}
+.pst img{display:block;width:100%;height:100%;object-fit:contain}
+.on .pst{animation:pst 15s ease-out both}
+@keyframes pst{0%{transform:rotateY(-40deg) translateZ(-300px);opacity:0}12%{transform:rotateY(4deg);opacity:1}40%{transform:rotateY(-2deg)}100%{transform:rotateY(0)}}
 .s-order .copy{position:absolute;left:120px;top:230px;width:900px}
 .s-order .h1{font-size:190px;color:#fff}
 .s-order .h1 em{font-style:normal;color:var(--gold)}
@@ -439,6 +451,11 @@ const SLIDES0=[
    el.querySelector('.now').innerHTML=`<span class="nw">${esc(m.desc||m.name)}</span>`}},
  {k:'pizza',t:11,make(){return build('pizza')},tick(el,t){buildTick(el,t,[1.5,3.8,6.1,8.4,10.7])}},
  {k:'garlic',t:11,make(){return build('garlic')},tick(el,t){buildTick(el,t,[1.5,3.8,6.1,8.4,10.7])}},
+ {k:'poster',t:12,make(){const o=outlet(),ph=o.phone||'77780 43066';
+   return`<div class="rays" style="--rx:1214px;--ry:545px;--ra:.16"></div>${bokeh(7)}<div class="copy"><div class="kick rise" style="--d:.1s;color:#ffd76a">${KK('poster','Our menu card')}</div>
+   <div class="h1 anton">${TT('poster',letters('Pick your')+'<br><em>'+letters('pizza')+'</em>')}</div>
+   <div class="rise" style="--d:1s"><span class="sub">No mayonnaise in any product</span></div><div class="ph rise" style="--d:1.3s">Call ${esc(ph)} to book</div></div>
+   <div class="pstw"><div class="pst"><img src="img/menu-poster.jpg" alt="Cheesy Pizza menu card"></div></div>`}},
  {k:'best',t:10,ok:()=>bestItems().length,make(){const b=bestItems();return`<div class="bigword anton">Best sellers</div>
    <div class="head"><div class="kick rise" style="--d:.1s">${KK('best',"Everyone's favourites")}</div><div class="h1 anton">${TT('best',letters('Our best sellers'))}</div></div>
    <div class="grid" style="--n:${b.length}">${b.map((m,i)=>`<div class="bcard" style="--i:${i}"><div class="ph${isPng(m)?' png':''}" style="background-image:url('${photo(m)}')"><span class="rib">Best seller</span></div><div class="tx"><h3>${esc(m.name)}</h3><p>${esc(m.desc||'')}</p><div class="price">${priceOf(m)}</div></div></div>`).join('')}</div>`}},
@@ -520,7 +537,7 @@ const customSlide=c=>({k:'custom',key:'c_'+c.id,make(){const t=c.title||'';
    <div class="h1 anton" style="--fs:${t.length>13&&c.img?120:170}px">${WORDS(t)}</div><div class="desc rise" style="--d:1s;${c.img?'':'max-width:none'}">${esc(c.text||'')}</div></div>
    ${c.img?`<div class="spotw"><div class="spot"><img src="${esc(c.img)}" alt=""></div></div>`:''}${sparkles(6,c.img?1050:200,1820,120,900)}`},
   enter(el){el.style.setProperty('--bg',SPOT_BG[(+c.bg||0)%SPOT_BG.length])}});
-const SLIDES=[];SLIDES0.forEach(s=>{s.key=s.key||s.k;SLIDES.push(s);const at={hero:0,ring:1,garlic:2,combos:3}[s.k];if(at!=null)SLIDES.push(spotSlide(at))});
+const SLIDES=[];SLIDES0.forEach(s=>{s.key=s.key||s.k;SLIDES.push(s);const at={hero:0,ring:1,poster:2,combos:3}[s.k];if(at!=null)SLIDES.push(spotSlide(at))});
 function starPts(){let p=[];for(let i=0;i<24;i++){const r=i%2?40:50,a=i/24*Math.PI*2;p.push((50+Math.cos(a)*r).toFixed(1)+','+(50+Math.sin(a)*r).toFixed(1))}return p.join(' ')}
 function sparkles(n,x0,x1,y0,y1){return[...Array(n)].map((_,i)=>`<i class="spk" style="left:${x0+Math.random()*(x1-x0)|0}px;top:${y0+Math.random()*(y1-y0)|0}px;--z:${30+Math.random()*40|0}px;--d:${(i*.37).toFixed(2)}s"></i>`).join('')}
 function bokeh(n){return[...Array(n)].map((_,i)=>{const z=60+Math.random()*180|0;return`<i class="bokeh" style="width:${z}px;height:${z}px;left:${Math.random()*1800|0}px;top:${Math.random()*900|0}px;--t:${6+Math.random()*6|0}s;--d:-${Math.random()*6|0}s;--bx:${(Math.random()*200-100)|0}px"></i>`}).join('')}
@@ -636,7 +653,9 @@ function rebuild(){needsRebuild=false;
   // the slide on screen stays until it has moved away, so a change from Admin never cuts the picture
   const keep=deck.querySelector('.sl.on');deck.innerHTML='';if(keep){deck.appendChild(keep);setTimeout(()=>keep.remove(),12000)}const c=CFG(),hide=c.hide||{},ord=c.order||[];
   SHOW=Math.min(120,Math.max(5,+c.show||15));DUR=Math.min(10,Math.max(.5,+c.change||4))*1000;
-  const all=[...SLIDES.filter(s=>s.key!=='address'),...(c.custom||[]).map(customSlide),...SLIDES.filter(s=>s.key==='address')],pos=s=>{const i=ord.indexOf(s.key);return i<0?1000+all.indexOf(s):i};
+  const all=[...SLIDES.filter(s=>s.key!=='address'),...(c.custom||[]).map(customSlide),...SLIDES.filter(s=>s.key==='address')],pos=s=>{const i=ord.indexOf(s.key);if(i>=0)return i;
+    // a slide added after the owner saved an order goes right after the slide it follows by default
+    const j=all.indexOf(s);for(let k=j-1;k>=0;k--){const p=ord.indexOf(all[k].key);if(p>=0)return p+(j-k)/100}return 1000+j};
   order=all.filter(s=>!hide[s.key]&&(!s.ok||s.ok())).sort((a,b)=>pos(a)-pos(b));
   if(!order.length)order=[SLIDES[0]];
   order.forEach(s=>{const el=document.createElement('section');el.className='sl s-'+s.k+(s.k==='pizza'||s.k==='garlic'?' s-build':'')+(s.k==='garlic'?' gb':'')+(s.k==='custom'?' s-spot':'');el.innerHTML=s.make();s.el=el;deck.appendChild(el)});
