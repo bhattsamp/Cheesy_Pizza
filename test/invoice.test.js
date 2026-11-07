@@ -43,3 +43,8 @@ test('invoice lists each part of a split payment and the UPI reference', () => {
   const h = invoicePage({ ...o, pay: { mode: 'split', splits: [{ mode: 'cash', amt: 100 }, { mode: 'upi', amt: 61 }], utr: '123456789012' } }, { name: 'Main' }, opts);
   assert.match(h, /Paid via Cash ₹100 \+ UPI ₹61 · UPI ref 123456789012/);
 });
+
+test('invoice for a part paid order shows what is paid and the balance', () => {
+  const h = invoicePage({ ...o, paid: false, pay: { mode: 'split', splits: [{ mode: 'cash', amt: 100 }] } }, { name: 'Main' }, opts);
+  assert.match(h, /Paid so far: Cash ₹100 · Balance due ₹61/);
+});
