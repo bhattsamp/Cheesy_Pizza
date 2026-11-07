@@ -4661,6 +4661,8 @@ function readField(o,e){const k=e.target.dataset.k;if(k)o[k]=e.target.type==='ch
 function openOfferForm(id,type){
   const ex=S.offers.find(o=>o.id===id);
   const o=ex?JSON.parse(JSON.stringify(ex)):{id:uid('of'),type,active:true,days:[],name:type==='day'?'Day Special':type==='bogo'?'Buy 1 Get 1 Free':type==='code'?'Coupon':'Pizza Deal',code:'NEW50',cap:0,pct:15,scope:'pizza',min:0,size:type==='bogo'?S.sizes[0].id:'any',itemId:'p1',kind:type==='code'?'flat':'pct',value:type==='code'?50:20};
+  const prevHtml=()=>`<div class="stub">${offerStub(o)}</div><div class="ct"><b>${esc(o.name)}</b><span>${esc(offerText(o))}</span><div class="when"><span class="chip t">${daysText(o.days)}</span></div></div>`;
+  const prev=()=>{const el=document.getElementById('of-prev');if(el)el.innerHTML=prevHtml()};
   let confirmDel=false;const pizzas=S.menu.filter(m=>m.cat==='pizza');
   const draw=()=>showModal(`<div class="mh"><h3>${ex?'Edit':'New'} ${o.type==='day'?'day-wise % offer':o.type==='bogo'?'BOGO offer':o.type==='code'?'coupon code':'pizza offer'}</h3><button class="x" data-act="close" aria-label="Close">×</button></div>
   <div class="mb">
@@ -4678,10 +4680,12 @@ function openOfferForm(id,type){
       <div class="row"><div class="field grow"><label for="of-cv">${o.kind==='pct'?'Discount %':'₹ off'}</label><input class="inp num" type="number" id="of-cv" data-k="value" value="${o.value}"></div><div class="field grow"><label for="of-cm">Min order ₹</label><input class="inp num" type="number" id="of-cm" data-k="min" value="${o.min||0}"></div>${o.kind==='pct'?`<div class="field grow"><label for="of-cc">Max discount ₹</label><input class="inp num" type="number" id="of-cc" data-k="cap" value="${o.cap||0}"></div>`:''}</div>`:''}
     ${o.type==='code'?`<div class="row"><label class="row small"><input type="checkbox" data-k="firstOnly" ${o.firstOnly?'checked':''}> First order only</label><label class="row small"><input type="checkbox" data-k="once" ${o.once?'checked':''}> One use per customer</label><div class="field"><label for="of-until">Valid till (optional)</label><input class="inp" type="date" id="of-until" data-k="until" value="${esc(o.until||'')}"></div></div>`:''}
     <div class="field"><span class="lbl">Days (leave all off for every day)</span>${daysPicker(o.days)}</div>
-    <div class="coupon k-${o.type}"><div class="stub">${offerStub(o)}</div><div class="ct"><b>${esc(o.name)}</b><span>${esc(offerText(o))}</span><div class="when"><span class="chip t">${daysText(o.days)}</span></div></div></div>
+    <div class="coupon k-${o.type}" id="of-prev">${prevHtml()}</div>
     <div class="row">${ex?(confirmDel?`<button class="btn bad solid" data-act="of-del-yes">Yes, delete</button><button class="btn" data-act="of-del-no">Keep</button>`:`<button class="btn bad" data-act="of-del">Delete</button>`):''}<span class="grow"></span><button class="btn pri lg" data-act="of-save">Save offer</button></div>
-  </div>`,{onChange:e=>{readField(o,e);if(e.target.name==='days')o.days=[...document.querySelectorAll('input[name=days]:checked')].map(x=>+x.value);draw()},
-    onInput:e=>readField(o,e),
+  </div>`,{onChange:e=>{readField(o,e);if(e.target.name==='days')o.days=[...document.querySelectorAll('input[name=days]:checked')].map(x=>+x.value);
+      // Typed fields only refresh the preview: redrawing the whole form as the box loses focus would swallow the tap on Save
+      if(e.target.tagName==='INPUT'&&!['checkbox','radio','date'].includes(e.target.type)){prev();return}draw()},
+    onInput:e=>{readField(o,e);prev()},
     onAct:act=>{
       if(act==='of-save'){if(o.type==='code'){o.code=String(o.code||'').trim().toUpperCase().replace(/\s+/g,'');if(!o.code){toast('Enter a coupon code');return true}}if(ex)Object.assign(ex,o);else S.offers.push(o);save();closeModal();toast('Offer saved');render();return true}
       if(act==='of-del'){confirmDel=true;draw();return true}
@@ -4704,7 +4708,7 @@ function openComboForm(id){
     <div class="field"><span class="lbl">Included sides</span><div class="days">${sides.map(m=>`<label><input type="checkbox" name="ex" value="${m.id}" ${c.extras.includes(m.id)?'checked':''}>${esc(m.name)}</label>`).join('')}</div></div>
     <div class="savings num">Worth up to ${rs(comboWorth(c))} · customer saves ${rs(Math.max(0,comboWorth(c)-c.price))}</div>
     <div class="row">${ex?(confirmDel?`<button class="btn bad solid" data-act="cb-del-yes">Yes, delete</button><button class="btn" data-act="cb-del-no">Keep</button>`:`<button class="btn bad" data-act="cb-del">Delete</button>`):''}<span class="grow"></span><button class="btn pri lg" data-act="cb-save">Save combo</button></div>
-  </div>`,{onChange:e=>{readField(c,e);if(e.target.name==='ex')c.extras=[...document.querySelectorAll('input[name=ex]:checked')].map(x=>x.value);draw()},
+  </div>`,{onChange:e=>{readField(c,e);if(e.target.name==='ex')c.extras=[...document.querySelectorAll('input[name=ex]:checked')].map(x=>x.value);if(e.target.tagName==='INPUT'&&!['checkbox','radio','date'].includes(e.target.type))return;draw()},
     onInput:e=>readField(c,e),
     onAct:act=>{
       if(act==='cb-save'){c.pizzas=Math.max(0,Math.min(4,c.pizzas|0));if(!c.desc.trim())c.desc=`${c.pizzas?`${c.pizzas} × ${sizeLabel(c.size)} pizza`:''}${c.extras.map(id=>' + '+(menuItem(id)?.name||'')).join('')}`.replace(/^ \+ /,'');if(ex)Object.assign(ex,c);else S.combos.push(c);save();closeModal();toast('Combo saved');render();return true}
