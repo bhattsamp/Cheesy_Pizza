@@ -993,14 +993,13 @@ html:has(body:not(.pubmode) .pos){scroll-padding-top:calc(env(safe-area-inset-to
 .pos .side-foot>span{display:inline}
 .pos .side-foot .sdemo{display:none}
 .pos .side-foot .btn.sm{font-size:12px;padding:6px 10px;white-space:nowrap}
-.mobnav{display:none!important}
+@media (min-width:761px){.mobnav{display:none!important}}
 .mbar{top:calc(env(safe-area-inset-top,0px) + var(--toph,61px) + var(--navh))}
 .catrail{display:none}
+/* Phones keep the bottom bar (four sections and More), as before */
 @media (max-width:760px){
-  .pos .side{padding:6px 8px}
-  .pos .side button{padding:8px 11px;font-size:13px}
-  .pos .side-foot>span{display:none}
-  .main{padding-bottom:24px}
+  .pos .side{display:none}
+  :root{--navh:0px!important}
 }
 @media (min-width:761px){
   .menucol{display:grid;grid-template-columns:clamp(118px,11vw,150px) minmax(0,1fr);gap:10px;align-items:start}
@@ -2499,7 +2498,7 @@ function render(){
 // screen, so totals and the Bill buttons stay in view while the menu scrolls beside it
 // Height of the POS section bar, so sticky panes sit below it; keeps the current section in view
 function sideBar(){
-  const sd=app.querySelector('.pos .side');document.documentElement.style.setProperty('--navh',(sd?sd.offsetHeight:0)+'px');
+  let sd=app.querySelector('.pos .side');if(sd&&!sd.offsetHeight)sd=null;document.documentElement.style.setProperty('--navh',(sd?sd.offsetHeight:0)+'px');
   const on=sd&&sd.querySelector('[aria-current="page"]');if(!on||U.sideFor===U.pos.tab)return;U.sideFor=U.pos.tab;
   const l=on.offsetLeft,r=l+on.offsetWidth;if(l<sd.scrollLeft||r>sd.scrollLeft+sd.clientWidth)sd.scrollLeft=Math.max(0,l-sd.clientWidth/2+on.offsetWidth/2);
 }
