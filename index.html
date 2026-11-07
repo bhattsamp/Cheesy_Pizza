@@ -2332,7 +2332,19 @@ function coinRules(){const r=(S.offers||[]).find(o=>o.type==='coins')||{};const 
 const coinRs=n=>{const x=Math.round(n*100)/100;return '₹'+(Number.isInteger(x)?x.toLocaleString('en-IN'):x.toFixed(2))};
 const coinValTxt=()=>{const v=coinRules().value;return v<1?Math.round(v*100)+' paisa':coinRs(v)};
 const coinLine=()=>{const c=coinRules();return `Get ${c.per100} coin${c.per100===1?'':'s'} for every ₹100 you spend. Use them to pay up to ${c.maxPct}% of your next bill. 1 coin = ${coinValTxt()}.`};
-function activeOffers(dow){return S.offers.filter(o=>o.active&&o.type!=='coins'&&dayOK(o,dow))}
+// Spin & win rules, set by the owner in Offers (a hidden record in offers, like the coin rules)
+const SPIN_DEF={win:2,daily:200,paidOnly:true,hold:true,w:{}};
+function spinRules(){const r=(S.offers||[]).find(o=>o.type==='spin')||{};
+  return{win:r.win!=null&&r.win!==''?Math.max(0,Math.min(10,+r.win)):SPIN_DEF.win,daily:r.daily!=null&&r.daily!==''?Math.max(0,+r.daily):SPIN_DEF.daily,
+   paidOnly:r.paidOnly!==false,hold:r.hold!==false,w:r.w||{}}}
+// how often each prize slice comes up when a spin wins: 3 often, 2 sometimes, 1 rarely, 0 never
+const spinW=i=>{const v=spinRules().w[i];return v==null?(SEGS[i]&&SEGS[i].k==='coins'&&SEGS[i].v>=50?1:2):+v};
+// coins won on the wheel today by everyone (held or added), for the daily limit
+function spinCoinsToday(){const t=today();let n=0;Object.values(S.customers||{}).forEach(c=>{(c.spinLog||[]).forEach(x=>{if(x.d===t)n+=+x.coins||0})});return n}
+const hasPaidOrder=ph=>S.orders.some(o=>o.customer&&o.customer.phone===ph&&o.paid&&o.status!=='cancelled');
+// a win that was held is added when the customer's next order is placed
+function releaseSpinHold(ph,no){const c=S.customers[ph];if(!c||!(c.spinHold>0))return;const n=c.spinHold;c.spinHold=0;coinAdd(ph,n,'Spin & win (unlocked on '+no+')')}
+function activeOffers(dow){return S.offers.filter(o=>o.active&&o.type!=='coins'&&o.type!=='spin'&&dayOK(o,dow))}
 function computeBill(items,dateStr,extra){
   extra=extra||{};
   const dow=new Date((dateStr||today())+'T12:00:00').getDay();
@@ -2453,7 +2465,7 @@ function commitOrder(o){
   o.no=out.code+'-'+String(S.seq[k]).padStart(3,'0');
   const b=computeBill(o.items,o.date,{...(o.extra||{}),phone:o.customer.phone,outletId:o.outletId});o.subtotal=b.subtotal;o.discounts=b.discounts;o.total=b.total;if(b.gst)o.gst=b.gst;else delete o.gst;o.coinsUsed=b.coinsUsed;o.coinsEarned=(o.customer.phone||'').length===10?b.earn:0;
   o.times=o.times||{};o.times.placed=o.times.placed||o.ts;if(o.status==='preparing')o.times.preparing=o.times.preparing||o.ts;
-  S.orders.push(o);
+  S.orders.push(o);if((o.customer.phone||'').length===10)releaseSpinHold(o.customer.phone,o.no);
   const ph=(o.customer.phone||'').replace(/\D/g,'');
   if(ph){const c=S.customers[ph]||{phone:ph,name:'',due:0};c.name=o.customer.name||c.name;c.coins=Math.max(0,(c.coins||0)-(o.coinsUsed||0)+(o.coinsEarned||0));if(o.extra&&o.extra.code&&c.myCodes){const pc=c.myCodes.find(x=>x.code===o.extra.code.toUpperCase());if(pc)pc.used=true}if(dueOf(o)&&o.status!=='cancelled')c.due+=dueOf(o);S.customers[ph]=c}
   return o;
@@ -4156,8 +4168,23 @@ function vTables(){
 /* Cancelling an order. A sheet (not an inline button where the Cancel button was, so a double
    tap can't cancel) that asks why, warns when the money was already taken, and keeps who
    cancelled it, when and why on the order. Cancelled orders stay in history and Day sale lists them. */
+// Asks for the owner's PIN before a cashier or manager changes money that was already taken.
+// The owner signed in themselves goes straight through. cb gets the name of the owner who allowed it.
+function askOwnerPin(what,cb){const su=staff();if(su&&su.role==='owner'){cb(su.name);return}
+  const owners=S.users.filter(u=>u.role==='owner');if(!owners.length){cb('');return}
+  let uid=owners[0].id,pin='',busy=false,err='';
+  const draw=()=>showModal(`<div class="mh"><h3>Owner PIN needed</h3><button class="x" data-act="close" aria-label="Close">×</button></div>
+  <div class="mb"><div class="small">${esc(what)}</div>
+   ${owners.length>1?`<div class="field"><label for="op-u">Owner</label><select class="inp" id="op-u">${owners.map(u=>`<option value="${u.id}" ${u.id===uid?'selected':''}>${esc(u.name)}</option>`).join('')}</select></div>`:`<div class="small muted">Ask ${esc(owners[0].name)} to type their PIN.</div>`}
+   <input class="inp num" id="op-pin" type="password" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="4-digit PIN" style="font-size:24px;letter-spacing:.4em;text-align:center">
+   ${err?`<div class="msg-bad">${esc(err)}</div>`:''}
+   <div class="row" style="gap:8px"><button class="btn lg grow" data-act="close">Back</button><button class="btn pri lg grow" data-act="op-ok" ${busy?'disabled':''}>Allow</button></div></div>`,
+   {onAct:act=>{if(act!=='op-ok')return false;pin=(document.getElementById('op-pin')?.value||'').trim();uid=document.getElementById('op-u')?.value||uid;
+     if(pin.length!==4){err='Type the 4-digit PIN';draw();return true}busy=true;
+     api('/api/auth/staff',{id:uid,pin}).then(r=>{busy=false;if(r.ok){const u=S.users.find(x=>x.id===uid);closeModal();cb(u?u.name:'Owner')}else{err='Wrong PIN';draw()}},()=>{busy=false;err='Could not check the PIN. Check the internet.';draw()});return true}});
+  draw();setTimeout(()=>document.getElementById('op-pin')?.focus(),60)}
 const CANCEL_WHY=['Billed twice / made again','Wrong items or bill','Customer left','Kitchen could not make it'];
-const cancelNote=o=>o&&o.cancel?[o.cancel.by?'by '+o.cancel.by:'',o.cancel.at?fmtTime(o.cancel.at):'',o.cancel.why||''].filter(Boolean).join(' · '):'';
+const cancelNote=o=>o&&o.cancel?[o.cancel.by?'by '+o.cancel.by:'',o.cancel.okBy?'allowed by '+o.cancel.okBy:'',o.cancel.at?fmtTime(o.cancel.at):'',o.cancel.why||''].filter(Boolean).join(' · '):'';
 function openCancel(o){
   if(!o||o.status==='cancelled')return;
   const paid=paidSoFar(o);let why='';
@@ -4172,8 +4199,10 @@ function openCancel(o){
     if(act==='cx-why'){why=el.dataset.v;draw();return true}
     if(act!=='cx-yes')return false;
     if(!why.trim()){toast('Pick or type why you are cancelling');document.getElementById('cx-why')?.focus();return true}
+    if(paid>0&&!o._okBy){askOwnerPin(`Cancelling ${o.no}, which was already paid ${rs(paid)}. Reason: ${why.trim()}`,nm=>{o._okBy=nm||'-';draw();setTimeout(()=>document.querySelector('[data-act="cx-yes"]')?.click(),0)});return true}
+    const okBy=o._okBy&&o._okBy!=='-'?o._okBy:'';delete o._okBy;
     refundOrder(o);const c=S.customers[o.customer.phone];if(dueOf(o)&&c)c.due=Math.max(0,c.due-dueOf(o));if(c)c.coins=Math.max(0,(c.coins||0)+(o.coinsUsed||0)-(o.coinsEarned||0));
-    const su=staff();o.cancel={by:su?.name||'',role:su?.role||'',why:why.trim(),at:Date.now(),paid};
+    const su=staff();o.cancel={by:su?.name||'',role:su?.role||'',why:why.trim(),at:Date.now(),paid,...(okBy&&okBy!==su?.name?{okBy}:{})};
     setStatus(o,'cancelled');closeModal();toast(o.no+' cancelled');render();return true},
     onInput:e=>{if(e.target.id==='cx-why'){why=e.target.value;document.querySelectorAll('[data-act="cx-why"]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===why))}}});
   draw();
@@ -4183,14 +4212,50 @@ function openDelete(o){
   showModal(`<div class="mh"><h3>Delete ${esc(o.no)} from history?</h3><button class="x" data-act="close" aria-label="Close">×</button></div>
   <div class="mb"><div class="small">This cancelled order (${rs(o.total)}${cancelNote(o)?', cancelled '+esc(cancelNote(o)):''}) will no longer show anywhere. This can't be undone.</div>
     <div class="row" style="gap:8px"><button class="btn lg grow" data-act="close">Keep it</button><button class="btn bad solid lg grow" data-act="del-yes">Delete</button></div></div>`,
-  {onAct:act=>{if(act!=='del-yes')return false;S.orders=S.orders.filter(x=>x.id!==o.id);save();closeModal();toast('Deleted from history');render();return true}});
+  {onAct:act=>{if(act!=='del-yes')return false;askOwnerPin(`Deleting ${o.no} (${rs(o.total)}) from history for good.`,()=>{S.orders=S.orders.filter(x=>x.id!==o.id);save();closeModal();toast('Deleted from history');render()});return true}});
 }
+/* Day close: at the end of the day the counter counts the cash drawer. The app works out the cash that
+   should be there, keeps the difference and who closed, and won't close while orders are left unpaid. */
+const dayClose=(d,o=cur())=>(o&&o.closes||{})[d];
+function closeCalc(d,out=cur()){const L=S.orders.filter(o=>o.outletId===out.id&&o.date===d&&o.status!=='cancelled');
+  const cash=L.reduce((a,o)=>a+amtIn(o,'cash'),0),by={};SALE_COLS.forEach(k=>by[k]=L.reduce((a,o)=>a+amtIn(o,k),0));
+  const open=L.filter(o=>!o.paid&&o.pay.mode!=='due');return{L,cash,by,open,tot:L.reduce((a,o)=>a+o.total,0)}}
+function openDayClose(d){d=d||today();const out=cur(),prev=dayClose(d,out);let opening=prev?prev.opening:(+(out.float||0)||0),counted=prev?String(prev.counted):'',note=prev?prev.note||'':'',upiOk=prev?!!prev.upiOk:false;
+  const draw=()=>{const c=closeCalc(d,out),exp=Math.round((+opening||0)+c.cash),cnt=counted===''?null:+counted,diff=cnt==null?null:Math.round(cnt-exp);
+   showModal(`<div class="mh"><h3>Close the day · ${fmtDate(d)}</h3><button class="x" data-act="close" aria-label="Close">×</button></div>
+   <div class="mb">
+    ${prev?`<div class="notice">Closed by <b>${esc(prev.by)}</b> at ${fmtTime(prev.at)}. Saving again updates it.</div>`:''}
+    ${c.open.length?`<div class="notice" style="border-color:var(--bad)"><b>${c.open.length} order${c.open.length===1?' is':'s are'} not paid yet (${rs(c.open.reduce((a,o)=>a+balanceOf(o),0))}).</b> Bill each one, put it on baki, or cancel it with a reason before closing.
+      <div style="margin-top:6px;display:flex;flex-direction:column;gap:4px">${c.open.map(o=>`<div class="row small"><b class="num">${esc(o.no)}</b><span>${fmtTime(o.ts)} · ${esc(o.customer.name||'Walk-in')}</span><b class="num">${rs(balanceOf(o))}</b><span class="grow"></span><button class="btn sm" data-act="dc-go" data-v="${esc(o.no)}">Open</button></div>`).join('')}</div></div>`:''}
+    <div class="card" style="padding:10px"><div class="grp-h">Sale today · ${rs(c.tot)} · ${c.L.length} orders</div>
+      <div class="row small" style="gap:12px;flex-wrap:wrap">${SALE_COLS.filter(k=>c.by[k]).map(k=>`<span><span class="sw" style="background:${PAYCOL[k]}"></span> ${PAY[k]} <b class="num">${rs(c.by[k])}</b></span>`).join('')||'No sales yet'}</div></div>
+    <div class="row" style="gap:10px;flex-wrap:wrap">
+     <div class="field grow"><label for="dc-open">Cash in drawer at opening ₹</label><input class="inp num" type="number" min="0" id="dc-open" value="${opening}"></div>
+     <div class="field grow"><label>Cash that should be there</label><div class="big num" style="padding:8px 0">${rs(exp)}</div><span class="small muted">opening + ${rs(c.cash)} cash sales</span></div>
+     <div class="field grow"><label for="dc-count">Cash counted now ₹</label><input class="inp num" type="number" min="0" id="dc-count" value="${esc(counted)}" placeholder="Count the drawer" style="font-size:22px;font-weight:700"></div></div>
+    ${diff==null?'':diff===0?'<div class="savings">Cash matches. ✓</div>':`<div class="msg-bad"><b>Cash is ${diff>0?'over':'short'} by ${rs(Math.abs(diff))}.</b> Write what happened below.</div>`}
+    ${c.by.upi?`<label class="row small" style="cursor:pointer"><input type="checkbox" id="dc-upi" ${upiOk?'checked':''}> GPay / UPI total ${rs(c.by.upi)} matches the money received in our UPI app</label>`:''}
+    <div class="field"><label for="dc-note">Note ${diff?'(needed when cash does not match)':'(optional)'}</label><input class="inp" id="dc-note" value="${esc(note)}" placeholder="e.g. ₹200 given for milk" autocomplete="off"></div>
+    <button class="btn pri lg block" data-act="dc-save" ${c.open.length?'disabled':''}>${c.open.length?'Clear the unpaid orders first':'Close the day'}</button>
+   </div>`,{onAct:(act,el)=>{
+     if(act==='dc-go'){closeModal();U.pos.tab='orders';U.ordersDate=d===today()?null:d;U.ordersQ=el.dataset.v;render();return true}
+     if(act!=='dc-save')return false;const c2=closeCalc(d,out);if(c2.open.length){draw();return true}
+     if(counted===''){toast('Type the cash you counted');return true}
+     const ex=Math.round((+opening||0)+c2.cash),df=Math.round(+counted-ex);if(df&&!note.trim()){toast('Write why the cash does not match');document.getElementById('dc-note')?.focus();return true}
+     if(c2.by.upi&&!upiOk){toast('Check the UPI total in your UPI app, then tick the box');return true}
+     const su=staff();out.closes=out.closes||{};out.closes[d]={by:su?.name||'',role:su?.role||'',at:Date.now(),opening:+opening||0,cashSales:Math.round(c2.cash),expected:ex,counted:+counted,diff:df,upi:Math.round(c2.by.upi||0),upiOk,note:note.trim(),total:Math.round(c2.tot),orders:c2.L.length};
+     out.float=+opening||0;save();closeModal();toast(df?`Day closed. Cash ${df>0?'over':'short'} by ${rs(Math.abs(df))}`:'Day closed. Cash matches ✓');render();return true},
+    onInput:e=>{const t=e.target;if(t.id==='dc-open'){opening=t.value}if(t.id==='dc-count'){counted=t.value}if(t.id==='dc-note'){note=t.value;return}if(t.id==='dc-upi'){upiOk=t.checked;return}
+      if(t.id==='dc-open'||t.id==='dc-count'){clearTimeout(draw._t);draw._t=setTimeout(()=>{const f=document.activeElement?.id,pos=document.activeElement?.selectionStart;draw();const n=f&&document.getElementById(f);if(n){n.focus();try{n.setSelectionRange(pos,pos)}catch(_){}}},500)}},
+    onChange:e=>{if(e.target.id==='dc-upi')upiOk=e.target.checked}})};
+  draw()}
+const closeBtn=d=>{const c=dayClose(d);return c?`<button class="btn" data-act="day-close" data-v="${d}">${c.diff?'⚠ ':'✓ '}Day closed${c.diff?' · cash '+(c.diff>0?'over ':'short ')+rs(Math.abs(c.diff)):''}</button>`:`<button class="btn pri" data-act="day-close" data-v="${d}">Close the day</button>`};
 function vOrders(){
   const q=U.ordersQ.trim().toLowerCase();const day=U.ordersDate||today();const all=U.ordersScope==='all';
   const list=S.orders.filter(o=>(all||o.outletId===S.cur)&&o.date===day&&(!q||o.no.toLowerCase().includes(q)||o.customer.phone.includes(q)||(o.customer.name||'').toLowerCase().includes(q)||(o.zomatoId||'').includes(q))&&(!U.ordersNew||isNewCust(o))).sort((a,b)=>b.ts-a.ts);
   const unpaid=list.filter(o=>!o.paid&&o.status!=='cancelled');
   return `<div class="ph1"><h2>Order history</h2>
-    <input class="inp" type="date" id="od-date" value="${day}" style="width:auto" aria-label="Date">
+    <input class="inp" type="date" id="od-date" value="${day}" style="width:auto" aria-label="Date">${closeBtn(day)}
     <div class="seg"><button data-act="od-scope" data-v="outlet" aria-pressed="${!all}">${esc(cur().name)}</button><button data-act="od-scope" data-v="all" aria-pressed="${all}">All outlets</button></div>
     <div class="filters"><button data-act="od-new" aria-pressed="${!!U.ordersNew}">New customers only</button></div>
     <input class="inp" id="od-q" placeholder="Order no, name, mobile or Zomato ID" value="${esc(U.ordersQ)}" style="max-width:260px"></div>
@@ -4265,7 +4330,7 @@ function vSales(){
   const days=[...Array(7)].map((_,i)=>addDays(d,i-6)).map(x=>({d:x,t:salesFor(x,sc).tot}));const mx=Math.max(1,...days.map(x=>x.t));
   const top=Object.entries(s.items).sort((a,b)=>b[1]-a[1]).slice(0,6);const cols=SALE_COLS;
   return `<div class="ph1"><h2>Whole day sale</h2>
-    <input class="inp" type="date" id="sd-date" value="${d}" style="width:auto" aria-label="Date">
+    <input class="inp" type="date" id="sd-date" value="${d}" style="width:auto" aria-label="Date">${closeBtn(d)}
     <div class="seg"><button data-act="scope" data-v="outlet" aria-pressed="${sc==='outlet'}">${esc(cur().name)}</button><button data-act="scope" data-v="all" aria-pressed="${sc==='all'}">All outlets</button></div>${ownerBtn(salesText(s,d,sc))}<a class="btn" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(salesText(s,d,sc))}">Share on WhatsApp</a></div>
   ${cur().ownerPhone?'':`<div class="small muted" style="margin:-4px 0 10px">Add the owner's WhatsApp number on the Outlets screen so Send to owner goes straight to them.</div>`}
   <div class="stats">
@@ -4341,9 +4406,10 @@ function repTables(r,cur){const C=cur||rs;// shared by the screen, Excel and PDF
    hours:{h:['Hour','Orders','Amount'],rows:Object.keys(r.hours).map(Number).sort((a,b)=>a-b).map(h=>[`${h%12||12}${h<12?'am':'pm'} to ${(h+1)%12||12}${h+1<12||h+1===24?'am':'pm'}`,r.hours[h].n,C(r.hours[h].a)])},
    canc:{h:['No.','Date','Time','Customer','Amount','Was paid','Cancelled by, time, reason'],rows:r.canc.map(o=>[o.no,fmtDate(o.date),fmtTime(o.ts),o.customer.name||'Walk-in',C(o.total),o.paid?payName(o):'No',cancelNote(o)||''])},
    unpaid:{h:['No.','Date','Customer','Phone','Amount','Status'],rows:r.unpaid.map(o=>[o.no,fmtDate(o.date),o.customer.name||'Walk-in',o.customer.phone||'',C(balanceOf(o)||o.total),o.pay.mode==='due'?'Baki':'Not paid'])},
+   closes:{h:['Date','Outlet','Closed by','Time','Opening cash','Cash sales','Should be','Counted','Difference','UPI checked','Note'],rows:r.days.flatMap(x=>S.outlets.filter(o=>r.sc==='all'||o.id===S.cur).map(o=>[x.d,o,dayClose(x.d,o)])).filter(z=>z[2]).map(([d,o,c])=>[fmtDate(d),o.name,c.by,fmtTime(c.at),C(c.opening),C(c.cashSales),C(c.expected),C(c.counted),C(c.diff),c.upiOk?'Yes':'No',c.note||''])},
    orders:{h:['No.','Date','Time','Type','Customer','Phone','Items','Subtotal','Discount','Total','Payment','UTR','Billed by','Status'],rows:r.all.map(o=>[o.no,fmtDate(o.date),fmtTime(o.ts),TYPES[o.type]||o.type,o.customer.name||'Walk-in',o.customer.phone||'',
      (o.items||[]).map(l=>l.qty+' x '+l.name+(l.size?' '+sizeLabel(l.size):'')).join(', '),C(o.subtotal||o.total),C((o.subtotal||o.total)-o.total),C(o.total),o.paid?payName(o):(o.pay.mode==='due'?'Baki':'Not paid'),o.pay.utr||'',orderWho(o),o.status==='cancelled'?'Cancelled':o.paid?'Paid':'Unpaid'])}}}
-const REP_SECS=[['summary','Summary'],['pay','By payment mode'],['days','Day by day'],['items','Item-wise sale'],['cats','Category-wise sale'],['types','By order type'],['who','By cashier (who billed)'],['offers','Offers used'],['hours','By hour'],['unpaid','Unpaid and baki orders'],['canc','Cancelled orders'],['orders','All orders in detail']];
+const REP_SECS=[['summary','Summary'],['pay','By payment mode'],['days','Day by day'],['items','Item-wise sale'],['cats','Category-wise sale'],['types','By order type'],['who','By cashier (who billed)'],['offers','Offers used'],['hours','By hour'],['unpaid','Unpaid and baki orders'],['canc','Cancelled orders'],['closes','Day close and cash count'],['orders','All orders in detail']];
 function repTbl(t,max){const rows=max?t.rows.slice(0,max):t.rows;
   return `<div class="tw"><table class="stk ordtbl reptbl"><thead><tr>${t.h.map((h,i)=>{const c=t.rows[0]?.[i];return `<th${i&&(typeof c==='number'||/^₹/.test(String(c)))?' class="r"':''}>${esc(h)}</th>`}).join('')}</tr></thead><tbody>
   ${rows.map(r=>`<tr>${r.map((c,i)=>`<td class="${i&&(typeof c==='number'||/^₹/.test(String(c)))?'r num':''}">${esc(String(c))}</td>`).join('')}</tr>`).join('')||`<tr><td colspan="${t.h.length}" class="empty">Nothing in this period.</td></tr>`}
@@ -4398,6 +4464,19 @@ async function repPdf(){const r=repData();toast('Making the PDF…');
   const pages=doc.internal.getNumberOfPages();for(let i=1;i<=pages;i++){doc.setPage(i);doc.setFontSize(8);doc.setTextColor(140);doc.text(`Page ${i} of ${pages}`,W-90,doc.internal.pageSize.getHeight()-18)}
   await saveFile(doc.output('blob'),repName(r,'pdf'),'application/pdf')}
 
+// The owner sets how often the Spin & win wheel pays out
+function spinBox(){const own=staff()?.role==='owner',r=spinRules(),dis=own?'':'disabled';
+  const lvl=[[3,'Often'],[2,'Sometimes'],[1,'Rarely'],[0,'Never']];
+  return `<div class="card" style="padding:14px;margin-top:14px;display:flex;flex-direction:column;gap:10px"><h3 style="font-size:20px">Spin & win (customer app)</h3>
+   <div class="small muted">Customers get one spin a day. Today ${spinCoinsToday()} of ${r.daily} coins have been won.</div>
+   <div class="row" style="gap:12px;flex-wrap:wrap;align-items:flex-start">
+    <div class="field grow"><label for="sp-win">Wins in every 10 spins</label><select class="inp" id="sp-win" data-spin="win" ${dis}>${[0,1,2,3,4,5,6,7,8,9,10].map(n=>`<option value="${n}" ${n===r.win?'selected':''}>${n} in 10${n===0?' (always Try again)':''}</option>`).join('')}</select><span class="small muted">The other spins land on Try again</span></div>
+    <div class="field grow"><label for="sp-daily">Most coins given a day (all customers)</label><input class="inp num" type="number" min="0" id="sp-daily" data-spin="daily" value="${r.daily}" ${dis}><span class="small muted">After this, coin prizes stop until tomorrow</span></div></div>
+   <label class="row small" style="cursor:pointer"><span class="switch"><input type="checkbox" data-spin="paidOnly" ${r.paidOnly?'checked':''} ${dis}><span></span></span>Only customers who have paid for an order can spin</label>
+   <label class="row small" style="cursor:pointer"><span class="switch"><input type="checkbox" data-spin="hold" ${r.hold?'checked':''} ${dis}><span></span></span>Coins won are added only when the customer places their next order</label>
+   <div class="grp-h">How often each prize comes up when a spin wins</div>
+   <div class="row" style="gap:8px;flex-wrap:wrap">${SEGS.map((x,i)=>x.k==='none'?'':`<label class="field" style="min-width:140px"><span class="small"><span class="sw" style="background:${x.c}"></span> ${esc(x.t)}</span><select class="inp" data-spin="w" data-i="${i}" ${dis}>${lvl.map(([v,n])=>`<option value="${v}" ${spinW(i)===v?'selected':''}>${n}</option>`).join('')}</select></label>`).join('')}</div>
+   ${own?'':'<div class="small muted">Only the owner can change these.</div>'}</div>`}
 // The owner sets what a Cheese Coin is worth and how coins are earned and used
 function coinBox(){const own=staff()?.role==='owner',c=coinRules();
   const f=(k,lbl,v,step,help)=>`<div class="field grow"><label for="cr-${k}">${lbl}</label><input class="inp num" type="number" id="cr-${k}" data-coin="${k}" value="${v}" step="${step}" min="0" ${own?'':'disabled'}><span class="small muted">${help}</span></div>`;
@@ -4413,8 +4492,8 @@ function vOffers(){
   ${canSend?`<button class="card bcast-cta" data-act="bcast"><span aria-hidden="true">📣</span><span class="grow"><b>Send a notification to customers</b><span class="small muted">Tell everyone with the app about a deal, a new pizza or a festival offer.</span></span><span aria-hidden="true">›</span></button>`:''}
   <div class="row" style="margin-bottom:12px"><button class="btn pri" data-act="new-offer" data-v="day">+ Day-wise % offer</button><button class="btn pri" data-act="new-offer" data-v="bogo">+ BOGO offer</button><button class="btn pri" data-act="new-offer" data-v="item">+ Specific pizza offer</button><button class="btn pri" data-act="new-offer" data-v="code">+ Coupon code</button><button class="btn chz" data-act="edit-combo" data-id="">+ Combo</button></div>
   <div class="sec-h" style="margin-top:6px"><h2 style="font-size:22px">Offers</h2></div>
-  <div class="ogrid">${S.offers.filter(o=>o.type!=='coins').map(o=>card(o,false)).join('')||'<div class="empty card">No offers yet.</div>'}</div>
-  ${coinBox()}
+  <div class="ogrid">${S.offers.filter(o=>o.type!=='coins'&&o.type!=='spin').map(o=>card(o,false)).join('')||'<div class="empty card">No offers yet.</div>'}</div>
+  ${coinBox()}${spinBox()}
   <div class="sec-h"><h2 style="font-size:22px">Combos</h2></div>
   <div class="ogrid">${S.combos.map(c=>card(c,true)).join('')||'<div class="empty card">No combos yet.</div>'}</div>`;
 }
@@ -4943,6 +5022,7 @@ document.addEventListener('click',e=>{
     case 'board':U.board=true;renderBoard();break;
     case 'board-x':U.board=false;renderBoard();break;
     case 'cancel':openCancel(find(el.dataset.id));break;
+    case 'day-close':openDayClose(el.dataset.v);break;
     case 'del':openDelete(find(el.dataset.id));break;
     case 'scope':U.salesScope=el.dataset.v;render();break;
     case 'rep-p':repU().p=el.dataset.v;if(el.dataset.v==='custom'){const[a,b]=repRange({p:'today'});repU().from=repU().from||a;repU().to=repU().to||b}render();break;
@@ -5039,6 +5119,8 @@ document.addEventListener('change',e=>{
   if(mh.onChange&&mroot.contains(e.target)){mh.onChange(e);return}
   const t=e.target;
   if(t.id==='pc-coins'){U.pos.useCoins=t.checked;render()}
+  if(t.dataset.spin&&staff()?.role==='owner'){let r=S.offers.find(o=>o.type==='spin');if(!r){r={id:'spinrules',type:'spin',name:'Spin & win rules',active:false};S.offers.push(r)}
+    const k=t.dataset.spin;if(k==='w'){r.w={...(r.w||{}),[t.dataset.i]:+t.value}}else r[k]=t.type==='checkbox'?t.checked:+t.value;r.active=false;save();render();toast('Spin & win updated')}
   if(t.dataset.coin&&staff()?.role==='owner'){const v=+t.value;if(!(v>=0)||(t.dataset.coin!=='per100'&&!(v>0))){toast('Enter a number above 0');render();return}
     let r=S.offers.find(o=>o.type==='coins');if(!r){r={id:'coinrules',type:'coins',name:'Cheese Coins rules',active:false};S.offers.push(r)}
     r[t.dataset.coin]=t.dataset.coin==='maxPct'?Math.min(100,v):v;r.active=false;save();render();toast('Cheese Coins updated')}
@@ -5321,13 +5403,21 @@ function wheelSVG(){
 }
 function doSpin(){
   const c=me();if(!c||U.spin.busy)return;if(c.spinDate===today()){toast('You have already spun today. Come back tomorrow!');return}
-  const idx=Math.floor(Math.random()*SEGS.length);
+  const R=spinRules();if(R.paidOnly&&!hasPaidOrder(c.phone)){toast('Place your first order to unlock Spin & win');return}
+  // the owner's win chance decides if this spin wins; the prize is then picked by how often each slice should come up,
+  // leaving out coin prizes that would go past today's limit
+  const lose=SEGS.findIndex(x=>x.k==='none'),left=R.daily-spinCoinsToday();
+  const prizes=SEGS.map((x,i)=>({i,w:x.k==='none'?0:spinW(i)})).filter(x=>x.w>0&&!(SEGS[x.i].k==='coins'&&SEGS[x.i].v>left));
+  let idx=lose<0?0:lose;
+  if(prizes.length&&Math.random()<R.win/10){let t=Math.random()*prizes.reduce((a,x)=>a+x.w,0);idx=prizes.find(x=>(t-=x.w)<0)?.i??prizes[0].i}
   U.spin.busy=true;U.spin.deg=U.spin.deg-(U.spin.deg%360)+360*6+(360-idx*45)%360;
   const w=document.getElementById('wheel');if(w)w.style.transform=`rotate(${U.spin.deg}deg)`;
   const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
   setTimeout(()=>{
     const s=SEGS[idx];c.spinDate=today();let msg;
-    if(s.k==='coins'){coinAdd(c.phone,s.v,'Spin & win');msg=`You won ${s.v} Cheese Coins!`}
+    if(s.k==='coins'){c.spinLog=[{d:today(),coins:s.v},...(c.spinLog||[]).filter(x=>x.d>=addDays(today(),-30))];
+      if(R.hold){c.spinHold=(c.spinHold||0)+s.v;msg=`You won ${s.v} Cheese Coins! They are added to your account with your next order.`}
+      else{coinAdd(c.phone,s.v,'Spin & win');msg=`You won ${s.v} Cheese Coins!`}}
     else if(s.k==='none'){msg='So close! Try again tomorrow.'}
     else{const code='SPIN'+Math.random().toString(36).slice(2,6).toUpperCase();
       c.myCodes.unshift({code,name:s.t==='Free dip'?'Free Cheesy Dip':'Spin reward',kind:s.k,value:s.v,min:s.min||0,cap:s.k==='pct'?100:0,until:addDays(today(),7)});
@@ -5471,7 +5561,9 @@ function renderAccount(){
       <div class="card panel" style="text-align:center"><h3 style="font-size:22px">Spin & win</h3><div class="small muted">One free spin every day</div>
         <div class="wheel-wrap"><span class="ptr"></span>${wheelSVG()}</div>
         ${U.spin.result?`<div class="savings">${esc(U.spin.result)}</div>`:''}
-        <button class="btn chz lg" data-act="spin" ${can&&!U.spin.busy?'':'disabled'}>${can?'Spin now':'Come back tomorrow'}</button></div>
+        ${c.spinHold>0?`<div class="small" style="margin:6px 0"><b class="num">${c.spinHold}</b> coins won, added with your next order</div>`:''}
+        ${spinRules().paidOnly&&!hasPaidOrder(c.phone)?'<div class="small muted" style="margin:6px 0">Place your first order to unlock Spin & win.</div>':''}
+        <button class="btn chz lg" data-act="spin" ${can&&!U.spin.busy&&!(spinRules().paidOnly&&!hasPaidOrder(c.phone))?'':'disabled'}>${can?'Spin now':'Come back tomorrow'}</button></div>
       <div class="card panel"><h3 style="font-size:22px">My coupons</h3>
         ${codes.map(x=>`<div class="coupon k-code"><div class="stub">${x.kind==='pct'?x.value+'%':'₹'+x.value}<small>${x.personal||c.myCodes.includes(x)?'YOURS':'CODE'}</small></div><div class="ct"><b>${esc(x.name)}</b><span class="codechip">${esc(x.code)}</span><span>${x.kind==='pct'?x.value+'% off'+(x.cap?' up to '+rs(x.cap):''):rs(x.value)+' off'}${x.min?' above '+rs(x.min):''}${x.until?' · till '+fmtDate(x.until):''}</span></div></div>`).join('')||'<div class="empty">No coupons right now. Spin the wheel!</div>'}</div>
       <div class="card panel"><h3 style="font-size:22px">Cheese Coins</h3><div class="row"><div class="coin">C</div><div><b class="num" style="font-size:28px;font-family:var(--display)">${Math.floor(c.coins||0)}</b><div class="small muted">1 coin = ${coinValTxt()} · worth ${coinRs(Math.floor(c.coins||0)*coinRules().value)} · use up to ${coinRules().maxPct}% of a bill</div></div></div>
