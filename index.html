@@ -2324,7 +2324,15 @@ const menuItem=id=>S.menu.find(m=>m.id===id);
 
 /* ===== OFFERS ENGINE ===== */
 function dayOK(o,dow){return !o.days||!o.days.length||o.days.includes(dow)}
-function activeOffers(dow){return S.offers.filter(o=>o.active&&dayOK(o,dow))}
+// Cheese Coins rules, set by the owner in Offers: what one coin is worth, how many a bill earns, how much of a bill they can pay.
+// Kept as a hidden record in offers (never active) so it syncs to every till and phone.
+const COIN_DEF={value:1,per100:5,maxPct:20};
+function coinRules(){const r=(S.offers||[]).find(o=>o.type==='coins')||{};const v=+r.value>0?+r.value:COIN_DEF.value;
+  return{value:v,per100:+r.per100>=0&&r.per100!==''&&r.per100!=null?+r.per100:Math.round(COIN_RATE*100)||COIN_DEF.per100,maxPct:+r.maxPct>0?Math.min(100,+r.maxPct):COIN_DEF.maxPct}}
+const coinRs=n=>{const x=Math.round(n*100)/100;return '₹'+(Number.isInteger(x)?x.toLocaleString('en-IN'):x.toFixed(2))};
+const coinValTxt=()=>{const v=coinRules().value;return v<1?Math.round(v*100)+' paisa':coinRs(v)};
+const coinLine=()=>{const c=coinRules();return `Get ${c.per100} coin${c.per100===1?'':'s'} for every ₹100 you spend. Use them to pay up to ${c.maxPct}% of your next bill. 1 coin = ${coinValTxt()}.`};
+function activeOffers(dow){return S.offers.filter(o=>o.active&&o.type!=='coins'&&dayOK(o,dow))}
 function computeBill(items,dateStr,extra){
   extra=extra||{};
   const dow=new Date((dateStr||today())+'T12:00:00').getDay();
@@ -2361,14 +2369,14 @@ function computeBill(items,dateStr,extra){
     else{const left=subtotal-discount;let a=cd.kind==='pct'?Math.round(left*cd.value/100):+cd.value;if(cd.kind==='pct'&&cd.cap)a=Math.min(a,cd.cap);a=Math.max(0,Math.min(a,left));
       if(a>0){disc.push({name:'Code '+cd.code,amt:a});discount+=a;codeOk=true;codeMsg=`${cd.code} applied · you save ${rs(a)}`}}
   }
-  const coinsMax=Math.floor(Math.max(0,subtotal-discount)*0.2);let coinsUsed=0;
-  if(extra.coins>0){coinsUsed=Math.min(Math.floor(extra.coins),coinsMax);if(coinsUsed>0){disc.push({name:`Cheese Coins (${coinsUsed})`,amt:coinsUsed});discount+=coinsUsed}}
+  const CR=coinRules(),coinsMax=Math.floor(Math.max(0,subtotal-discount)*CR.maxPct/100/CR.value+1e-9);let coinsUsed=0;
+  if(extra.coins>0){coinsUsed=Math.min(Math.floor(extra.coins),coinsMax);if(coinsUsed>0){const amt=Math.round(coinsUsed*CR.value*100)/100;disc.push({name:`Cheese Coins (${coinsUsed})`,amt});discount+=amt}}
   const comboSave=items.filter(l=>l.combo).reduce((s,l)=>s+Math.max(0,(l.worth||0)-l.unit)*l.qty,0);
   const net=Math.max(0,subtotal-discount);
   // GST (owner sets it per outlet): included in menu prices, or added on top of the bill
   const g=gstOf(S.outlets.find(x=>x.id===(extra.outletId||S.cur)));let tax=0,total=net,gst=null;
   if(g){tax=g.mode==='excl'?Math.round(net*g.rate)/100:Math.round((net-net/(1+g.rate/100))*100)/100;if(g.mode==='excl')total=Math.round(net+tax);gst={rate:g.rate,mode:g.mode,tax,net}}
-  return {subtotal,discounts:disc,discount,net,gst,total,hint,saved:discount+comboSave,codeMsg,codeOk,coinsUsed,coinsMax,earn:Math.floor(total*COIN_RATE)};
+  return {subtotal,discounts:disc,discount,net,gst,total,hint,saved:discount+comboSave,codeMsg,codeOk,coinsUsed,coinsMax,coinsAmt:Math.round(coinsUsed*CR.value*100)/100,earn:Math.floor(total*CR.per100/100)};
 }
 /* GST applies only once the outlet has a GSTIN and a rate; mode 'incl' = prices include GST, 'excl' = added on top */
 const gstOf=o=>o&&o.gstin&&+o.gstRate>0?{rate:+o.gstRate,mode:o.gstMode==='excl'?'excl':'incl'}:null;
@@ -2639,7 +2647,7 @@ function matchFilter(m,dow){
 // while the mouse is over it or a finger is on it, so customers can read it.
 function offerTicker(){
   const dow=new Date().getDay();
-  const tick=[...activeOffers(dow).map(x=>`<span><b>${x.type==='code'?'CODE '+esc(x.code):'TODAY'}</b> ${esc(x.name)}: ${esc(offerText(x))}</span>`),...S.combos.filter(c=>c.active).map(c=>`<span><b>COMBO</b> ${esc(c.name)} at ${rs(c.price)}</span>`),'<span><b>CHEESE COINS</b> 5% back on every order</span>','<span><b>PURE VEG</b> No mayonnaise products</span>'];
+  const tick=[...activeOffers(dow).map(x=>`<span><b>${x.type==='code'?'CODE '+esc(x.code):'TODAY'}</b> ${esc(x.name)}: ${esc(offerText(x))}</span>`),...S.combos.filter(c=>c.active).map(c=>`<span><b>COMBO</b> ${esc(c.name)} at ${rs(c.price)}</span>`),'<span><b>CHEESE COINS</b> ${coinRules().per100} coins per ₹100 · 1 coin = ${coinValTxt()}</span>','<span><b>PURE VEG</b> No mayonnaise products</span>'];
   const secs=Math.max(45,Math.round(tick.join('').replace(/<[^>]+>/g,'').length*.32));
   // the delay keeps its place when the page re-renders, instead of starting over
   return `<div class="ticker${U.tickHold?' hold':''}" aria-label="Offers" title="Hold to pause"><div class="tk" style="animation-duration:${secs}s;animation-delay:-${(Date.now()/1000%secs).toFixed(1)}s">${tick.join('')}${tick.join('')}</div></div>`;
@@ -2685,7 +2693,7 @@ function renderPublic(){
       <div class="stack">${[...Array(c.pizzas)].map((_,i)=>`<img src="${IMG(['margherita','veggieparadise','cheesyspecial'][i%3])}" alt="">`).join('')}${ex.map(m=>m.img?`<img src="${IMG(m.img)}" alt="">`:'<span class="pzs"></span>').join('')}</div>
       <div><h3 style="font-size:20px">${esc(c.name)}</h3><div class="small muted">${esc(c.desc)}</div>
       <div class="row" style="margin-top:6px"><span class="price num">${rs(c.price)}</span><s class="num">${rs(comboWorth(c))}</s><span class="grow"></span><button class="btn pri" data-act="combo-add" data-id="${c.id}" data-t="pub">Add</button></div></div></article>`}).join('')}</div></section>`:''}
-  <div class="coins-band"><div class="coin">C</div><div class="grow"><h3>Cheese Coins</h3><div class="small muted">Get 5% back as coins on every order. Use them to pay up to 20% of your next bill. 1 coin = ₹1.</div></div><button class="btn" data-act="pub-track-find">Check my coins</button></div>
+  <div class="coins-band"><div class="coin">C</div><div class="grow"><h3>Cheese Coins</h3><div class="small muted">${coinLine()}</div></div><button class="btn" data-act="pub-track-find">Check my coins</button></div>
   <div id="menu" style="scroll-margin-top:60px"></div>
   <div class="sec-h"><h2>Menu</h2><span class="gu">મેનુ</span></div>
   <div class="filters"><input class="inp" id="pub-q" placeholder="Search paneer, cheese, spicy…" value="${esc(U.pubQ)}" aria-label="Search menu">
@@ -2888,7 +2896,7 @@ function renderHome(){if(HOME2)return renderHome2();
         <p data-sx style="--n:${p1.n}">${p1.html}</p>
         <p data-sx style="--n:${p2a.n+p2b.n}"><strong>${p2a.html}</strong> ${p2b.html.replace(/--i:(\d+)/g,(m,d)=>'--i:'+(+d+p2a.n))}</p>
         <ul class="craft">${['Fresh dough','Hand stretched','Soft base','Live pizza'].map((t,i)=>`<li><span>0${i+1}</span>${t}</li>`).join('')}</ul>
-        <div class="st-stats"><div><b class="num">${pizzas.length}</b><span>Pizzas</span></div>${minPz?`<div><b class="num">${rs(minPz)}</b><span>Pizzas from</span></div>`:''}<div><b class="num">${Math.round(COIN_RATE*100)}%</b><span>Back in coins</span></div></div>
+        <div class="st-stats"><div><b class="num">${pizzas.length}</b><span>Pizzas</span></div>${minPz?`<div><b class="num">${rs(minPz)}</b><span>Pizzas from</span></div>`:''}<div><b class="num">${Math.round(coinRules().per100*coinRules().value)}%</b><span>Back in coins</span></div></div>
       </div>
     </div>
   </div></section>
@@ -2920,7 +2928,7 @@ function renderHome(){if(HOME2)return renderHome2();
       <div class="stack">${[...Array(c.pizzas)].map((_,i)=>`<img src="${IMG(['margherita','veggieparadise','cheesyspecial'][i%3])}" alt="" loading="lazy">`).join('')}${ex.map(m=>m.img?`<img src="${IMG(m.img)}" alt="" loading="lazy">`:'<span class="pzs"></span>').join('')}</div>
       <h3>${esc(c.name)}</h3><p>${esc(c.desc)}</p>
       <div class="cmb-ft"><span class="price num">${rs(c.price)}</span>${worth>c.price?`<s class="num">${rs(worth)}</s>`:''}<button class="btn pri" data-act="combo-add" data-id="${c.id}" data-t="pub" aria-label="Add ${esc(c.name)} combo">Add combo</button></div></article>`}).join('')}</div>`:''}
-    <div class="coins-x"><div class="coin" aria-hidden="true">C</div><div class="grow"><h3>Cheese Coins</h3><div class="muted">Get ${Math.round(COIN_RATE*100)}% back as coins on every order. Use them to pay up to 20% of your next bill. 1 coin = ₹1.</div></div><button class="btn" data-act="pub-track-find">Check my coins</button></div>
+    <div class="coins-x"><div class="coin" aria-hidden="true">C</div><div class="grow"><h3>Cheese Coins</h3><div class="muted">${coinLine()}</div></div><button class="btn" data-act="pub-track-find">Check my coins</button></div>
   </div></section>
 
   ${best.length?`<section class="sx" id="favourites"><div class="sx-in">
@@ -3449,7 +3457,7 @@ function openPubCart(){
     <div class="grp-h">Your details</div>
     <div class="row"><div class="field grow"><label for="pf-name">Name</label><input class="inp" id="pf-name" value="${esc(pubForm.name)}" autocomplete="name"></div>
     <div class="field grow"><label for="pf-phone">Mobile number</label><input class="inp num" id="pf-phone" inputmode="numeric" maxlength="10" value="${esc(pubForm.phone)}" autocomplete="tel" ${mm?'disabled':''}></div></div>
-    ${coins?`<label class="opt"><input type="checkbox" id="pf-coins" ${pubForm.useCoins?'checked':''}><span class="coin sm">C</span> Use my Cheese Coins <span class="small muted num">(${coins} available)</span><span class="p num">${pubForm.useCoins?'−'+rs(b.coinsUsed):'up to '+rs(Math.min(coins,b.coinsMax))}</span></label>`:''}
+    ${coins?`<label class="opt"><input type="checkbox" id="pf-coins" ${pubForm.useCoins?'checked':''}><span class="coin sm">C</span> Use my Cheese Coins <span class="small muted num">(${coins} available)</span><span class="p num">${pubForm.useCoins?'−'+coinRs(b.coinsAmt):'up to '+coinRs(Math.min(coins,b.coinsMax)*coinRules().value)}</span></label>`:''}
     ${wal?`<label class="opt"><input type="checkbox" id="pf-wallet" ${pubForm.useWallet?'checked':''}> Pay from Cheesy Wallet <span class="small muted num">(balance ${rs(wal)})</span><span class="p num">${pubForm.useWallet?'−'+rs(wUse):''}</span></label>`:''}
     <div style="display:flex;flex-direction:column;gap:4px">${billLines(b)}${wUse?`<div class="bl disc"><span>From wallet</span><span class="num">−${rs(wUse)}</span></div><div class="tot" style="font-size:20px"><span>Balance to pay</span><span class="num">${rs(due)}</span></div>`:''}</div>
     ${b.saved?`<div class="savings num">You're saving ${rs(b.saved)} on this order</div>`:''}
@@ -4390,6 +4398,12 @@ async function repPdf(){const r=repData();toast('Making the PDF…');
   const pages=doc.internal.getNumberOfPages();for(let i=1;i<=pages;i++){doc.setPage(i);doc.setFontSize(8);doc.setTextColor(140);doc.text(`Page ${i} of ${pages}`,W-90,doc.internal.pageSize.getHeight()-18)}
   await saveFile(doc.output('blob'),repName(r,'pdf'),'application/pdf')}
 
+// The owner sets what a Cheese Coin is worth and how coins are earned and used
+function coinBox(){const own=staff()?.role==='owner',c=coinRules();
+  const f=(k,lbl,v,step,help)=>`<div class="field grow"><label for="cr-${k}">${lbl}</label><input class="inp num" type="number" id="cr-${k}" data-coin="${k}" value="${v}" step="${step}" min="0" ${own?'':'disabled'}><span class="small muted">${help}</span></div>`;
+  return `<div class="card" style="padding:14px;margin-top:14px;display:flex;flex-direction:column;gap:10px"><div class="row"><div class="coin">C</div><div class="grow"><h3 style="font-size:20px">Cheese Coins</h3><div class="small muted">${esc(coinLine())}</div></div></div>
+   <div class="row" style="gap:12px;flex-wrap:wrap;align-items:flex-start">${f('value','1 coin is worth ₹',c.value,'0.05','0.25 = 25 paisa, 0.5 = 50 paisa, 1 = ₹1')}${f('per100','Coins earned per ₹100 of bill',c.per100,'1','On every paid order with a mobile number')}${f('maxPct','Coins can pay up to % of a bill',c.maxPct,'1','The rest is paid normally')}</div>
+   <div class="small muted">${own?`A customer earns about ${Math.round(c.per100*c.value*100)/100}% back. Coins already earned keep their number; the new value applies from now on.`:'Only the owner can change these.'}</div></div>`}
 function vOffers(){
   const dow=new Date().getDay();
   const card=(o,isCombo)=>`<div class="card" style="padding:12px;display:flex;flex-direction:column;gap:10px">${coupon(o,dow,isCombo)}
@@ -4399,7 +4413,8 @@ function vOffers(){
   ${canSend?`<button class="card bcast-cta" data-act="bcast"><span aria-hidden="true">📣</span><span class="grow"><b>Send a notification to customers</b><span class="small muted">Tell everyone with the app about a deal, a new pizza or a festival offer.</span></span><span aria-hidden="true">›</span></button>`:''}
   <div class="row" style="margin-bottom:12px"><button class="btn pri" data-act="new-offer" data-v="day">+ Day-wise % offer</button><button class="btn pri" data-act="new-offer" data-v="bogo">+ BOGO offer</button><button class="btn pri" data-act="new-offer" data-v="item">+ Specific pizza offer</button><button class="btn pri" data-act="new-offer" data-v="code">+ Coupon code</button><button class="btn chz" data-act="edit-combo" data-id="">+ Combo</button></div>
   <div class="sec-h" style="margin-top:6px"><h2 style="font-size:22px">Offers</h2></div>
-  <div class="ogrid">${S.offers.map(o=>card(o,false)).join('')||'<div class="empty card">No offers yet.</div>'}</div>
+  <div class="ogrid">${S.offers.filter(o=>o.type!=='coins').map(o=>card(o,false)).join('')||'<div class="empty card">No offers yet.</div>'}</div>
+  ${coinBox()}
   <div class="sec-h"><h2 style="font-size:22px">Combos</h2></div>
   <div class="ogrid">${S.combos.map(c=>card(c,true)).join('')||'<div class="empty card">No combos yet.</div>'}</div>`;
 }
@@ -5024,6 +5039,9 @@ document.addEventListener('change',e=>{
   if(mh.onChange&&mroot.contains(e.target)){mh.onChange(e);return}
   const t=e.target;
   if(t.id==='pc-coins'){U.pos.useCoins=t.checked;render()}
+  if(t.dataset.coin&&staff()?.role==='owner'){const v=+t.value;if(!(v>=0)||(t.dataset.coin!=='per100'&&!(v>0))){toast('Enter a number above 0');render();return}
+    let r=S.offers.find(o=>o.type==='coins');if(!r){r={id:'coinrules',type:'coins',name:'Cheese Coins rules',active:false};S.offers.push(r)}
+    r[t.dataset.coin]=t.dataset.coin==='maxPct'?Math.min(100,v):v;r.active=false;save();render();toast('Cheese Coins updated')}
   if(t.dataset.al&&staff()?.role==='owner'){const o=S.outlets.find(x=>x.id===t.dataset.al);const c=alertCfg(o);c[t.dataset.f]=t.type==='checkbox'?t.checked:t.dataset.f==='vol'?+t.value:t.value;o.alert=c;save();render();if(t.dataset.f!=='loop')playTone(o);toast('Alert saved')}
   if(t.dataset.alsnd&&t.files[0]&&staff()?.role==='owner'){const o=S.outlets.find(x=>x.id===t.dataset.alsnd),f=t.files[0];
     if(f.size>1048576){toast('That sound is over 1 MB. Pick a shorter one.')}else{const r=new FileReader();r.onload=()=>{o.alertSound=r.result;o.alert={...alertCfg(o),tone:'custom'};save();render();playTone(o);toast('Ringtone saved')};r.readAsDataURL(f)}}
@@ -5456,7 +5474,7 @@ function renderAccount(){
         <button class="btn chz lg" data-act="spin" ${can&&!U.spin.busy?'':'disabled'}>${can?'Spin now':'Come back tomorrow'}</button></div>
       <div class="card panel"><h3 style="font-size:22px">My coupons</h3>
         ${codes.map(x=>`<div class="coupon k-code"><div class="stub">${x.kind==='pct'?x.value+'%':'₹'+x.value}<small>${x.personal||c.myCodes.includes(x)?'YOURS':'CODE'}</small></div><div class="ct"><b>${esc(x.name)}</b><span class="codechip">${esc(x.code)}</span><span>${x.kind==='pct'?x.value+'% off'+(x.cap?' up to '+rs(x.cap):''):rs(x.value)+' off'}${x.min?' above '+rs(x.min):''}${x.until?' · till '+fmtDate(x.until):''}</span></div></div>`).join('')||'<div class="empty">No coupons right now. Spin the wheel!</div>'}</div>
-      <div class="card panel"><h3 style="font-size:22px">Cheese Coins</h3><div class="row"><div class="coin">C</div><div><b class="num" style="font-size:28px;font-family:var(--display)">${Math.floor(c.coins||0)}</b><div class="small muted">1 coin = ₹1 · use up to 20% of a bill</div></div></div>
+      <div class="card panel"><h3 style="font-size:22px">Cheese Coins</h3><div class="row"><div class="coin">C</div><div><b class="num" style="font-size:28px;font-family:var(--display)">${Math.floor(c.coins||0)}</b><div class="small muted">1 coin = ${coinValTxt()} · worth ${coinRs(Math.floor(c.coins||0)*coinRules().value)} · use up to ${coinRules().maxPct}% of a bill</div></div></div>
         ${c.tx.filter(t=>t.kind==='coins').slice(0,6).map(t=>`<div class="tx"><span>${esc(t.note)}</span><span class="num ${t.amt>=0?'pos':'neg'}">${t.amt>=0?'+':''}${t.amt}</span></div>`).join('')}</div>
       <div class="card panel"><h3 style="font-size:22px">Invite friends</h3><div class="refcard"><div class="grow"><div class="small muted">Your referral code</div><div class="refcode">${esc(c.ref)}</div></div><button class="btn sm" data-act="copyref" data-t="${esc(refTxt)}">Copy</button><a class="btn sm pri" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(refTxt)}">Share on WhatsApp</a></div><div class="small muted">You and your friend each get 50 Cheese Coins when they sign up with your code.</div></div>
     </div>
