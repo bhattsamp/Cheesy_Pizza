@@ -952,6 +952,7 @@ html:has(#modalRoot:not(:empty)),html:has(#boardRoot:not(:empty)),html:has(#choo
 .paysheet .calc .big{font-size:32px}
 .paysheet .quick button{padding:10px 14px;font-size:15px}
 .acts2{display:grid;grid-template-columns:1.3fr 1fr;gap:8px}.acts2 .btn{padding:16px 8px;font-size:17px}
+.acts2 .btn.wa{background:#25d366;border-color:#25d366;color:#fff}
 .paystat{text-align:left;font:inherit;color:inherit;cursor:pointer;width:100%}
 .paystat .more{margin-left:auto;font-size:18px;line-height:1;color:var(--teal);font-weight:800}
 .paystat:hover{border-color:var(--teal)}
@@ -3782,7 +3783,7 @@ function openPay(){
     ${P.pay==='zomato'?'<div class="small muted">Paid through Zomato.</div>':''}
     ${P.pay==='split'?splitHtml(t,P.splits||(P.splits={}),spKeys,'sp'):''}
     ${P.pay==='upi'||P.pay==='split'?`<div id="utr-wrap" ${P.pay==='split'&&!(+(P.splits||{}).upi>0)?'hidden':''}>${P.pay==='split'?'<button class="btn sm" data-act="pos-qr" style="margin-bottom:8px">Show QR for the UPI part</button>':''}${utrField('pos-utr',P.utr)}</div>`:''}
-    <div class="acts2"><button class="btn pri lg" data-act="pos-go" data-v="billprint">Bill & Print</button><button class="btn lg" data-act="pos-go" data-v="bill">Bill only</button></div>
+    <div class="acts2"><button class="btn pri lg" data-act="pos-go" data-v="billprint">Bill & Print</button><button class="btn lg wa" data-act="pos-go" data-v="billwa">Bill & WhatsApp</button></div>
     ${(P.pay==='cash'||P.pay==='split'&&+(P.splits||{}).cash>0)&&btp()&&btGet()&&btGet().drawer!==false?'<div class="small muted" style="text-align:center">The cash drawer opens when you bill.</div>':''}
   </div>`,{
     onAct:(act,el)=>{
@@ -3917,8 +3918,11 @@ function posGo(kind){
   }
   save();Object.assign(U.pos,JSON.parse(JSON.stringify(POS_BLANK)));render();
   if(kind==='kot'){const txt=kotText(o,run?round:null);printText(txt);toast((run?'New items for '+o.no:o.no)+' sent to kitchen')}
-  else{openDone(o);const cash=mode==='cash'||!!(splits&&splits.some(x=>x.mode==='cash'));if(kind==='billprint')printText(billText(o),{drawer:cash});else if(cash)openDrawer()}
+  else{openDone(o);const cash=mode==='cash'||!!(splits&&splits.some(x=>x.mode==='cash'));if(kind==='billprint')printText(billText(o),{drawer:cash});else if(cash)openDrawer();
+    if(kind==='billwa'){if(o.customer.phone)openLink(waLink(o.customer.phone,waInvoice(o)));else toast('Billed. No mobile number, so nothing was sent on WhatsApp')}}
 }
+// opens a link the way a tapped link would (a new tab on a computer, WhatsApp itself in the app)
+function openLink(url){const a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove()}
 // UPI QR for the customer to scan (the UPI part only, on a split bill). When the money shows in
 // the shop's UPI app, the counter taps Payment received and the QR turns into a big Paid screen.
 function openQr(paid){
@@ -3927,7 +3931,7 @@ function openQr(paid){
   const head=`<div class="mh"><h3>${paid?'Payment received':'Scan to pay · <span class="num">'+rs(amt)+'</span>'}</h3><button class="x" data-act="close" aria-label="Close">×</button></div>`;
   showModal(head+(paid?`<div class="mb qrpay">
     <div class="paidok big" role="status"><svg viewBox="0 0 84 84" aria-hidden="true"><circle class="ring" cx="42" cy="42" r="40"/><circle cx="42" cy="42" r="40"/><path d="M25 43l11 11 23-24"/></svg><b>Paid ${rs(amt)}</b><span class="small muted">GPay / UPI${P.utr?' · UTR <span class="num">'+esc(fmtUtr(P.utr))+'</span>':''}</span>${P.pay==='split'?`<span class="chip c">Also take: ${esc(splitList(P.splits||{},[...COUNTER_MODES,'due']).filter(x=>x.mode!=='upi').map(x=>modeName(x.mode)+' '+rs(x.amt)).join(' + ')||'nothing')}</span>`:''}</div>
-    <div class="acts2"><button class="btn pri lg" data-act="pos-go" data-v="billprint">Bill & Print</button><button class="btn lg" data-act="pos-go" data-v="bill">Bill only</button></div></div>`
+    <div class="acts2"><button class="btn pri lg" data-act="pos-go" data-v="billprint">Bill & Print</button><button class="btn lg wa" data-act="pos-go" data-v="billwa">Bill & WhatsApp</button></div></div>`
   :`<div class="mb qrpay"><div class="qr"><div data-qr="${esc(upiLink(cur(),amt))}"></div><b class="num">${rs(amt)} · ${esc(cur().upi)}</b></div>
     ${utrField('pos-utr',P.utr)}
     <button class="btn ok solid lg block" data-act="qr-paid">✓ Payment received</button>
@@ -3949,6 +3953,7 @@ function openDone(o){
     <div class="row" style="justify-content:center">
       <button class="btn" data-act="bill" data-id="${o.id}">Bill & Print</button>
       <button class="btn" data-act="kot" data-id="${o.id}">KOT Print</button>
+      ${o.customer.phone?`<a class="btn" href="${waLink(o.customer.phone,waInvoice(o))}" target="_blank" rel="noopener">Send bill on WhatsApp</a>`:''}
       <button class="btn" data-act="track" data-id="${o.id}">Tracking page</button>
     </div>
     <button class="btn pri lg" data-act="close">Next order</button>
