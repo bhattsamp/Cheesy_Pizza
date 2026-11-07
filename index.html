@@ -951,6 +951,27 @@ html:has(#modalRoot:not(:empty)),html:has(#boardRoot:not(:empty)),html:has(#choo
 .paysheet .paymodes.five{grid-template-columns:repeat(auto-fit,minmax(90px,1fr))}
 .paysheet .calc .big{font-size:32px}
 .paysheet .quick button{padding:10px 14px;font-size:15px}
+#cs{position:fixed;inset:0;z-index:9999;background:radial-gradient(circle at 70% 40%,#14606e,#0b3a43 70%);color:#fff;font-family:'Baloo Bhai 2',system-ui,sans-serif;overflow:hidden}
+#cs .cs-logo{height:clamp(70px,14vh,150px);align-self:center}
+.cs-l .cs-logo{align-self:flex-start}
+#cs h1{font-size:clamp(36px,6vw,80px);line-height:1;margin:18px 0 8px}#cs h2{font-size:clamp(26px,3.4vw,44px);margin:18px 0 10px}
+.cs-idle,.cs-qr,.cs-done{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:3vh 4vw;gap:1vh}
+.cs-poster{max-height:56vh;max-width:90vw;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.45);margin-top:2vh}
+.cs-nm{display:inline-block;background:#d23f35;color:#fff;font-weight:800;border-radius:12px;padding:8px 20px 5px;font-size:clamp(16px,2vw,26px)}
+.cs-cart{height:100%;display:grid;grid-template-columns:1.4fr 1fr;gap:4vw;padding:4vh 4vw}
+.cs-l{display:flex;flex-direction:column;min-height:0}.cs-lines{overflow:auto;display:flex;flex-direction:column;gap:10px;padding-right:8px}
+.cs-li{display:flex;gap:16px;align-items:baseline;font-size:clamp(20px,2.4vw,32px);border-bottom:1px solid rgba(255,255,255,.14);padding-bottom:10px}
+.cs-li .q{color:#f2b632;font-weight:800;min-width:2.4em}.cs-li .n{flex:1}.cs-li small{display:block;font-size:.6em;opacity:.7}
+.cs-r{display:flex;flex-direction:column;justify-content:center;gap:3vh}
+.cs-sum{background:#fff;color:#0b3a43;border-radius:28px;padding:4vh 3vw;box-shadow:0 30px 70px rgba(0,0,0,.35)}
+.cs-sum .row{display:flex;justify-content:space-between;font-size:clamp(18px,2vw,28px);padding:4px 0}.cs-sum .ok{color:#1f8a4c}
+.cs-tot{display:flex;flex-direction:column;align-items:flex-start;margin-top:12px;border-top:2px dashed #cfe0e3;padding-top:14px}
+.cs-tot span{font-size:clamp(18px,2vw,28px);font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#56727a}.cs-tot b{font-size:clamp(56px,8vw,120px);line-height:1}
+.cs-qbox{background:#fff;border-radius:28px;padding:24px;box-shadow:0 30px 70px rgba(0,0,0,.35);margin-top:2vh}
+#cs-code img,#cs-code canvas{width:min(46vh,420px)!important;height:min(46vh,420px)!important}
+.cs-amt{font-size:clamp(48px,7vw,104px);font-weight:800;color:#f2b632;line-height:1.1}
+.cs-hint{font-size:clamp(18px,2.2vw,30px);opacity:.92}.cs-upi{font-size:clamp(16px,1.8vw,24px);opacity:.75}
+.cs-done .paidok svg{width:min(26vh,220px);height:min(26vh,220px)}
 .lowstock{display:flex;gap:8px;align-items:center;width:100%;text-align:left;padding:10px 14px;margin-bottom:12px;border:1px solid var(--bad);background:color-mix(in srgb,var(--bad) 8%,var(--surface));color:var(--ink);font:inherit;cursor:pointer}
 .lowrow td{background:color-mix(in srgb,var(--bad) 6%,transparent)}
 .repsec{padding:0;margin-top:10px;overflow:hidden}.repsec>summary{cursor:pointer;padding:12px 14px;list-style:none;display:flex;gap:8px;align-items:center}
@@ -2536,6 +2557,7 @@ const TABS=[['new','New order'],['kitchen','Kitchen'],['counter','Counter'],['or
 
 const app=document.getElementById('app');
 function render(){
+  if(CS_MODE){renderCS();return}
   syncHours();
   if(APP_ROLE){S.mode=APP_ROLE==='admin'?'pos':'public';document.body.classList.add('app-'+APP_ROLE)}
   document.getElementById('m-pub').setAttribute('aria-pressed',S.mode==='public');
@@ -2548,8 +2570,47 @@ function render(){
   const ks={};app.querySelectorAll('[data-ks]').forEach(el=>{ks[el.dataset.ks]=[el.scrollTop,el.scrollLeft]});
   app.innerHTML=S.mode==='public'?pubNav()+(U.pubView==='account'&&me()?renderAccount():U.pubView==='auth'&&!me()?renderAuth():U.pubView==='home'?renderHome():renderPublic()):renderPOS();renderAcct();
   app.querySelectorAll('[data-ks]').forEach(el=>{const v=ks[el.dataset.ks];if(v){el.scrollTop=v[0];el.scrollLeft=v[1]}});
-  renderChrome();renderBoard();renderRing();afterRender();navTrack();sideBar();fitTicket();
+  renderChrome();renderBoard();renderRing();afterRender();navTrack();sideBar();fitTicket();csSend();
 }
+/* ===== Customer screen: a second window on the till's front monitor that the customer faces.
+   It shows the bill as the cashier builds it, the UPI QR with the amount at payment, and a thank-you
+   when it's paid. The till and the window talk through a BroadcastChannel in the same browser. ===== */
+const CS_MODE=new URLSearchParams(location.search).get('screen')==='customer';
+const CS_CH=typeof BroadcastChannel!=='undefined'?new BroadcastChannel('cheesy-cs'):null;
+let csLast='',csFlash=null; // csFlash: {phase:'qr'|'paid'|'thanks', ..., until}
+function csState(){
+  if(S.mode!=='pos'||!staff())return{phase:'idle'};
+  if(csFlash&&csFlash.until>Date.now()){if(csFlash.phase!=='qr'||mroot.querySelector('.qrpay'))return csFlash}
+  csFlash=null;const {P,b,t}=posCalc(),run=P.addTo&&S.orders.find(o=>o.id===P.addTo);
+  const lines=[...(run?run.items:[]),...P.cart].map(l=>({n:l.name+(l.size?' '+sizeLabel(l.size):''),q:l.qty,a:r2(l.unit*l.qty),x:[...(l.addons||[]),...(l.tops||[])].join(', ')}));
+  if(!lines.length)return{phase:'idle'};
+  return{phase:'cart',lines,sub:b.subtotal,disc:(b.discounts||[]).map(d=>({n:d.name,a:d.amt})),total:t,name:(P.name||run?.customer?.name||'').trim()}}
+function csSend(force){if(!CS_CH||CS_MODE)return;const st=csState(),j=JSON.stringify(st);if(!force&&j===csLast)return;csLast=j;CS_CH.postMessage({t:'state',st,shop:{name:cur().name,upi:cur().upi}})}
+function csFlashSet(f,ms){csFlash={...f,until:Date.now()+ms};setTimeout(()=>csSend(true),0);setTimeout(()=>csSend(),ms+50)}
+if(CS_CH&&!CS_MODE)CS_CH.onmessage=e=>{if(e.data&&e.data.t==='hello')csSend(true)};
+async function openCustomerScreen(){
+  let feat='popup=yes,width=1280,height=800';
+  try{if(window.getScreenDetails){const sd=await getScreenDetails();const other=sd.screens.find(x=>x!==sd.currentScreen);if(other)feat=`popup=yes,left=${other.availLeft},top=${other.availTop},width=${other.availWidth},height=${other.availHeight}`}}catch(e){}
+  const w=window.open(location.pathname+'?screen=customer','cheesy-cs',feat);
+  if(!w){toast('Allow pop-ups for this site, then tap Customer screen again');return}
+  toast('Drag the new window to the front screen and press F11 for full screen');setTimeout(()=>csSend(true),800)}
+let CS={st:{phase:'idle'},shop:{}};
+function renderCS(){
+  if(!document.getElementById('cs')){document.body.insertAdjacentHTML('beforeend','<div id="cs"></div>');document.title='Cheesy Pizza · Customer screen';
+    if(CS_CH){CS_CH.onmessage=e=>{if(e.data&&e.data.t==='state'){CS={st:e.data.st,shop:e.data.shop||{}};renderCS()}};CS_CH.postMessage({t:'hello'})}
+    document.addEventListener('click',()=>{if(!document.fullscreenElement)document.documentElement.requestFullscreen?.().catch(()=>{})})}
+  const st=CS.st,el=document.getElementById('cs'),logo='<img class="cs-logo" src="img/logo-stack-light.png" alt="Cheesy Pizza">';
+  let h;
+  if(st.phase==='cart')h=`<div class="cs-cart"><div class="cs-l">${logo}<h2>${st.name?'Hi '+esc(st.name.split(' ')[0])+', your order':'Your order'}</h2>
+     <div class="cs-lines">${st.lines.map(l=>`<div class="cs-li"><span class="q num">${l.q}×</span><span class="n">${esc(l.n)}${l.x?`<small>${esc(l.x)}</small>`:''}</span><b class="num">${rs(l.a)}</b></div>`).join('')}</div></div>
+     <div class="cs-r"><div class="cs-sum">${st.disc.length?`<div class="row"><span>Items</span><span class="num">${rs(st.sub)}</span></div>${st.disc.map(d=>`<div class="row ok"><span>${esc(d.n)}</span><span class="num">−${rs(d.a)}</span></div>`).join('')}`:''}
+     <div class="cs-tot"><span>To pay</span><b class="num">${rs(st.total)}</b></div></div><div class="cs-nm">We don't use mayonnaise in any product</div></div></div>`;
+  else if(st.phase==='qr')h=`<div class="cs-qr">${logo}<div class="cs-qbox"><div id="cs-code"></div></div><div class="cs-amt num">${rs(st.amt)}</div><div class="cs-hint">Scan with GPay, PhonePe, Paytm or any UPI app</div><div class="cs-upi num">${esc(st.upi||'')}</div></div>`;
+  else if(st.phase==='paid'||st.phase==='thanks')h=`<div class="cs-done"><div class="paidok big"><svg viewBox="0 0 84 84" aria-hidden="true"><circle class="ring" cx="42" cy="42" r="40"/><circle cx="42" cy="42" r="40"/><path d="M25 43l11 11 23-24"/></svg></div>
+     <h1>${st.phase==='paid'?'Payment received':'Thank you!'}</h1><div class="cs-amt num">${rs(st.amt||0)}</div>${st.no?`<div class="cs-hint">Your order number is <b class="num">${esc(st.no)}</b></div>`:''}<div class="cs-hint">Really cheesy pizza is on its way 🍕</div></div>`;
+  else h=`<div class="cs-idle">${logo}<h1>Welcome to Cheesy Pizza</h1><div class="cs-nm">Pure veg · We don't use mayonnaise in any product</div><img class="cs-poster" src="img/menu-poster.jpg" alt="Our menu"></div>`;
+  el.innerHTML=h;
+  if(st.phase==='qr'&&window.QRCode){const c=document.getElementById('cs-code');try{new QRCode(c,{text:st.link,width:420,height:420,colorDark:'#0b3a43',correctLevel:QRCode.CorrectLevel.M})}catch(e){}}}
 // POS terminals and tablets: the order ticket fills the space from its top to the bottom of the
 // screen, so totals and the Bill buttons stay in view while the menu scrolls beside it
 // Height of the POS section bar, so sticky panes sit below it; keeps the current section in view
@@ -3745,7 +3806,7 @@ function vNew(){
   const ci=custInfo(P.phone);const todays=activeOffers(dow);
   const n=P.cart.reduce((a,l)=>a+l.qty,0);
   const optsOn=P.opts||P.note||P.code||(P.wait&&P.wait!==PREP_MIN);
-  return `<div class="ph1"><h2>New order</h2><span class="muted small">${esc(cur().name)} · next no. <b class="num">${cur().code}-${String((S.seq[S.cur+'|'+today()]||0)+1).padStart(3,'0')}</b></span></div>
+  return `<div class="ph1"><h2>New order</h2><span class="muted small">${esc(cur().name)} · next no. <b class="num">${cur().code}-${String((S.seq[S.cur+'|'+today()]||0)+1).padStart(3,'0')}</b></span>${!CAP&&CS_CH?'<span class="grow"></span><button class="btn sm" data-act="cs-open" title="Open the screen the customer sees on your second monitor">Customer screen ↗</button>':''}</div>
   ${todays.length?`<div class="row" style="margin-bottom:10px"><span class="grp-h">Live today</span>${todays.map(o=>`<span class="chip ${o.type==='bogo'?'r':o.type==='item'?'c':'t'}">${esc(o.name)}</span>`).join('')}</div>`:''}
   <div class="neworder">
     <div class="menucol">
@@ -3949,7 +4010,7 @@ function posGo(kind){
   }
   save();Object.assign(U.pos,JSON.parse(JSON.stringify(POS_BLANK)));render();
   if(kind==='kot'){const txt=kotText(o,run?round:null);printText(txt);toast((run?'New items for '+o.no:o.no)+' sent to kitchen')}
-  else{openDone(o);const cash=mode==='cash'||!!(splits&&splits.some(x=>x.mode==='cash'));if(kind==='billprint')printText(billText(o),{drawer:cash});else if(cash)openDrawer();
+  else{openDone(o);if(o.paid)csFlashSet({phase:'thanks',amt:o.total,no:o.no},8000);const cash=mode==='cash'||!!(splits&&splits.some(x=>x.mode==='cash'));if(kind==='billprint')printText(billText(o),{drawer:cash});else if(cash)openDrawer();
     if(kind==='billwa'){if(o.customer.phone)openLink(waLink(o.customer.phone,waInvoice(o)));else toast('Billed. No mobile number, so nothing was sent on WhatsApp')}}
 }
 // opens a link the way a tapped link would (a new tab on a computer, WhatsApp itself in the app)
@@ -3959,6 +4020,7 @@ function openLink(url){const a=document.createElement('a');a.href=url;a.target='
 function openQr(paid){
   const {P,t}=posCalc();const amt=P.pay==='split'?r2(+(P.splits||{}).upi||0):t;
   if(!(amt>0)){toast('Type the UPI amount in the split first');openPay();return}
+  if(!paid)csFlashSet({phase:'qr',amt,link:upiLink(cur(),amt),upi:cur().upi},15*60000);
   const head=`<div class="mh"><h3>${paid?'Payment received':'Scan to pay · <span class="num">'+rs(amt)+'</span>'}</h3><button class="x" data-act="close" aria-label="Close">×</button></div>`;
   showModal(head+(paid?`<div class="mb qrpay">
     <div class="paidok big" role="status"><svg viewBox="0 0 84 84" aria-hidden="true"><circle class="ring" cx="42" cy="42" r="40"/><circle cx="42" cy="42" r="40"/><path d="M25 43l11 11 23-24"/></svg><b>Paid ${rs(amt)}</b><span class="small muted">GPay / UPI${P.utr?' · UTR <span class="num">'+esc(fmtUtr(P.utr))+'</span>':''}</span>${P.pay==='split'?`<span class="chip c">Also take: ${esc(splitList(P.splits||{},[...COUNTER_MODES,'due']).filter(x=>x.mode!=='upi').map(x=>modeName(x.mode)+' '+rs(x.amt)).join(' + ')||'nothing')}</span>`:''}</div>
@@ -3969,7 +4031,7 @@ function openQr(paid){
     <button class="btn block" data-act="qr-back">Back to payment</button>
     <div class="small muted" style="text-align:center">Tap Payment received once the money shows in your UPI app.</div></div>`),{
     onAct:(act,el)=>{
-      if(act==='qr-paid'){const bad=utrBad(P.utr);if(bad){toast(bad);return true}openQr(true);return true}
+      if(act==='qr-paid'){const bad=utrBad(P.utr);if(bad){toast(bad);return true}openQr(true);csFlashSet({phase:'paid',amt},6000);return true}
       if(act==='qr-back'){openPay();return true}
       if(act==='pos-go'){closeModal();posGo(el.dataset.v);return true}
       return false},
@@ -5074,6 +5136,7 @@ document.addEventListener('click',e=>{
     case 'board-x':U.board=false;renderBoard();break;
     case 'cancel':openCancel(find(el.dataset.id));break;
     case 'day-close':openDayClose(el.dataset.v);break;
+    case 'cs-open':openCustomerScreen();break;
     case 'exp-add':openExpense(el.dataset.v);break;
     case 'st-add':{const o=cur();o.stock=o.stock||[];o.stock.push({id:uid('st'),name:'New item',unit:'pcs',qty:0,low:0});save();render();break}
     case 'st-starter':{const o=cur();o.stock=[['Mozzarella cheese','kg',0,2],['Pizza dough balls','pcs',0,20],['Pizza boxes 7"','pcs',0,30],['Pizza boxes 10"','pcs',0,20],['Pizza sauce','kg',0,1],['Garlic bread dough','pcs',0,10],['Cold drinks','bottles',0,12],['Dip cups','pcs',0,30]].map(([name,unit,qty,low])=>({id:uid('st'),name,unit,qty,low}));save();render();toast('Added. Now type what you have in stock.');break}
