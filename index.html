@@ -4553,13 +4553,13 @@ function vHomeAdm(){
    spots:[item ids], custom:[{id,kick,title,text,img,bg}]}. display.html reads the same keys. */
 const DSP_SLIDES=[['hero','Welcome','Fresh from our oven','Cheesy'],['spot0','Spotlight 1'],['pull','Cheese pull','The cheese pull','Pull a|slice!'],
   ['ring','Ekdum cheesy carousel','Our signature six','Ekdum cheesy'],['spot1','Spotlight 2'],['pizza','Pizza being made','Watch us make it','Made fresh'],
-  ['garlic','Garlic bread being made','Watch us make it','Garlic bread'],['spot2','Spotlight 3'],['best','Best sellers',"Everyone's favourites",'Our best sellers'],
+  ['garlic','Garlic bread being made','Watch us make it','Garlic bread'],['poster','Menu card poster','Our menu card','Pick your|pizza'],['spot2','Spotlight 3'],['best','Best sellers',"Everyone's favourites",'Our best sellers'],
   ['offers',"Today's offers (shows only when there are offers today)",'(day) deals',"Today's offers"],['combos','Combo meals','Bring friends','Combo meals'],['spot3','Spotlight 4'],
   ['hours','Opening hours','Come say kem cho','Open|every day'],['order','Order online with QR code','Skip the queue','Order|online'],['play','Play zone','Play zone','Come play with your food'],['address','Address and map (last slide)','Come visit us','Find us|here']];
 const DSP_BG=['Red','Sea blue','Cheese yellow','Teal'];
 function dspSlides(o){const d=o.display||{},ord=d.order||[];
   const std=DSP_SLIDES.map(([key,name,kick,title])=>({key,name,kick,title})),all=[...std.filter(x=>x.key!=='address'),...(d.custom||[]).map(c=>({key:'c_'+c.id,name:'Your slide: '+(c.title||'no heading yet'),c})),...std.filter(x=>x.key==='address')];
-  const pos=k=>{const i=ord.indexOf(k);return i<0?1000+all.findIndex(s=>s.key===k):i};return all.sort((a,b)=>pos(a.key)-pos(b.key))}
+  const pos=k=>{const i=ord.indexOf(k);if(i>=0)return i;const j=all.findIndex(s=>s.key===k);for(let q=j-1;q>=0;q--){const p=ord.indexOf(all[q].key);if(p>=0)return p+(j-q)/100}return 1000+j};return all.sort((a,b)=>pos(a.key)-pos(b.key))}
 function vDisplayAdm(){
   if(staff()?.role!=='owner')return '<div class="ph1"><h2>Shop display</h2><span class="muted small">Only the owner can change the shop display.</span></div>';
   const o=cur(),d=o.display||{},all=dspSlides(o),link=location.origin+'/display'+(liveOutlets().length>1?'?outlet='+o.id:'');
