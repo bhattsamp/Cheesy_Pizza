@@ -767,9 +767,34 @@ html:has(#modalRoot:not(:empty)),html:has(#boardRoot:not(:empty)),html:has(#choo
 }
 .field label.btn{text-transform:none;letter-spacing:0;font-size:14px;color:var(--ink);cursor:pointer}
 .photo-row{display:grid;grid-template-columns:minmax(0,260px) 1fr;gap:14px;align-items:start}
-.item.prev{pointer-events:none}.item.prev .ph{aspect-ratio:4/3}
+.item.prev{pointer-events:none}.item.prev .ph{aspect-ratio:4/3}.item.prev .psl{pointer-events:auto}
 .mthumb{width:44px;height:44px;border-radius:8px;border:1px dashed var(--line);background:var(--surface2);padding:0;overflow:hidden;flex:none;font-size:10px;font-weight:700;color:var(--muted)}
 .mthumb img{width:100%;height:100%;object-fit:cover;display:block}
+.mthumb{position:relative}.mthumb .n{position:absolute;right:2px;bottom:2px;background:rgba(0,0,0,.65);color:#fff;border-radius:6px;padding:0 4px;font-size:10px;line-height:15px}
+.pics{display:flex;flex-wrap:wrap;gap:8px}
+.pic{position:relative;width:76px;height:76px;border-radius:10px;overflow:hidden;background:var(--surface2);border:2px solid transparent}
+.pic.main{border-color:var(--teal)}
+.pic img{width:100%;height:100%;object-fit:cover;display:block}
+.pic .tag{position:absolute;left:0;right:0;bottom:0;background:var(--teal);color:#fff;font-size:10px;font-weight:800;text-align:center;line-height:16px}
+.pic .pa{position:absolute;top:3px;right:3px;display:flex;gap:3px}
+.pic .pa button{width:22px;height:22px;border-radius:50%;border:0;background:rgba(0,0,0,.6);color:#fff;font-size:13px;line-height:22px;padding:0;cursor:pointer}
+.psl{position:relative;width:100%;height:100%}
+.psl.round{width:min(300px,78vw);height:auto;aspect-ratio:1;margin:0 auto}
+.psl-t{display:flex;width:100%;height:100%;overflow-x:auto;scroll-snap-type:x mandatory;scroll-behavior:smooth;scrollbar-width:none;overscroll-behavior-x:contain}
+.psl-t::-webkit-scrollbar{display:none}
+.psl-s{position:relative;flex:0 0 100%;height:100%;scroll-snap-align:center;scroll-snap-stop:always;touch-action:pan-x pan-y}
+.psl-s>img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;-webkit-user-drag:none}
+.psl.round .psl-t{overflow-y:hidden}
+.psl.round .psl-s{padding:6px}.psl.round .psl-s>img{border-radius:50%;box-shadow:var(--shadow-lg)}
+.psl.round .psl-s .lens{position:absolute;display:none;border-radius:50%;overflow:hidden;border:4px solid #fff;box-shadow:0 10px 30px rgba(0,0,0,.35),0 0 0 2px var(--teal);background:var(--surface);pointer-events:none;z-index:3}
+.psl.round .psl-s .lens>*{position:absolute;left:0;top:0;transform-origin:0 0;max-width:none;border-radius:50%;box-shadow:none;padding:0}
+.psl-a{position:absolute;top:50%;transform:translateY(-50%);width:36px;height:36px;border-radius:50%;border:0;background:rgba(255,255,255,.92);color:var(--ink,#222);font-size:24px;line-height:34px;padding:0;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.25);z-index:4}
+.psl-a.prev{left:4px}.psl-a.next{right:4px}
+.psl-d{position:absolute;left:0;right:0;bottom:8px;display:flex;justify-content:center;gap:6px;z-index:4;pointer-events:none}
+.psl-d i{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.6);box-shadow:0 0 0 1px rgba(0,0,0,.25);transition:.2s}
+.psl-d i.on{background:var(--teal);width:20px;border-radius:99px}
+.psl.round .psl-d{bottom:-14px}
+.ph .pcount{position:absolute;right:8px;bottom:8px;z-index:2;background:rgba(0,0,0,.6);color:#fff;font-size:11px;font-weight:700;border-radius:99px;padding:2px 8px;pointer-events:none}
 @media (max-width:560px){.photo-row{grid-template-columns:1fr}}
 /* ===== POS on terminals, tablets and phones =====
    phone (to 760px): bottom tab bar, ticket below the menu (rules above)
@@ -2017,6 +2042,18 @@ html.lenis,html.lenis body{height:auto}
 <script>
 // Built-in photos are named (img/margherita.jpg); uploaded ones are stored as a path (api/images/…)
 const IMG=n=>/[\/:]/.test(n)?n:'img/'+n+'.jpg';
+// All of an item's photos, main photo first (img is always the first one; imgs is set when there are more)
+const photosOf=m=>m.imgs?.length?m.imgs:m.img?[m.img]:[];
+// Swipeable slider for an item's photos (srcs: ready image URLs). round: the item details look, with the mouse magnifier.
+function photoSlider(srcs,alt,round){
+  return `<div class="psl${round?' round':''}"><div class="psl-t">${srcs.map((u,i)=>`<div class="psl-s"${round?' data-zoom="m"':''}><img src="${esc(u)}" alt="${esc(alt)} · photo ${i+1} of ${srcs.length}"${i?' loading="lazy"':''} draggable="false"></div>`).join('')}</div>
+    <button type="button" class="psl-a prev" data-psl="-1" aria-label="Previous photo">‹</button><button type="button" class="psl-a next" data-psl="1" aria-label="Next photo">›</button>
+    <div class="psl-d">${srcs.map((_,i)=>`<i class="${i?'':'on'}"></i>`).join('')}</div></div>`;
+}
+document.addEventListener('click',e=>{const a=e.target.closest?.('[data-psl]');if(!a)return;e.preventDefault();e.stopPropagation();
+  const t=a.parentNode.querySelector('.psl-t'),w=t.clientWidth,n=t.children.length,i=Math.round(t.scrollLeft/w),k=(i+ +a.dataset.psl+n)%n;t.scrollTo({left:k*w})},true);
+document.addEventListener('scroll',e=>{const t=e.target;if(!t.classList?.contains('psl-t'))return;const i=Math.round(t.scrollLeft/t.clientWidth);
+  t.parentNode.querySelectorAll('.psl-d i').forEach((d,j)=>d.classList.toggle('on',j===i))},true);
 const DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
 /* Lookup lists and settings come from the database (see applyConfig) */
@@ -2474,7 +2511,7 @@ function renderPublic(){
     const items=S.menu.filter(m=>m.cat===k&&!m.off&&matchFilter(m,dow));if(!items.length)return'';shown+=items.length;
     return `<section><div class="sec-h"><h2>${n}</h2><span class="gu">${GU[k]||''}</span>${k==='pizza'?'<span class="muted small">Tap Add to build yours: size, base, toppings</span>':''}</div>
     <div class="grid">${items.map(m=>{const tags=itemOfferTags(m,dow);return `<article class="card item">
-      <div class="ph" data-act="pz-info" data-id="${m.id}" role="button" tabindex="0" aria-label="About ${esc(m.name)}">${thumb(m)}<div class="ribbon">${m.best?'<span>Best seller</span>':''}${tags.map(t=>`<span class="o">${esc(t)}</span>`).join('')}</div></div>
+      <div class="ph" data-act="pz-info" data-id="${m.id}" role="button" tabindex="0" aria-label="About ${esc(m.name)}">${thumb(m)}${photosOf(m).length>1?`<span class="pcount">${photosOf(m).length} photos</span>`:''}<div class="ribbon">${m.best?'<span>Best seller</span>':''}${tags.map(t=>`<span class="o">${esc(t)}</span>`).join('')}</div></div>
       <div class="bd"><h3><span class="veg" title="Veg"></span>${esc(m.name)} ${m.jain?'<span class="jain" title="Jain option">J</span>':''} ${m.spicy?'<span title="Spicy">'+'🌶'.repeat(m.spicy)+'</span>':''}</h3>
       <div class="desc">${esc(m.desc)}</div>
       <div class="ft">${m.cat==='pizza'?`<div class="sizes">${S.sizes.filter(s=>+m.prices[s.id]).map(s=>`<span>${esc(s.label)} <b class="num">${rs(m.prices[s.id])}</b></span>`).join('')}</div>`:`<div class="price num">${rs(m.price)}</div>`}
@@ -3064,11 +3101,11 @@ function fillWords(t){let i=0;const html=t.split(/(\s+)/).map(s=>!s||/^\s+$/.tes
 // Pizza builder, or the options box for sides. With `edit` set, changes that cart line instead of adding one.
 // Tapping a menu photo: the item's details, with a magnifier that follows a finger or the mouse
 function openInfo(id){
-  const m=menuItem(id);if(!m)return;const tags=itemOfferTags(m,new Date().getDay());const sizes=S.sizes.filter(s=>+m.prices?.[s.id]);
+  const m=menuItem(id);if(!m)return;const tags=itemOfferTags(m,new Date().getDay());const sizes=S.sizes.filter(s=>+m.prices?.[s.id]);const ph=photosOf(m);
   showModal(`<div class="mh"><h3>${esc(m.name)}</h3><button class="x" data-act="close" aria-label="Close">×</button></div>
   <div class="mb">
-    <div class="zoom" data-zoom>${thumb(m)}</div>
-    <div class="small muted" style="text-align:center;margin-top:-8px">Touch and move on the ${m.cat==='pizza'?'pizza':'photo'} to zoom in</div>
+    ${ph.length>1?photoSlider(ph.map(IMG),m.name,true):`<div class="zoom" data-zoom>${thumb(m)}</div>`}
+    <div class="small muted" style="text-align:center;${ph.length>1?'margin-top:6px':'margin-top:-8px'}">${ph.length>1?`Swipe to see all ${ph.length} photos`:`Touch and move on the ${m.cat==='pizza'?'pizza':'photo'} to zoom in`}</div>
     <div class="row"><span class="chip ready"><span class="veg"></span> Pure veg</span>${m.jain?'<span class="chip t">Jain option</span>':''}${m.spicy?`<span class="chip r">${'🌶'.repeat(m.spicy)} Spicy</span>`:''}${m.best?'<span class="chip c">Best seller</span>':''}${tags.map(t=>`<span class="chip r">${esc(t)}</span>`).join('')}</div>
     <p style="margin:0">${esc(m.desc||'')}</p>
     ${sizes.length?`<div class="opts">${sizes.map(s=>`<div class="opt" style="cursor:default"><b>${esc(s.label)}</b>${s.pcs?`<span class="muted small">${s.pcs} slices</span>`:''}<span class="p num">${rs(m.prices[s.id])}</span></div>`).join('')}</div>`:`<div class="price num">${rs(m.price)}</div>`}
@@ -3082,8 +3119,8 @@ function zoomMove(el,e){
   Object.assign(lens.style,{width:L+'px',height:L+'px',left:(x-L/2)+'px',top:(y-L/2-up)+'px',display:'block'});
   Object.assign(lens.firstElementChild.style,{width:b.width+'px',height:b.height+'px',transform:`translate(${L/2-x*Z}px,${L/2-y*Z}px) scale(${Z})`});
 }
-document.addEventListener('pointerdown',e=>{const z=e.target.closest('[data-zoom]');if(!z)return;z.setPointerCapture?.(e.pointerId);z.dataset.on='1';zoomMove(z,e)});
-document.addEventListener('pointermove',e=>{const z=e.target.closest('[data-zoom]');if(z&&(z.dataset.on||e.pointerType==='mouse'))zoomMove(z,e)});
+document.addEventListener('pointerdown',e=>{const z=e.target.closest('[data-zoom]');if(!z||z.dataset.zoom==='m'&&e.pointerType!=='mouse')return;z.setPointerCapture?.(e.pointerId);z.dataset.on='1';zoomMove(z,e)});
+document.addEventListener('pointermove',e=>{const z=e.target.closest('[data-zoom]');if(z&&(z.dataset.on&&z.dataset.zoom!=='m'||e.pointerType==='mouse'))zoomMove(z,e)});
 ['pointerup','pointercancel','pointerleave'].forEach(t=>document.addEventListener(t,e=>{const z=e.target.closest?.('[data-zoom]');if(!z)return;if(t==='pointerup'&&e.pointerType==='mouse')return;delete z.dataset.on;const l=z.querySelector('.lens');if(l)l.style.display='none'},true));
 function openCustomizer(id,target,edit){
   const m=menuItem(id);if(!m){toast('This item is no longer on the menu');return}
@@ -4004,7 +4041,7 @@ function vMenu(){
   </div>
   ${extrasEditor(sz)}
   ${CATS.map(([cat,cn])=>{const items=S.menu.filter(m=>m.cat===cat);return `<div class="card tw" style="margin-bottom:12px"><table class="stk"><thead><tr><th>${cn}</th><th>Short description</th>${cat==='pizza'?sz.map(s=>`<th class="r">${esc(s.label)}</th>`).join(''):'<th class="r">Price</th>'}<th>On</th><th></th></tr></thead><tbody>
-  ${items.map(m=>`<tr><td style="min-width:150px"><div class="row" style="gap:8px;flex-wrap:nowrap"><button class="mthumb" data-act="mi-edit" data-id="${m.id}" title="Change photo">${m.img?`<img src="${esc(IMG(m.img))}" alt="">`:'<span>+ Photo</span>'}</button><b>${esc(m.name)}</b></div>${cat!=='pizza'&&itemOpts(m).length?`<div class="small muted">${itemOpts(m).map(esc).join(' · ')}</div>`:''}</td>
+  ${items.map(m=>`<tr><td style="min-width:150px"><div class="row" style="gap:8px;flex-wrap:nowrap"><button class="mthumb" data-act="mi-edit" data-id="${m.id}" title="Change photos">${m.img?`<img src="${esc(IMG(m.img))}" alt="">${photosOf(m).length>1?`<span class="n">${photosOf(m).length}</span>`:''}`:'<span>+ Photo</span>'}</button><b>${esc(m.name)}</b></div>${cat!=='pizza'&&itemOpts(m).length?`<div class="small muted">${itemOpts(m).map(esc).join(' · ')}</div>`:''}</td>
    <td style="min-width:240px"><textarea class="inp desc-in" rows="2" data-desc="${m.id}" aria-label="${esc(m.name)} description">${esc(m.desc)}</textarea></td>
    ${cat==='pizza'?sz.map(s=>`<td class="r"><input class="lp-in num" type="number" data-mi="${m.id}" data-s="${s.id}" value="${m.prices[s.id]??''}" placeholder="—" aria-label="${esc(m.name)} ${esc(s.label)}"></td>`).join(''):`<td class="r"><input class="lp-in num" type="number" data-mi="${m.id}" data-s="" value="${m.price}" aria-label="${esc(m.name)} price"></td>`}
    <td><label class="switch"><input type="checkbox" data-av="${m.id}" ${m.off?'':'checked'} aria-label="${esc(m.name)} available"><span></span></label></td><td>${dd(m)}</td></tr>`).join('')}
@@ -4019,9 +4056,9 @@ function shrinkImage(file){return new Promise((ok,bad)=>{
     c.getContext('2d').drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(url);ok(c.toDataURL('image/jpeg',.85))};
   im.onerror=()=>{URL.revokeObjectURL(url);bad(new Error('Could not read this photo'))};im.src=url})}
 // How the item will look on the customer site
-function itemPreview(it,src){
+function itemPreview(it,srcs){
   const pz=it.cat==='pizza';const sizes=S.sizes.filter(x=>+it.prices?.[x.id]);
-  return `<article class="card item prev"><div class="ph">${src?`<img src="${esc(src)}" alt="">`:thumb({...it,img:''})}</div>
+  return `<article class="card item prev"><div class="ph">${srcs.length>1?photoSlider(srcs,it.name||'Item'):srcs[0]?`<img src="${esc(srcs[0])}" alt="">`:thumb({...it,img:''})}</div>
     <div class="bd"><h3><span class="veg"></span>${esc(it.name||'Item name')}</h3><div class="desc">${esc(it.desc||'')}</div>
     <div class="ft">${pz?`<div class="sizes">${sizes.map(x=>`<span>${esc(x.label)} <b class="num">${rs(it.prices[x.id])}</b></span>`).join('')}</div>`:`<div class="price num">${rs(+it.price||0)}</div>`}<span class="btn pri">Add</span></div></div></article>`;
 }
@@ -4029,7 +4066,9 @@ function itemPreview(it,src){
 function openItemForm(id,cat,askDelete){
   const ex=id&&menuItem(id);
   const it=ex?JSON.parse(JSON.stringify(ex)):{id:uid('m'),cat:cat||'pizza',name:'',desc:'',prices:{},price:0};
-  it.prices=it.prices||{};let opts=(ex?itemOpts(ex):ITEM_OPTS[it.cat]||[]).join('\n');let confirmDel=!!askDelete;let photo=undefined,busy=false; // photo: new data URL, null = removed
+  it.prices=it.prices||{};let opts=(ex?itemOpts(ex):ITEM_OPTS[it.cat]||[]).join('\n');let confirmDel=!!askDelete;let busy=false;
+  const MAXPICS=8;let pics=photosOf(it).map(url=>({url})); // {url} saved photo, {data} new photo not uploaded yet; first is the main photo
+  const picSrc=p=>p.data||IMG(p.url);
   const draw=()=>showModal(`<div class="mh"><h3>${ex?'Edit '+esc(ex.name):'Add menu item'}</h3><button class="x" data-act="close" aria-label="Close">×</button></div>
   <div class="mb">
     <div class="row"><div class="field grow"><label for="ni-name">Item name</label><input class="inp" id="ni-name" data-k="name" value="${esc(it.name)}"></div>
@@ -4037,21 +4076,26 @@ function openItemForm(id,cat,askDelete){
     <div class="field"><label for="ni-desc">Short description</label><textarea class="inp" id="ni-desc" data-k="desc" rows="2" placeholder="Toppings or what makes it special">${esc(it.desc)}</textarea></div>
     ${it.cat==='pizza'?`<div class="row">${S.sizes.map(s=>`<div class="field grow"><label for="ni-p${s.id}">${esc(s.label)} price</label><input class="inp num" type="number" id="ni-p${s.id}" data-ps="${s.id}" value="${it.prices[s.id]??''}"></div>`).join('')}</div>`:`<div class="field"><label for="ni-pr">Price ₹</label><input class="inp num" type="number" id="ni-pr" data-k="price" value="${it.price||''}"></div>
     <div class="field"><label for="ni-opts">Options the cashier and customer can pick (one per line)</label><textarea class="inp" id="ni-opts" rows="4" placeholder="e.g. Spicy">${esc(opts)}</textarea></div>`}
-    <div class="grp-h">Photo · how customers will see it</div>
-    <div class="photo-row">${itemPreview(it,photo===null?'':photo||(it.img?IMG(it.img):''))}
-      <div class="field" style="gap:8px"><label class="btn" for="ni-photo">${photo||it.img?'Change photo':'Upload photo'}</label><input type="file" id="ni-photo" accept="image/*" hidden>
-      ${photo||(it.img&&photo!==null)?'<button class="btn bad sm" data-act="ni-nophoto">Remove photo</button>':''}
-      <span class="small muted">${photo?'New photo · saved when you press Save':'Square photos look best. Big photos are made smaller for you.'}</span></div></div>
+    <div class="grp-h">Photos · how customers will see it</div>
+    <div class="photo-row">${itemPreview(it,pics.map(picSrc))}
+      <div class="field" style="gap:8px">
+      ${pics.length?`<div class="pics">${pics.map((p,i)=>`<div class="pic${i?'':' main'}"><img src="${esc(picSrc(p))}" alt="">${i?'':'<span class="tag">Main photo</span>'}<div class="pa">${i?`<button data-act="ni-main" data-i="${i}" title="Make this the main photo" aria-label="Make photo ${i+1} the main photo">★</button>`:''}<button data-act="ni-rm" data-i="${i}" title="Remove" aria-label="Remove photo ${i+1}">×</button></div></div>`).join('')}</div>`:''}
+      ${pics.length<MAXPICS?`<label class="btn" for="ni-photo">${pics.length?'+ Add more photos':'Upload photos'}</label><input type="file" id="ni-photo" accept="image/*" multiple hidden>`:''}
+      <span class="small muted">${pics.some(p=>p.data)?'New photos are saved when you press Save. ':''}Pick several photos at once (up to ${MAXPICS}). The main photo shows on the menu and the shop display; customers swipe through all of them when they open the item. Square photos look best.</span></div></div>
     <div id="ni-err" class="small" style="color:var(--bad)"></div>
     <div class="row">${ex?(confirmDel?`<button class="btn bad solid" data-act="ni-del-yes">Yes, delete</button><button class="btn" data-act="ni-del-no">Keep</button>`:`<button class="btn bad" data-act="ni-del">Delete</button>`):''}<span class="grow"></span><button class="btn pri lg" data-act="ni-save">${ex?'Save':'Add to menu'}</button></div></div>`,
   {onInput:e=>{readField(it,e);if(e.target.dataset.ps)it.prices[e.target.dataset.ps]=+e.target.value||'';if(e.target.id==='ni-opts')opts=e.target.value},
    onChange:e=>{if(e.target.dataset.k==='cat'){it.cat=e.target.value;if(!ex)opts=(ITEM_OPTS[it.cat]||[]).join('\n');draw()}
-     if(e.target.id==='ni-photo'&&e.target.files[0])shrinkImage(e.target.files[0]).then(d=>{photo=d;draw()},er=>{document.getElementById('ni-err').textContent=er.message})},
+     if(e.target.id==='ni-photo'&&e.target.files.length){const fs=[...e.target.files],room=MAXPICS-pics.length;
+       Promise.allSettled(fs.slice(0,room).map(shrinkImage)).then(rs=>{rs.forEach(r=>{if(r.status==='fulfilled')pics.push({data:r.value})});draw();
+         const bad=rs.filter(r=>r.status==='rejected').length,msg=[bad?`${bad} photo${bad>1?'s':''} could not be read.`:'',fs.length>room?`Only ${MAXPICS} photos per item; ${fs.length-room} left out.`:''].filter(Boolean).join(' ');
+         if(msg)document.getElementById('ni-err').textContent=msg})}},
    onAct:(act,el)=>{
      if(act==='ni-del'){confirmDel=true;draw();return true}
      if(act==='ni-del-no'){confirmDel=false;draw();return true}
      if(act==='ni-del-yes'){S.menu=S.menu.filter(m=>m.id!==it.id);save();closeModal();toast(it.name+' deleted');render();return true}
-     if(act==='ni-nophoto'){photo=null;draw();return true}
+     if(act==='ni-rm'){pics.splice(+el.dataset.i,1);draw();return true}
+     if(act==='ni-main'){pics.unshift(...pics.splice(+el.dataset.i,1));draw();return true}
      if(act==='ni-save'){
      const err=document.getElementById('ni-err');if(busy)return true;
      if(!it.name.trim()){err.textContent='Enter the item name.';return true}
@@ -4059,9 +4103,11 @@ function openItemForm(id,cat,askDelete){
      if(it.cat!=='pizza'&&!it.price){err.textContent='Enter the price.';return true}
      if(it.cat!=='pizza'){delete it.prices;it.options=opts.split('\n').map(x=>x.trim()).filter(Boolean)}else{delete it.price;delete it.options}
      it.name=it.name.trim();
-     if(photo){busy=true;el.disabled=true;el.textContent='Uploading photo…';
-       api('/api/images',{data:photo}).then(r=>{photo=undefined;it.img=r.url;busy=false;mh.onAct('ni-save',el)},e=>{busy=false;err.textContent='Photo not saved: '+e.message;el.disabled=false;el.textContent='Save'});return true}
-     if(photo===null)delete it.img;
+     const pend=pics.find(p=>p.data);
+     if(pend){busy=true;el.disabled=true;const left=pics.filter(p=>p.data).length;el.textContent=`Uploading photo${left>1?'s · '+left+' left':''}…`;
+       api('/api/images',{data:pend.data}).then(r=>{delete pend.data;pend.url=r.url;busy=false;mh.onAct('ni-save',el)},e=>{busy=false;err.textContent='Photo not saved: '+e.message;el.disabled=false;el.textContent=ex?'Save':'Add to menu'});return true}
+     const urls=pics.map(p=>p.url);delete it.img;delete it.imgs;
+     if(urls.length){it.img=urls[0];if(urls.length>1)it.imgs=urls}
      if(ex){Object.keys(ex).forEach(k=>delete ex[k]);Object.assign(ex,it)}
      else{const last=S.menu.reduce((a,m,i)=>m.cat===it.cat?i:a,-1);S.menu.splice(last<0?S.menu.length:last+1,0,it);numberMenu()}
      save();closeModal();toast(it.name+(ex?' saved':' added to menu'));render();return true}}});
