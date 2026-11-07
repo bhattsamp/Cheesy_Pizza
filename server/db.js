@@ -13,6 +13,7 @@ const SPECS = {
   offers: { model: M.Offer, key: 'id' },
   combos: { model: M.Combo, key: 'id' },
   extras: { model: M.ExtraMenu, key: 'id' },
+  cats: { model: M.CustomCategory, key: 'id' }, // categories the owner adds, shown after the built-in ones
   users: { model: M.Staff, key: 'id', pin: true },
   customers: { model: M.Customer, map: true, pin: true },
   orders: { model: M.Order, key: 'id' },

@@ -2,7 +2,7 @@
 // device, from the starting data in server/seed-data.js. Everything is kept in this
 // device's local storage only and is not shared with other phones.
 (function(){
-  const SPECS={sizes:{key:'id'},outlets:{key:'id'},menu:{key:'id'},addons:{map:1},offers:{key:'id'},combos:{key:'id'},extras:{key:'id'},users:{key:'id',pin:1},customers:{map:1,pin:1},orders:{key:'id'}};
+  const SPECS={sizes:{key:'id'},outlets:{key:'id'},menu:{key:'id'},addons:{map:1},offers:{key:'id'},combos:{key:'id'},extras:{key:'id'},cats:{key:'id'},users:{key:'id',pin:1},customers:{map:1,pin:1},orders:{key:'id'}};
   const COLS=Object.keys(SPECS);const KEY='cheesy-preview-db-v1';
   let mem=null;
   const load=()=>{try{const j=localStorage.getItem(KEY);if(j)return JSON.parse(j)}catch(e){}return mem};
@@ -12,7 +12,7 @@
       cfg:{categories:data.categories,orderTypes:data.orderTypes,payModes:data.payModes,...data.config}};
     COLS.forEach(n=>db.c[n]={});apply(db,{upsert:data.state});db.v=1;keep(db);return db;
   }
-  const get=()=>load()||seed();
+  const get=()=>{const db=load();if(!db)return seed();COLS.forEach(n=>db.c[n]=db.c[n]||{});return db};
   function apply(db,ch){const up=ch.upsert||{},del=ch.delete||{},ren={};
     for(const n of COLS){const spec=SPECS[n];(del[n]||[]).forEach(k=>delete db.c[n][String(k)]);const items=up[n];if(!items)continue;
       const ents=Array.isArray(items)?items.map(o=>[o[spec.key],o]):Object.entries(items);

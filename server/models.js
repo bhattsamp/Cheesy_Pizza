@@ -34,7 +34,8 @@ const models = {
   ExtraMenu: mongoose.model('ExtraMenu', doc({ id: String }), 'extra_menus'),               // items: [{name, prices: {size: price}}]
   Staff: mongoose.model('Staff', doc({ id: String, pinHash: String }), 'staff'),
   Customer: mongoose.model('Customer', doc({ phone: String, pinHash: String }), 'customers'), // tx, myCodes
-  Order: mongoose.model('Order', orderSchema, 'orders'),                                   // items, customer, pay, times
+  Order: mongoose.model('Order', orderSchema, 'orders'),
+  CustomCategory: mongoose.model('CustomCategory', doc({ id: String }), 'custom_categories'), // menu categories the owner adds                                   // items, customer, pay, times
 };
 
 module.exports = models;

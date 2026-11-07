@@ -3,7 +3,7 @@
 // signed in to claude.ai with access) see the same menu, customers and live orders.
 // Falls back to this device's local storage when the database is not available.
 (function(){
-  const SPECS={sizes:{key:'id'},outlets:{key:'id'},menu:{key:'id'},addons:{map:1},offers:{key:'id'},combos:{key:'id'},extras:{key:'id'},users:{key:'id',pin:1},customers:{map:1,pin:1},orders:{key:'id'}};
+  const SPECS={sizes:{key:'id'},outlets:{key:'id'},menu:{key:'id'},addons:{map:1},offers:{key:'id'},combos:{key:'id'},extras:{key:'id'},cats:{key:'id'},users:{key:'id',pin:1},customers:{map:1,pin:1},orders:{key:'id'}};
   const COLS=Object.keys(SPECS);const LOCAL='cheesy-preview-db-v1';
   const M={c:{},v:1,demo:false,cfg:null,shared:false,canWrite:true};COLS.forEach(n=>M.c[n]={});
   window.CHEESY_SHARED=M;
