@@ -166,10 +166,7 @@ function createApp(store) {
 
   /* ----- demo data ----- */
   app.post('/api/demo/claim', async (req, res) => res.json({ ok: await store.claimDemo() }));
-  app.post('/api/reset', async (req, res) => {
-    await store.seed(seedData());
-    res.json(await store.readState());
-  });
+  // (the old /api/reset, which wiped the live shop back to the demo data, is removed)
 
   /* ----- read-only lookups ----- */
   app.get('/api/config', async (req, res) => res.json(await store.readConfig()));

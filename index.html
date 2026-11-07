@@ -3528,7 +3528,7 @@ function renderPOS(){
     <div class="row small muted"><span class="grow">Signed in as <b>${esc(su.name)}</b> · ${ROLES[su.role]}</span>${CAP?'<button class="btn sm" data-act="perms">Alerts & location</button>':''}<button class="btn sm" data-act="lock">Lock screen</button></div></div>`);
   const views={new:vNew,kitchen:vKitchen,counter:vCounter,orders:vOrders,sales:vSales,offers:vOffers,cust:vCust,menu:vMenu,home:vHomeAdm,display:vDisplayAdm,outlet:vOutlets,staff:vStaff,review:vReview,trips:vTrips};
   return `<div class="pos"><nav class="side" aria-label="POS sections" data-ks="side">${nav()}
-    <div class="side-foot small muted"><span>Signed in as <b>${esc(su.name)}</b> · ${ROLES[su.role]}</span>${CAP?'<button class="btn sm" data-act="perms">Alerts & location</button>':''}<button class="btn sm" data-act="lock">Lock screen</button>${su.role==='owner'?'<span class="sdemo">Example orders are loaded for testing.</span><button class="btn sm" data-act="reset">Reset demo data</button>':''}</div></nav>
+    <div class="side-foot small muted"><span>Signed in as <b>${esc(su.name)}</b> · ${ROLES[su.role]}</span>${CAP?'<button class="btn sm" data-act="perms">Alerts & location</button>':''}<button class="btn sm" data-act="lock">Lock screen</button></div></nav>
   <section class="main">${U.pos.tab!=='kitchen'&&U.pos.tab!=='trips'&&su.role!=='kitchen'&&su.role!=='rider'?onlineBanner():''}${views[U.pos.tab]()}</section></div>
   <nav class="mobnav" aria-label="POS sections">${mobNav()}</nav>`;
 }
@@ -4684,7 +4684,6 @@ document.addEventListener('click',e=>{
     case 'del-sound':{if(staff()?.role!=='owner')break;const o=S.outlets.find(x=>x.id===el.dataset.o);delete o.alertSound;o.alert={...alertCfg(o),tone:alertCfg(o).tone==='custom'?'chime':alertCfg(o).tone};save();render();break}
     case 'add-rider':{const o=S.outlets.find(x=>x.id===el.dataset.o);const n=document.getElementById('rn-'+o.id).value.trim(),p=document.getElementById('rp-'+o.id).value.replace(/\D/g,'');if(!n){toast('Enter the rider name');break}(o.riders=o.riders||[]).push({name:n,phone:p});save();render();break}
     case 'del-rider':{const o=S.outlets.find(x=>x.id===el.dataset.o);o.riders.splice(+el.dataset.i,1);save();render();break}
-    case 'reset':api('/api/reset',{}).then(async d=>{applyState(d);if(d.demoPending&&(await api('/api/demo/claim',{})).ok)seedDemoOrders();S.staffId=S.users[0].id;migrate();U.pos.cart=[];U.cart=[];render();toast('Demo data reset')}).catch(()=>toast('Could not reach the server'));break;
   }
 });
 document.addEventListener('click',e=>{if(U.menuDD&&!e.target.closest('.menu-dd')&&!e.target.closest('[data-act^="mi-"]')){U.menuDD=null;render()}});
