@@ -687,7 +687,13 @@ html:has(#modalRoot:not(:empty)),html:has(#boardRoot:not(:empty)),html:has(#choo
 @keyframes bellShake{0%,50%,100%{transform:rotate(0)}10%,30%{transform:rotate(18deg)}20%,40%{transform:rotate(-18deg)}}
 .online{border:2px solid var(--plum);background:var(--plum-soft);border-radius:14px;padding:10px 12px;margin-bottom:14px;display:flex;flex-direction:column;gap:8px}
 .online .on1{display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:var(--surface);border-radius:10px;padding:8px 10px}
-.tables button.held{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+.tables button.held{background:var(--plum-soft);color:var(--plum,#6a4fc9);border-color:var(--plum-soft)}
+.tables button.part{background:var(--warn-soft);color:var(--warn);border-color:var(--warn)}
+.tables button.paidt{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-soft)}
+.tables button.busy{border-color:var(--bad)}
+.tlegend{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:11px;font-weight:600;color:var(--muted)}
+.tlegend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+.bookbox{display:flex;flex-direction:column;gap:6px;background:var(--plum-soft);border-radius:10px;padding:8px 10px;font-size:13px}
 .tables button small{display:block;font-size:10px;font-weight:600}
 .addto{background:var(--cheese-soft);color:var(--cheese-ink);border-radius:10px;padding:8px 10px;font-weight:700;font-size:13px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .kt{--h:130;border-color:hsl(var(--h) 65% 42%);background:hsl(var(--h) 70% 45% / .10)}
@@ -3640,11 +3646,36 @@ function tableState(t){
   const run=S.orders.find(o=>o.outletId===S.cur&&o.type==='dine'&&String(o.table)===t&&o.ts>Date.now()-16*3600e3&&o.status!=='cancelled'&&(o.status!=='done'||!o.paid));
   return {run,hold:(cur().holds||{})[t]};
 }
+// Table colours: red = eating, not paid · amber = paid for some items, more ordered and not paid ·
+// green = fully paid, still at the table · purple = booked
+const tableClass=run=>!run?'':run.paid?'paidt':partPaid(run)?'part':'busy';
+const bookWhen=h=>h&&h.at?new Date(h.at).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'}):'';
 function tablePicker(P){
   const n=+cur().tables||8;
-  return `<div class="lbl">Table · red = running, orange = on hold</div><div class="tables">${[...Array(n)].map((_,i)=>{const t=String(i+1);const {run,hold}=tableState(t);
-    return `<button data-act="pick-table" data-v="${t}" aria-pressed="${P.table===t}" class="${run?'busy':hold?'held':''}">T${t}${run?`<small class="num">${rs(run.total)}</small>`:hold?`<small>${esc((hold.name||'Hold').split(' ')[0].slice(0,8))}</small>`:''}</button>`}).join('')}</div>
-  ${P.table&&!P.addTo?(()=>{const h=(cur().holds||{})[P.table];return h?`<div class="addto">T${esc(P.table)} is on hold for ${esc(h.name||'a guest')} since ${fmtTime(h.ts)}<span class="grow"></span><button class="btn sm" data-act="hold-table" data-v="off">Release hold</button></div>`:`<button class="btn sm" style="align-self:flex-start" data-act="hold-table" data-v="on">Hold T${esc(P.table)} ${P.name?'for '+esc(P.name):''}</button>`})():''}`;
+  return `<div class="lbl">Table</div><div class="tlegend"><span><i style="background:var(--bad)"></i>Not paid</span><span><i style="background:var(--warn)"></i>Part paid</span><span><i style="background:var(--ok)"></i>Paid</span><span><i style="background:var(--plum,#6a4fc9)"></i>Booked</span></div><div class="tables">${[...Array(n)].map((_,i)=>{const t=String(i+1);const {run,hold}=tableState(t);
+    return `<button data-act="pick-table" data-v="${t}" aria-pressed="${P.table===t}" class="${run?tableClass(run):hold?'held':''}" title="${run?(run.paid?'Paid':partPaid(run)?rs(balanceOf(run))+' left to pay':'Not paid'):hold?'Booked':'Free'}">T${t}${run?`<small class="num">${run.paid?'✓ '+rs(run.total):rs(balanceOf(run))}</small>`:hold?`<small>${esc((hold.name||'Booked').split(' ')[0].slice(0,8))}</small>`:''}</button>`}).join('')}</div>
+  ${P.table&&!P.addTo?(()=>{const h=(cur().holds||{})[P.table];return h?`<div class="bookbox"><div><b>T${esc(P.table)} booked</b> for ${esc(h.name||'a guest')}${h.guests?' · '+esc(h.guests)+' people':''}${h.at?' · '+esc(bookWhen(h)):''}${h.phone?` · <a href="tel:${esc(h.phone)}" class="num">${esc(fmtPhone(h.phone))}</a>`:''}</div>${h.note?`<div class="small muted">${esc(h.note)}</div>`:''}<div class="row" style="gap:6px"><button class="btn sm pri" data-act="book-seat">Guests arrived</button><button class="btn sm" data-act="book-open">Change</button><button class="btn sm bad" data-act="hold-table" data-v="off">Cancel booking</button></div></div>`:`<button class="btn sm" style="align-self:flex-start" data-act="book-open">📅 Book T${esc(P.table)}</button>`})():''}`;
+}
+// Book a dine-in table: name, mobile, date and time, guests and a note (kept in outlet.holds)
+function openBook(t){
+  const o=cur();const h=(o.holds||{})[t]||{};const P=U.pos;
+  const pad2=n=>String(n).padStart(2,'0');const d=new Date(h.at||Date.now()+30*60000);
+  const local=`${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}T${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+  showModal(`<div class="mh"><h3>Book table T${esc(t)}</h3><button class="x" data-act="close" aria-label="Close">×</button></div>
+  <div class="mb">
+    <div class="row"><div class="field grow"><label for="bk-name">Name</label><input class="inp" id="bk-name" value="${esc(h.name||P.name||'')}" autocomplete="off"></div>
+    <div class="field grow"><label for="bk-ph">Mobile</label><input class="inp num" id="bk-ph" inputmode="numeric" maxlength="10" value="${esc(h.phone||P.phone||'')}"></div></div>
+    <div class="row"><div class="field grow"><label for="bk-at">Date and time</label><input class="inp" id="bk-at" type="datetime-local" value="${local}"></div>
+    <div class="field" style="width:110px"><label for="bk-g">Guests</label><input class="inp num" id="bk-g" type="number" min="1" max="50" value="${esc(h.guests||2)}"></div></div>
+    <div class="field"><label for="bk-note">Note</label><input class="inp" id="bk-note" value="${esc(h.note||'')}" placeholder="Birthday, high chair, window seat…"></div>
+    <button class="btn pri lg block" data-act="book-save">${h.name||h.at?'Save booking':'Book T'+esc(t)}</button>
+  </div>`,{onAct:act=>{
+    if(act!=='book-save')return false;
+    const name=document.getElementById('bk-name').value.trim(),ph=document.getElementById('bk-ph').value.replace(/\D/g,''),at=document.getElementById('bk-at').value;
+    if(!name){toast('Enter the guest name');return true}
+    if(ph&&ph.length!==10){toast('Mobile number should be 10 digits');return true}
+    o.holds=o.holds||{};o.holds[t]={name,phone:ph,at:at?new Date(at).getTime():Date.now(),guests:+document.getElementById('bk-g').value||2,note:document.getElementById('bk-note').value.trim(),ts:h.ts||Date.now(),by:staff()?.name||''};
+    save();closeModal();toast('T'+t+' booked for '+name);render();return true}});
 }
 // Bill, payment choices and totals for the order on the POS ticket (used by the ticket and the Pay sheet)
 function posCalc(){
@@ -4635,6 +4666,8 @@ document.addEventListener('click',e=>{
       if(run){P.phone=run.customer.phone||P.phone;P.name=run.customer.name||P.name}render();break}
     case 'addto-x':P.addTo=null;P.table='';render();break;
     case 'hold-table':{const o=cur();o.holds=o.holds||{};if(el.dataset.v==='on'){o.holds[P.table]={name:P.name.trim(),ts:Date.now()};toast('T'+P.table+' on hold')}else{delete o.holds[P.table];toast('T'+P.table+' is free')}save();render();break}
+    case 'book-open':openBook(P.table);break;
+    case 'book-seat':{const h=(cur().holds||{})[P.table];if(h){if(!P.name)P.name=h.name||'';if(!P.phone&&h.phone)P.phone=h.phone;if(h.note&&!P.note)P.note=h.note}render();toast('Add their order · the booking clears when you send the KOT or bill');break}
     case 'pos-pm':P.pay=el.dataset.v;render();break;
     case 'pos-gv':P.given=el.dataset.v;render();break;
     case 'pos-wait':P.wait=+el.dataset.v;render();break;
