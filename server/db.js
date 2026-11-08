@@ -191,6 +191,7 @@ class Store {
   /* ----- seeding ----- */
   async wipe() {
     for (const m of Object.values(M)) {
+      if (m === M.Backup) continue; // daily backups survive a reseed
       if (m === M.Counter) await m.deleteMany({ _id: { $ne: 'version' } });
       else await m.deleteMany({});
     }
