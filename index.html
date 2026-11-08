@@ -185,10 +185,15 @@ textarea.inp{resize:vertical}
 .side button{display:flex;align-items:center;gap:10px;border:0;background:transparent;text-align:left;padding:10px 12px;border-radius:10px;font-weight:600;color:var(--muted)}
 .side button svg{width:18px;height:18px;flex:none}
 .side button[aria-current="page"]{background:var(--teal-soft);color:var(--teal)}
+.side button.tnew,.side button.tnew[aria-current="page"]{background:var(--bad);color:#fff}
+.side button.tnew svg{color:#fff;stroke:#fff}
+.side button.tnew:not([aria-current="page"]){opacity:.92}
 .side .cnt,.mobnav .cnt{margin-left:auto;background:var(--warn);color:#fff;border-radius:999px;font-size:11px;padding:0 7px}
 .main{padding:16px;min-width:0;padding-bottom:96px}
 .ph1{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
 .ph1 h2{font-size:28px;font-weight:800;margin-right:auto}
+.ph1.nohead{margin-bottom:10px;gap:10px;flex-wrap:nowrap;min-width:0}
+.ph1 .livechips{display:flex;gap:6px;overflow:hidden;min-width:0;flex-wrap:nowrap}.ph1 .livechips .chip{white-space:nowrap}
 .neworder{display:grid;grid-template-columns:minmax(0,1fr) 370px;gap:16px;align-items:start}
 .neworder>*{min-width:0}
 .tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
@@ -532,6 +537,8 @@ html:has(#modalRoot:not(:empty)),html:has(#boardRoot:not(:empty)),html:has(#choo
   .mobnav button{flex:1;border:0;background:transparent;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;font-weight:600;color:var(--muted);padding:4px 6px;min-width:62px;position:relative}
   .mobnav button svg{width:20px;height:20px}
   .mobnav button[aria-current="page"]{color:var(--teal)}
+  .mobnav button.tnew{color:#fff;background:var(--bad);border-radius:12px}.mobnav button.tnew svg{stroke:#fff;color:#fff}
+  .ph1.nohead [data-act="cs-open"]{display:none}
   .mobnav .cnt{position:absolute;top:0;right:8px;font-size:10px;padding:0 5px}
   .hero{grid-template-columns:1fr;padding:24px 18px}
   .hero-art{width:min(280px,76vw)}
@@ -1004,6 +1011,33 @@ html:has(#modalRoot:not(:empty)),html:has(#boardRoot:not(:empty)),html:has(#choo
 .paybig:active:not(:disabled){transform:scale(.99)}
 .paybig:disabled{opacity:.45;box-shadow:none}
 .tkrow{display:flex;gap:6px}.tkrow .btn{flex:1;padding:10px 6px}
+.tktot{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-weight:600;color:var(--muted)}
+.tktot small{font-size:13px}
+.tklink{border:0;background:none;color:var(--muted);font-size:13px;font-weight:600;padding:4px 6px;border-radius:6px;text-decoration:underline;text-underline-offset:2px}
+.tklink:disabled{opacity:.4;text-decoration:none}.tktot b{margin-left:6px}.tktot b{font-family:var(--display);font-size:28px;font-weight:800;color:var(--ink);line-height:1}
+.tkpm{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.tkpm button{border:1.5px solid var(--line);background:var(--surface);color:var(--ink);border-radius:10px;padding:8px 2px;font-weight:600;font-size:14px}
+.tkpm button[aria-pressed="true"]{border-color:var(--teal);background:var(--teal-soft);color:var(--teal-deep);font-weight:700}
+.tkacts{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px}
+.tkacts .btn{grid-column:span 2;padding:8px 4px;font-weight:700}
+.tkacts .btn.chzs{background:var(--cheese-soft);border-color:var(--cheese-soft);color:var(--cheese-ink)}
+.tkacts .tkbig{grid-column:span 3;padding:12px 4px;font-size:16px;font-weight:800}
+.tkacts .btn:disabled{opacity:.45}
+.holdsheet{display:flex;flex-direction:column;gap:12px}
+.holdtables{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:8px;max-height:46vh;overflow:auto}
+.holdtables button{border:1px dashed var(--line);background:var(--surface);color:var(--muted);border-radius:12px;padding:10px;text-align:left;display:flex;flex-direction:column;gap:1px;min-height:76px}
+.holdtables button b{font-family:var(--display);font-size:20px;color:var(--ink)}
+.holdtables button small{font-size:12px;opacity:.85}
+.holdtables button.busy{border:1px solid var(--bad-soft);background:var(--bad-soft);color:var(--bad)}
+.holdtables button.part{border:1px solid var(--warn-soft);background:var(--warn-soft);color:var(--warn)}
+.holdtables button.paidt{border:1px solid var(--ok-soft);background:var(--ok-soft);color:var(--ok)}
+.holdtables button.held{border:1px solid var(--plum-soft);background:var(--plum-soft);color:var(--plum)}
+.holdtables button[aria-pressed="true"]{border:2px solid var(--teal);background:var(--teal);color:var(--teal-ink)}
+.holdtables button[aria-pressed="true"] b{color:var(--teal-ink)}
+.holdpay{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.holdpay button{border:1.5px solid var(--line);background:var(--surface);color:var(--ink);border-radius:12px;padding:10px 12px;text-align:left;display:flex;flex-direction:column;gap:2px}
+.holdpay button span{font-size:13px;color:var(--muted)}
+.holdpay button[aria-pressed="true"]{border-color:var(--teal);background:var(--teal-soft);color:var(--teal-deep)}
 .paysheet{display:flex;flex-direction:column;gap:12px}
 .paysheet .paymodes button{padding:16px 6px;font-size:15px}
 .paysheet .paymodes.five{grid-template-columns:repeat(auto-fit,minmax(90px,1fr))}
@@ -3745,10 +3779,10 @@ function renderPOS(){
   const mine=liveOrders();
   const k=mine.filter(o=>o.status==='placed'||o.status==='preparing').length;
   const c=mine.filter(o=>o.status==='ready'||o.status==='out').length;
-  const nav=()=>allowed.map(([t,n])=>{const cnt=t==='kitchen'?k:t==='counter'?c:0;return `<button data-act="tab" data-v="${t}" ${U.pos.tab===t?'aria-current="page"':''}>${I[t]}<span>${n}</span>${cnt?`<span class="cnt num">${cnt}</span>`:''}</button>`}).join('');
+  const nav=()=>allowed.map(([t,n])=>{const cnt=t==='kitchen'?k:t==='counter'?c:0;return `<button data-act="tab" data-v="${t}" ${t==='new'?'class="tnew"':''} ${U.pos.tab===t?'aria-current="page"':''}>${I[t]}<span>${n}</span>${cnt?`<span class="cnt num">${cnt}</span>`:''}</button>`}).join('');
   // Phones show four tabs and a More button; the rest open in a sheet
   const mobNav=()=>{if(allowed.length<=5)return nav();const four=allowed.slice(0,4),more=allowed.slice(4);
-    return four.map(([t,n])=>{const cnt=t==='kitchen'?k:t==='counter'?c:0;return `<button data-act="tab" data-v="${t}" ${U.pos.tab===t?'aria-current="page"':''}>${I[t]}<span>${n}</span>${cnt?`<span class="cnt num">${cnt}</span>`:''}</button>`}).join('')+
+    return four.map(([t,n])=>{const cnt=t==='kitchen'?k:t==='counter'?c:0;return `<button data-act="tab" data-v="${t}" ${t==='new'?'class="tnew"':''} ${U.pos.tab===t?'aria-current="page"':''}>${I[t]}<span>${n}</span>${cnt?`<span class="cnt num">${cnt}</span>`:''}</button>`}).join('')+
       `<button data-act="pos-more" ${more.some(([t])=>t===U.pos.tab)?'aria-current="page"':''}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="5" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="19" cy="12" r="1.4"/></svg><span>${esc((more.find(([t])=>t===U.pos.tab)||[0,'More'])[1])}</span></button>`};
   U.posMore=()=>showModal(`<div class="mh"><h3>All sections</h3><button class="x" data-act="close" aria-label="Close">×</button></div><div class="mb"><div class="moregrid">${allowed.map(([t,n])=>`<button data-act="tab" data-v="${t}" ${U.pos.tab===t?'aria-current="page"':''}>${I[t]}<span>${n}</span></button>`).join('')}</div>
     <div class="row small muted"><span class="grow">Signed in as <b>${esc(su.name)}</b> · ${ROLES[su.role]}</span>${CAP?'<button class="btn sm" data-act="perms">Alerts & location</button>':''}<button class="btn sm" data-act="lock">Lock screen</button></div></div>`);
@@ -3827,7 +3861,7 @@ function custInfo(ph){
   return {c,count:list.length,spent:list.reduce((s,o)=>s+o.total,0)};
 }
 function custBox(ci){
-  if(!ci)return '<div class="small muted cbhelp">Enter mobile to see past orders and baki amount.</div>';
+  if(!ci)return '';
   if(!ci.count&&!(ci.c&&ci.c.due))return '<div class="custbox"><span class="chip c">New customer</span> First order from this number</div>';
   const due=ci.c&&ci.c.due||0;
   return `<div class="custbox ${due?'due':''}"><b>${ci.count} past order${ci.count===1?'':'s'}</b><span class="num">· spent ${rs(ci.spent)} · ${Math.floor(ci.c?.coins||0)} coins</span>${due?`<b style="color:var(--bad)" class="num">· Baki ${rs(due)}</b>`:''}<button class="btn sm" style="margin-left:auto" data-act="cust-open" data-ph="${U.pos.phone}">History</button></div>`;
@@ -3875,7 +3909,7 @@ function openBook(t){
 function posCalc(){
   const P=U.pos;
   const run=P.addTo&&S.orders.find(o=>o.id===P.addTo);if(P.addTo&&!run)P.addTo=null;
-  if(P.type==='delivery'&&!delOn())P.type='takeaway';
+  if(P.type==='delivery'&&!delOn()||!posTypes().some(([k])=>k===P.type))P.type='takeaway';
   const coins=P.phone.length===10?coinsOf(P.phone):0;
   const b=run?computeBill([...run.items,...P.cart],run.date,{...(run.extra||{}),...(P.code?{code:P.code}:{}),phone:run.customer.phone}):computeBill(P.cart,null,{code:P.code,coins:P.useCoins?coins:0,phone:P.phone});
   const already=run?r2(paidSoFar(run)+(run.walletUsed||0)):0;const t=Math.max(0,r2(b.total-already));P.total=t;P.already=already;P.full=b.total;
@@ -3884,6 +3918,10 @@ function posCalc(){
   if(!modes.includes(P.pay))P.pay=modes[0];
   return {P,run,coins,b,t,zom,modes,can:!!(P.cart.length||run)};
 }
+// The till's order types, in this order: Delivery (when delivery is on) | Dine-in | Takeaway
+const posTypes=()=>['delivery','dine','takeaway'].filter(k=>TYPES[k]&&(k!=='delivery'||delOn())).map(k=>[k,TYPES[k]]);
+// Pay-by choices on the bill. Card and bank stay inside Split.
+const TK_PAY=[['cash','Cash'],['upi','UPI'],['due','Baki'],['split','Split']];
 const posTile=m=>`<button class="tile" data-act="${m.combo?'combo-add':'pos-add'}" data-id="${m.id}" data-t="pos" ${m.off?'disabled':''}>
   ${m.combo?'<span class="tg tgc">Combo</span>':''}${m.tag?'<span class="tg">Offer</span>':''}
   <b>${esc(m.name)}</b><span class="tpr num">${m.off?'Not available':m.label}</span></button>`;
@@ -3898,8 +3936,7 @@ function vNew(){
   const ci=custInfo(P.phone);const todays=activeOffers(dow);
   const n=P.cart.reduce((a,l)=>a+l.qty,0);
   const optsOn=P.opts||P.note||P.code||(P.wait&&P.wait!==PREP_MIN);
-  return `<div class="ph1"><h2>New order</h2><span class="muted small">${esc(cur().name)} · next no. <b class="num">${orderNo(cur(),today(),(S.seq[S.cur+'|'+today()]||0)+1)}</b></span>${!CAP&&CS_CH?'<span class="grow"></span><button class="btn sm" data-act="cs-open" title="Open the screen the customer sees on your second monitor">Customer screen ↗</button>':''}</div>
-  ${todays.length?`<div class="row" style="margin-bottom:10px"><span class="grp-h">Live today</span>${todays.map(o=>`<span class="chip ${o.type==='bogo'?'r':o.type==='item'?'c':'t'}">${esc(o.name)}</span>`).join('')}</div>`:''}
+  return `<div class="ph1 nohead"><span class="muted small">Next no. <b class="num">${orderNo(cur(),today(),(S.seq[S.cur+'|'+today()]||0)+1)}</b></span>${todays.length?`<span class="livechips">${todays.map(o=>`<span class="chip ${o.type==='bogo'?'r':o.type==='item'?'c':'t'}">${esc(o.name)}</span>`).join('')}</span>`:''}<span class="grow"></span>${!CAP&&CS_CH?'<button class="btn sm" data-act="cs-open" title="Open the screen the customer sees on your second monitor">Customer screen ↗</button>':''}</div>
   <div class="neworder">
     <div class="menucol">
       <div class="mbar card">
@@ -3911,7 +3948,7 @@ function vNew(){
     ${P.cart.length?`<button class="tkjump" data-act="to-ticket"><b class="num">${n} item${n>1?'s':''} · ${rs(t)}</b><span>View order ↓</span></button>`:''}
     <aside class="card ticket order" id="ticket" data-ks="ticket">
       <div class="tkhead">
-        <div class="types" style="grid-template-columns:repeat(${typesOn().length},minmax(0,1fr))">${typesOn().map(([k,nm])=>`<button data-act="pos-type" data-v="${k}" aria-pressed="${P.type===k}">${nm}</button>`).join('')}</div>
+        <div class="types" style="grid-template-columns:repeat(${posTypes().length},minmax(0,1fr))">${posTypes().map(([k,nm])=>`<button data-act="pos-type" data-v="${k}" aria-pressed="${P.type===k}">${nm}</button>`).join('')}</div>
       </div>
       <div class="sec tkcust">
         ${zom?`<div class="field"><label for="pos-zid">Zomato order ID</label><input class="inp num" id="pos-zid" value="${esc(P.zid)}" placeholder="e.g. 5123456789"></div>`:''}
@@ -3942,8 +3979,15 @@ function vNew(){
       <div class="tkpay">
         ${b.hint?`<div class="hint">${esc(b.hint)}</div>`:''}
         <div class="tksum">${b.subtotal!==t||(b.discounts||[]).length?`<div class="bl"><span>Item total</span><span class="num">${rs(b.subtotal)}</span></div>`:''}${(b.discounts||[]).map(d=>`<div class="bl disc"><span>${esc(d.name)}</span><span class="num">−${rs(d.amt)}</span></div>`).join('')}${b.gst&&b.gst.mode==='excl'?`<div class="bl"><span>GST ${b.gst.rate}%</span><span class="num">+${rs2(b.gst.tax)}</span></div>`:''}${P.already?`<div class="bl disc"><span>Paid earlier</span><span class="num">−${rs(P.already)}</span></div>`:''}</div>
-        <button class="paybig" data-act="pos-pay" ${can?'':'disabled'}><span>Pay${n?` <small class="num">· ${n} item${n>1?'s':''}</small>`:''}</span><b class="num">${rs(t)}</b></button>
-        <div class="tkrow"><button class="btn chz" data-act="pos-go" data-v="kot" ${P.cart.length?'':'disabled'}>KOT Print</button>${btp()&&btGet()?'<button class="btn" data-act="drawer-open">Open drawer</button>':''}<button class="btn" data-act="pos-clear" ${P.cart.length||run?'':'disabled'}>Clear</button></div>
+        <div class="tktot"><span>Total${n?` <small class="num">· ${n} item${n>1?'s':''}</small>`:''}</span><span class="grow"></span>${btp()&&btGet()?'<button class="tklink" data-act="drawer-open">Drawer</button>':''}<button class="tklink" data-act="pos-pay" ${can?'':'disabled'}>More ways</button><button class="tklink" data-act="pos-clear" ${P.cart.length||run?'':'disabled'}>Clear</button><b class="num">${rs(t)}</b></div>
+        <div class="tkpm" role="group" aria-label="Pay by">${TK_PAY.map(([k,nm])=>`<button data-act="pos-pm" data-v="${k}" aria-pressed="${P.pay===k}">${nm}</button>`).join('')}</div>
+        <div class="tkacts">
+          <button class="btn" data-act="pos-go" data-v="save" ${P.cart.length?'':'disabled'} title="Save the order without printing">Save</button>
+          <button class="btn chzs" data-act="pos-go" data-v="kot" ${P.cart.length?'':'disabled'} title="Save and print the kitchen slip">KOT</button>
+          <button class="btn" data-act="pos-hold" ${P.cart.length?'':'disabled'} title="Add these items to a table, paid or pending">Hold</button>
+          <button class="btn pri tkbig" data-act="pos-bill" data-v="bill" ${can?'':'disabled'}>Save &amp; Bill</button>
+          <button class="btn chz tkbig" data-act="pos-bill" data-v="kotbill" ${P.cart.length?'':'disabled'}>KOT &amp; Bill</button>
+        </div>
       </div>
     </aside>
   </div>`;
@@ -4054,10 +4098,44 @@ function settleOrder(o,mode,given,splits,utr){
   if(mode==='wallet'){o.walletUsed=o.total;walletAdd(ph,-o.total,'Paid for '+o.no+' at counter')}
   if(o.paid){o.paidAt=Date.now();o.paidBy=staff()?.name||''}
 }
+// Save & Bill / KOT & Bill: bill straight away by the Pay-by choice on the ticket. Split needs the
+// amounts, so it opens the payment sheet first (its Bill button then prints the KOT too for KOT & Bill).
+function posBill(kind){
+  const {P,t}=posCalc();P.kotToo=kind==='kotbill';
+  if(P.pay==='split'&&t>0){openPay();return}
+  posGo(kind==='kotbill'?'kotbill':'billprint');
+}
+// Hold: put the items on the ticket onto a dine-in table, running or free, as paid now or pending
+function openHold(){
+  const P=U.pos;if(!P.cart.length)return;
+  const n=+cur().tables||8;let sel=null,paid=false;
+  const cnt=P.cart.reduce((a,l)=>a+l.qty,0),amt=computeBill(P.cart,null,{}).total;
+  const pm=(TK_PAY.find(x=>x[0]===P.pay)||[0,PAY[P.pay]||'Cash'])[1];
+  const draw=()=>{
+    const list=[...Array(n)].map((_,i)=>{const t=String(i+1);return {t,...tableState(t)}}).sort((a,b)=>(!!b.run)-(!!a.run));
+    const sr=sel&&tableState(sel).run;
+    showModal(`<div class="mh"><h3>Hold on a table</h3><button class="x" data-act="close" aria-label="Close">×</button></div>
+    <div class="mb holdsheet">
+      <div class="small muted">Add ${cnt>1?'these '+cnt+' items':'this item'} (<span class="num">${rs(amt)}</span>) to a table. Running tables are first.</div>
+      <div class="holdtables">${list.map(({t,run,hold})=>`<button data-act="hold-t" data-v="${t}" aria-pressed="${sel===t}" class="${run?tableClass(run):hold?'held':'free'}"><b>T${t}</b><span class="num">${run?(run.paid?'Paid '+rs(run.total):rs(balanceOf(run))+' due'):hold?esc((hold.name||'Booked').split(' ')[0].slice(0,10)):'Free'}</span>${run?`<small class="num">${run.items.reduce((a,l)=>a+l.qty,0)} items · ${Math.max(1,Math.round((Date.now()-run.ts)/60000))} min</small>`:''}</button>`).join('')}</div>
+      <div class="grp-h">These items are</div>
+      <div class="holdpay"><button data-act="hold-p" data-v="0" aria-pressed="${!paid}"><b>Pending</b><span>Added to the table's bill, paid when the table settles</span></button><button data-act="hold-p" data-v="1" aria-pressed="${paid}"><b>Paid now</b><span>${sr&&!sr.paid&&balanceOf(sr)>0?'Bills the table\'s whole balance by '+esc(pm):'Bill now by '+esc(pm)}</span></button></div>
+      <div class="row" style="gap:8px"><button class="btn lg grow" data-act="close">Cancel</button><button class="btn pri lg grow" data-act="hold-go" ${sel?'':'disabled'}>${sel?'Hold on T'+sel+' · '+(paid?'paid':'pending'):'Pick a table'}</button></div>
+    </div>`,{onAct:(act,el)=>{
+      if(act==='hold-t'){sel=el.dataset.v;draw();return true}
+      if(act==='hold-p'){paid=el.dataset.v==='1';draw();return true}
+      if(act!=='hold-go')return false;
+      if(!sel)return true;
+      const {run}=tableState(sel);P.type='dine';P.table=sel;P.addTo=run?run.id:null;
+      if(run){P.phone=run.customer.phone||P.phone;P.name=run.customer.name||P.name}
+      closeModal();if(paid)posBill('bill');else posGo('save');return true}});
+  };
+  draw();
+}
 function posGo(kind){
   const P=U.pos;const su=staff();
   const run=P.addTo&&S.orders.find(o=>o.id===P.addTo);
-  if(!P.cart.length&&!(run&&kind!=='kot'))return;
+  if(!P.cart.length&&!(run&&kind!=='kot'&&kind!=='save'))return;
   if(P.phone&&P.phone.length!==10){toast('Mobile number should be 10 digits');return}
   if(!run){
     if(needPhone()&&P.phone.length!==10){toast('Enter the customer mobile number');document.getElementById('pos-ph')?.focus();return}
@@ -4065,7 +4143,7 @@ function posGo(kind){
     if(P.type==='delivery'&&!P.address.trim()){toast('Add the delivery address');return}
     if(P.type==='dine'&&!P.table){toast('Pick a table');return}
   }
-  const bill=kind!=='kot';let mode=P.type==='zomato'?'zomato':P.pay,splits=null;
+  const bill=kind!=='kot'&&kind!=='save';const kotToo=kind==='kotbill'||!!P.kotToo;let mode=P.type==='zomato'?'zomato':P.pay,splits=null;
   const pre=()=>run?Math.max(0,r2(computeBill([...run.items,...P.cart],run.date,{...(run.extra||{}),...(P.code?{code:P.code}:{}),phone:run.customer.phone}).total-paidSoFar(run)-(run.walletUsed||0))):computeBill(P.cart,null,{code:P.code,coins:P.useCoins?coinsOf(P.phone):0,phone:P.phone}).total;
   if(bill&&mode==='split'){
     const hasPh=P.phone.length===10||!!(run&&run.customer.phone);
@@ -4100,8 +4178,10 @@ function posGo(kind){
     settleOrder(o,mode,P.pay==='cash'?+P.given||0:0,splits,utr);
   }
   save();Object.assign(U.pos,JSON.parse(JSON.stringify(POS_BLANK)));render();
-  if(kind==='kot'){const txt=kotText(o,run?round:null);printText(txt);toast((run?'New items for '+o.no:o.no)+' sent to kitchen')}
-  else{openDone(o);if(o.paid)csFlashSet({phase:'thanks',amt:o.total,no:o.no},8000);const cash=mode==='cash'||!!(splits&&splits.some(x=>x.mode==='cash'));if(kind==='billprint')printText(billText(o),{drawer:cash});else if(cash)openDrawer();
+  if(kind==='save')toast((run?'Added to '+o.no:o.no+' saved')+(o.table?' · Table '+o.table:'')+(o.paid?'':' · not paid'));
+  else if(kind==='kot'){const txt=kotText(o,run?round:null);printText(txt);toast((run?'New items for '+o.no:o.no)+' sent to kitchen')}
+  else{openDone(o);if(o.paid)csFlashSet({phase:'thanks',amt:o.total,no:o.no},8000);const cash=mode==='cash'||!!(splits&&splits.some(x=>x.mode==='cash'));const kt=kotToo?kotText(o,run?round:null)+'\n\n\n':'';
+    if(kind==='billprint'||kind==='kotbill')printText(kt+billText(o),{drawer:cash});else{if(kt)printText(kt);if(cash)openDrawer()}
     if(kind==='billwa'){if(o.customer.phone)openLink(waLink(o.customer.phone,waInvoice(o)));else toast('Billed. No mobile number, so nothing was sent on WhatsApp')}}
 }
 // opens a link the way a tapped link would (a new tab on a computer, WhatsApp itself in the app)
@@ -5222,7 +5302,9 @@ document.addEventListener('click',e=>{
     case 'lq':{const l=P.cart[+el.dataset.i];l.qty+= +el.dataset.v;if(l.qty<1)P.cart.splice(+el.dataset.i,1);render();break}
     case 'lp-edit':U.editLine=+el.dataset.i;render();{const i=document.getElementById('lp-'+el.dataset.i);if(i){i.focus();i.select()}}break;
     case 'pos-clear':P.cart=[];P.addTo=null;render();break;
-    case 'pos-pay':openPay();break;
+    case 'pos-pay':P.kotToo=false;openPay();break;
+    case 'pos-bill':posBill(el.dataset.v);break;
+    case 'pos-hold':openHold();break;
     case 'dsp-mv':{if(!dspOwner())break;const o=cur(),keys=dspSlides(o).map(x=>x.key),i=keys.indexOf(el.dataset.k),j=i+ +el.dataset.v;if(i<0||j<0||j>=keys.length)break;
       [keys[i],keys[j]]=[keys[j],keys[i]];dspCfg().order=keys;save();render();break}
     case 'dsp-add':{if(!dspOwner())break;const D=dspCfg();D.custom=D.custom||[];const nid='s'+Date.now().toString(36);D.custom.push({id:nid,kick:'',title:'',text:'',bg:D.custom.length%4});if(D.order){const at=D.order.indexOf('address');D.order.splice(at<0?D.order.length:at,0,'c_'+nid)}save();render();toast('Slide added before the address. Type its words and add a photo.');break}
