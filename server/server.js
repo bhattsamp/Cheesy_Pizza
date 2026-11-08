@@ -207,6 +207,20 @@ function createApp(store) {
   return app;
 }
 
+// Render's free plan sleeps the server after 15 minutes with no outside visits, and a sleeping
+// server sometimes fails to wake. Visiting our own public address every 10 minutes counts as
+// outside traffic, so the server never goes to sleep. Only runs on Render (RENDER_EXTERNAL_URL).
+function keepAwake() {
+  const base = process.env.KEEP_AWAKE_URL || process.env.RENDER_EXTERNAL_URL;
+  if (!base || process.env.KEEP_AWAKE === 'off') return;
+  const url = base.replace(/\/$/, '') + '/api/version';
+  const ping = () => fetch(url, { signal: AbortSignal.timeout(30000) })
+    .then(r => { if (!r.ok) console.warn('Keep-awake visit got', r.status); })
+    .catch(e => console.warn('Keep-awake visit failed:', e.message));
+  setInterval(ping, 10 * 60 * 1000).unref();
+  console.log('Keep-awake is on:', url, 'every 10 minutes');
+}
+
 if (require.main === module) {
   try {
     if (push.initPush()) console.log('Push alerts for the Admin app are on');
@@ -214,6 +228,7 @@ if (require.main === module) {
   openStore().then(store => {
     const port = +process.env.PORT || 3000;
     createApp(store).listen(port, () => console.log(`Cheesy Pizza running at http://localhost:${port}  (database: ${store.uri})`));
+    keepAwake();
   }).catch(e => { console.error('Could not connect to MongoDB:', e.message); process.exit(1); });
 }
 
