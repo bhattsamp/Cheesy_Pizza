@@ -22,6 +22,9 @@ const SPECS = {
 const COLLECTIONS = Object.keys(SPECS);
 
 /* ---------- PINs ---------- */
+// A + date (ddmmyyyy) + outlet code + a 6-digit count for that outlet and day, e.g. A08112026A000001
+const orderNo = (code, date, n) => 'A' + String(date).split('-').reverse().join('') + code + String(n).padStart(6, '0');
+
 function hashPin(pin) {
   const salt = crypto.randomBytes(16).toString('hex');
   return 'scrypt:' + salt + ':' + crypto.scryptSync(String(pin), salt, 32).toString('hex');
@@ -81,7 +84,7 @@ class Store {
 
   async readSeq() {
     const seq = {};
-    (await M.Counter.find({ _id: /^seq:/ }).lean()).forEach(c => { seq[c._id.slice(4)] = c.n; });
+    (await M.Counter.find({ _id: /^no:/ }).lean()).forEach(c => { seq[c._id.slice(3)] = c.n; });
     return seq;
   }
 
@@ -97,8 +100,9 @@ class Store {
   async nextOrderNo(outletId, date) {
     const out = await M.Outlet.findById(String(outletId)).lean();
     if (!out || !date) return null;
-    const n = await this.bump('seq:' + outletId + '|' + date);
-    return out.code + '-' + String(n).padStart(3, '0');
+    // 'no:' counters belong to the A + date + outlet format, so it starts at 000001
+    const n = await this.bump('no:' + outletId + '|' + date);
+    return orderNo(out.code, date, n);
   }
 
   // Saves run one at a time in this server, so two tills saving together
@@ -221,4 +225,4 @@ class Store {
   }
 }
 
-module.exports = { Store, SPECS, COLLECTIONS, hashPin, checkPin };
+module.exports = { Store, SPECS, COLLECTIONS, hashPin, checkPin, orderNo };
