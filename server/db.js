@@ -116,6 +116,11 @@ class Store {
   // changes: { upsert: { coll: [obj] | {key: obj} }, delete: { coll: [key] } }
   async _apply(changes) {
     const renumbered = {};
+    // Each record carries _rev, bumped on every save. A device sends the _rev it last saw; if another
+    // device saved that record since, this save is refused for that record (it would wipe the other
+    // device's change) and the device is told, so it reloads the record. Saves without _rev (older apps)
+    // are accepted as before.
+    const revs = {}, conflicts = [];
     const up = changes.upsert || {};
     const del = changes.delete || {};
     // Validate everything before writing anything
@@ -136,15 +141,18 @@ class Store {
       if ((del[name] || []).length) await spec.model.deleteMany({ _id: { $in: del[name].map(String) } });
       const entries = batches[name];
       if (!entries) continue;
-      const existing = new Map((await spec.model.find({ _id: { $in: entries.map(e => e[0]) } }, { _pos: 1, pinHash: 1 }).lean())
+      const existing = new Map((await spec.model.find({ _id: { $in: entries.map(e => e[0]) } }, { _pos: 1, pinHash: 1, _rev: 1 }).lean())
         .map(d => [d._id, d]));
       const isNew = entries.filter(([k]) => !existing.has(k)).length;
       let pos = isNew ? await this.bump('pos', isNew) - isNew : 0;
       const ops = [];
       for (const [key, obj] of entries) {
         const old = existing.get(key);
+        const oldRev = (old && old._rev) || 0;
+        if (old && typeof obj._rev === 'number' && obj._rev < oldRev) { conflicts.push({ coll: name, id: key, no: obj.no || obj.name || key }); continue; }
         const { pin, _newPin, ...rest } = obj;
-        const d = { ...rest, _id: key, _pos: old ? old._pos : ++pos };
+        const d = { ...rest, _id: key, _pos: old ? old._pos : ++pos, _rev: oldRev + 1 };
+        (revs[name] = revs[name] || {})[key] = d._rev;
         if (spec.pin) {
           if (typeof _newPin === 'string' && _newPin) d.pinHash = hashPin(_newPin);
           else if (pin && old && old.pinHash) d.pinHash = old.pinHash;
@@ -158,7 +166,7 @@ class Store {
       if (ops.length) await spec.model.bulkWrite(ops, { ordered: true });
     }
     const version = await this.bump('version');
-    return { prev: version - 1, version, renumbered, seq: await this.readSeq() };
+    return { prev: version - 1, version, renumbered, revs, conflicts, seq: await this.readSeq() };
   }
 
   /* ----- uploaded photos ----- */

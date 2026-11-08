@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><meta name="description" content="Cheesy Pizza, Anand: pure veg pizza on fresh, hand-stretched dough, with no mayonnaise in any product. Order online for delivery, takeaway or dine-in."><link rel="canonical" href="https://cheesypizza.online/"><meta name="theme-color" content="#1a93a8"><meta property="og:type" content="website"><meta property="og:site_name" content="Cheesy Pizza"><meta property="og:title" content="Cheesy Pizza · Serious cheese. Pure veg pizza in Anand."><meta property="og:description" content="Fresh dough, soft base, hand stretched, never any mayonnaise. Order online from Cheesy Pizza."><meta property="og:url" content="https://cheesypizza.online/"><meta property="og:image" content="https://cheesypizza.online/img/cheesyspecial.jpg"><meta name="twitter:card" content="summary">
+<!doctype html><html lang="en"><head><meta charset=utf8><script>if(/^\/staff(\/|$)/.test(location.pathname))document.write('<base href="/">')</script><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><meta name="description" content="Cheesy Pizza, Anand: pure veg pizza on fresh, hand-stretched dough, with no mayonnaise in any product. Order online for delivery, takeaway or dine-in."><link rel="canonical" href="https://cheesypizza.online/"><meta name="theme-color" content="#1a93a8"><meta property="og:type" content="website"><meta property="og:site_name" content="Cheesy Pizza"><meta property="og:title" content="Cheesy Pizza · Serious cheese. Pure veg pizza in Anand."><meta property="og:description" content="Fresh dough, soft base, hand stretched, never any mayonnaise. Order online from Cheesy Pizza."><meta property="og:url" content="https://cheesypizza.online/"><meta property="og:image" content="https://cheesypizza.online/img/cheesyspecial.jpg"><meta name="twitter:card" content="summary">
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"Restaurant","name":"Cheesy Pizza","url":"https://cheesypizza.online/","image":"https://cheesypizza.online/img/cheesyspecial.jpg","telephone":"+91-7778043066","servesCuisine":["Pizza","Vegetarian"],"address":{"@type":"PostalAddress","streetAddress":"B/H Gopi Cinema, Maniyani Khad","addressLocality":"Anand","addressRegion":"Gujarat","addressCountry":"IN"},"openingHoursSpecification":[{"@type":"OpeningHoursSpecification","dayOfWeek":["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],"opens":"12:00","closes":"22:00"}]}</script></head><body>
 <script>/* In the Android apps, let Android keep the page clear of the status bar and navigation buttons */if(/CheesyApp\//.test(navigator.userAgent))document.querySelectorAll('meta[name=viewport]').forEach(m=>m.content='width=device-width,initial-scale=1')</script>
 <title>Cheesy Pizza · Pure Veg Pizza in Anand · Order Online</title>
@@ -185,10 +185,15 @@ textarea.inp{resize:vertical}
 .side button{display:flex;align-items:center;gap:10px;border:0;background:transparent;text-align:left;padding:10px 12px;border-radius:10px;font-weight:600;color:var(--muted)}
 .side button svg{width:18px;height:18px;flex:none}
 .side button[aria-current="page"]{background:var(--teal-soft);color:var(--teal)}
+.side button.tnew,.side button.tnew[aria-current="page"]{background:var(--bad);color:#fff}
+.side button.tnew svg{color:#fff;stroke:#fff}
+.side button.tnew:not([aria-current="page"]){opacity:.92}
 .side .cnt,.mobnav .cnt{margin-left:auto;background:var(--warn);color:#fff;border-radius:999px;font-size:11px;padding:0 7px}
 .main{padding:16px;min-width:0;padding-bottom:96px}
 .ph1{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
 .ph1 h2{font-size:28px;font-weight:800;margin-right:auto}
+.ph1.nohead{margin-bottom:10px;gap:10px;flex-wrap:nowrap;min-width:0}
+.ph1 .livechips{display:flex;gap:6px;overflow:hidden;min-width:0;flex-wrap:nowrap}.ph1 .livechips .chip{white-space:nowrap}
 .neworder{display:grid;grid-template-columns:minmax(0,1fr) 370px;gap:16px;align-items:start}
 .neworder>*{min-width:0}
 .tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
@@ -532,6 +537,8 @@ html:has(#modalRoot:not(:empty)),html:has(#boardRoot:not(:empty)),html:has(#choo
   .mobnav button{flex:1;border:0;background:transparent;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;font-weight:600;color:var(--muted);padding:4px 6px;min-width:62px;position:relative}
   .mobnav button svg{width:20px;height:20px}
   .mobnav button[aria-current="page"]{color:var(--teal)}
+  .mobnav button.tnew{color:#fff;background:var(--bad);border-radius:12px}.mobnav button.tnew svg{stroke:#fff;color:#fff}
+  .ph1.nohead [data-act="cs-open"]{display:none}
   .mobnav .cnt{position:absolute;top:0;right:8px;font-size:10px;padding:0 5px}
   .hero{grid-template-columns:1fr;padding:24px 18px}
   .hero-art{width:min(280px,76vw)}
@@ -704,7 +711,14 @@ html:has(#modalRoot:not(:empty)),html:has(#boardRoot:not(:empty)),html:has(#choo
 .ringpop .rp1{background:var(--plum-soft);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:6px}
 @keyframes ringIn{from{opacity:0;transform:translate(-50%,-20px) scale(.95)}to{opacity:1;transform:translateX(-50%)}}
 @keyframes bellShake{0%,50%,100%{transform:rotate(0)}10%,30%{transform:rotate(18deg)}20%,40%{transform:rotate(-18deg)}}
-.online{border:2px solid var(--plum);background:var(--plum-soft);border-radius:14px;padding:10px 12px;margin-bottom:14px;display:flex;flex-direction:column;gap:8px}
+.online{border:2px solid var(--plum);background:var(--plum-soft);border-radius:14px;padding:10px 12px;display:flex;flex-direction:column;gap:8px;
+  position:fixed;z-index:60;top:72px;right:16px;width:min(460px,calc(100vw - 32px));max-height:min(70vh,560px);overflow:auto;box-shadow:var(--shadow-lg);animation:onlin .35s ease-out}
+@media (max-width:760px){.online{top:64px;right:12px;width:calc(100vw - 24px);max-height:55vh}}
+.onlpill{position:fixed;z-index:60;top:72px;right:16px;border:0;border-radius:999px;background:var(--plum);color:#fff;font-weight:700;padding:9px 16px;box-shadow:var(--shadow-lg);animation:onlin .35s ease-out}
+@media (max-width:760px){.onlpill{top:68px;right:12px}}
+@keyframes onlin{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:none}}
+.online .on1{flex-direction:column;align-items:stretch!important;gap:4px}.online .on1>*{flex:0 0 auto!important}
+.online .on1 .acts{display:flex;gap:6px;align-items:center}.online .on1 .acts .btn{flex:1}
 .online .on1{display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:var(--surface);border-radius:10px;padding:8px 10px}
 .tables button.held{background:var(--plum-soft);color:var(--plum,#6a4fc9);border-color:var(--plum-soft)}
 .tables button.part{background:var(--warn-soft);color:var(--warn);border-color:var(--warn)}
@@ -934,7 +948,7 @@ html:has(#modalRoot:not(:empty)),html:has(#boardRoot:not(:empty)),html:has(#choo
 @media (min-width:761px) and (max-height:720px){
   .main{padding:10px 14px 20px}
   .ph1{margin-bottom:8px}.ph1 h2{font-size:22px}
-  .online{padding:8px 10px;margin-bottom:10px}
+  .online{padding:8px 10px;top:64px}
   .pos .ticket.order .sec,.pos .ticket.order .ft{padding:8px 12px}
   .pos .ticket.order .tkpay{padding:8px 12px 10px}.paybig{padding:10px 16px}.paybig b{font-size:24px}
   .pos .ticket.order .ft{gap:5px}
@@ -980,6 +994,18 @@ html:has(#modalRoot:not(:empty)),html:has(#boardRoot:not(:empty)),html:has(#choo
 .pos .tile b{display:flex;align-items:center;justify-content:center;min-height:2.9em;padding:6px 8px;font-size:13.5px;line-height:1.2}
 .pos .tile .tpr{display:block;margin-top:auto;background:#22343d;color:#fff;font-weight:700;font-size:13px;padding:6px 8px}
 .pos .tile:disabled .tph{filter:grayscale(1)}
+.pos .tiles .tile2{padding:10px;gap:8px;text-align:left;border-radius:14px;min-height:86px;display:flex;flex-direction:column;justify-content:space-between}
+.pos .tiles .tile2 .tnm{border:0;background:none;padding:0 4px 0 0;text-align:left;font-weight:700;font-size:14.5px;line-height:1.25;color:var(--ink);min-height:2.5em;cursor:pointer}
+.pos .tiles .tile2 .tg{left:auto;right:6px;top:6px}.pos .tiles .tile2 .tg~.tnm{padding-right:46px}
+.pos .tiles .tile2 .tsz{display:grid;gap:6px}
+.pos .tiles .tile2 .tsz button{border:0;border-radius:9px;background:#22343d;color:#fff;padding:5px 2px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:0;line-height:1.15;touch-action:manipulation}
+.pos .tiles .tile2 .tsz button .num{color:#fff;margin:0}
+.pos .tiles .tile2 .tsz button small{font-size:11px;opacity:.75;font-weight:600}.pos .tiles .tile2 .tsz button b{font-size:13px;font-weight:700}
+.pos .tiles .tile2 .tsz button:active:not(:disabled){transform:scale(.96);background:var(--teal)}
+.pos .tiles .tile2.off{opacity:.55}
+.catrail button{display:flex;justify-content:space-between;align-items:center;gap:6px}.catrail button .cn{font-size:12px;opacity:.65;font-weight:600}
+.cathd{display:flex;align-items:baseline;gap:10px;margin:0 0 8px;flex-wrap:wrap}.cathd h2{font-size:22px;font-weight:800;margin:0}
+@media (max-width:760px){.pos .menucol .cathd{display:none}}
 .tkhead{background:#22343d;padding:10px;border-radius:var(--r) var(--r) 0 0}
 .tkhead .types button{background:transparent;color:#d7e6ea;border-color:rgba(255,255,255,.22)}
 .tkhead .types button[aria-pressed="true"]{background:#fff;color:#22343d;border-color:#fff}
@@ -1004,6 +1030,45 @@ html:has(#modalRoot:not(:empty)),html:has(#boardRoot:not(:empty)),html:has(#choo
 .paybig:active:not(:disabled){transform:scale(.99)}
 .paybig:disabled{opacity:.45;box-shadow:none}
 .tkrow{display:flex;gap:6px}.tkrow .btn{flex:1;padding:10px 6px}
+.tktot{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-weight:600;color:var(--muted)}
+.tktot small{font-size:13px}
+.tklink{border:0;background:none;color:var(--muted);font-size:13px;font-weight:600;padding:4px 6px;border-radius:6px;text-decoration:underline;text-underline-offset:2px}
+.tklink:disabled{opacity:.4;text-decoration:none}.tktot b{margin-left:6px}.tktot b{font-family:var(--display);font-size:28px;font-weight:800;color:var(--ink);line-height:1}
+.tkpm{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.tkpm button{border:1.5px solid var(--line);background:var(--surface);color:var(--ink);border-radius:10px;padding:8px 2px;font-weight:600;font-size:14px}
+.tkpm button[aria-pressed="true"]{border-color:var(--teal);background:var(--teal-soft);color:var(--teal-deep);font-weight:700}
+.tkacts{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px}
+.tkacts .btn{grid-column:span 2;padding:8px 4px;font-weight:700}
+.tkacts .btn.chzs{background:var(--cheese-soft);border-color:var(--cheese-soft);color:var(--cheese-ink)}
+.tkacts .tkbig{grid-column:span 3;padding:12px 4px;font-size:16px;font-weight:800}
+.tkacts .btn:disabled{opacity:.45}
+.tkacts.tk5{grid-template-columns:1fr 1fr 1fr 1.35fr 1.35fr;gap:5px}
+.tkacts.tk5 .btn,.tkacts.tk5 .tkbig{grid-column:auto;padding:11px 2px;font-size:13.5px;line-height:1.15;white-space:nowrap}
+.tkacts.tk5 .tkbig{font-weight:800}
+.tkpay{gap:6px!important;padding:8px 12px 10px!important}
+.tkpay .hint{padding:4px 10px;font-size:12px;border-radius:8px}
+.tkpay .tksum{flex-direction:row;flex-wrap:wrap;gap:2px 12px}.tkpay .tksum .bl{font-size:12.5px;justify-content:flex-start;gap:6px;color:var(--muted)}.tkpay .tksum .bl.disc{color:var(--ok)}
+.tkpm button{padding:6px 2px!important}
+.tktot b{font-size:26px!important}
+.tkopts{display:flex;flex-direction:column;gap:6px}
+.tkopts .codes button{padding:3px 8px;font-size:12px}.tkopts .waits button{padding:3px 8px;font-size:12px}
+.holdsheet{display:flex;flex-direction:column;gap:12px}
+.uouts{display:flex;flex-wrap:wrap;gap:4px 12px;min-width:160px}.uouts .opt{font-size:13px;white-space:nowrap}
+body.staffurl #m-pub{display:none}
+.holdtables{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:8px;max-height:46vh;overflow:auto}
+.holdtables button{border:1px dashed var(--line);background:var(--surface);color:var(--muted);border-radius:12px;padding:10px;text-align:left;display:flex;flex-direction:column;gap:1px;min-height:76px}
+.holdtables button b{font-family:var(--display);font-size:20px;color:var(--ink)}
+.holdtables button small{font-size:12px;opacity:.85}
+.holdtables button.busy{border:1px solid var(--bad-soft);background:var(--bad-soft);color:var(--bad)}
+.holdtables button.part{border:1px solid var(--warn-soft);background:var(--warn-soft);color:var(--warn)}
+.holdtables button.paidt{border:1px solid var(--ok-soft);background:var(--ok-soft);color:var(--ok)}
+.holdtables button.held{border:1px solid var(--plum-soft);background:var(--plum-soft);color:var(--plum)}
+.holdtables button[aria-pressed="true"]{border:2px solid var(--teal);background:var(--teal);color:var(--teal-ink)}
+.holdtables button[aria-pressed="true"] b{color:var(--teal-ink)}
+.holdpay{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.holdpay button{border:1.5px solid var(--line);background:var(--surface);color:var(--ink);border-radius:12px;padding:10px 12px;text-align:left;display:flex;flex-direction:column;gap:2px}
+.holdpay button span{font-size:13px;color:var(--muted)}
+.holdpay button[aria-pressed="true"]{border-color:var(--teal);background:var(--teal-soft);color:var(--teal-deep)}
 .paysheet{display:flex;flex-direction:column;gap:12px}
 .paysheet .paymodes button{padding:16px 6px;font-size:15px}
 .paysheet .paymodes.five{grid-template-columns:repeat(auto-fit,minmax(90px,1fr))}
@@ -1124,6 +1189,7 @@ html:has(body:not(.pubmode) .pos){scroll-padding-top:calc(env(safe-area-inset-to
   .catrail{display:flex;flex-direction:column;gap:3px;padding:6px;position:sticky;top:calc(var(--toph,61px) + var(--navh) + 12px);max-height:calc(100vh - var(--toph,61px) - var(--navh) - 24px);overflow-y:auto;overscroll-behavior:contain}
   .catrail button{border:0;background:transparent;text-align:left;padding:10px 12px;border-radius:10px;font-weight:700;color:var(--muted);line-height:1.2}
   .catrail button[aria-pressed="true"]{background:var(--teal-soft);color:var(--teal)}
+  .menucol>.catrail{grid-column:1;grid-row:1/span 2}.menucol>.cathd{grid-column:2;grid-row:1;margin:0}.menucol>.tiles{grid-column:2;grid-row:2}
 }
 @media (min-width:761px) and (min-height:540px){
   .pos .ticket.order{top:calc(var(--toph,61px) + var(--navh) + 12px);max-height:var(--tkh,calc(100vh - var(--toph,61px) - var(--navh) - 24px))}
@@ -2332,7 +2398,8 @@ const noteText=l=>[...(l.notes||[]),l.note].filter(Boolean).join(' · ');
 const APP_LINK='https://github.com/bhattsamp/Cheesy_Pizza/releases/download/android-latest/cheesy-pizza.apk';
 // The Android apps say which one they are: Cheesy Pizza (customer site only) or Cheesy Pizza Admin (POS only)
 const APP_ROLE=(/CheesyApp\/(customer|admin)/.exec(navigator.userAgent)||[])[1]||null;
-const LKEY='cheesy_local_v1';
+// Each outlet's staff link keeps its own login on this device, so two outlet tabs never log each other in or out
+const LKEY='cheesy_local_v1'+((location.pathname.match(/^\/staff\/([^\/?#]+)/)||[])[1]?':'+decodeURIComponent(location.pathname.match(/^\/staff\/([^\/?#]+)/)[1]).toLowerCase():'');
 const LOCAL_KEYS=['cur','mode','me','staffId'];
 const SYNCED=['sizes','outlets','menu','addons','offers','combos','extras','cats','users','customers','orders'];
 const MAPS={addons:1,customers:1};
@@ -2366,19 +2433,30 @@ function diff(){
   });
   return any?{upsert:up,delete:del}:null;
 }
+// The changes are worked out when this save's turn comes, after the previous save has answered,
+// so each record goes out with the newest _rev the server gave it
 function flush(){
-  pendingFlush=null;const ch=diff();if(!ch)return syncQ;inFlight++;
-  syncQ=syncQ.then(()=>api('/api/sync',ch)).then(onSynced,e=>{
+  pendingFlush=null;inFlight++;
+  syncQ=syncQ.then(()=>{const ch=diff();if(!ch)return;
+    return api('/api/sync',ch).then(onSynced,e=>{
     // Mark the records as unsaved so the next save sends them again
     console.error(e);Object.entries(ch.upsert).forEach(([n,v])=>(Array.isArray(v)?v.map(o=>o.id):Object.keys(v)).forEach(k=>SNAP[n].delete(k)));
     Object.entries(ch.delete).forEach(([n,ks])=>ks.forEach(k=>SNAP[n].set(k,'')));
     toast('Not saved: server unreachable. Retrying…');setTimeout(save,4000);
-  }).finally(()=>inFlight--);
+  })}).finally(()=>inFlight--);
   return syncQ;
 }
+const recOf=(n,k)=>MAPS[n]?(S[n]||{})[k]:(S[n]||[]).find(o=>o.id===k);
 function onSynced(r){
   if(r.prev!==VER)VER=-1;else VER=r.version; // someone else saved too: refresh on the next poll
   S.seq=r.seq;
+  // Keep each saved record's new _rev without counting it as an unsaved change
+  Object.entries(r.revs||{}).forEach(([n,m])=>Object.entries(m).forEach(([k,rev])=>{const o=recOf(n,k);if(!o)return;const was=JSON.stringify(o);o._rev=rev;if(SNAP[n].get(k)===was)SNAP[n].set(k,JSON.stringify(o))}));
+  // Another till saved the same record first: load theirs instead of overwriting it, and say so
+  if((r.conflicts||[]).length){VER=-1;r.conflicts.forEach(c=>{const o=recOf(c.coll,c.id);if(SNAP[c.coll]&&o)SNAP[c.coll].set(c.id,JSON.stringify(o))});
+    const names=r.conflicts.map(c=>c.coll==='orders'?'order '+c.no:c.coll==='customers'?'customer '+c.id:c.no).join(', ');
+    const pull=()=>refresh().then(ok=>{if(!ok&&VER===-1)return setTimeout(pull,1000);if(!mroot.innerHTML&&!isBusy())render()}).catch(()=>setTimeout(pull,3000));setTimeout(pull,300);
+    toast('⚠ '+names+' was changed on another device at the same moment. Their change is kept and the screen now shows it. Please check it and redo your last change if it is missing.',9000)}
   const ren=Object.entries(r.renumbered||{});
   ren.forEach(([id,no])=>{const o=S.orders.find(x=>x.id===id);if(o){o.no=no;SNAP.orders.set(id,JSON.stringify(o))}});
   if(ren.length&&!mroot.innerHTML&&!isBusy())render();
@@ -2653,7 +2731,8 @@ function render(){
   if(APP_ROLE){S.mode=APP_ROLE==='admin'?'pos':'public';document.body.classList.add('app-'+APP_ROLE)}
   document.getElementById('m-pub').setAttribute('aria-pressed',S.mode==='public');
   document.getElementById('m-pos').setAttribute('aria-pressed',S.mode==='pos');
-  document.getElementById('outletSel').innerHTML=liveOutlets().map(o=>`<option value="${o.id}" ${o.id===cur().id?'selected':''}>${esc(o.name)}</option>`).join('');
+  {const sel=document.getElementById('outletSel'),own=staff()?.role==='owner',lk=U.lockOutlet&&!own;const su=staff();
+  sel.innerHTML=(lk?liveOutlets().filter(o=>o.id===U.lockOutlet):liveOutlets().filter(o=>!su||own||worksAt(su,o.id)||o.id===cur().id)).map(o=>`<option value="${o.id}" ${o.id===cur().id?'selected':''}>${esc(o.name)}</option>`).join('');sel.disabled=!!lk}
   document.body.classList.toggle('pubmode',S.mode==='public');
   const th=document.querySelector('.top')?.offsetHeight;if(th)document.documentElement.style.setProperty('--toph',th+'px');
   const vk=S.mode+'|'+(S.mode==='public'?U.pubView+'|'+(U.accTab||''):'');U.enter=vk!==U.lastView;U.lastView=vk;
@@ -3745,10 +3824,10 @@ function renderPOS(){
   const mine=liveOrders();
   const k=mine.filter(o=>o.status==='placed'||o.status==='preparing').length;
   const c=mine.filter(o=>o.status==='ready'||o.status==='out').length;
-  const nav=()=>allowed.map(([t,n])=>{const cnt=t==='kitchen'?k:t==='counter'?c:0;return `<button data-act="tab" data-v="${t}" ${U.pos.tab===t?'aria-current="page"':''}>${I[t]}<span>${n}</span>${cnt?`<span class="cnt num">${cnt}</span>`:''}</button>`}).join('');
+  const nav=()=>allowed.map(([t,n])=>{const cnt=t==='kitchen'?k:t==='counter'?c:0;return `<button data-act="tab" data-v="${t}" ${t==='new'?'class="tnew"':''} ${U.pos.tab===t?'aria-current="page"':''}>${I[t]}<span>${n}</span>${cnt?`<span class="cnt num">${cnt}</span>`:''}</button>`}).join('');
   // Phones show four tabs and a More button; the rest open in a sheet
   const mobNav=()=>{if(allowed.length<=5)return nav();const four=allowed.slice(0,4),more=allowed.slice(4);
-    return four.map(([t,n])=>{const cnt=t==='kitchen'?k:t==='counter'?c:0;return `<button data-act="tab" data-v="${t}" ${U.pos.tab===t?'aria-current="page"':''}>${I[t]}<span>${n}</span>${cnt?`<span class="cnt num">${cnt}</span>`:''}</button>`}).join('')+
+    return four.map(([t,n])=>{const cnt=t==='kitchen'?k:t==='counter'?c:0;return `<button data-act="tab" data-v="${t}" ${t==='new'?'class="tnew"':''} ${U.pos.tab===t?'aria-current="page"':''}>${I[t]}<span>${n}</span>${cnt?`<span class="cnt num">${cnt}</span>`:''}</button>`}).join('')+
       `<button data-act="pos-more" ${more.some(([t])=>t===U.pos.tab)?'aria-current="page"':''}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="5" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="19" cy="12" r="1.4"/></svg><span>${esc((more.find(([t])=>t===U.pos.tab)||[0,'More'])[1])}</span></button>`};
   U.posMore=()=>showModal(`<div class="mh"><h3>All sections</h3><button class="x" data-act="close" aria-label="Close">×</button></div><div class="mb"><div class="moregrid">${allowed.map(([t,n])=>`<button data-act="tab" data-v="${t}" ${U.pos.tab===t?'aria-current="page"':''}>${I[t]}<span>${n}</span></button>`).join('')}</div>
     <div class="row small muted"><span class="grow">Signed in as <b>${esc(su.name)}</b> · ${ROLES[su.role]}</span>${CAP?'<button class="btn sm" data-act="perms">Alerts & location</button>':''}<button class="btn sm" data-act="lock">Lock screen</button></div></div>`);
@@ -3760,11 +3839,14 @@ function renderPOS(){
 }
 // Orders placed on the customer site wait here for the owner or cashier to accept
 function onlineBanner(){
-  const pl=liveOrders().filter(o=>o.status==='placed').sort((a,b)=>a.ts-b.ts);if(!pl.length)return '';
-  return `<div class="online" role="region" aria-label="New online orders"><div class="row"><b class="grow">${pl.length} new online order${pl.length>1?'s':''} from the customer site</b>${ringTimer||ringAudio?'<button class="btn sm" data-act="mute-ring">Stop ringing</button>':''}</div>
+  const pl=liveOrders().filter(o=>o.status==='placed').sort((a,b)=>a.ts-b.ts);if(!pl.length){U.onlMin=null;return ''}
+  // Floats over the screen as a popup. "Later" shrinks it to a small pill until another order comes in.
+  const ids=pl.map(o=>o.id).join();if(U.onlMin&&U.onlMin!==ids&&pl.some(o=>!U.onlMin.split(',').includes(o.id)))U.onlMin=null;
+  if(U.onlMin)return `<button class="onlpill" data-act="onl-max">${pl.length} online order${pl.length>1?'s':''} waiting · Open</button>`;
+  return `<div class="online" role="region" aria-label="New online orders"><div class="row"><b class="grow">${pl.length} new online order${pl.length>1?'s':''} from the customer site</b>${ringTimer||ringAudio?'<button class="btn sm" data-act="mute-ring">Stop ringing</button>':''}<button class="btn sm" data-act="onl-min" data-v="${ids}">Later</button></div>
     ${pl.map(o=>`<div class="on1"><b class="num">${o.no}</b><span class="small">${fmtTime(o.ts)} · ${esc(o.customer.name)} · <span class="num">${fmtPhone(o.customer.phone)}</span> · ${TYPES[o.type]}${o.scheduled?' · for '+esc(o.scheduled):''}</span>
-      <span class="small muted grow">${o.items.map(l=>l.qty+'× '+esc(l.name)+(l.size?' '+sizeLabel(l.size):'')).join(', ')}</span><b class="num">${rs(o.total)}</b>${payTag(o)}
-      <button class="btn sm ok" data-act="accept" data-id="${o.id}">Accept</button><button class="btn sm bad" data-act="reject" data-id="${o.id}">Reject</button></div>`).join('')}</div>`;
+      <span class="small muted">${o.items.map(l=>l.qty+'× '+esc(l.name)+(l.size?' '+sizeLabel(l.size):'')).join(', ')}</span>
+      <div class="acts"><b class="num">${rs(o.total)}</b>${payTag(o)}<button class="btn sm ok" data-act="accept" data-id="${o.id}">Accept</button><button class="btn sm bad" data-act="reject" data-id="${o.id}">Reject</button></div></div>`).join('')}</div>`;
 }
 let seenPlaced=null;
 // New online order alert: rings on POS screens with the outlet's ringtone, chosen by the
@@ -3827,7 +3909,7 @@ function custInfo(ph){
   return {c,count:list.length,spent:list.reduce((s,o)=>s+o.total,0)};
 }
 function custBox(ci){
-  if(!ci)return '<div class="small muted cbhelp">Enter mobile to see past orders and baki amount.</div>';
+  if(!ci)return '';
   if(!ci.count&&!(ci.c&&ci.c.due))return '<div class="custbox"><span class="chip c">New customer</span> First order from this number</div>';
   const due=ci.c&&ci.c.due||0;
   return `<div class="custbox ${due?'due':''}"><b>${ci.count} past order${ci.count===1?'':'s'}</b><span class="num">· spent ${rs(ci.spent)} · ${Math.floor(ci.c?.coins||0)} coins</span>${due?`<b style="color:var(--bad)" class="num">· Baki ${rs(due)}</b>`:''}<button class="btn sm" style="margin-left:auto" data-act="cust-open" data-ph="${U.pos.phone}">History</button></div>`;
@@ -3875,7 +3957,7 @@ function openBook(t){
 function posCalc(){
   const P=U.pos;
   const run=P.addTo&&S.orders.find(o=>o.id===P.addTo);if(P.addTo&&!run)P.addTo=null;
-  if(P.type==='delivery'&&!delOn())P.type='takeaway';
+  if(P.type==='delivery'&&!delOn()||!posTypes().some(([k])=>k===P.type))P.type='takeaway';
   const coins=P.phone.length===10?coinsOf(P.phone):0;
   const b=run?computeBill([...run.items,...P.cart],run.date,{...(run.extra||{}),...(P.code?{code:P.code}:{}),phone:run.customer.phone}):computeBill(P.cart,null,{code:P.code,coins:P.useCoins?coins:0,phone:P.phone});
   const already=run?r2(paidSoFar(run)+(run.walletUsed||0)):0;const t=Math.max(0,r2(b.total-already));P.total=t;P.already=already;P.full=b.total;
@@ -3884,9 +3966,21 @@ function posCalc(){
   if(!modes.includes(P.pay))P.pay=modes[0];
   return {P,run,coins,b,t,zom,modes,can:!!(P.cart.length||run)};
 }
-const posTile=m=>`<button class="tile" data-act="${m.combo?'combo-add':'pos-add'}" data-id="${m.id}" data-t="pos" ${m.off?'disabled':''}>
-  ${m.combo?'<span class="tg tgc">Combo</span>':''}${m.tag?'<span class="tg">Offer</span>':''}
-  <b>${esc(m.name)}</b><span class="tpr num">${m.off?'Not available':m.label}</span></button>`;
+// The till's order types, in this order: Delivery (when delivery is on) | Dine-in | Takeaway
+const posTypes=()=>['delivery','dine','takeaway'].filter(k=>TYPES[k]&&(k!=='delivery'||delOn())).map(k=>[k,TYPES[k]]);
+// Pay-by choices on the bill. Card and bank stay inside Split.
+const TK_PAY=[['cash','Cash'],['upi','UPI'],['due','Baki'],['split','Split']];
+// A till tile: tap the name for options; tap a size (pizza) or the price button to add it at once
+const posTile=m=>{
+  const tags=`${m.combo?'<span class="tg tgc">Combo</span>':''}${m.tag?'<span class="tg">Offer</span>':''}`;
+  const dis=m.off?'disabled':'';let btns;
+  if(m.combo)btns=`<button data-act="combo-add" data-id="${m.id}" data-t="pos"><b class="num">${m.label}</b></button>`;
+  else if(m.m&&m.m.cat==='pizza'){const sz=S.sizes.filter(z=>+m.m.prices[z.id]);btns=sz.map(z=>`<button data-act="pos-q" data-id="${m.id}" data-v="${z.id}" ${dis} aria-label="Add ${esc(m.name)} ${esc(z.label)}"><small>${esc(z.label)}</small><b class="num">${rs(m.m.prices[z.id])}</b></button>`).join('')}
+  else btns=`<button data-act="pos-q" data-id="${m.id}" data-v="" ${dis} aria-label="Add ${esc(m.name)}"><small>Add</small><b class="num">${m.label}</b></button>`;
+  const n=m.combo?1:(btns.match(/<button/g)||[]).length;
+  return `<div class="tile tile2${m.off?' off':''}">${tags}<button class="tnm" data-act="${m.combo?'combo-add':'pos-add'}" data-id="${m.id}" data-t="pos" ${dis}>${esc(m.name)}</button>
+  ${m.off?'<span class="small muted">Not available</span>':`<div class="tsz" style="grid-template-columns:repeat(${n},minmax(0,1fr))">${btns}</div>`}</div>`;
+};
 function vNew(){
   U.pos.q=''; // the till has no menu search box now; categories pick the items
   const {P,run,coins,b,t,zom,can}=posCalc();const dow=new Date().getDay();
@@ -3897,21 +3991,21 @@ function vNew(){
   else items=S.menu.filter(m=>m.cat===P.cat).map(mk);
   const ci=custInfo(P.phone);const todays=activeOffers(dow);
   const n=P.cart.reduce((a,l)=>a+l.qty,0);
-  const optsOn=P.opts||P.note||P.code||(P.wait&&P.wait!==PREP_MIN);
-  return `<div class="ph1"><h2>New order</h2><span class="muted small">${esc(cur().name)} · next no. <b class="num">${orderNo(cur(),today(),(S.seq[S.cur+'|'+today()]||0)+1)}</b></span>${!CAP&&CS_CH?'<span class="grow"></span><button class="btn sm" data-act="cs-open" title="Open the screen the customer sees on your second monitor">Customer screen ↗</button>':''}</div>
-  ${todays.length?`<div class="row" style="margin-bottom:10px"><span class="grp-h">Live today</span>${todays.map(o=>`<span class="chip ${o.type==='bogo'?'r':o.type==='item'?'c':'t'}">${esc(o.name)}</span>`).join('')}</div>`:''}
+  const optsOn=true; // kitchen note, waiting time and coupon stay open on the till
+  return `<div class="ph1 nohead"><span class="muted small">Next no. <b class="num">${orderNo(cur(),today(),(S.seq[S.cur+'|'+today()]||0)+1)}</b></span>${todays.length?`<span class="livechips">${todays.map(o=>`<span class="chip ${o.type==='bogo'?'r':o.type==='item'?'c':'t'}">${esc(o.name)}</span>`).join('')}</span>`:''}<span class="grow"></span>${!CAP&&CS_CH?'<button class="btn sm" data-act="cs-open" title="Open the screen the customer sees on your second monitor">Customer screen ↗</button>':''}</div>
   <div class="neworder">
     <div class="menucol">
       <div class="mbar card">
         <nav class="cats poscats" aria-label="Categories"><button data-act="poscat" data-v="combo" aria-pressed="${P.cat==='combo'&&!P.q}">Combos</button>${CATS.map(([k,nm])=>`<button data-act="poscat" data-v="${k}" aria-pressed="${P.cat===k&&!P.q}">${nm}</button>`).join('')}</nav>
       </div>
-      <nav class="card catrail" aria-label="Item categories" data-ks="catrail"><button data-act="poscat" data-v="combo" aria-pressed="${P.cat==='combo'&&!P.q}">Combos</button>${CATS.map(([k,nm])=>`<button data-act="poscat" data-v="${k}" aria-pressed="${P.cat===k&&!P.q}">${nm}</button>`).join('')}</nav>
+      <nav class="card catrail" aria-label="Item categories" data-ks="catrail"><button data-act="poscat" data-v="combo" aria-pressed="${P.cat==='combo'&&!P.q}"><span>Combos</span><span class="cn num">${S.combos.filter(c=>c.active).length}</span></button>${CATS.map(([k,nm])=>`<button data-act="poscat" data-v="${k}" aria-pressed="${P.cat===k&&!P.q}"><span>${nm}</span><span class="cn num">${S.menu.filter(m=>m.cat===k).length}</span></button>`).join('')}</nav>
+      <div class="cathd"><h2>${P.cat==='combo'?'Combos':esc((CATS.find(c=>c[0]===P.cat)||[0,''])[1])}</h2><span class="small muted">${P.cat==='pizza'?'Tap a size to add · tap the name for toppings':'Tap the price to add · tap the name for options'}</span></div>
       <div class="tiles">${items.map(posTile).join('')||'<div class="empty">No items</div>'}</div>
     </div>
     ${P.cart.length?`<button class="tkjump" data-act="to-ticket"><b class="num">${n} item${n>1?'s':''} · ${rs(t)}</b><span>View order ↓</span></button>`:''}
     <aside class="card ticket order" id="ticket" data-ks="ticket">
       <div class="tkhead">
-        <div class="types" style="grid-template-columns:repeat(${typesOn().length},minmax(0,1fr))">${typesOn().map(([k,nm])=>`<button data-act="pos-type" data-v="${k}" aria-pressed="${P.type===k}">${nm}</button>`).join('')}</div>
+        <div class="types" style="grid-template-columns:repeat(${posTypes().length},minmax(0,1fr))">${posTypes().map(([k,nm])=>`<button data-act="pos-type" data-v="${k}" aria-pressed="${P.type===k}">${nm}</button>`).join('')}</div>
       </div>
       <div class="sec tkcust">
         ${zom?`<div class="field"><label for="pos-zid">Zomato order ID</label><input class="inp num" id="pos-zid" value="${esc(P.zid)}" placeholder="e.g. 5123456789"></div>`:''}
@@ -3942,8 +4036,15 @@ function vNew(){
       <div class="tkpay">
         ${b.hint?`<div class="hint">${esc(b.hint)}</div>`:''}
         <div class="tksum">${b.subtotal!==t||(b.discounts||[]).length?`<div class="bl"><span>Item total</span><span class="num">${rs(b.subtotal)}</span></div>`:''}${(b.discounts||[]).map(d=>`<div class="bl disc"><span>${esc(d.name)}</span><span class="num">−${rs(d.amt)}</span></div>`).join('')}${b.gst&&b.gst.mode==='excl'?`<div class="bl"><span>GST ${b.gst.rate}%</span><span class="num">+${rs2(b.gst.tax)}</span></div>`:''}${P.already?`<div class="bl disc"><span>Paid earlier</span><span class="num">−${rs(P.already)}</span></div>`:''}</div>
-        <button class="paybig" data-act="pos-pay" ${can?'':'disabled'}><span>Pay${n?` <small class="num">· ${n} item${n>1?'s':''}</small>`:''}</span><b class="num">${rs(t)}</b></button>
-        <div class="tkrow"><button class="btn chz" data-act="pos-go" data-v="kot" ${P.cart.length?'':'disabled'}>KOT Print</button>${btp()&&btGet()?'<button class="btn" data-act="drawer-open">Open drawer</button>':''}<button class="btn" data-act="pos-clear" ${P.cart.length||run?'':'disabled'}>Clear</button></div>
+        <div class="tktot"><span>Total${n?` <small class="num">· ${n} item${n>1?'s':''}</small>`:''}</span><span class="grow"></span>${btp()&&btGet()?'<button class="tklink" data-act="drawer-open">Drawer</button>':''}<button class="tklink" data-act="pos-pay" ${can?'':'disabled'}>More ways</button><button class="tklink" data-act="pos-clear" ${P.cart.length||run?'':'disabled'}>Clear</button><b class="num">${rs(t)}</b></div>
+        <div class="tkpm" role="group" aria-label="Pay by">${TK_PAY.map(([k,nm])=>`<button data-act="pos-pm" data-v="${k}" aria-pressed="${P.pay===k}">${nm}</button>`).join('')}</div>
+        <div class="tkacts tk5">
+          <button class="btn" data-act="pos-go" data-v="save" ${P.cart.length?'':'disabled'} title="Save the order without printing">Save</button>
+          <button class="btn chzs" data-act="pos-go" data-v="kot" ${P.cart.length?'':'disabled'} title="Save and print the kitchen slip">KOT</button>
+          <button class="btn" data-act="pos-hold" ${P.cart.length?'':'disabled'} title="Add these items to a table, paid or pending">Hold</button>
+          <button class="btn pri tkbig" data-act="pos-bill" data-v="bill" ${can?'':'disabled'}>Save &amp; Bill</button>
+          <button class="btn chz tkbig" data-act="pos-bill" data-v="kotbill" ${P.cart.length?'':'disabled'}>KOT &amp; Bill</button>
+        </div>
       </div>
     </aside>
   </div>`;
@@ -4054,10 +4155,44 @@ function settleOrder(o,mode,given,splits,utr){
   if(mode==='wallet'){o.walletUsed=o.total;walletAdd(ph,-o.total,'Paid for '+o.no+' at counter')}
   if(o.paid){o.paidAt=Date.now();o.paidBy=staff()?.name||''}
 }
+// Save & Bill / KOT & Bill: bill straight away by the Pay-by choice on the ticket. Split needs the
+// amounts, so it opens the payment sheet first (its Bill button then prints the KOT too for KOT & Bill).
+function posBill(kind){
+  const {P,t}=posCalc();P.kotToo=kind==='kotbill';
+  if(P.pay==='split'&&t>0){openPay();return}
+  posGo(kind==='kotbill'?'kotbill':'billprint');
+}
+// Hold: put the items on the ticket onto a dine-in table, running or free, as paid now or pending
+function openHold(){
+  const P=U.pos;if(!P.cart.length)return;
+  const n=+cur().tables||8;let sel=null,paid=false;
+  const cnt=P.cart.reduce((a,l)=>a+l.qty,0),amt=computeBill(P.cart,null,{}).total;
+  const pm=(TK_PAY.find(x=>x[0]===P.pay)||[0,PAY[P.pay]||'Cash'])[1];
+  const draw=()=>{
+    const list=[...Array(n)].map((_,i)=>{const t=String(i+1);return {t,...tableState(t)}}).sort((a,b)=>(!!b.run)-(!!a.run));
+    const sr=sel&&tableState(sel).run;
+    showModal(`<div class="mh"><h3>Hold on a table</h3><button class="x" data-act="close" aria-label="Close">×</button></div>
+    <div class="mb holdsheet">
+      <div class="small muted">Add ${cnt>1?'these '+cnt+' items':'this item'} (<span class="num">${rs(amt)}</span>) to a table. Running tables are first.</div>
+      <div class="holdtables">${list.map(({t,run,hold})=>`<button data-act="hold-t" data-v="${t}" aria-pressed="${sel===t}" class="${run?tableClass(run):hold?'held':'free'}"><b>T${t}</b><span class="num">${run?(run.paid?'Paid '+rs(run.total):rs(balanceOf(run))+' due'):hold?esc((hold.name||'Booked').split(' ')[0].slice(0,10)):'Free'}</span>${run?`<small class="num">${run.items.reduce((a,l)=>a+l.qty,0)} items · ${Math.max(1,Math.round((Date.now()-run.ts)/60000))} min</small>`:''}</button>`).join('')}</div>
+      <div class="grp-h">These items are</div>
+      <div class="holdpay"><button data-act="hold-p" data-v="0" aria-pressed="${!paid}"><b>Pending</b><span>Added to the table's bill, paid when the table settles</span></button><button data-act="hold-p" data-v="1" aria-pressed="${paid}"><b>Paid now</b><span>${sr&&!sr.paid&&balanceOf(sr)>0?'Bills the table\'s whole balance by '+esc(pm):'Bill now by '+esc(pm)}</span></button></div>
+      <div class="row" style="gap:8px"><button class="btn lg grow" data-act="close">Cancel</button><button class="btn pri lg grow" data-act="hold-go" ${sel?'':'disabled'}>${sel?'Hold on T'+sel+' · '+(paid?'paid':'pending'):'Pick a table'}</button></div>
+    </div>`,{onAct:(act,el)=>{
+      if(act==='hold-t'){sel=el.dataset.v;draw();return true}
+      if(act==='hold-p'){paid=el.dataset.v==='1';draw();return true}
+      if(act!=='hold-go')return false;
+      if(!sel)return true;
+      const {run}=tableState(sel);P.type='dine';P.table=sel;P.addTo=run?run.id:null;
+      if(run){P.phone=run.customer.phone||P.phone;P.name=run.customer.name||P.name}
+      closeModal();if(paid)posBill('bill');else posGo('save');return true}});
+  };
+  draw();
+}
 function posGo(kind){
   const P=U.pos;const su=staff();
   const run=P.addTo&&S.orders.find(o=>o.id===P.addTo);
-  if(!P.cart.length&&!(run&&kind!=='kot'))return;
+  if(!P.cart.length&&!(run&&kind!=='kot'&&kind!=='save'))return;
   if(P.phone&&P.phone.length!==10){toast('Mobile number should be 10 digits');return}
   if(!run){
     if(needPhone()&&P.phone.length!==10){toast('Enter the customer mobile number');document.getElementById('pos-ph')?.focus();return}
@@ -4065,7 +4200,7 @@ function posGo(kind){
     if(P.type==='delivery'&&!P.address.trim()){toast('Add the delivery address');return}
     if(P.type==='dine'&&!P.table){toast('Pick a table');return}
   }
-  const bill=kind!=='kot';let mode=P.type==='zomato'?'zomato':P.pay,splits=null;
+  const bill=kind!=='kot'&&kind!=='save';const kotToo=kind==='kotbill'||!!P.kotToo;let mode=P.type==='zomato'?'zomato':P.pay,splits=null;
   const pre=()=>run?Math.max(0,r2(computeBill([...run.items,...P.cart],run.date,{...(run.extra||{}),...(P.code?{code:P.code}:{}),phone:run.customer.phone}).total-paidSoFar(run)-(run.walletUsed||0))):computeBill(P.cart,null,{code:P.code,coins:P.useCoins?coinsOf(P.phone):0,phone:P.phone}).total;
   if(bill&&mode==='split'){
     const hasPh=P.phone.length===10||!!(run&&run.customer.phone);
@@ -4100,8 +4235,10 @@ function posGo(kind){
     settleOrder(o,mode,P.pay==='cash'?+P.given||0:0,splits,utr);
   }
   save();Object.assign(U.pos,JSON.parse(JSON.stringify(POS_BLANK)));render();
-  if(kind==='kot'){const txt=kotText(o,run?round:null);printText(txt);toast((run?'New items for '+o.no:o.no)+' sent to kitchen')}
-  else{openDone(o);if(o.paid)csFlashSet({phase:'thanks',amt:o.total,no:o.no},8000);const cash=mode==='cash'||!!(splits&&splits.some(x=>x.mode==='cash'));if(kind==='billprint')printText(billText(o),{drawer:cash});else if(cash)openDrawer();
+  if(kind==='save')toast((run?'Added to '+o.no:o.no+' saved')+(o.table?' · Table '+o.table:'')+(o.paid?'':' · not paid'));
+  else if(kind==='kot'){const txt=kotText(o,run?round:null);printText(txt);toast((run?'New items for '+o.no:o.no)+' sent to kitchen')}
+  else{openDone(o);if(o.paid)csFlashSet({phase:'thanks',amt:o.total,no:o.no},8000);const cash=mode==='cash'||!!(splits&&splits.some(x=>x.mode==='cash'));const kt=kotToo?kotText(o,run?round:null)+'\n\n\n':'';
+    if(kind==='billprint'||kind==='kotbill')printText(kt+billText(o),{drawer:cash});else{if(kt)printText(kt);if(cash)openDrawer()}
     if(kind==='billwa'){if(o.customer.phone)openLink(waLink(o.customer.phone,waInvoice(o)));else toast('Billed. No mobile number, so nothing was sent on WhatsApp')}}
 }
 // opens a link the way a tapped link would (a new tab on a computer, WhatsApp itself in the app)
@@ -5064,6 +5201,7 @@ function vOutlets(){const own=staff()?.role==='owner';
   return head+`
   <div class="grid">${liveOutlets().map(o=>{const t=S.orders.filter(x=>x.outletId===o.id&&x.date===today()&&x.status!=='cancelled');return `<div class="card" style="padding:14px;display:flex;flex-direction:column;gap:8px">
     <div class="row"><span class="chip t num">Code ${esc(o.code)}</span>${isMainOutlet(o)?'<span class="chip c">Main</span>':''}${o.id===cur().id?'<span class="chip ready">Current</span>':''}</div>
+    <div class="row small" style="gap:6px;flex-wrap:wrap"><span class="muted">Staff login:</span><a class="num" href="${esc(staffLink(o))}" target="_blank" rel="noopener">${esc(staffLink(o).replace(/^https?:\/\//,''))}</a><button class="btn sm" data-act="copy-staff-link" data-v="${esc(staffLink(o))}">Copy</button></div>
     <div class="field"><label for="on-${o.id}">Name</label><input class="inp" id="on-${o.id}" data-ou="${o.id}" data-f="name" value="${esc(o.name)}"></div>
     <div class="field"><label for="oa-${o.id}">Full address (shown on bills)</label><input class="inp" id="oa-${o.id}" data-ou="${o.id}" data-f="area" value="${esc(o.area)}" ${own?'':'readonly'}></div>
     <div class="row"><div class="field grow"><label for="op-${o.id}">Phone</label><input class="inp num" id="op-${o.id}" data-ou="${o.id}" data-f="phone" value="${esc(o.phone)}"></div>
@@ -5143,7 +5281,7 @@ async function qrPoster(o){
   const file=new File([blob],name,{type:'image/png'});
   if(navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file],title:'Cheesy Pizza UPI QR · '+o.name});return}catch(e){if(e.name==='AbortError')return}}
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000);toast('QR saved')}
-let tt;function toast(t){clearTimeout(tt);let el=document.querySelector('.toast');if(!el){el=document.createElement('div');el.className='toast';el.setAttribute('role','status');document.body.appendChild(el)}el.textContent=t;tt=setTimeout(()=>el.remove(),1800)}
+let tt;function toast(t,ms){clearTimeout(tt);let el=document.querySelector('.toast');if(!el){el=document.createElement('div');el.className='toast';el.setAttribute('role','status');document.body.appendChild(el)}el.textContent=t;tt=setTimeout(()=>el.remove(),ms||1800)}
 
 document.addEventListener('click',e=>{
   const el=e.target.closest('[data-act]');if(!el)return;
@@ -5218,11 +5356,17 @@ document.addEventListener('click',e=>{
     case 'to-ticket':document.getElementById('ticket')?.scrollIntoView({behavior:'smooth',block:'start'});break;
     case 'poscat':P.cat=el.dataset.v;P.q='';render();break;
     case 'pos-add':openCustomizer(el.dataset.id,'pos');break;
+    case 'pos-q':{const m=S.menu.find(x=>x.id===el.dataset.id);if(!m||m.off)break;addLine('pos',mkLine(m,el.dataset.v||null,[],1));break}
     case 'pos-type':P.type=el.dataset.v;if(P.type!=='dine'){P.addTo=null;P.table=''}if(P.type==='zomato')P.pay='zomato';else if(P.pay==='zomato')P.pay='cash';render();break;
     case 'lq':{const l=P.cart[+el.dataset.i];l.qty+= +el.dataset.v;if(l.qty<1)P.cart.splice(+el.dataset.i,1);render();break}
     case 'lp-edit':U.editLine=+el.dataset.i;render();{const i=document.getElementById('lp-'+el.dataset.i);if(i){i.focus();i.select()}}break;
     case 'pos-clear':P.cart=[];P.addTo=null;render();break;
-    case 'pos-pay':openPay();break;
+    case 'pos-pay':P.kotToo=false;openPay();break;
+    case 'pos-bill':posBill(el.dataset.v);break;
+    case 'pos-hold':openHold();break;
+    case 'copy-staff-link':{const v=el.dataset.v;(navigator.clipboard?navigator.clipboard.writeText(v):Promise.reject()).then(()=>toast('Link copied'),()=>{prompt('Copy this link',v)});break}
+    case 'onl-min':U.onlMin=el.dataset.v;render();break;
+    case 'onl-max':U.onlMin=null;render();break;
     case 'dsp-mv':{if(!dspOwner())break;const o=cur(),keys=dspSlides(o).map(x=>x.key),i=keys.indexOf(el.dataset.k),j=i+ +el.dataset.v;if(i<0||j<0||j>=keys.length)break;
       [keys[i],keys[j]]=[keys[j],keys[i]];dspCfg().order=keys;save();render();break}
     case 'dsp-add':{if(!dspOwner())break;const D=dspCfg();D.custom=D.custom||[];const nid='s'+Date.now().toString(36);D.custom.push({id:nid,kick:'',title:'',text:'',bg:D.custom.length%4});if(D.order){const at=D.order.indexOf('address');D.order.splice(at<0?D.order.length:at,0,'c_'+nid)}save();render();toast('Slide added before the address. Type its words and add a photo.');break}
@@ -5864,9 +6008,21 @@ function scratchBlock(o){
 
 /* ----- staff login + staff screen ----- */
 const L={uid:null,buf:'',err:''};
+// Outlet login links: cheesypizza.online/staff/<outlet>. The outlet part is its name in lower case with
+// dashes (main-outlet); its code or id also work. That page logs staff in to that outlet only.
+const outletSlug=o=>String(o.name||o.code||o.id).toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'')||String(o.id);
+const STAFF_PATH=(location.pathname.match(/^\/staff(?:\/([^\/?#]+))?\/?$/)||null);
+const STAFF_CODE=STAFF_PATH?decodeURIComponent(STAFF_PATH[1]||'').toLowerCase():'';
+const outletByCode=c=>c?S.outlets.find(o=>o.id.toLowerCase()===c||String(o.code||'').toLowerCase()===c||outletSlug(o)===c):null;
+const staffLink=o=>location.origin+'/staff/'+outletSlug(o);
+// Staff with no outlets ticked work at every outlet; owners always can.
+const worksAt=(u,id)=>u.role==='owner'||!(u.outlets&&u.outlets.length)||u.outlets.includes(id);
 function renderLogin(){
-  return `<div class="login"><div class="card ${L.err?'shake':''}"><h2 style="font-size:28px">Outlet login</h2><div class="small muted">Choose your name, then enter your 4-digit PIN.</div>
-    <div class="users">${S.users.map(u=>`<button data-act="lg-user" data-v="${u.id}" aria-pressed="${L.uid===u.id}"><span class="av">${esc(u.name[0])}</span>${esc(u.name)}<small>${ROLES[u.role]}</small></button>`).join('')}</div>
+  const lock=U.lockOutlet&&S.outlets.find(o=>o.id===U.lockOutlet);
+  const list=lock?S.users.filter(u=>worksAt(u,lock.id)):S.users;
+  return `<div class="login"><div class="card ${L.err?'shake':''}"><h2 style="font-size:28px">${lock?esc(lock.name):'Outlet login'}</h2><div class="small muted">${lock?'Staff login for this outlet. ':''}Choose your name, then enter your 4-digit PIN.</div>
+    ${STAFF_PATH&&STAFF_CODE&&!lock?'<div class="msg-bad">This outlet link is not right, or the outlet is inactive. Ask the owner for the outlet\'s staff link.</div>':''}
+    <div class="users">${list.map(u=>`<button data-act="lg-user" data-v="${u.id}" aria-pressed="${L.uid===u.id}"><span class="av">${esc(u.name[0])}</span>${esc(u.name)}<small>${ROLES[u.role]}</small></button>`).join('')}</div>
     <div class="dots" aria-label="PIN entered">${[0,1,2,3].map(i=>`<i class="${L.buf.length>i?'on':''}"></i>`).join('')}</div>
     ${L.err?`<div class="msg-bad" style="text-align:center">${esc(L.err)}</div>`:''}
     <div class="keypad">${['1','2','3','4','5','6','7','8','9','C','0','←'].map(k=>`<button data-act="lg-key" data-v="${k}" aria-label="${k==='C'?'Clear':k==='←'?'Delete':k}">${k}</button>`).join('')}</div>
@@ -5876,15 +6032,16 @@ function lgKey(k){
   if(!L.uid){L.err='Choose your name first.';render();return}
   if(L.busy)return;if(k==='C')L.buf='';else if(k==='←')L.buf=L.buf.slice(0,-1);else if(L.buf.length<4)L.buf+=k;L.err='';
   if(L.buf.length===4&&!L.busy){const u=S.users.find(x=>x.id===L.uid);L.busy=true;
-    api('/api/auth/staff',{id:L.uid,pin:L.buf}).then(r=>{if(r.ok&&u){S.staffId=u.id;pushLogin(L.buf);L.uid=null;saveLocal();U.pos.tab=ROLE_TABS[u.role][0];toast('Welcome, '+u.name)}else L.err='Wrong PIN. Try again.'},()=>{L.err='Could not reach the server.'}).finally(()=>{L.buf='';L.busy=false;render()})}
+    api('/api/auth/staff',{id:L.uid,pin:L.buf}).then(r=>{if(r.ok&&u){S.staffId=u.id;if(!U.lockOutlet&&!worksAt(u,S.cur)){const ok=liveOutlets().find(o=>worksAt(u,o.id));if(ok)S.cur=ok.id}pushLogin(L.buf);L.uid=null;saveLocal();U.pos.tab=ROLE_TABS[u.role][0];toast('Welcome, '+u.name)}else L.err='Wrong PIN. Try again.'},()=>{L.err='Could not reach the server.'}).finally(()=>{L.buf='';L.busy=false;render()})}
   render();
 }
 function vStaff(){
   const meU=staff();
   return `<div class="ph1"><h2>Staff & logins</h2><span class="muted small">Owners see everything. Cashiers: orders, counter, customers. Kitchen: kitchen and counter. Riders: their deliveries, sharing live location; give them the same name as in the outlet's rider list.</span></div>
-  <div class="card tw"><table class="stk"><thead><tr><th>Name</th><th>Role</th><th>New PIN</th><th></th></tr></thead><tbody>
+  <div class="card tw"><table class="stk"><thead><tr><th>Name</th><th>Role</th><th>Outlets</th><th>New PIN</th><th></th></tr></thead><tbody>
   ${S.users.map(u=>`<tr><td><input class="inp" data-us="${u.id}" data-f="name" value="${esc(u.name)}" aria-label="Name" style="min-width:140px"></td>
     <td><select class="inp" data-us="${u.id}" data-f="role" aria-label="Role" ${u.id===meU.id?'disabled':''}>${Object.entries(ROLES).map(([k,n])=>`<option value="${k}" ${u.role===k?'selected':''}>${n}</option>`).join('')}</select></td>
+    <td>${u.role==='owner'?'<span class="small muted">All outlets</span>':`<div class="uouts">${liveOutlets().map(o=>`<label class="opt"><input type="checkbox" data-uo="${u.id}" data-o="${o.id}" ${(u.outlets||[]).includes(o.id)?'checked':''}> ${esc(o.name)}</label>`).join('')}${(u.outlets||[]).length?'':'<span class="small muted">None ticked = all</span>'}</div>`}</td>
     <td><input class="inp num" data-us="${u.id}" data-f="pin" type="password" inputmode="numeric" maxlength="4" placeholder="4 digits" aria-label="New PIN" style="max-width:120px"></td>
     <td>${u.id===meU.id?'<span class="chip ready">You</span>':`<button class="btn sm bad" data-act="del-user" data-id="${u.id}">Remove</button>`}</td></tr>`).join('')}
   </tbody></table></div>
@@ -5893,6 +6050,10 @@ function vStaff(){
    <div class="small">Give every cashier their own name and PIN, and don't share PINs. Then bills, cancels and day closes show who did them, and Reports can show each person's sales.${S.users.some(u=>/^(abcd|test|staff|cashier|new staff|user)\d*$/i.test(u.name.trim()))?` <b style="color:var(--bad)">Rename: ${S.users.filter(u=>/^(abcd|test|staff|cashier|new staff|user)\d*$/i.test(u.name.trim())).map(u=>esc(u.name)).join(', ')}.</b>`:''}</div>
    <div class="field" style="max-width:360px"><label for="al-min">Lock the till when nobody taps it for</label><select class="inp" id="al-min" data-autolock="1">${[[0,'Never'],[2,'2 minutes'],[5,'5 minutes'],[10,'10 minutes'],[15,'15 minutes'],[30,'30 minutes']].map(([v,n])=>`<option value="${v}" ${(+cur().autoLock||0)===v?'selected':''}>${n}</option>`).join('')}</select>
     <span class="small muted">The next person then has to sign in with their own PIN. Kitchen and rider screens never lock.</span></div></div>
+  <div class="card" style="padding:14px;margin-top:14px;display:flex;flex-direction:column;gap:8px"><div class="grp-h">Staff login link for each outlet</div>
+   <div class="small">Open the outlet's link on that outlet's till or tablet. It shows only the staff ticked for that outlet, and they can't switch to another outlet.</div>
+   ${liveOutlets().map(o=>`<div class="row" style="gap:8px;flex-wrap:wrap"><b style="min-width:120px">${esc(o.name)}</b><a class="num small" href="${esc(staffLink(o))}" target="_blank" rel="noopener">${esc(staffLink(o).replace(/^https?:\/\//,''))}</a><button class="btn sm" data-act="copy-staff-link" data-v="${esc(staffLink(o))}">Copy</button></div>`).join('')}
+   <span class="small muted">Renaming an outlet changes its link.</span></div>
   <p class="small muted">A new PIN is saved when you leave the box. New staff start with PIN 0000.</p>`;
 }
 /* ----- extra events ----- */
@@ -5940,7 +6101,9 @@ document.addEventListener('click',e=>{
   }
 });
 document.addEventListener('change',e=>{
-  const t=e.target;if(!t.dataset.us)return;const u=S.users.find(x=>x.id===t.dataset.us);if(!u)return;
+  const t=e.target;
+  if(t.dataset.uo){const u=S.users.find(x=>x.id===t.dataset.uo);if(!u||staff()?.role!=='owner')return;const set=new Set(u.outlets||[]);if(t.checked)set.add(t.dataset.o);else set.delete(t.dataset.o);u.outlets=[...set];save();render();toast(u.name+': '+(u.outlets.length?u.outlets.map(id=>(S.outlets.find(o=>o.id===id)||{}).name).join(', '):'all outlets'));return}
+  if(!t.dataset.us)return;const u=S.users.find(x=>x.id===t.dataset.us);if(!u)return;
   if(t.dataset.f==='pin'){if(/^\d{4}$/.test(t.value)){setPin(u,t.value);t.value='';toast('PIN updated for '+u.name)}else toast('PIN must be 4 digits')}
   else u[t.dataset.f]=t.value;
   save();if(t.dataset.f!=='name')render();
@@ -5968,6 +6131,8 @@ document.addEventListener('click',e=>{const a=e.target.closest('[data-wa1]');if(
   if(d.demoPending)try{if((await api('/api/demo/claim',{})).ok)seedDemoOrders()}catch(_){}
   migrate();
   if(location.hash==='#pos'||location.hash==='#public')S.mode=location.hash.slice(1);
+  if(STAFF_PATH){S.mode='pos';document.body.classList.add('staffurl');const o=outletByCode(STAFF_CODE);
+    if(o&&isLive(o)){S.cur=o.id;U.lockOutlet=o.id;const su=staff();if(su&&!worksAt(su,o.id))S.staffId=null}else if(STAFF_CODE)S.staffId=null;save()}
   render();startPolling();introDone();
   if(S.staffId&&pushTok())pushSetup(); // keeps this phone's alert sign-up current
   cpushSetup();
