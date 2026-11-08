@@ -5993,7 +5993,7 @@ function upiSetupCard(){
   const lastTxt=last?`Last alert ${fmtDate(today(new Date(last.ts)))} ${fmtTime(last.ts)}.`:'No alert has come in yet.';
   if(!UPIAL)return `<div class="card uasetup"><b>How it works</b><span class="small">Set it up once in the <b>Cheesy Pizza Admin</b> app on the shop phone that gets your UPI app's alerts (Day sale › UPI alerts › Turn on). ${lastTxt}</span></div>`;
   const st=U.uaSt;if(!st){UPIAL.status().then(r=>{U.uaSt=r;render()}).catch(()=>{U.uaSt={supported:false}});return '<div class="card uasetup small muted">Checking this phone…</div>'}
-  if(!st.supported)return '<div class="card uasetup small">Update the Admin app to read UPI alerts on this phone.</div>';
+  if(!st.supported)return '<div class="card uasetup small"><b>This phone has the standard Admin app, which does not read UPI alerts.</b> On the one shop phone that gets your UPI app\'s payment alerts, install the UPI version instead: open <b>cheesypizza.online/admin-upi.apk</b> in Chrome. Google Play Protect blocks it unless you first turn off Play Store › profile › Play Protect › Settings › <i>Scan apps with Play Protect</i>; turn it back on after installing.</div>';
   const apps=new Set((st.apps||'').split(',').filter(Boolean));
   return `<div class="card uasetup"><div class="row" style="justify-content:space-between;gap:8px;flex-wrap:wrap"><b>Read UPI alerts on this phone</b><span class="chip ${st.on&&st.access?'ready':'amber'}">${st.on&&st.access?'On':'Off'}</span></div>
    <div class="small">${st.on?'Sending alerts for <b>'+esc((S.outlets.find(o=>o.id===st.outletId)||{}).name||'')+'</b>. ':''}${lastTxt}${st.waiting?' '+st.waiting+' alerts waiting for internet.':''}</div>

@@ -211,7 +211,8 @@ function createApp(store) {
   // Staff login for one outlet: /staff/<outlet> opens the till's login screen for that outlet only
   // Direct APK downloads from our own domain (phones that can't fetch from GitHub).
   // Streams the newest build from the android-latest release.
-  const APKS = { '/admin.apk': 'cheesy-pizza-admin.apk', '/app.apk': 'cheesy-pizza.apk' };
+  // admin-upi.apk is the Admin app with UPI payment alerts, for the one shop phone that reads them
+  const APKS = { '/admin.apk': 'cheesy-pizza-admin.apk', '/admin-upi.apk': 'cheesy-pizza-admin-upi.apk', '/app.apk': 'cheesy-pizza.apk' };
   app.get(Object.keys(APKS), async (req, res) => {
     const name = APKS[req.path];
     try {
