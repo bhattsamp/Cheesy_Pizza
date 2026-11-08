@@ -23,8 +23,8 @@ const SPECS = {
 const COLLECTIONS = Object.keys(SPECS);
 
 /* ---------- PINs ---------- */
-// A + date (ddmmyyyy) + outlet code + a 6-digit count for that outlet and day, e.g. A08112026A000001
-const orderNo = (code, date, n) => 'A' + String(date).split('-').reverse().join('') + code + String(n).padStart(6, '0');
+// Outlet code - date (ddmmyy) - a 3-digit count for that outlet and day, e.g. A-081126-001
+const orderNo = (code, date, n) => { const [y, m, d] = String(date).split('-'); return code + '-' + d + m + y.slice(2) + '-' + String(n).padStart(3, '0'); };
 
 function hashPin(pin) {
   const salt = crypto.randomBytes(16).toString('hex');
@@ -101,7 +101,7 @@ class Store {
   async nextOrderNo(outletId, date) {
     const out = await M.Outlet.findById(String(outletId)).lean();
     if (!out || !date) return null;
-    // 'no:' counters belong to the A + date + outlet format, so it starts at 000001
+    // 'no:' counters count orders per outlet and day for this format
     const n = await this.bump('no:' + outletId + '|' + date);
     return orderNo(out.code, date, n);
   }

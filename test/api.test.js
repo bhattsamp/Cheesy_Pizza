@@ -52,14 +52,14 @@ test('PINs are checked on the server', () => withServer(async ({ post }) => {
 
 test('orders round-trip and get numbered per outlet per day', () => withServer(async ({ get, post }) => {
   const order = {
-    id: 'ord1', no: 'A08102026A000001', outletId: 'o1', date: '2026-10-08', ts: 1, status: 'preparing', source: 'pos', type: 'dine',
+    id: 'ord1', no: 'A-081026-001', outletId: 'o1', date: '2026-10-08', ts: 1, status: 'preparing', source: 'pos', type: 'dine',
     table: '3', address: '', customer: { name: 'Asha', phone: '9000000000' }, pay: { mode: 'cash', given: 500, change: 20 },
     paid: true, times: { placed: 1 }, subtotal: 480, total: 480, discounts: [{ name: 'X', amt: 0 }],
     items: [{ itemId: 'p1', cat: 'pizza', name: 'Margherita', size: '7', addons: ['burst'], qty: 2, unit: 220, custom: false, notes: ['Soft bake'] },
       { itemId: 'b1', cat: 'bread', name: 'Cheesy Garlic Bread', size: null, addons: [], qty: 1, unit: 160, custom: false }],
   };
   const r1 = await post('/api/sync', { upsert: { orders: [order, { ...order, id: 'ord2' }] } });
-  assert.deepEqual(r1.renumbered, { ord2: 'A08102026A000002' });
+  assert.deepEqual(r1.renumbered, { ord2: 'A-081026-002' });
   assert.equal(r1.seq['o1|2026-10-08'], 2);
   const [saved] = await get('/api/orders?date=2026-10-08&outlet=o1&status=preparing');
   assert.deepEqual(saved, order);
@@ -67,7 +67,7 @@ test('orders round-trip and get numbered per outlet per day', () => withServer(a
   const all = await get('/api/orders');
   assert.equal(all.length, 1);
   assert.equal(all[0].status, 'done');
-  assert.equal(all[0].no, 'A08102026A000001');
+  assert.equal(all[0].no, 'A-081026-001');
 }));
 
 test('edited values keep their type', () => withServer(async ({ get, post }) => {

@@ -29,7 +29,7 @@
       for(const [k0,obj] of ents){const k=String(k0);const old=M.c[n][k];const {pin,_newPin,...rest}=obj;const d={...clone(rest),_pos:old?old._pos:newPos()};
         if(n==='extras'&&d.items)d.items=d.items.map(({from,...it})=>it);
         if(spec.pin){if(_newPin)d._pin=String(_newPin);else if(pin&&old&&old._pin)d._pin=old._pin}
-        if(n==='orders'&&!old){const out=M.c.outlets[String(obj.outletId)];if(out&&obj.date){const key=obj.outletId+'|'+obj.date;seq[key]=(seq[key]||0)+1;const no='A'+String(obj.date).split('-').reverse().join('')+out.code+String(seq[key]).padStart(6,'0');if(no!==obj.no){d.no=no;ren[k]=no}}}
+        if(n==='orders'&&!old){const out=M.c.outlets[String(obj.outletId)];if(out&&obj.date){const key=obj.outletId+'|'+obj.date;seq[key]=(seq[key]||0)+1;const dp=String(obj.date).split('-');const no=out.code+'-'+dp[2]+dp[1]+dp[0].slice(2)+'-'+String(seq[key]).padStart(3,'0');if(no!==obj.no){d.no=no;ren[k]=no}}}
         M.c[n][k]=d;writes.push(['rec_'+n+'/'+enc(k),d])}}
     M.v++;return {prev:M.v-1,version:M.v,renumbered:ren,seq}}
   function read(n){const spec=SPECS[n];const docs=Object.entries(M.c[n]).sort((a,b)=>a[1]._pos-b[1]._pos);

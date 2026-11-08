@@ -736,6 +736,15 @@ html:has(#modalRoot:not(:empty)),html:has(#boardRoot:not(:empty)),html:has(#choo
 .tord{border:1px solid var(--line);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:6px}
 .tord.cx{opacity:.55}
 .cxrow{padding:6px 0;border-top:1px dashed var(--line)}
+.addpop{position:fixed;inset:0;z-index:45;background:var(--bg);overflow:auto;overscroll-behavior:contain;padding:0 16px 24px}
+.addpop-h{position:sticky;top:0;z-index:5;background:var(--surface);border-bottom:1px solid var(--line);margin:0 -16px 12px;padding:10px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.addpop-h h3{margin:0;font-size:20px}
+body:has(.addpop){overflow:hidden}
+.addpop .ph1 h2{display:none}
+.ordtbl tr.heat td{background:hsl(var(--h) 70% 45% / .10)}
+.ordtbl tr.heat td:first-child{box-shadow:inset 5px 0 hsl(var(--h) 65% 42%)}
+.ordtbl .addit{margin-top:6px}
+
 .tround{display:flex;flex-direction:column;gap:2px;padding-left:8px;border-left:3px solid var(--line)}
 .addto{background:var(--cheese-soft);color:var(--cheese-ink);border-radius:10px;padding:8px 10px;font-weight:700;font-size:14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .kt{--h:130;border-color:hsl(var(--h) 65% 42%);background:hsl(var(--h) 70% 45% / .10)}
@@ -2659,10 +2668,10 @@ function comboWorth(c){
 }
 
 /* ===== ORDERS ===== */
-// Order number: A + date (ddmmyyyy) + outlet code + a 6-digit count for that outlet and day, e.g. A08112026A000001
-const orderNo=(out,date,n)=>'A'+date.split('-').reverse().join('')+out.code+String(n).padStart(6,'0');
+// Order number: outlet code - date (ddmmyy) - a 3-digit count for that outlet and day, e.g. A-081126-001
+const orderNo=(out,date,n)=>{const [y,m,d]=String(date).split('-');return out.code+'-'+d+m+y.slice(2)+'-'+String(n).padStart(3,'0')};
 // On kitchen and counter cards the date and outlet part is small, so the count stands out
-const noHtml=no=>{const m=/^(A\d{8}[A-Z]+)(\d{6})$/.exec(no||'');return m?`<small class="np">${m[1]}</small>${m[2]}`:esc(no||'')};
+const noHtml=no=>{const m=/^([A-Z]+-\d{6}-)(\d{3,})$/.exec(no||'');return m?`<small class="np">${m[1]}</small>${m[2]}`:esc(no||'')};
 function commitOrder(o){
   const out=S.outlets.find(x=>x.id===o.outletId);
   const k=o.outletId+'|'+o.date;S.seq[k]=(S.seq[k]||0)+1;
@@ -2822,6 +2831,7 @@ function navTrack(){const n=navNow(),top=NAV[NAV.length-1];if(top&&(top.m!==n.m|
 function navGo(n){if(n.m==='public'){U.pubView=n.v;U.accTab=n.a}else U.pos.tab=n.t;NAV.length=Math.max(0,NAV.length-1);render();window.scrollTo(0,0)}
 window.cpBack=function(){
   if(U.drawer){setDrawer(false);return 'handled'}
+  if(U.addPop&&!mroot.innerHTML){closeAddPop();return 'handled'}
   if(mroot.innerHTML){const x=mroot.querySelector('[data-act="close"]');if(x)x.click();else{closeModal();render()}return 'handled'}
   NAV.pop();
   while(NAV.length&&navSame(NAV[NAV.length-1],navNow()))NAV.pop();
@@ -3847,7 +3857,7 @@ function renderPOS(){
   const views={new:vNew,kitchen:vKitchen,counter:vCounter,orders:vOrders,tables:vTables,sales:vSales,reports:vReports,stock:vStock,offers:vOffers,cust:vCust,menu:vMenu,home:vHomeAdm,display:vDisplayAdm,outlet:vOutlets,staff:vStaff,review:vReview,trips:vTrips};
   return `<div class="pos"><nav class="side" aria-label="POS sections" data-ks="side">${nav()}
     <div class="side-foot small muted"><span>Signed in as <b>${esc(su.name)}</b> · ${ROLES[su.role]}</span>${CAP?'<button class="btn sm" data-act="perms">Alerts & location</button>':''}<button class="btn sm" data-act="lock">Lock screen</button></div></nav>
-  <section class="main">${U.pos.tab!=='kitchen'&&U.pos.tab!=='trips'&&su.role!=='kitchen'&&su.role!=='rider'?onlineBanner():''}${!(ROLE_TABS[su.role]||[]).includes('stock')&&U.pos.tab!=='stock'&&su.role!=='kitchen'&&su.role!=='rider'?lowStockBanner():''}${views[U.pos.tab]()}</section></div>
+  <section class="main">${U.pos.tab!=='kitchen'&&U.pos.tab!=='trips'&&su.role!=='kitchen'&&su.role!=='rider'?onlineBanner():''}${!(ROLE_TABS[su.role]||[]).includes('stock')&&U.pos.tab!=='stock'&&su.role!=='kitchen'&&su.role!=='rider'?lowStockBanner():''}${views[U.pos.tab]()}</section>${U.addPop&&U.pos.tab==='orders'?addPopHtml():''}</div>
   <nav class="mobnav" aria-label="POS sections">${mobNav()}</nav>`;
 }
 // Orders placed on the customer site wait here for the owner or cashier to accept
@@ -4026,7 +4036,7 @@ function vNew(){
         <div class="field grow"><label for="pos-nm">Name${zom?' (optional)':''}</label><input class="inp" id="pos-nm" value="${esc(P.name)}" placeholder="Customer name"></div></div>
         <div id="custbox">${custBox(ci)}</div>
         ${P.type==='dine'?tablePicker(P):''}
-        ${run?`<div class="addto">Adding to ${run.no} · Table ${esc(run.table)} · ${rs(run.total)} so far${run.paid?' · paid':paidSoFar(run)?' · '+rs(paidSoFar(run))+' paid, '+rs(balanceOf(run))+' left':' · not paid'}<span class="grow"></span><button class="btn sm" data-act="addto-x">New order instead</button></div>
+        ${run?`<div class="addto">Adding to ${run.no} · ${run.table?'Table '+esc(run.table):TYPES[run.type]} · ${rs(run.total)} so far${run.paid?' · paid':paidSoFar(run)?' · '+rs(paidSoFar(run))+' paid, '+rs(balanceOf(run))+' left':' · not paid'}<span class="grow"></span>${U.addPop?'':'<button class="btn sm" data-act="addto-x">New order instead</button>'}</div>
           <div class="small muted">${run.items.map(l=>l.qty+'× '+esc(l.name)+(l.size?' '+sizeLabel(l.size):'')).join(', ')}</div>`:''}
         ${P.type==='delivery'?`<input class="inp" id="pos-ad" placeholder="Delivery address" value="${esc(P.address)}" aria-label="Delivery address">`:''}
       </div>
@@ -4248,7 +4258,7 @@ function posGo(kind){
     settleOrder(o,mode,P.pay==='cash'?+P.given||0:0,splits,utr);
   }
   if(bill&&P.upiAlert){const a=S.upialerts.find(x=>x.id===P.upiAlert);if(a){a.status='matched';a.orderId=o.id;a.orderNo=o.no;o.upiAlert=a.id}}
-  save();Object.assign(U.pos,JSON.parse(JSON.stringify(POS_BLANK)));render();
+  save();Object.assign(U.pos,JSON.parse(JSON.stringify(POS_BLANK)));U.addPop=null;render();
   if(kind==='save')toast((run?'Added to '+o.no:o.no+' saved')+(o.table?' · Table '+o.table:'')+(o.paid?'':' · not paid'));
   else if(kind==='kot'){const txt=kotText(o,run?round:null);printText(txt);toast((run?'New items for '+o.no:o.no)+' sent to kitchen')}
   else{openDone(o);if(o.paid)csFlashSet({phase:'thanks',amt:o.total,no:o.no},8000);const cash=mode==='cash'||!!(splits&&splits.some(x=>x.mode==='cash'));const kt=kotToo?kotText(o,run?round:null)+'\n\n\n':'';
@@ -4343,6 +4353,7 @@ function openReceipt(o,kind){
   <div class="row" style="justify-content:center">
     ${kind!=='kot'&&ph?`<a class="btn pri" href="${waLink(ph,waInvoice(o))}" target="_blank" rel="noopener" data-wa1>1 · Send invoice on WhatsApp</a><a class="btn" href="${waLink(ph,waThanks())}" target="_blank" rel="noopener" data-wa2>2 · Send thank-you</a>`:''}
     <button class="btn pri" data-act="print-txt" data-t="${esc(txt)}">Print</button>
+    ${kind!=='kot'&&invoiceUrl(o)?`<a class="btn" href="${esc(invoiceUrl(o))}" target="_blank" rel="noopener">🧾 E-bill</a>${ph?'':`<a class="btn" href="https://wa.me/?text=${encodeURIComponent(waInvoice(o))}" target="_blank" rel="noopener">Share e-bill on WhatsApp</a>`}`:''}
     <button class="btn" data-act="copy" data-t="${esc(txt)}">Copy text</button>
   </div>
   <div class="small muted" style="text-align:center">${btp()?(btGet()?`Prints on <b>${esc(btGet().name)}</b> · <a href="#" data-act="bt-change">Change printer</a>`:'<a href="#" data-act="bt-change">Choose your Bluetooth printer</a>'):'Sized for a 58 mm thermal printer. Print opens the printer box of this device.'}</div></div>`);
@@ -4651,6 +4662,16 @@ function vStock(){const L=stockOf(),own=['owner','manager'].includes(staff()?.ro
   </tbody></table></div>
   ${own?`<div class="row" style="margin-top:12px;gap:8px"><button class="btn pri" data-act="st-add">+ Add item</button>${L.length?'':'<button class="btn" data-act="st-starter">Add the usual pizza items</button>'}</div>`:''}`}
 function stockSet(x,f,v){const su=staff();x[f]=v;if(f==='qty'){x.at=Date.now();x.by=su?.name||''}save();render()}
+// Order colour by time left, as on the kitchen screen: green when it comes in, yellow, then red when late
+function heatOf(o){if(o.status==='placed')return 265;const mins=Math.floor((Date.now()-(o.times?.preparing||o.ts))/60000);return Math.round(130*Math.max(0,Math.min(1,1-mins/waitOf(o))))}
+// "+ Add items" on Orders: the New order screen in a full-page popup, adding to that bill.
+// Saving, sending the KOT or billing closes it and leaves you on Orders.
+function openAddPop(o){if(!o||o.status==='cancelled')return;
+  Object.assign(U.pos,JSON.parse(JSON.stringify(POS_BLANK)),{addTo:o.id,type:o.type,table:o.table||'',name:o.customer.name||'',phone:o.customer.phone||''});
+  U.addPop=o.id;render();window.scrollTo(0,0)}
+function closeAddPop(){U.addPop=null;Object.assign(U.pos,JSON.parse(JSON.stringify(POS_BLANK)));render()}
+function addPopHtml(){const o=S.orders.find(x=>x.id===U.addPop);if(!o||U.pos.addTo!==o.id){U.addPop=null;return ''}
+  return `<div class="addpop" role="dialog" aria-modal="true" aria-label="Add items to ${esc(o.no)}"><div class="addpop-h"><h3>Add items to <span class="num">${esc(o.no)}</span></h3><span class="small muted">${esc(o.customer.name||'Walk-in')} · ${TYPES[o.type]}${o.table?' · T'+esc(o.table):''} · now ${rs(o.total)}</span><span class="grow"></span><button class="x" data-act="addpop-close" aria-label="Close">×</button></div><div class="addpop-b">${vNew()}</div></div>`}
 function vOrders(){
   const q=U.ordersQ.trim().toLowerCase();const day=U.ordersDate||today();const all=U.ordersScope==='all';
   const list=S.orders.filter(o=>(all||o.outletId===S.cur)&&o.date===day&&(!q||o.no.toLowerCase().includes(q)||o.customer.phone.includes(q)||(o.customer.name||'').toLowerCase().includes(q)||(o.zomatoId||'').includes(q))&&(!U.ordersNew||isNewCust(o))).sort((a,b)=>b.ts-a.ts);
@@ -4662,14 +4683,14 @@ function vOrders(){
     <input class="inp" id="od-q" placeholder="Order no, name, mobile or Zomato ID" value="${esc(U.ordersQ)}" style="max-width:260px"></div>
   ${unpaid.length?`<div class="notice" style="margin-bottom:10px;background:var(--bad-soft);color:var(--bad)"><b>${unpaid.length} order${unpaid.length>1?'s':''} not paid yet · ${rs(unpaid.reduce((a,o)=>a+o.total,0))}</b></div>`:''}
   <div class="card tw"><table class="stk ordtbl"><thead><tr><th>No.</th><th>Time</th><th>Customer</th><th>Type</th><th>Items</th><th class="r">Total</th><th>Payment</th><th>Status</th><th>Made by</th><th></th></tr></thead><tbody>
-  ${list.map(o=>`<tr class="${o.status==='cancelled'?'cx':''}"><td><b class="num">${o.no}</b>${all?`<div class="small muted">${esc(outletOf(o).name)}</div>`:''}</td><td class="num">${fmtTime(o.ts)}</td>
+  ${list.map(o=>`<tr class="${o.status==='cancelled'?'cx':''}${isActive(o)?' heat':''}"${isActive(o)?` style="--h:${heatOf(o)}"`:''}><td><b class="num">${o.no}</b>${all?`<div class="small muted">${esc(outletOf(o).name)}</div>`:''}</td><td class="num">${fmtTime(o.ts)}</td>
     <td>${esc(o.customer.name||'—')} ${isNewCust(o)?'<span class="chip c">New</span>':''}<div class="small muted num">${esc(o.customer.phone)}</div></td>
     <td>${TYPES[o.type]}${o.table?' · T'+esc(o.table):''}${o.source==='online'?' <span class="chip t">online</span>':''}${o.zomatoId?`<div class="small muted num">ID ${esc(o.zomatoId)}</div>`:''}</td>
-    <td class="small">${o.items.map(l=>l.qty+'× '+esc(l.name)+(l.size?' '+sizeLabel(l.size):'')).join(', ')}</td><td class="r num"><b>${rs(o.total)}</b>${o.subtotal>o.total?`<div class="small" style="color:var(--ok)">−${rs(o.subtotal-o.total)}</div>`:''}</td>
+    <td class="small">${o.items.map(l=>l.qty+'× '+esc(l.name)+(l.size?' '+sizeLabel(l.size):'')).join(', ')}${o.status!=='cancelled'&&o.outletId===S.cur?`<div><button class="btn sm addit" data-act="order-add" data-id="${o.id}">+ Add items</button></div>`:''}</td><td class="r num"><b>${rs(o.total)}</b>${o.subtotal>o.total?`<div class="small" style="color:var(--ok)">−${rs(o.subtotal-o.total)}</div>`:''}</td>
     <td>${o.status==='cancelled'?esc(payName(o)):o.paid?`<span class="chip ready">Done</span> <span class="small">${esc(payName(o))}</span>${o.pay.utr?`<div class="small muted num">UTR ${esc(fmtUtr(o.pay.utr))}</div>`:''}`:`<span class="chip r">${partPaid(o)?rs(balanceOf(o))+' left':'Baki'}</span>${o.pay.mode==='due'?' <span class="small">on account</span>':partPaid(o)?` <span class="small">${esc(payName(o))} paid</span>`:''} <button class="btn sm" data-act="collect-open" data-id="${o.id}">Collect</button>`}</td>
     <td class="st"><span class="chip ${o.status}">${statusName(o.status,o.type)}</span>${o.status==='cancelled'&&cancelNote(o)?`<div class="small muted">${esc(cancelNote(o))}</div>`:''}${isActive(o)?`<div class="small num" style="font-weight:700;color:${minsLeft(o)<0?'var(--bad)':'var(--warn)'}">${leftText(minsLeft(o))}</div><button class="btn sm" data-act="set-wait" data-id="${o.id}" title="Change waiting time">⏱ wait ${waitOf(o)} min</button>`:''}</td>
     <td class="small">${o.source==='online'?'Customer site':esc(o.by||'—')}</td>
-    <td style="white-space:nowrap">${`<button class="btn sm" data-act="bill" data-id="${o.id}">Bill</button> <button class="btn sm" data-act="kot" data-id="${o.id}">KOT</button> <button class="btn sm" data-act="track" data-id="${o.id}">Track</button> ${o.status==='cancelled'?`<button class="btn sm bad" data-act="del" data-id="${o.id}">Delete</button>`:`<button class="btn sm bad" data-act="cancel" data-id="${o.id}">Cancel</button>`}`}</td></tr>`).join('')||`<tr><td colspan="10" class="empty">No orders on ${fmtDate(day)}${all?'':' at '+esc(cur().name)}.</td></tr>`}
+    <td style="white-space:nowrap">${`<button class="btn sm" data-act="bill" data-id="${o.id}">Bill</button> ${o.status==='cancelled'?`<button class="btn sm bad" data-act="del" data-id="${o.id}">Delete</button>`:`<button class="btn sm bad" data-act="cancel" data-id="${o.id}">Cancel</button>`}`}</td></tr>`).join('')||`<tr><td colspan="10" class="empty">No orders on ${fmtDate(day)}${all?'':' at '+esc(cur().name)}.</td></tr>`}
   </tbody></table></div>
   <p class="small muted">This list updates by itself. Cancelled orders are removed from the day sale. Delete removes a cancelled order from history.</p>`;
 }
@@ -5410,7 +5431,9 @@ document.addEventListener('click',e=>{
     case 'pf-place':placePublic({retry:!!el.dataset.retry});break;
     case 'pub-track-find':openTrackFind();break;
     case 'track':U.trackId=el.dataset.id;openTrack();break;
-    case 'tab':P.tab=el.dataset.v;U.confirmCancel=null;closeModal();render();window.scrollTo(0,0);break;
+    case 'order-add':openAddPop(find(el.dataset.id));break;
+    case 'addpop-close':closeAddPop();break;
+    case 'tab':P.tab=el.dataset.v;U.confirmCancel=null;U.addPop=null;closeModal();render();window.scrollTo(0,0);break;
     case 'pos-more':U.posMore&&U.posMore();break;
     case 'to-ticket':document.getElementById('ticket')?.scrollIntoView({behavior:'smooth',block:'start'});break;
     case 'poscat':P.cat=el.dataset.v;P.q='';render();break;
