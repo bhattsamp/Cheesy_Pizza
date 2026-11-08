@@ -711,7 +711,14 @@ html:has(#modalRoot:not(:empty)),html:has(#boardRoot:not(:empty)),html:has(#choo
 .ringpop .rp1{background:var(--plum-soft);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:6px}
 @keyframes ringIn{from{opacity:0;transform:translate(-50%,-20px) scale(.95)}to{opacity:1;transform:translateX(-50%)}}
 @keyframes bellShake{0%,50%,100%{transform:rotate(0)}10%,30%{transform:rotate(18deg)}20%,40%{transform:rotate(-18deg)}}
-.online{border:2px solid var(--plum);background:var(--plum-soft);border-radius:14px;padding:10px 12px;margin-bottom:14px;display:flex;flex-direction:column;gap:8px}
+.online{border:2px solid var(--plum);background:var(--plum-soft);border-radius:14px;padding:10px 12px;display:flex;flex-direction:column;gap:8px;
+  position:fixed;z-index:60;top:72px;right:16px;width:min(460px,calc(100vw - 32px));max-height:min(70vh,560px);overflow:auto;box-shadow:var(--shadow-lg);animation:onlin .35s ease-out}
+@media (max-width:760px){.online{top:64px;right:12px;width:calc(100vw - 24px);max-height:55vh}}
+.onlpill{position:fixed;z-index:60;top:72px;right:16px;border:0;border-radius:999px;background:var(--plum);color:#fff;font-weight:700;padding:9px 16px;box-shadow:var(--shadow-lg);animation:onlin .35s ease-out}
+@media (max-width:760px){.onlpill{top:68px;right:12px}}
+@keyframes onlin{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:none}}
+.online .on1{flex-direction:column;align-items:stretch!important;gap:4px}.online .on1>*{flex:0 0 auto!important}
+.online .on1 .acts{display:flex;gap:6px;align-items:center}.online .on1 .acts .btn{flex:1}
 .online .on1{display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:var(--surface);border-radius:10px;padding:8px 10px}
 .tables button.held{background:var(--plum-soft);color:var(--plum,#6a4fc9);border-color:var(--plum-soft)}
 .tables button.part{background:var(--warn-soft);color:var(--warn);border-color:var(--warn)}
@@ -941,7 +948,7 @@ html:has(#modalRoot:not(:empty)),html:has(#boardRoot:not(:empty)),html:has(#choo
 @media (min-width:761px) and (max-height:720px){
   .main{padding:10px 14px 20px}
   .ph1{margin-bottom:8px}.ph1 h2{font-size:22px}
-  .online{padding:8px 10px;margin-bottom:10px}
+  .online{padding:8px 10px;top:64px}
   .pos .ticket.order .sec,.pos .ticket.order .ft{padding:8px 12px}
   .pos .ticket.order .tkpay{padding:8px 12px 10px}.paybig{padding:10px 16px}.paybig b{font-size:24px}
   .pos .ticket.order .ft{gap:5px}
@@ -987,6 +994,18 @@ html:has(#modalRoot:not(:empty)),html:has(#boardRoot:not(:empty)),html:has(#choo
 .pos .tile b{display:flex;align-items:center;justify-content:center;min-height:2.9em;padding:6px 8px;font-size:13.5px;line-height:1.2}
 .pos .tile .tpr{display:block;margin-top:auto;background:#22343d;color:#fff;font-weight:700;font-size:13px;padding:6px 8px}
 .pos .tile:disabled .tph{filter:grayscale(1)}
+.pos .tiles .tile2{padding:10px;gap:8px;text-align:left;border-radius:14px;min-height:86px;display:flex;flex-direction:column;justify-content:space-between}
+.pos .tiles .tile2 .tnm{border:0;background:none;padding:0 4px 0 0;text-align:left;font-weight:700;font-size:14.5px;line-height:1.25;color:var(--ink);min-height:2.5em;cursor:pointer}
+.pos .tiles .tile2 .tg{left:auto;right:6px;top:6px}.pos .tiles .tile2 .tg~.tnm{padding-right:46px}
+.pos .tiles .tile2 .tsz{display:grid;gap:6px}
+.pos .tiles .tile2 .tsz button{border:0;border-radius:9px;background:#22343d;color:#fff;padding:5px 2px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:0;line-height:1.15;touch-action:manipulation}
+.pos .tiles .tile2 .tsz button .num{color:#fff;margin:0}
+.pos .tiles .tile2 .tsz button small{font-size:11px;opacity:.75;font-weight:600}.pos .tiles .tile2 .tsz button b{font-size:13px;font-weight:700}
+.pos .tiles .tile2 .tsz button:active:not(:disabled){transform:scale(.96);background:var(--teal)}
+.pos .tiles .tile2.off{opacity:.55}
+.catrail button{display:flex;justify-content:space-between;align-items:center;gap:6px}.catrail button .cn{font-size:12px;opacity:.65;font-weight:600}
+.cathd{display:flex;align-items:baseline;gap:10px;margin:0 0 8px;flex-wrap:wrap}.cathd h2{font-size:22px;font-weight:800;margin:0}
+@media (max-width:760px){.pos .menucol .cathd{display:none}}
 .tkhead{background:#22343d;padding:10px;border-radius:var(--r) var(--r) 0 0}
 .tkhead .types button{background:transparent;color:#d7e6ea;border-color:rgba(255,255,255,.22)}
 .tkhead .types button[aria-pressed="true"]{background:#fff;color:#22343d;border-color:#fff}
@@ -1023,6 +1042,16 @@ html:has(#modalRoot:not(:empty)),html:has(#boardRoot:not(:empty)),html:has(#choo
 .tkacts .btn.chzs{background:var(--cheese-soft);border-color:var(--cheese-soft);color:var(--cheese-ink)}
 .tkacts .tkbig{grid-column:span 3;padding:12px 4px;font-size:16px;font-weight:800}
 .tkacts .btn:disabled{opacity:.45}
+.tkacts.tk5{grid-template-columns:1fr 1fr 1fr 1.35fr 1.35fr;gap:5px}
+.tkacts.tk5 .btn,.tkacts.tk5 .tkbig{grid-column:auto;padding:11px 2px;font-size:13.5px;line-height:1.15;white-space:nowrap}
+.tkacts.tk5 .tkbig{font-weight:800}
+.tkpay{gap:6px!important;padding:8px 12px 10px!important}
+.tkpay .hint{padding:4px 10px;font-size:12px;border-radius:8px}
+.tkpay .tksum{flex-direction:row;flex-wrap:wrap;gap:2px 12px}.tkpay .tksum .bl{font-size:12.5px;justify-content:flex-start;gap:6px;color:var(--muted)}.tkpay .tksum .bl.disc{color:var(--ok)}
+.tkpm button{padding:6px 2px!important}
+.tktot b{font-size:26px!important}
+.tkopts{display:flex;flex-direction:column;gap:6px}
+.tkopts .codes button{padding:3px 8px;font-size:12px}.tkopts .waits button{padding:3px 8px;font-size:12px}
 .holdsheet{display:flex;flex-direction:column;gap:12px}
 .holdtables{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:8px;max-height:46vh;overflow:auto}
 .holdtables button{border:1px dashed var(--line);background:var(--surface);color:var(--muted);border-radius:12px;padding:10px;text-align:left;display:flex;flex-direction:column;gap:1px;min-height:76px}
@@ -1158,6 +1187,7 @@ html:has(body:not(.pubmode) .pos){scroll-padding-top:calc(env(safe-area-inset-to
   .catrail{display:flex;flex-direction:column;gap:3px;padding:6px;position:sticky;top:calc(var(--toph,61px) + var(--navh) + 12px);max-height:calc(100vh - var(--toph,61px) - var(--navh) - 24px);overflow-y:auto;overscroll-behavior:contain}
   .catrail button{border:0;background:transparent;text-align:left;padding:10px 12px;border-radius:10px;font-weight:700;color:var(--muted);line-height:1.2}
   .catrail button[aria-pressed="true"]{background:var(--teal-soft);color:var(--teal)}
+  .menucol>.catrail{grid-column:1;grid-row:1/span 2}.menucol>.cathd{grid-column:2;grid-row:1;margin:0}.menucol>.tiles{grid-column:2;grid-row:2}
 }
 @media (min-width:761px) and (min-height:540px){
   .pos .ticket.order{top:calc(var(--toph,61px) + var(--navh) + 12px);max-height:var(--tkh,calc(100vh - var(--toph,61px) - var(--navh) - 24px))}
@@ -3794,11 +3824,14 @@ function renderPOS(){
 }
 // Orders placed on the customer site wait here for the owner or cashier to accept
 function onlineBanner(){
-  const pl=liveOrders().filter(o=>o.status==='placed').sort((a,b)=>a.ts-b.ts);if(!pl.length)return '';
-  return `<div class="online" role="region" aria-label="New online orders"><div class="row"><b class="grow">${pl.length} new online order${pl.length>1?'s':''} from the customer site</b>${ringTimer||ringAudio?'<button class="btn sm" data-act="mute-ring">Stop ringing</button>':''}</div>
+  const pl=liveOrders().filter(o=>o.status==='placed').sort((a,b)=>a.ts-b.ts);if(!pl.length){U.onlMin=null;return ''}
+  // Floats over the screen as a popup. "Later" shrinks it to a small pill until another order comes in.
+  const ids=pl.map(o=>o.id).join();if(U.onlMin&&U.onlMin!==ids&&pl.some(o=>!U.onlMin.split(',').includes(o.id)))U.onlMin=null;
+  if(U.onlMin)return `<button class="onlpill" data-act="onl-max">${pl.length} online order${pl.length>1?'s':''} waiting · Open</button>`;
+  return `<div class="online" role="region" aria-label="New online orders"><div class="row"><b class="grow">${pl.length} new online order${pl.length>1?'s':''} from the customer site</b>${ringTimer||ringAudio?'<button class="btn sm" data-act="mute-ring">Stop ringing</button>':''}<button class="btn sm" data-act="onl-min" data-v="${ids}">Later</button></div>
     ${pl.map(o=>`<div class="on1"><b class="num">${o.no}</b><span class="small">${fmtTime(o.ts)} · ${esc(o.customer.name)} · <span class="num">${fmtPhone(o.customer.phone)}</span> · ${TYPES[o.type]}${o.scheduled?' · for '+esc(o.scheduled):''}</span>
-      <span class="small muted grow">${o.items.map(l=>l.qty+'× '+esc(l.name)+(l.size?' '+sizeLabel(l.size):'')).join(', ')}</span><b class="num">${rs(o.total)}</b>${payTag(o)}
-      <button class="btn sm ok" data-act="accept" data-id="${o.id}">Accept</button><button class="btn sm bad" data-act="reject" data-id="${o.id}">Reject</button></div>`).join('')}</div>`;
+      <span class="small muted">${o.items.map(l=>l.qty+'× '+esc(l.name)+(l.size?' '+sizeLabel(l.size):'')).join(', ')}</span>
+      <div class="acts"><b class="num">${rs(o.total)}</b>${payTag(o)}<button class="btn sm ok" data-act="accept" data-id="${o.id}">Accept</button><button class="btn sm bad" data-act="reject" data-id="${o.id}">Reject</button></div></div>`).join('')}</div>`;
 }
 let seenPlaced=null;
 // New online order alert: rings on POS screens with the outlet's ringtone, chosen by the
@@ -3922,9 +3955,17 @@ function posCalc(){
 const posTypes=()=>['delivery','dine','takeaway'].filter(k=>TYPES[k]&&(k!=='delivery'||delOn())).map(k=>[k,TYPES[k]]);
 // Pay-by choices on the bill. Card and bank stay inside Split.
 const TK_PAY=[['cash','Cash'],['upi','UPI'],['due','Baki'],['split','Split']];
-const posTile=m=>`<button class="tile" data-act="${m.combo?'combo-add':'pos-add'}" data-id="${m.id}" data-t="pos" ${m.off?'disabled':''}>
-  ${m.combo?'<span class="tg tgc">Combo</span>':''}${m.tag?'<span class="tg">Offer</span>':''}
-  <b>${esc(m.name)}</b><span class="tpr num">${m.off?'Not available':m.label}</span></button>`;
+// A till tile: tap the name for options; tap a size (pizza) or the price button to add it at once
+const posTile=m=>{
+  const tags=`${m.combo?'<span class="tg tgc">Combo</span>':''}${m.tag?'<span class="tg">Offer</span>':''}`;
+  const dis=m.off?'disabled':'';let btns;
+  if(m.combo)btns=`<button data-act="combo-add" data-id="${m.id}" data-t="pos"><b class="num">${m.label}</b></button>`;
+  else if(m.m&&m.m.cat==='pizza'){const sz=S.sizes.filter(z=>+m.m.prices[z.id]);btns=sz.map(z=>`<button data-act="pos-q" data-id="${m.id}" data-v="${z.id}" ${dis} aria-label="Add ${esc(m.name)} ${esc(z.label)}"><small>${esc(z.label)}</small><b class="num">${rs(m.m.prices[z.id])}</b></button>`).join('')}
+  else btns=`<button data-act="pos-q" data-id="${m.id}" data-v="" ${dis} aria-label="Add ${esc(m.name)}"><small>Add</small><b class="num">${m.label}</b></button>`;
+  const n=m.combo?1:(btns.match(/<button/g)||[]).length;
+  return `<div class="tile tile2${m.off?' off':''}">${tags}<button class="tnm" data-act="${m.combo?'combo-add':'pos-add'}" data-id="${m.id}" data-t="pos" ${dis}>${esc(m.name)}</button>
+  ${m.off?'<span class="small muted">Not available</span>':`<div class="tsz" style="grid-template-columns:repeat(${n},minmax(0,1fr))">${btns}</div>`}</div>`;
+};
 function vNew(){
   U.pos.q=''; // the till has no menu search box now; categories pick the items
   const {P,run,coins,b,t,zom,can}=posCalc();const dow=new Date().getDay();
@@ -3935,14 +3976,15 @@ function vNew(){
   else items=S.menu.filter(m=>m.cat===P.cat).map(mk);
   const ci=custInfo(P.phone);const todays=activeOffers(dow);
   const n=P.cart.reduce((a,l)=>a+l.qty,0);
-  const optsOn=P.opts||P.note||P.code||(P.wait&&P.wait!==PREP_MIN);
+  const optsOn=true; // kitchen note, waiting time and coupon stay open on the till
   return `<div class="ph1 nohead"><span class="muted small">Next no. <b class="num">${orderNo(cur(),today(),(S.seq[S.cur+'|'+today()]||0)+1)}</b></span>${todays.length?`<span class="livechips">${todays.map(o=>`<span class="chip ${o.type==='bogo'?'r':o.type==='item'?'c':'t'}">${esc(o.name)}</span>`).join('')}</span>`:''}<span class="grow"></span>${!CAP&&CS_CH?'<button class="btn sm" data-act="cs-open" title="Open the screen the customer sees on your second monitor">Customer screen ↗</button>':''}</div>
   <div class="neworder">
     <div class="menucol">
       <div class="mbar card">
         <nav class="cats poscats" aria-label="Categories"><button data-act="poscat" data-v="combo" aria-pressed="${P.cat==='combo'&&!P.q}">Combos</button>${CATS.map(([k,nm])=>`<button data-act="poscat" data-v="${k}" aria-pressed="${P.cat===k&&!P.q}">${nm}</button>`).join('')}</nav>
       </div>
-      <nav class="card catrail" aria-label="Item categories" data-ks="catrail"><button data-act="poscat" data-v="combo" aria-pressed="${P.cat==='combo'&&!P.q}">Combos</button>${CATS.map(([k,nm])=>`<button data-act="poscat" data-v="${k}" aria-pressed="${P.cat===k&&!P.q}">${nm}</button>`).join('')}</nav>
+      <nav class="card catrail" aria-label="Item categories" data-ks="catrail"><button data-act="poscat" data-v="combo" aria-pressed="${P.cat==='combo'&&!P.q}"><span>Combos</span><span class="cn num">${S.combos.filter(c=>c.active).length}</span></button>${CATS.map(([k,nm])=>`<button data-act="poscat" data-v="${k}" aria-pressed="${P.cat===k&&!P.q}"><span>${nm}</span><span class="cn num">${S.menu.filter(m=>m.cat===k).length}</span></button>`).join('')}</nav>
+      <div class="cathd"><h2>${P.cat==='combo'?'Combos':esc((CATS.find(c=>c[0]===P.cat)||[0,''])[1])}</h2><span class="small muted">${P.cat==='pizza'?'Tap a size to add · tap the name for toppings':'Tap the price to add · tap the name for options'}</span></div>
       <div class="tiles">${items.map(posTile).join('')||'<div class="empty">No items</div>'}</div>
     </div>
     ${P.cart.length?`<button class="tkjump" data-act="to-ticket"><b class="num">${n} item${n>1?'s':''} · ${rs(t)}</b><span>View order ↓</span></button>`:''}
@@ -3981,7 +4023,7 @@ function vNew(){
         <div class="tksum">${b.subtotal!==t||(b.discounts||[]).length?`<div class="bl"><span>Item total</span><span class="num">${rs(b.subtotal)}</span></div>`:''}${(b.discounts||[]).map(d=>`<div class="bl disc"><span>${esc(d.name)}</span><span class="num">−${rs(d.amt)}</span></div>`).join('')}${b.gst&&b.gst.mode==='excl'?`<div class="bl"><span>GST ${b.gst.rate}%</span><span class="num">+${rs2(b.gst.tax)}</span></div>`:''}${P.already?`<div class="bl disc"><span>Paid earlier</span><span class="num">−${rs(P.already)}</span></div>`:''}</div>
         <div class="tktot"><span>Total${n?` <small class="num">· ${n} item${n>1?'s':''}</small>`:''}</span><span class="grow"></span>${btp()&&btGet()?'<button class="tklink" data-act="drawer-open">Drawer</button>':''}<button class="tklink" data-act="pos-pay" ${can?'':'disabled'}>More ways</button><button class="tklink" data-act="pos-clear" ${P.cart.length||run?'':'disabled'}>Clear</button><b class="num">${rs(t)}</b></div>
         <div class="tkpm" role="group" aria-label="Pay by">${TK_PAY.map(([k,nm])=>`<button data-act="pos-pm" data-v="${k}" aria-pressed="${P.pay===k}">${nm}</button>`).join('')}</div>
-        <div class="tkacts">
+        <div class="tkacts tk5">
           <button class="btn" data-act="pos-go" data-v="save" ${P.cart.length?'':'disabled'} title="Save the order without printing">Save</button>
           <button class="btn chzs" data-act="pos-go" data-v="kot" ${P.cart.length?'':'disabled'} title="Save and print the kitchen slip">KOT</button>
           <button class="btn" data-act="pos-hold" ${P.cart.length?'':'disabled'} title="Add these items to a table, paid or pending">Hold</button>
@@ -5298,6 +5340,7 @@ document.addEventListener('click',e=>{
     case 'to-ticket':document.getElementById('ticket')?.scrollIntoView({behavior:'smooth',block:'start'});break;
     case 'poscat':P.cat=el.dataset.v;P.q='';render();break;
     case 'pos-add':openCustomizer(el.dataset.id,'pos');break;
+    case 'pos-q':{const m=S.menu.find(x=>x.id===el.dataset.id);if(!m||m.off)break;addLine('pos',mkLine(m,el.dataset.v||null,[],1));break}
     case 'pos-type':P.type=el.dataset.v;if(P.type!=='dine'){P.addTo=null;P.table=''}if(P.type==='zomato')P.pay='zomato';else if(P.pay==='zomato')P.pay='cash';render();break;
     case 'lq':{const l=P.cart[+el.dataset.i];l.qty+= +el.dataset.v;if(l.qty<1)P.cart.splice(+el.dataset.i,1);render();break}
     case 'lp-edit':U.editLine=+el.dataset.i;render();{const i=document.getElementById('lp-'+el.dataset.i);if(i){i.focus();i.select()}}break;
@@ -5305,6 +5348,8 @@ document.addEventListener('click',e=>{
     case 'pos-pay':P.kotToo=false;openPay();break;
     case 'pos-bill':posBill(el.dataset.v);break;
     case 'pos-hold':openHold();break;
+    case 'onl-min':U.onlMin=el.dataset.v;render();break;
+    case 'onl-max':U.onlMin=null;render();break;
     case 'dsp-mv':{if(!dspOwner())break;const o=cur(),keys=dspSlides(o).map(x=>x.key),i=keys.indexOf(el.dataset.k),j=i+ +el.dataset.v;if(i<0||j<0||j>=keys.length)break;
       [keys[i],keys[j]]=[keys[j],keys[i]];dspCfg().order=keys;save();render();break}
     case 'dsp-add':{if(!dspOwner())break;const D=dspCfg();D.custom=D.custom||[];const nid='s'+Date.now().toString(36);D.custom.push({id:nid,kick:'',title:'',text:'',bg:D.custom.length%4});if(D.order){const at=D.order.indexOf('address');D.order.splice(at<0?D.order.length:at,0,'c_'+nid)}save();render();toast('Slide added before the address. Type its words and add a photo.');break}
