@@ -209,6 +209,19 @@ function createApp(store) {
   // Full-screen slideshow for the TV in the shop; nothing on the site links to it
   app.get('/display', (req, res) => res.sendFile(path.join(ROOT, 'display.html')));
   // Staff login for one outlet: /staff/<outlet> opens the till's login screen for that outlet only
+  // Direct APK downloads from our own domain (phones that can't fetch from GitHub).
+  // Streams the newest build from the android-latest release.
+  const APKS = { '/admin.apk': 'cheesy-pizza-admin.apk', '/app.apk': 'cheesy-pizza.apk' };
+  app.get(Object.keys(APKS), async (req, res) => {
+    const name = APKS[req.path];
+    try {
+      const r = await fetch('https://github.com/bhattsamp/Cheesy_Pizza/releases/download/android-latest/' + name, { redirect: 'follow' });
+      if (!r.ok || !r.body) return res.status(502).send('Could not get the app right now. Please try again.');
+      res.set({ 'Content-Type': 'application/vnd.android.package-archive', 'Content-Disposition': 'attachment; filename="' + name + '"', 'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex' });
+      if (r.headers.get('content-length')) res.set('Content-Length', r.headers.get('content-length'));
+      require('stream').Readable.fromWeb(r.body).pipe(res);
+    } catch (e) { console.error('APK download', e.message); res.status(502).send('Could not get the app right now. Please try again.'); }
+  });
   app.get(['/staff', '/staff/:outlet'], (req, res) => { res.set('X-Robots-Tag', 'noindex'); res.sendFile(path.join(ROOT, 'index.html')); });
 
   app.use((err, req, res, next) => { console.error(err); res.status(500).json({ error: 'Server error' }); });

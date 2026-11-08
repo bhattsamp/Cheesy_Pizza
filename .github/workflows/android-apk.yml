@@ -97,6 +97,8 @@ jobs:
         run: |
           unzip -p cheesy-pizza.apk assets/capacitor.config.json | grep -q 'CheesyApp/customer'
           unzip -p cheesy-pizza-admin.apk assets/capacitor.config.json | grep -q 'CheesyApp/admin'
+          # Play Protect blocks sideloaded apps that read notifications, so the Admin app must never ask for notification access
+          if unzip -p cheesy-pizza-admin.apk AndroidManifest.xml | tr -d '\0' | grep -q UpiAlertService; then echo "::error::The plain Admin app must not read notifications"; exit 1; fi
           echo "Customer and Admin apps are set up correctly"
 
       # Checks the Play Store release build and its signing still work, with a throwaway key
