@@ -965,6 +965,9 @@ html:has(#modalRoot:not(:empty)),html:has(#boardRoot:not(:empty)),html:has(#choo
   .tiles{grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px}
   .pos .tile b{font-size:16px}
   .kds{grid-template-columns:repeat(auto-fill,minmax(270px,1fr))}
+.kt{border-width:4px!important}.kt.placed{border-width:4px!important}
+.ktop{font-size:15px}.ktop .kwho{font-weight:800;font-size:16px}
+.klanes{align-items:start}.klanes .lane{background:transparent;border:0;padding:0}
 }
 /* ===== POS order screen: photo tiles, clean ticket, big Pay button ===== */
 .mbar{display:flex;align-items:center;gap:8px;padding:4px 6px 4px 10px;margin-bottom:10px;position:sticky;top:calc(env(safe-area-inset-top,0px) + var(--toph,61px));z-index:6;box-shadow:0 4px 14px -10px rgba(0,0,0,.3)}
@@ -4355,6 +4358,12 @@ function payTag(o){
   if(o.paid&&o.pay&&o.pay.app)return `<span class="chip ready paid-chip">UPI paid in app${o.pay.utr?` · UTR <b class="num">${esc(fmtUtr(o.pay.utr))}</b>`:''}</span>`;
   if(partPaid(o))return `<span class="chip amber paid-chip">${rs(paidSoFar(o))} paid · ${rs(balanceOf(o))} left</span>`;
   return o.paid?'<span class="chip ready paid-chip">Payment done</span>':`<span class="chip r paid-chip">Baki ${rs(o.total)}</span>`}
+// Kitchen lanes, like the Counter screen: one column for each kind of order
+function kLanes(list){const L=[['Dine-in',o=>o.type==='dine'],['Takeaway',o=>o.type==='takeaway'||o.type==='zomato'],['Delivery',o=>o.type==='delivery']];
+  const used=new Set();const out=L.map(([n,f])=>{const os=list.filter(o=>f(o));os.forEach(o=>used.add(o));return [n,os]}).filter(([n,os])=>os.length||n!=='Delivery'||delOn());
+  const rest=list.filter(o=>!used.has(o));if(rest.length)out.push(['Other',rest]);return out}
+// The kitchen sees the customer's alias (set on the Customers screen) instead of the name; bills keep the real name
+const kName=o=>{const c=S.customers[o.customer.phone];return (c&&c.alias)||o.customer.name||'Walk-in'};
 function vKitchen(){
   const list=liveOrders().filter(o=>o.status==='placed'||o.status==='preparing').sort((a,b)=>a.ts-b.ts);
   const pl=list.filter(o=>o.status==='placed'),pr=list.filter(o=>o.status==='preparing');
@@ -4364,18 +4373,18 @@ function vKitchen(){
     // green when the order comes in, turning yellow then red as the waiting time runs out
     const h=o.status==='placed'?265:Math.round(130*Math.max(0,Math.min(1,1-mins/w)));
     return `<div class="kt ${o.status==='placed'?'placed':''} ${o.status==='preparing'&&left<0?'late':''}" style="--h:${h}" ${o.status==='preparing'?`data-act="ktap" data-id="${o.id}"`:''}>
+    <div class="kfoot ktop"><span class="kwho">${esc(kName(o))}</span><span class="num">${esc(o.customer.phone?fmtPhone(o.customer.phone):'—')}</span><span>${TYPES[o.type]}${o.table?' · T'+esc(o.table):''}</span><span class="${o.paid?'pd':'bk'}">${o.paid?'Payment done':'Baki'}</span></div>
     <div class="row"><span class="no num">${noHtml(o.no)}</span><span class="grow"></span><span class="chip ${o.type==='zomato'?'r':'t'}">${TYPES[o.type]}${o.table?' · T'+esc(o.table):''}</span></div>
     <div class="row"><span class="small muted num grow">${fmtTime(o.ts)} · ${mins<1?'just now':mins+' min'}${o.source==='online'?' · online':''}${o.zomatoId?' · Zomato '+esc(o.zomatoId):''}</span>${o.status==='preparing'?`<span class="left num">${leftText(left)}</span>`:''}<button class="btn sm" data-act="set-wait" data-id="${o.id}" title="Change waiting time">⏱ ${w} min</button></div>
     ${o.scheduled?`<span class="chip c" style="align-self:flex-start">Scheduled for ${esc(o.scheduled)}</span>`:''}
     ${o.status==='preparing'?`<div class="pbar" title="Waiting time ${w} min"><i style="width:${Math.min(100,mins/w*100)}%;background:hsl(${h} 65% 42%)"></i></div>`:''}
     ${items(o)}
-    <div class="kfoot"><span>${esc(o.customer.name||'Walk-in')}</span><span class="num">${esc(o.customer.phone||'—')}</span><span>${TYPES[o.type]}</span><span class="${o.paid?'pd':'bk'}">${o.paid?'Payment done':'Baki'}</span></div>
     ${o.status==='placed'?`<div class="row"><button class="btn ok grow" data-act="accept" data-id="${o.id}">Accept</button><button class="btn bad" data-act="reject" data-id="${o.id}">Reject</button></div>`:`<button class="btn ok" data-act="kready" data-id="${o.id}">Ready → counter</button>`}
   </div>`};
   return `<div class="ph1"><h2>Kitchen display</h2><span class="muted small">${esc(cur().name)} · tap an item when it is done · green turns red as the waiting time runs out</span></div>
   ${pl.length?`<div class="kcol-h"><span class="chip placed num">${pl.length}</span><h3>New online orders</h3>${ringTimer||ringAudio?'<button class="btn sm" data-act="mute-ring">Stop ringing</button>':''}</div><div class="kds" style="margin-bottom:22px">${pl.map(card).join('')}</div>`:''}
   <div class="kcol-h"><span class="chip preparing num">${pr.length}</span><h3>Preparing</h3></div>
-  <div class="kds">${pr.map(card).join('')||'<div class="empty card">No orders in the oven.</div>'}</div>`;
+  <div class="counter klanes">${kLanes(pr).map(([n,os])=>`<div class="lane"><div class="lane-h"><h3>${n}</h3><span class="n num">${os.length}</span></div>${os.map(card).join('')||'<div class="empty small">No orders.</div>'}</div>`).join('')}</div>`;
 }
 
 function collectRow(o){return o.paid||upiPending(o)?'':`<div class="small" style="font-weight:700;color:var(--bad)">Collect ${rs(balanceOf(o))}${o.pay.mode==='due'?' (on baki account)':partPaid(o)?' (rest of the bill)':''}:</div><div class="row" style="gap:4px">${COUNTER_MODES.map(k=>`<button class="btn sm" data-act="collect" data-id="${o.id}" data-v="${k}">${PAY[k]}</button>`).join('')}</div>`}
@@ -4461,7 +4470,9 @@ function vTables(){
   const rounds=o=>{const g={};o.items.forEach(l=>{const r=l.round||1;(g[r]=g[r]||[]).push(l)});return Object.entries(g).map(([r,ls])=>{const at=+r===1?o.ts:ls[0].at,by=+r===1?o.by:ls[0].by;
     return `<div class="tround"><div class="small muted">${+r===1?'First order':'Added items ('+r+')'}${at?' · <b class="num">'+fmtTime(at)+'</b>':''}${by?' · taken by '+esc(by):''}</div>${ls.map(l=>`<div class="bl"><span>${l.qty} × ${esc(l.name)} <span class="muted small">${esc(addonText(l))}</span></span><span class="num">${rs(l.unit*l.qty)}</span></div>`).join('')}</div>`}).join('')};
   const hist=t=>{const os=tableDay(t,day);const ok=os.filter(o=>o.status!=='cancelled');
+    const run=isToday&&tableState(t).run;
     return `<div class="card panel thist"><div class="row"><h3 class="grow" style="margin:0">T${esc(t)} · ${isToday?'today':fmtDate(day)}</h3><span class="small muted num">${ok.length} order${ok.length===1?'':'s'} · ${ok.reduce((x,o)=>x+qty(o),0)} items · ${rs(sum(ok))}</span></div>
+    ${run?`<div class="row" style="gap:8px"><button class="btn pri" data-act="tbl-move" data-v="${esc(t)}">⇄ Move or merge T${esc(t)}</button><span class="small muted">Shift this running order to a free table, or join it with another running table into one bill.</span></div>`:''}
     ${os.length?os.map(o=>{const c=o.customer||{};return `<div class="tord${o.status==='cancelled'?' cx':''}">
       <div class="row"><b class="num">${esc(o.no)}</b><span class="small muted num">${fmtTime(o.ts)}${o.times&&o.times.done?' – '+fmtTime(o.times.done):''}</span><span class="grow"></span><span class="chip ${o.status}">${statusName(o.status,o.type)}</span>${payTag(o)}</div>
       <div class="small">${c.name?'<b>'+esc(c.name)+'</b>':'Walk-in guest'}${c.phone?` · <a class="num" href="tel:${esc(c.phone)}">${esc(fmtPhone(c.phone))}</a>`:''}${o.by?' · order taken by '+esc(o.by):''}</div>
@@ -4473,6 +4484,35 @@ function vTables(){
   ${isToday?`<div class="tlegend"><span><i style="background:var(--bad)"></i>Not paid</span><span><i style="background:var(--warn)"></i>Part paid</span><span><i style="background:var(--ok)"></i>Paid</span><span><i style="background:var(--plum,#6a4fc9)"></i>Booked</span></div>`:''}
   <div class="tables tgrid">${[...Array(n)].map((_,i)=>card(String(i+1))).join('')}</div>
   ${sel?hist(sel):'<div class="small muted" style="margin-top:10px">Tap a table to see what it was served that day.</div>'}`;
+}
+/* Move a running table's order to a free table, or merge it into another running table so the
+   guests get one bill. Merging moves every item (with its round and who took it) onto the other
+   table's order and closes this one as "merged", so sales count the items once. */
+function openMoveTable(t){
+  const src=tableState(t).run;if(!src){toast('T'+t+' has no running order');return}
+  const n=+cur().tables||8,tabs=[...Array(n)].map((_,i)=>String(i+1)).filter(x=>x!==t);
+  showModal(`<div class="mh"><h3>Move or merge T${esc(t)}</h3><button class="x" data-act="close" aria-label="Close">×</button></div>
+  <div class="mb"><div class="small muted">${esc(src.no)} · ${src.items.reduce((a,l)=>a+l.qty,0)} items · ${rs(src.total)}${src.paid?' · paid':partPaid(src)?' · '+rs(paidSoFar(src))+' paid':''}</div>
+   <div class="grp-h">Free tables · move here</div><div class="holdtables">${tabs.filter(x=>!tableState(x).run).map(x=>`<button data-act="mv-to" data-v="${x}"><b>T${x}</b><small>${tableState(x).hold?'Booked':'Free'}</small></button>`).join('')||'<span class="small muted">No free table.</span>'}</div>
+   <div class="grp-h">Running tables · merge into one bill</div><div class="holdtables">${tabs.filter(x=>tableState(x).run).map(x=>{const r=tableState(x).run;return `<button class="busy" data-act="mg-to" data-v="${x}"><b>T${x}</b><small class="num">${rs(r.total)} · ${r.items.reduce((a,l)=>a+l.qty,0)} items</small></button>`}).join('')||'<span class="small muted">No other running table.</span>'}</div></div>`,
+  {onAct:(act,el)=>{
+    const to=el.dataset.v;
+    if(act==='mv-to'){src.table=to;src.moves=[...(src.moves||[]),{from:t,to,at:Date.now(),by:staff()?.name||''}];if(cur().holds&&cur().holds[to])delete cur().holds[to];
+      save();U.tblSel=to;closeModal();render();toast(src.no+' moved T'+t+' → T'+to);return true}
+    if(act==='mg-to'){const dst=tableState(to).run;if(!dst)return true;
+      if(src.paid||partPaid(src)||dst.walletUsed||src.walletUsed){toast('T'+t+' has a payment on it. Move it to a free table instead, or settle it first.');return true}
+      askConfirm('Merge T'+t+' into T'+to+'?','All items of '+src.no+' go onto '+dst.no+' (T'+to+') and the guests get one bill. '+src.no+' is closed as merged.','Merge',()=>{
+        if(dst.paid)keepPaidParts(dst);
+        const round=Math.max(1,...dst.items.map(l=>l.round||1))+1,at=Date.now(),by=staff()?.name||'';
+        src.items.forEach(l=>dst.items.push({...l,round,at:l.at||src.ts,by:l.by||src.by||by,from:'T'+t}));
+        if(src.note)dst.note=[dst.note,'T'+t+': '+src.note].filter(Boolean).join(' · ');
+        if(!dst.customer.phone&&src.customer.phone)dst.customer={...src.customer};
+        recalcOrder(dst);if(['ready','done'].includes(dst.status)&&src.status==='preparing'){dst.status='preparing';dst.times.preparing=Date.now()}
+        // undo src's coins, then close it as merged (not a cancellation)
+        const c=S.customers[src.customer.phone];if(c)c.coins=Math.max(0,(c.coins||0)+(src.coinsUsed||0)-(src.coinsEarned||0));
+        src.status='cancelled';src.mergedInto=dst.id;src.cancel={by,why:'Merged into '+dst.no+' (T'+to+')',at,merged:true};src.times.cancelled=at;
+        save();U.tblSel=to;closeModal();render();toast('T'+t+' merged into T'+to+' · one bill '+rs(dst.total))});return true}
+    return false}});
 }
 /* Cancelling an order. A sheet (not an inline button where the Cancel button was, so a double
    tap can't cancel) that asks why, warns when the money was already taken, and keeps who
@@ -4777,7 +4817,11 @@ function repTbl(t,max){const rows=max?t.rows.slice(0,max):t.rows;
   return `<div class="tw"><table class="stk ordtbl reptbl"><thead><tr>${t.h.map((h,i)=>{const c=t.rows[0]?.[i];return `<th${i&&(typeof c==='number'||/^₹/.test(String(c)))?' class="r"':''}>${esc(h)}</th>`}).join('')}</tr></thead><tbody>
   ${rows.map(r=>`<tr>${r.map((c,i)=>`<td class="${i&&(typeof c==='number'||/^₹/.test(String(c)))?'r num':''}">${esc(String(c))}</td>`).join('')}</tr>`).join('')||`<tr><td colspan="${t.h.length}" class="empty">Nothing in this period.</td></tr>`}
   </tbody></table></div>${max&&t.rows.length>max?`<div class="small muted" style="padding:6px 2px">Showing ${max} of ${t.rows.length}. The Excel and PDF have all of them.</div>`:''}`}
-function vReports(){const seg=upiSeg('rep');if(U.repView==='upi'){const R=repU(),[f,t]=repRange(R);return seg+vUpiAlerts(f,t,R.sc)}return seg+vReportsMain()}
+function vReports(){const seg=upiSeg('rep'),R=repU(),[f,t]=repRange(R);
+  if(U.repView==='upi')return seg+vUpiAlerts(f,t,R.sc);
+  if(U.repView==='cx')return seg+vCancelRep(f,t,R.sc);
+  if(U.repView==='bk')return seg+vBackup();
+  return seg+vReportsMain()}
 function vReportsMain(){const R=repU(),r=repData(),T=repTables(r);const cols=SALE_COLS.filter(k=>r.by[k]);
   return `<div class="ph1"><h2>Sales reports</h2><span class="muted small">Pick a period, then save it as Excel or PDF.</span></div>
   <div class="card" style="padding:12px;display:flex;flex-direction:column;gap:10px;margin-bottom:12px">
@@ -4934,7 +4978,8 @@ function vCust(){
     const byDate={};list.forEach(o=>(byDate[o.date]=byDate[o.date]||[]).push(o));
     const ok=list.filter(o=>o.status!=='cancelled');
     detail=`<div class="card" style="padding:16px;margin-top:12px">
-      <div class="row"><div class="grow"><h3 style="font-size:24px">${esc(one.name||'Customer')}</h3><div class="muted num">${fmtPhone(one.phone)} · ${ok.length} orders · ${rs(ok.reduce((s,o)=>s+o.total,0))}</div></div>
+      <div class="row"><div class="grow"><h3 style="font-size:24px">${esc(one.name||'Customer')}</h3><div class="muted num">${fmtPhone(one.phone)} · ${ok.length} orders · ${rs(ok.reduce((s,o)=>s+o.total,0))}</div>
+        <div class="row" style="gap:6px;margin-top:6px"><label class="small" for="c-alias"><b>Kitchen alias</b></label><input class="inp" id="c-alias" data-calias="${esc(one.phone)}" value="${esc(one.alias||'')}" placeholder="e.g. Ripal bhai, Blue car" maxlength="30" style="max-width:220px"><span class="small muted">Shown on the kitchen screen only</span></div></div>
       ${one.due?`<div class="custbox due"><b class="num">Baki ${rs(one.due)}</b><button class="btn sm" data-act="settle" data-ph="${one.phone}">Mark as paid</button></div>`:'<span class="chip ready">No baki</span>'}</div>
       <div class="row" style="margin-top:10px"><span class="chip t num">Wallet ${rs(one.wallet||0)}</span><span class="chip c num">${Math.floor(one.coins||0)} coins</span>${one.pin?'<span class="chip ready">Has account</span>':'<span class="chip done">No account</span>'}<span class="grow"></span><input class="inp num" id="tw-amt" type="number" placeholder="₹" style="width:100px" aria-label="Top-up amount"><button class="btn sm" data-act="topup-pos" data-ph="${one.phone}">Add money (cash)</button>${one.pin?`<button class="btn sm bad" data-act="reset-pin" data-ph="${one.phone}">Reset PIN</button>`:''}</div>
       ${Object.entries(byDate).map(([d,os])=>`<div class="grp-h" style="margin:14px 0 4px">${fmtDate(d)}</div>${os.map(o=>`<div class="line"><div><b class="num">${o.no}</b> <span class="small muted">${fmtTime(o.ts)} · ${esc(outletOf(o).name)} · ${TYPES[o.type]}</span><div class="ad">${o.items.map(l=>l.qty+'× '+esc(l.name)+(l.size?' '+sizeLabel(l.size):'')).join(', ')}</div></div><div class="row"><b class="num">${rs(o.total)}</b><span class="chip ${o.status}">${statusName(o.status,o.type)}</span><button class="btn sm" data-act="bill" data-id="${o.id}">Print bill</button></div></div>`).join('')}`).join('')}
@@ -4942,7 +4987,7 @@ function vCust(){
   }
   return `<div class="ph1"><h2>Customers</h2><input class="inp" id="cu-q" placeholder="Search mobile or name" value="${esc(U.custQ)}" style="max-width:260px"></div>
   ${one?`<button class="btn sm" data-act="cust-all">← All customers</button>`:`<div class="card tw"><table class="stk"><thead><tr><th>Name</th><th>Mobile</th><th class="r">Orders</th><th class="r">Baki</th><th></th></tr></thead><tbody>
-    ${all.map(c=>{const n=S.orders.filter(o=>o.customer.phone===c.phone&&o.status!=='cancelled').length;return `<tr><td>${esc(c.name||'—')}</td><td class="num">${fmtPhone(c.phone)}</td><td class="r num">${n}</td><td class="r num" style="color:${c.due?'var(--bad)':'inherit'}">${c.due?rs(c.due):'—'}</td><td><button class="btn sm" data-act="cust-open" data-ph="${c.phone}">Open</button></td></tr>`}).join('')||'<tr><td colspan="5" class="empty">No customers found.</td></tr>'}
+    ${all.map(c=>{const n=S.orders.filter(o=>o.customer.phone===c.phone&&o.status!=='cancelled').length;return `<tr><td>${esc(c.name||'—')}${c.alias?' <small class="muted">· '+esc(c.alias)+'</small>':''}</td><td class="num">${fmtPhone(c.phone)}</td><td class="r num">${n}</td><td class="r num" style="color:${c.due?'var(--bad)':'inherit'}">${c.due?rs(c.due):'—'}</td><td><button class="btn sm" data-act="cust-open" data-ph="${c.phone}">Open</button></td></tr>`}).join('')||'<tr><td colspan="5" class="empty">No customers found.</td></tr>'}
   </tbody></table></div>`}${detail}`;
 }
 
@@ -5413,6 +5458,9 @@ document.addEventListener('click',e=>{
     case 'st-step':{const x=stockOf().find(y=>y.id===el.dataset.id);if(x)stockSet(x,'qty',Math.max(0,Math.round(((+x.qty||0)+ +el.dataset.v)*100)/100));break}
     case 'del':openDelete(find(el.dataset.id));break;
     case 'scope':U.salesScope=el.dataset.v;render();break;
+    case 'tbl-move':openMoveTable(el.dataset.v);break;
+    case 'cx-xls':cxExcel();break;
+    case 'bk-json':bkDo('json');break;case 'bk-xls':bkDo('xls');break;case 'bk-list':bkDo('list');break;case 'bk-day':bkDo('day',el);break;
     case 'upi-view':{const [w,v]=el.dataset.v.split(':');if(w==='sales')U.salesView=v;else U.repView=v;render();break}
     case 'ua-open':{const a=S.upialerts.find(x=>x.id===el.dataset.id);if(a)openUpiAlert(a,true);break}
     case 'ua-setup':upiSetup(el.dataset.v);break;
@@ -5821,7 +5869,64 @@ function uaUnlink(a){
   Object.assign(a,{status:'new',orderId:'',orderNo:'',by:''});save();
 }
 function upiSeg(w){const v=(w==='sales'?U.salesView:U.repView)||'sale';const n=S.upialerts.filter(a=>a.outletId===S.cur&&a.status==='new'&&!a.test).length;
-  return `<div class="seg upiseg" role="tablist"><button data-act="upi-view" data-v="${w}:sale" aria-pressed="${v!=='upi'}">${w==='sales'?'Day sale':'Sales report'}</button><button data-act="upi-view" data-v="${w}:upi" aria-pressed="${v==='upi'}">UPI alerts${n?` <span class="badge">${n}</span>`:''}</button></div>`}
+  const own=staff()?.role==='owner';
+  return `<div class="seg upiseg" role="tablist"><button data-act="upi-view" data-v="${w}:sale" aria-pressed="${!['upi','cx','bk'].includes(v)}">${w==='sales'?'Day sale':'Sales report'}</button>${w==='rep'?`<button data-act="upi-view" data-v="rep:cx" aria-pressed="${v==='cx'}">Cancelled & refunds</button>`:''}<button data-act="upi-view" data-v="${w}:upi" aria-pressed="${v==='upi'}">UPI alerts${n?` <span class="badge">${n}</span>`:''}</button>${w==='rep'&&own?`<button data-act="upi-view" data-v="rep:bk" aria-pressed="${v==='bk'}">Backup & export</button>`:''}</div>`}
+// Cancelled orders (with who, when, why and whether money was taken) and wallet refunds for a period
+function vCancelRep(from,to,sc){
+  const os=S.orders.filter(o=>o.date>=from&&o.date<=to&&(sc==='all'||o.outletId===S.cur)&&o.status==='cancelled').sort((a,b)=>b.ts-a.ts);
+  const merged=os.filter(o=>o.mergedInto),cx=os.filter(o=>!o.mergedInto);
+  const refunds=cx.filter(o=>o.refunded),paidCx=cx.filter(o=>o.cancel&&o.cancel.paid);
+  const sum=a=>r2(a.reduce((t,o)=>t+o.total,0));
+  const byWho={};cx.forEach(o=>{const k=(o.cancel&&o.cancel.by)||(o.source==='online'?'Online order rejected':'Not recorded');(byWho[k]=byWho[k]||[]).push(o)});
+  const U2=U.cxRows=cx;
+  return `<div class="ph1"><h2>Cancelled & refunds</h2><span class="muted small">${from===to?fmtDate(from):fmtDate(from)+' – '+fmtDate(to)} · use the period buttons on Sales report</span><button class="btn" data-act="cx-xls">Save as Excel</button></div>
+  <div class="stats">
+    <div class="card stat hero"><div class="k">Cancelled orders</div><div class="v num">${cx.length}</div><div class="d num">${rs(sum(cx))} of bills</div></div>
+    <div class="card stat"><div class="k">Money already taken</div><div class="v num" style="color:${paidCx.length?'var(--bad)':'inherit'}">${rs(sum(paidCx))}</div><div class="d muted num">${paidCx.length} orders were paid before cancelling</div></div>
+    <div class="card stat"><div class="k">Refunded to wallet</div><div class="v num">${rs(r2(refunds.reduce((t,o)=>t+o.refunded,0)))}</div><div class="d muted num">${refunds.length} orders</div></div>
+    <div class="card stat"><div class="k">Tables merged</div><div class="v num">${merged.length}</div><div class="d muted">not counted as cancelled</div></div>
+  </div>
+  <div class="card" style="padding:12px 14px;margin:12px 0;display:flex;gap:8px;flex-wrap:wrap;align-items:center"><b>Cancelled by</b>${Object.entries(byWho).map(([k,a])=>`<span class="chip">${esc(k)} · ${a.length} · ${rs(sum(a))}</span>`).join('')||'<span class="small muted">Nobody</span>'}</div>
+  <div class="card tw"><table class="stk"><thead><tr><th>Date</th><th>Order</th><th>Customer</th><th>Items</th><th class="r">Bill</th><th>Paid?</th><th>Refund</th><th>Cancelled by</th><th>Why</th></tr></thead><tbody>
+  ${cx.map(o=>`<tr><td data-l="Date">${fmtDate(o.date)} ${fmtTime((o.cancel&&o.cancel.at)||o.ts)}</td><td data-l="Order"><b class="num">${esc(o.no)}</b><br><small class="muted">${esc(TYPES[o.type]||o.type)}${o.table?' · T'+esc(o.table):''}</small></td><td data-l="Customer">${esc(o.customer.name||'Walk-in')}${o.customer.phone?'<br><small class="num muted">'+esc(fmtPhone(o.customer.phone))+'</small>':''}</td><td data-l="Items" class="small">${esc(o.items.map(l=>l.qty+'× '+l.name).join(', ').slice(0,80))}</td><td data-l="Bill" class="r num">${rs(o.total)}</td><td data-l="Paid?">${o.cancel&&o.cancel.paid?'<span class="chip r">Yes</span>':'No'}</td><td data-l="Refund" class="num">${o.refunded?rs(o.refunded)+' to wallet':'—'}</td><td data-l="Cancelled by">${esc((o.cancel&&o.cancel.by)||(o.source==='online'?'Rejected (online)':'—'))}${o.cancel&&o.cancel.okBy?'<br><small class="muted">allowed by '+esc(o.cancel.okBy)+'</small>':''}</td><td data-l="Why" class="small">${esc((o.cancel&&o.cancel.why)||'—')}</td></tr>`).join('')||'<tr><td colspan="9" class="muted" style="text-align:center;padding:18px">No cancelled orders in this period.</td></tr>'}
+  </tbody></table></div>`;
+}
+async function xlsSave(name,sheets){
+  try{await loadLib('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js')}catch(e){toast('Could not load the Excel maker. Check the internet and try again.');return}
+  const wb=XLSX.utils.book_new();
+  sheets.forEach(([n,rows])=>{const ws=XLSX.utils.aoa_to_sheet(rows);ws['!cols']=(rows[0]||[]).map((h,i)=>({wch:Math.min(60,Math.max(...rows.slice(0,400).map(r=>String(r[i]??'').length))+2)}));XLSX.utils.book_append_sheet(wb,ws,n.slice(0,31))});
+  const out=XLSX.write(wb,{bookType:'xlsx',type:'array'});
+  await saveFile(new Blob([out],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),name,'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')}
+function cxExcel(){const R=repU(),[f,t]=repRange(R),cx=U.cxRows||[];
+  xlsSave('cheesy-cancelled-'+f+'_'+t+'.xlsx',[['Cancelled',[['Date','Time','Order','Type','Table','Customer','Mobile','Items','Bill','Paid before cancel','Refund to wallet','Cancelled by','Allowed by','Why'],
+    ...cx.map(o=>[o.date,fmtTime((o.cancel&&o.cancel.at)||o.ts),o.no,TYPES[o.type]||o.type,o.table||'',o.customer.name||'',o.customer.phone||'',o.items.map(l=>l.qty+'x '+l.name).join(', '),o.total,o.cancel&&o.cancel.paid?'Yes':'No',o.refunded||0,(o.cancel&&o.cancel.by)||'',(o.cancel&&o.cancel.okBy)||'',(o.cancel&&o.cancel.why)||''])]]])}
+/* Backup & export (owner): the whole shop's data as one backup file, Excel sheets of orders,
+   customers and menu, and the server's own daily copies (kept 30 days). */
+function vBackup(){
+  const days=U.bkList;if(!days&&!U.bkAsked){U.bkAsked=true}
+  return `<div class="ph1"><h2>Backup & export</h2><span class="muted small">Keep a copy of everything outside the server</span></div>
+  <div class="card" style="padding:14px;display:flex;flex-direction:column;gap:10px;margin-bottom:12px"><b>Download now</b>
+   <div class="row" style="gap:8px;flex-wrap:wrap"><button class="btn pri" data-act="bk-json">Full backup file (.json)</button><button class="btn" data-act="bk-xls">Excel: orders, customers, menu</button></div>
+   <span class="small muted">${S.orders.length} orders · ${Object.keys(S.customers).length} customers · ${S.menu.length} menu items. Save the backup file to Google Drive or email it to yourself.</span></div>
+  <div class="card" style="padding:14px;display:flex;flex-direction:column;gap:10px"><b>Daily backups on the server</b>
+   <span class="small">The server saves a full copy every day and keeps the last 30 days, so a wrong delete can be undone.</span>
+   ${days?(days.length?`<div class="row" style="gap:6px;flex-wrap:wrap">${days.map(d=>`<button class="btn sm" data-act="bk-day" data-v="${esc(d.date)}">${fmtDate(d.date)} <small class="muted">${Math.round(d.size/1024)} KB</small></button>`).join('')}</div>`:'<span class="small muted">No daily copy yet. The first one is made within a day.</span>'):'<button class="btn" data-act="bk-list">Show daily backups (asks for your PIN)</button>'}</div>`;
+}
+async function bkPin(){const pin=U.bkPin||prompt('Enter your owner PIN');if(!pin)return null;U.bkPin=pin;return pin}
+function bkAll(){const o={exportedAt:new Date().toISOString(),version:VER};SYNCED.forEach(n=>o[n]=S[n]);o.config=S.config;return o}
+async function bkDo(v,el){
+  const stamp=today();
+  if(v==='json'){await saveFile(new Blob([JSON.stringify(bkAll())],{type:'application/json'}),'cheesy-pizza-backup-'+stamp+'.json','application/json');return}
+  if(v==='xls'){toast('Making the Excel file…');
+    await xlsSave('cheesy-pizza-data-'+stamp+'.xlsx',[
+      ['Orders',[['Date','Time','Order','Outlet','Type','Table','Status','Customer','Mobile','Items','Subtotal','Discount','Total','Paid','Pay mode','UPI ref','Taken by'],...S.orders.slice().sort((a,b)=>a.ts-b.ts).map(o=>[o.date,fmtTime(o.ts),o.no,(S.outlets.find(x=>x.id===o.outletId)||{}).name||'',TYPES[o.type]||o.type,o.table||'',o.status,o.customer.name||'',o.customer.phone||'',o.items.map(l=>l.qty+'x '+l.name+(l.size?' '+sizeLabel(l.size):'')).join(', '),o.subtotal||'',r2((o.discounts||[]).reduce((t,d)=>t+d.amt,0)),o.total,o.paid?'Yes':'No',payName(o),(o.pay&&o.pay.utr)||'',o.by||''])]],
+      ['Customers',[['Mobile','Name','Alias','Orders','Total spent','Baki due','Wallet','Coins'],...Object.values(S.customers).map(c=>{const os=S.orders.filter(o=>o.customer.phone===c.phone&&o.status!=='cancelled');return [c.phone,c.name||'',c.alias||'',os.length,r2(os.reduce((t,o)=>t+o.total,0)),c.due||0,c.wallet||0,Math.floor(c.coins||0)]})]],
+      ['Menu',[['Item','Category','Prices','Off'],...S.menu.map(m=>[m.name,m.cat,Object.entries(m.prices||{}).map(([k,p])=>sizeLabel(k)+' '+p).join(', ')||m.price||'',m.off?'Yes':''])]]]);return}
+  const su=staff();if(!su||su.role!=='owner'){toast('Only the owner can open daily backups');return}
+  if(v==='list'){const pin=await bkPin();if(!pin)return;try{const r=await api('/api/backups',{staffId:su.id,pin});U.bkList=r.days;render()}catch(e){U.bkPin=null;toast(e.message)}return}
+  if(v==='day'){const pin=await bkPin();if(!pin)return;try{toast('Downloading…');const r=await fetch('/api/backups/get',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({staffId:su.id,pin,date:el.dataset.v})});if(!r.ok)throw new Error((await r.json().catch(()=>({}))).error||'HTTP '+r.status);
+    await saveFile(await r.blob(),'cheesy-pizza-backup-'+el.dataset.v+'.json','application/json')}catch(e){toast(e.message)}}
+}
 function vUpiAlerts(from,to,sc){
   const inR=a=>{const d=today(new Date(a.ts));return d>=from&&d<=to};
   const list=S.upialerts.filter(a=>inR(a)&&(sc==='all'||a.outletId===S.cur)).sort((x,y)=>y.ts-x.ts);
@@ -5877,6 +5982,8 @@ async function upiSetup(v){
     }
   }catch(e){toast(e.message||'Could not do that')}
 }
+document.addEventListener('change',e=>{const t=e.target;if(!t.dataset||!t.dataset.calias)return;const c=S.customers[t.dataset.calias];if(!c)return;
+  const v=t.value.trim().slice(0,30);if(v)c.alias=v;else delete c.alias;save();toast(v?'Kitchen will see: '+v:'Alias removed')});
 document.addEventListener('change',e=>{const t=e.target;if(!t.dataset||!t.dataset.uaapp||!UPIAL)return;
   const apps=[...document.querySelectorAll('[data-uaapp]:checked')].map(x=>x.dataset.uaapp).join(',');UPIAL.setup({apps}).then(()=>{if(U.uaSt)U.uaSt.apps=apps;toast('Saved')})});
 

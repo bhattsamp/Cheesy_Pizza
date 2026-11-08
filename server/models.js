@@ -35,6 +35,7 @@ const models = {
   Staff: mongoose.model('Staff', doc({ id: String, pinHash: String }), 'staff'),
   Customer: mongoose.model('Customer', doc({ phone: String, pinHash: String }), 'customers'), // tx, myCodes
   Order: mongoose.model('Order', orderSchema, 'orders'),
+  Backup: mongoose.model('Backup', new Schema({ _id: String, data: Buffer, size: Number, ts: Number }, { versionKey: false }), 'backups'), // daily copy of all data, kept 30 days
   UpiAlert: mongoose.model('UpiAlert', doc({ id: String, outletId: String, ts: Number, orderId: String }), 'upi_alerts'), // payments read from the shop UPI app's alerts
   CustomCategory: mongoose.model('CustomCategory', doc({ id: String }), 'custom_categories'), // menu categories the owner adds                                   // items, customer, pay, times
 };

@@ -8,6 +8,7 @@ const push = require('./push');
 const { invoicePage } = require('./invoice');
 const otp = require('./otp');
 const upiAlerts = require('./upi-alerts');
+const backups = require('./backups');
 const Models = require('./models');
 const { RiderLoc, Staff } = require('./models');
 
@@ -72,6 +73,7 @@ function createApp(store) {
   });
 
   upiAlerts.routes(app, store, Models);
+  backups.routes(app, store, Models);
 
   /* ----- push alerts for the Admin app ----- */
   app.get('/api/push/status', (req, res) => res.json({ enabled: push.pushEnabled() }));
@@ -235,6 +237,7 @@ if (require.main === module) {
     const port = +process.env.PORT || 3000;
     createApp(store).listen(port, () => console.log(`Cheesy Pizza running at http://localhost:${port}  (database: ${store.uri})`));
     keepAwake();
+    backups.schedule(store, Models);
   }).catch(e => { console.error('Could not connect to MongoDB:', e.message); process.exit(1); });
 }
 
