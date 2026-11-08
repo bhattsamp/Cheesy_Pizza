@@ -19,7 +19,7 @@
       for(const [k0,obj] of ents){const k=String(k0);const old=db.c[n][k];const {pin,_newPin,...rest}=obj;const d={...JSON.parse(JSON.stringify(rest)),_pos:old?old._pos:++db.pos};
         if(n==='extras'&&d.items)d.items=d.items.map(({from,...it})=>it);
         if(spec.pin){if(_newPin)d._pin=String(_newPin);else if(pin&&old)d._pin=old._pin}
-        if(n==='orders'&&!old){const out=db.c.outlets[String(obj.outletId)];if(out&&obj.date){const key=obj.outletId+'|'+obj.date;db.seq[key]=(db.seq[key]||0)+1;const no='A'+String(obj.date).split('-').reverse().join('')+out.code+String(db.seq[key]).padStart(6,'0');if(no!==obj.no){d.no=no;ren[k]=no}}}
+        if(n==='orders'&&!old){const out=db.c.outlets[String(obj.outletId)];if(out&&obj.date){const key=obj.outletId+'|'+obj.date;db.seq[key]=(db.seq[key]||0)+1;const dp=String(obj.date).split('-');const no=out.code+'-'+dp[2]+dp[1]+dp[0].slice(2)+'-'+String(db.seq[key]).padStart(3,'0');if(no!==obj.no){d.no=no;ren[k]=no}}}
         db.c[n][k]=d}}
     db.v++;return {prev:db.v-1,version:db.v,renumbered:ren,seq:{...db.seq}}}
   function read(db,n){const spec=SPECS[n];const docs=Object.entries(db.c[n]).sort((a,b)=>a[1]._pos-b[1]._pos);
