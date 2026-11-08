@@ -35,6 +35,7 @@ const models = {
   Staff: mongoose.model('Staff', doc({ id: String, pinHash: String }), 'staff'),
   Customer: mongoose.model('Customer', doc({ phone: String, pinHash: String }), 'customers'), // tx, myCodes
   Order: mongoose.model('Order', orderSchema, 'orders'),
+  UpiAlert: mongoose.model('UpiAlert', doc({ id: String, outletId: String, ts: Number, orderId: String }), 'upi_alerts'), // payments read from the shop UPI app's alerts
   CustomCategory: mongoose.model('CustomCategory', doc({ id: String }), 'custom_categories'), // menu categories the owner adds                                   // items, customer, pay, times
 };
 
