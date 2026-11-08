@@ -4377,13 +4377,12 @@ function payTag(o){
 function kLanes(list){const L=[['Dine-in',o=>o.type==='dine'],['Takeaway',o=>o.type==='takeaway'||o.type==='zomato'],['Delivery',o=>o.type==='delivery']];
   const used=new Set();const out=L.map(([n,f])=>{const os=list.filter(o=>f(o));os.forEach(o=>used.add(o));return [n,os]}).filter(([n,os])=>os.length||n!=='Delivery'||delOn());
   const rest=list.filter(o=>!used.has(o));if(rest.length)out.push(['Other',rest]);return out}
-// The kitchen sees the customer's alias (set on the Customers screen) instead of the name; bills keep the real name
 // L&T tag: an in-house marker on an order (Off › L&T › Super L&T). Shown on the till, kitchen and order screens only;
 // never printed on a bill, KOT or WhatsApp message. The owner sets the wording per outlet.
 function ltName(o,lvl){lvl=lvl==null?(+o.lt||0):lvl;if(!lvl)return '';const out=S.outlets.find(x=>x.id===o.outletId)||cur();return lvl===2?(out.lt2||'Super L&T'):(out.lt1||'L&T')}
 function ltChip(o){const t=ltName(o);return t?` <span class="ltchip${+o.lt===2?' l2':''}">${esc(t)}</span>`:''}
 function posLt(){const P=U.pos,run=P.addTo&&S.orders.find(o=>o.id===P.addTo);return P.lt==null?(run?+run.lt||0:0):+P.lt||0}
-const kName=o=>{const c=S.customers[o.customer.phone];return (c&&c.alias)||o.customer.name||'Walk-in'};
+const kName=o=>o.customer.name||'Walk-in';
 function vKitchen(){
   const list=liveOrders().filter(o=>o.status==='placed'||o.status==='preparing').sort((a,b)=>a.ts-b.ts);
   const pl=list.filter(o=>o.status==='placed'),pr=list.filter(o=>o.status==='preparing');
@@ -5009,7 +5008,7 @@ function vCust(){
     const ok=list.filter(o=>o.status!=='cancelled');
     detail=`<div class="card" style="padding:16px;margin-top:12px">
       <div class="row"><div class="grow"><h3 style="font-size:24px">${esc(one.name||'Customer')}</h3><div class="muted num">${fmtPhone(one.phone)} · ${ok.length} orders · ${rs(ok.reduce((s,o)=>s+o.total,0))}</div>
-        <div class="row" style="gap:6px;margin-top:6px"><label class="small" for="c-alias"><b>Kitchen alias</b></label><input class="inp" id="c-alias" data-calias="${esc(one.phone)}" value="${esc(one.alias||'')}" placeholder="e.g. Ripal bhai, Blue car" maxlength="30" style="max-width:220px"><span class="small muted">Shown on the kitchen screen only</span></div></div>
+        </div>
       ${one.due?`<div class="custbox due"><b class="num">Baki ${rs(one.due)}</b><button class="btn sm" data-act="settle" data-ph="${one.phone}">Mark as paid</button></div>`:'<span class="chip ready">No baki</span>'}</div>
       <div class="row" style="margin-top:10px"><span class="chip t num">Wallet ${rs(one.wallet||0)}</span><span class="chip c num">${Math.floor(one.coins||0)} coins</span>${one.pin?'<span class="chip ready">Has account</span>':'<span class="chip done">No account</span>'}<span class="grow"></span><input class="inp num" id="tw-amt" type="number" placeholder="₹" style="width:100px" aria-label="Top-up amount"><button class="btn sm" data-act="topup-pos" data-ph="${one.phone}">Add money (cash)</button>${one.pin?`<button class="btn sm bad" data-act="reset-pin" data-ph="${one.phone}">Reset PIN</button>`:''}</div>
       ${Object.entries(byDate).map(([d,os])=>`<div class="grp-h" style="margin:14px 0 4px">${fmtDate(d)}</div>${os.map(o=>`<div class="line"><div><b class="num">${o.no}</b> <span class="small muted">${fmtTime(o.ts)} · ${esc(outletOf(o).name)} · ${TYPES[o.type]}</span><div class="ad">${o.items.map(l=>l.qty+'× '+esc(l.name)+(l.size?' '+sizeLabel(l.size):'')).join(', ')}</div></div><div class="row"><b class="num">${rs(o.total)}</b><span class="chip ${o.status}">${statusName(o.status,o.type)}</span><button class="btn sm" data-act="bill" data-id="${o.id}">Print bill</button></div></div>`).join('')}`).join('')}
@@ -5017,7 +5016,7 @@ function vCust(){
   }
   return `<div class="ph1"><h2>Customers</h2><input class="inp" id="cu-q" placeholder="Search mobile or name" value="${esc(U.custQ)}" style="max-width:260px"></div>
   ${one?`<button class="btn sm" data-act="cust-all">← All customers</button>`:`<div class="card tw"><table class="stk"><thead><tr><th>Name</th><th>Mobile</th><th class="r">Orders</th><th class="r">Baki</th><th></th></tr></thead><tbody>
-    ${all.map(c=>{const n=S.orders.filter(o=>o.customer.phone===c.phone&&o.status!=='cancelled').length;return `<tr><td>${esc(c.name||'—')}${c.alias?' <small class="muted">· '+esc(c.alias)+'</small>':''}</td><td class="num">${fmtPhone(c.phone)}</td><td class="r num">${n}</td><td class="r num" style="color:${c.due?'var(--bad)':'inherit'}">${c.due?rs(c.due):'—'}</td><td><button class="btn sm" data-act="cust-open" data-ph="${c.phone}">Open</button></td></tr>`}).join('')||'<tr><td colspan="5" class="empty">No customers found.</td></tr>'}
+    ${all.map(c=>{const n=S.orders.filter(o=>o.customer.phone===c.phone&&o.status!=='cancelled').length;return `<tr><td>${esc(c.name||'—')}</td><td class="num">${fmtPhone(c.phone)}</td><td class="r num">${n}</td><td class="r num" style="color:${c.due?'var(--bad)':'inherit'}">${c.due?rs(c.due):'—'}</td><td><button class="btn sm" data-act="cust-open" data-ph="${c.phone}">Open</button></td></tr>`}).join('')||'<tr><td colspan="5" class="empty">No customers found.</td></tr>'}
   </tbody></table></div>`}${detail}`;
 }
 
@@ -5958,7 +5957,7 @@ async function bkDo(v,el){
   if(v==='xls'){toast('Making the Excel file…');
     await xlsSave('cheesy-pizza-data-'+stamp+'.xlsx',[
       ['Orders',[['Date','Time','Order','Outlet','Type','Table','Status','Customer','Mobile','Items','Subtotal','Discount','Total','Paid','Pay mode','UPI ref','Taken by'],...S.orders.slice().sort((a,b)=>a.ts-b.ts).map(o=>[o.date,fmtTime(o.ts),o.no,(S.outlets.find(x=>x.id===o.outletId)||{}).name||'',TYPES[o.type]||o.type,o.table||'',o.status,o.customer.name||'',o.customer.phone||'',o.items.map(l=>l.qty+'x '+l.name+(l.size?' '+sizeLabel(l.size):'')).join(', '),o.subtotal||'',r2((o.discounts||[]).reduce((t,d)=>t+d.amt,0)),o.total,o.paid?'Yes':'No',payName(o),(o.pay&&o.pay.utr)||'',o.by||''])]],
-      ['Customers',[['Mobile','Name','Alias','Orders','Total spent','Baki due','Wallet','Coins'],...Object.values(S.customers).map(c=>{const os=S.orders.filter(o=>o.customer.phone===c.phone&&o.status!=='cancelled');return [c.phone,c.name||'',c.alias||'',os.length,r2(os.reduce((t,o)=>t+o.total,0)),c.due||0,c.wallet||0,Math.floor(c.coins||0)]})]],
+      ['Customers',[['Mobile','Name','Orders','Total spent','Baki due','Wallet','Coins'],...Object.values(S.customers).map(c=>{const os=S.orders.filter(o=>o.customer.phone===c.phone&&o.status!=='cancelled');return [c.phone,c.name||'',os.length,r2(os.reduce((t,o)=>t+o.total,0)),c.due||0,c.wallet||0,Math.floor(c.coins||0)]})]],
       ['Menu',[['Item','Category','Prices','Off'],...S.menu.map(m=>[m.name,m.cat,Object.entries(m.prices||{}).map(([k,p])=>sizeLabel(k)+' '+p).join(', ')||m.price||'',m.off?'Yes':''])]]]);return}
   const su=staff();if(!su||su.role!=='owner'){toast('Only the owner can open daily backups');return}
   if(v==='list'){const pin=await bkPin();if(!pin)return;try{const r=await api('/api/backups',{staffId:su.id,pin});U.bkList=r.days;render()}catch(e){U.bkPin=null;toast(e.message)}return}
@@ -6020,8 +6019,6 @@ async function upiSetup(v){
     }
   }catch(e){toast(e.message||'Could not do that')}
 }
-document.addEventListener('change',e=>{const t=e.target;if(!t.dataset||!t.dataset.calias)return;const c=S.customers[t.dataset.calias];if(!c)return;
-  const v=t.value.trim().slice(0,30);if(v)c.alias=v;else delete c.alias;save();toast(v?'Kitchen will see: '+v:'Alias removed')});
 document.addEventListener('change',e=>{const t=e.target;if(!t.dataset||!t.dataset.uaapp||!UPIAL)return;
   const apps=[...document.querySelectorAll('[data-uaapp]:checked')].map(x=>x.dataset.uaapp).join(',');UPIAL.setup({apps}).then(()=>{if(U.uaSt)U.uaSt.apps=apps;toast('Saved')})});
 
