@@ -714,8 +714,8 @@ html:has(#modalRoot:not(:empty)),html:has(#boardRoot:not(:empty)),html:has(#choo
 .online{border:2px solid var(--plum);background:var(--plum-soft);border-radius:14px;padding:10px 12px;display:flex;flex-direction:column;gap:8px;
   position:fixed;z-index:60;top:72px;right:16px;width:min(460px,calc(100vw - 32px));max-height:min(70vh,560px);overflow:auto;box-shadow:var(--shadow-lg);animation:onlin .35s ease-out}
 @media (max-width:760px){.online{top:64px;right:12px;width:calc(100vw - 24px);max-height:55vh}}
-.onlpill{position:fixed;z-index:60;top:72px;right:16px;border:0;border-radius:999px;background:var(--plum);color:#fff;font-weight:700;padding:9px 16px;box-shadow:var(--shadow-lg);animation:onlin .35s ease-out}
-@media (max-width:760px){.onlpill{top:68px;right:12px}}
+.onlpill{position:fixed;z-index:60;left:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));border:0;border-radius:999px;background:var(--plum);color:#fff;font-weight:700;padding:9px 16px;box-shadow:var(--shadow-lg);animation:onlin .35s ease-out}
+@media (max-width:760px){.onlpill{left:auto;right:12px;bottom:calc(124px + env(safe-area-inset-bottom,0px))}}
 @keyframes onlin{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:none}}
 .online .on1{flex-direction:column;align-items:stretch!important;gap:4px}.online .on1>*{flex:0 0 auto!important}
 .online .on1 .acts{display:flex;gap:6px;align-items:center}.online .on1 .acts .btn{flex:1}
