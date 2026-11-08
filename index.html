@@ -3916,7 +3916,7 @@ function custBox(ci){
 }
 const priceLabel=m=>m.cat==='pizza'?S.sizes.filter(s=>+m.prices[s.id]).map(s=>rs(m.prices[s.id])).join(' / '):rs(m.price);
 
-const POS_BLANK={opts:0,cart:[],phone:'',name:'',table:'',address:'',note:'',type:'takeaway',zid:'',pay:'cash',given:'',splits:{},utr:'',code:'',useCoins:false,wait:null,addTo:null};
+const POS_BLANK={opts:0,payFixed:false,cart:[],phone:'',name:'',table:'',address:'',note:'',type:'takeaway',zid:'',pay:'cash',given:'',splits:{},utr:'',code:'',useCoins:false,wait:null,addTo:null};
 // A dine-in table is busy while its order is cooking, or served but not paid yet
 function tableState(t){
   const run=S.orders.find(o=>o.outletId===S.cur&&o.type==='dine'&&String(o.table)===t&&o.ts>Date.now()-16*3600e3&&o.status!=='cancelled'&&(o.status!=='done'||!o.paid));
@@ -4056,7 +4056,7 @@ function openPay(){
   const spKeys=[...COUNTER_MODES,...(P.phone.length===10||(run&&run.customer.phone)?['due']:[])];
   showModal(`<div class="mh"><h3>Pay <span class="num">${rs(t)}</span>${P.already?` <small class="muted" style="font-size:14px;font-weight:600">· bill ${rs(P.full)}, ${rs(P.already)} paid earlier</small>`:''}</h3><button class="x" data-act="close" aria-label="Close">×</button></div>
   <div class="mb paysheet">
-    <div class="paymodes ${modes.length>=5?'five':''}">${modes.map(k=>`<button data-act="pos-pm" data-v="${k}" aria-pressed="${P.pay===k}">${k==='due'?'Baki':PAY[k]}</button>`).join('')}</div>
+    ${P.payFixed&&modes.includes(P.pay)?`<div class="small muted">Paying by <b>${P.pay==='due'?'Baki':PAY[P.pay]}</b></div>`:`<div class="paymodes ${modes.length>=5?'five':''}">${modes.map(k=>`<button data-act="pos-pm" data-v="${k}" aria-pressed="${P.pay===k}">${k==='due'?'Baki':PAY[k]}</button>`).join('')}</div>`}
     ${P.pay==='cash'?`<div class="calc">
       <div class="field"><label for="pos-given">Customer given</label><input class="inp num" id="pos-given" type="number" inputmode="numeric" value="${esc(P.given)}" placeholder="${t}" style="font-size:24px;font-weight:700"></div>
       <div><div class="grp-h">Return amount</div><div class="big num" style="color:${ch<0&&g?'var(--bad)':'var(--ok)'}" id="chg">${g?(ch<0?'Short '+rs(-ch):rs(ch)):'—'}</div></div>
@@ -4159,7 +4159,7 @@ function settleOrder(o,mode,given,splits,utr){
 // amounts, so it opens the payment sheet first (its Bill button then prints the KOT too for KOT & Bill).
 function posBill(kind){
   const {P,t}=posCalc();P.kotToo=kind==='kotbill';
-  if(P.pay==='split'&&t>0){openPay();return}
+  if(P.pay==='split'&&t>0){P.payFixed=true;openPay();return}
   posGo(kind==='kotbill'?'kotbill':'billprint');
 }
 // Hold: put the items on the ticket onto a dine-in table, running or free, as paid now or pending
@@ -5361,7 +5361,7 @@ document.addEventListener('click',e=>{
     case 'lq':{const l=P.cart[+el.dataset.i];l.qty+= +el.dataset.v;if(l.qty<1)P.cart.splice(+el.dataset.i,1);render();break}
     case 'lp-edit':U.editLine=+el.dataset.i;render();{const i=document.getElementById('lp-'+el.dataset.i);if(i){i.focus();i.select()}}break;
     case 'pos-clear':P.cart=[];P.addTo=null;render();break;
-    case 'pos-pay':P.kotToo=false;openPay();break;
+    case 'pos-pay':P.kotToo=false;P.payFixed=false;openPay();break;
     case 'pos-bill':posBill(el.dataset.v);break;
     case 'pos-hold':openHold();break;
     case 'copy-staff-link':{const v=el.dataset.v;(navigator.clipboard?navigator.clipboard.writeText(v):Promise.reject()).then(()=>toast('Link copied'),()=>{prompt('Copy this link',v)});break}
