@@ -7,6 +7,8 @@ const { seedData } = require('./seed-data');
 const push = require('./push');
 const { invoicePage } = require('./invoice');
 const otp = require('./otp');
+const upiAlerts = require('./upi-alerts');
+const Models = require('./models');
 const { RiderLoc, Staff } = require('./models');
 
 const ROOT = path.join(__dirname, '..');
@@ -68,6 +70,8 @@ function createApp(store) {
       push.notifyPayments(checked).catch(fail);
     }
   });
+
+  upiAlerts.routes(app, store, Models);
 
   /* ----- push alerts for the Admin app ----- */
   app.get('/api/push/status', (req, res) => res.json({ enabled: push.pushEnabled() }));

@@ -1053,6 +1053,13 @@ html:has(#modalRoot:not(:empty)),html:has(#boardRoot:not(:empty)),html:has(#choo
 .tkopts{display:flex;flex-direction:column;gap:6px}
 .tkopts .codes button{padding:3px 8px;font-size:13px}.tkopts .waits button{padding:3px 8px;font-size:13px}
 .holdsheet{display:flex;flex-direction:column;gap:12px}
+.uasheet{display:flex;flex-direction:column;gap:12px}.uaamt{font-size:38px;font-weight:800;color:var(--ok);line-height:1}
+.uawho{background:var(--bg);border-radius:12px;padding:10px 12px;line-height:1.55}
+.uamatch{border:2px solid var(--teal);background:var(--teal-soft,#d6eef2);border-radius:12px;padding:10px 12px}
+.uapick{display:flex;flex-direction:column;gap:6px;max-height:46vh;overflow:auto}.uapick button{display:flex;justify-content:space-between;gap:10px;text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:10px 12px;font:inherit;color:inherit;cursor:pointer}
+.uapick button.eq{border:2px solid var(--teal);background:var(--teal-soft,#d6eef2)}
+.upiseg{margin-bottom:12px;width:max-content;max-width:100%}.upiseg .badge{background:var(--bad);color:#fff;border-radius:99px;padding:0 7px;font-size:12px;margin-left:4px}
+.uasetup{padding:12px 14px;display:flex;flex-direction:column;gap:8px;margin-bottom:12px}.uatable tr.uanew td{background:#fff7e0}
 .uouts{display:flex;flex-wrap:wrap;gap:4px 12px;min-width:160px}.uouts .opt{font-size:14px;white-space:nowrap}
 body.staffurl #m-pub{display:none}
 @media (max-width:760px){body:not(.pubmode) .brand b{font-size:18px}body:not(.pubmode) .brand{flex-shrink:1;min-width:0;overflow:hidden}}
@@ -2403,7 +2410,7 @@ const APP_ROLE=(/CheesyApp\/(customer|admin)/.exec(navigator.userAgent)||[])[1]|
 // Each outlet's staff link keeps its own login on this device, so two outlet tabs never log each other in or out
 const LKEY='cheesy_local_v1'+((location.pathname.match(/^\/staff\/([^\/?#]+)/)||[])[1]?':'+decodeURIComponent(location.pathname.match(/^\/staff\/([^\/?#]+)/)[1]).toLowerCase():'');
 const LOCAL_KEYS=['cur','mode','me','staffId'];
-const SYNCED=['sizes','outlets','menu','addons','offers','combos','extras','cats','users','customers','orders'];
+const SYNCED=['sizes','outlets','menu','addons','offers','combos','extras','cats','users','customers','orders','upialerts'];
 const MAPS={addons:1,customers:1};
 let S,VER=0,SNAP={},pendingFlush=null,inFlight=0,syncQ=Promise.resolve();
 const today=(d=new Date())=>d.toLocaleDateString('en-CA');
@@ -3919,7 +3926,7 @@ function custBox(ci){
 }
 const priceLabel=m=>m.cat==='pizza'?S.sizes.filter(s=>+m.prices[s.id]).map(s=>rs(m.prices[s.id])).join(' / '):rs(m.price);
 
-const POS_BLANK={opts:0,payFixed:false,cart:[],phone:'',name:'',table:'',address:'',note:'',type:'takeaway',zid:'',pay:'cash',given:'',splits:{},utr:'',code:'',useCoins:false,wait:null,addTo:null};
+const POS_BLANK={opts:0,payFixed:false,upiAlert:null,cart:[],phone:'',name:'',table:'',address:'',note:'',type:'takeaway',zid:'',pay:'cash',given:'',splits:{},utr:'',code:'',useCoins:false,wait:null,addTo:null};
 // A dine-in table is busy while its order is cooking, or served but not paid yet
 function tableState(t){
   const run=S.orders.find(o=>o.outletId===S.cur&&o.type==='dine'&&String(o.table)===t&&o.ts>Date.now()-16*3600e3&&o.status!=='cancelled'&&(o.status!=='done'||!o.paid));
@@ -4237,6 +4244,7 @@ function posGo(kind){
   if(bill&&!(run&&o.paid&&!P.cart.length)){
     settleOrder(o,mode,P.pay==='cash'?+P.given||0:0,splits,utr);
   }
+  if(bill&&P.upiAlert){const a=S.upialerts.find(x=>x.id===P.upiAlert);if(a){a.status='matched';a.orderId=o.id;a.orderNo=o.no;o.upiAlert=a.id}}
   save();Object.assign(U.pos,JSON.parse(JSON.stringify(POS_BLANK)));render();
   if(kind==='save')toast((run?'Added to '+o.no:o.no+' saved')+(o.table?' · Table '+o.table:'')+(o.paid?'':' · not paid'));
   else if(kind==='kot'){const txt=kotText(o,run?round:null);printText(txt);toast((run?'New items for '+o.no:o.no)+' sent to kitchen')}
@@ -4251,7 +4259,7 @@ function openLink(url){const a=document.createElement('a');a.href=url;a.target='
 function openQr(paid){
   const {P,t}=posCalc();const amt=P.pay==='split'?r2(+(P.splits||{}).upi||0):t;
   if(!(amt>0)){toast('Type the UPI amount in the split first');openPay();return}
-  if(!paid)csFlashSet({phase:'qr',amt,link:upiLink(cur(),amt),upi:cur().upi},15*60000);
+  if(!paid){csFlashSet({phase:'qr',amt,link:upiLink(cur(),amt),upi:cur().upi},15*60000);U.qrWait={amt,since:Date.now()-60000}}
   const head=`<div class="mh"><h3>${paid?'Payment received':'Scan to pay · <span class="num">'+rs(amt)+'</span>'}</h3><button class="x" data-act="close" aria-label="Close">×</button></div>`;
   showModal(head+(paid?`<div class="mb qrpay">
     <div class="paidok big" role="status"><svg viewBox="0 0 84 84" aria-hidden="true"><circle class="ring" cx="42" cy="42" r="40"/><circle cx="42" cy="42" r="40"/><path d="M25 43l11 11 23-24"/></svg><b>Paid ${rs(amt)}</b><span class="small muted">GPay / UPI${P.utr?' · UTR <span class="num">'+esc(fmtUtr(P.utr))+'</span>':''}</span>${P.pay==='split'?`<span class="chip c">Also take: ${esc(splitList(P.splits||{},[...COUNTER_MODES,'due']).filter(x=>x.mode!=='upi').map(x=>modeName(x.mode)+' '+rs(x.amt)).join(' + ')||'nothing')}</span>`:''}</div>
@@ -4678,7 +4686,8 @@ function openModeDetail(k){
     <div class="row" style="justify-content:flex-end">${ownerBtn(modeText(s,k,d,sc))}</div>
   </div>`);
 }
-function vSales(){
+function vSales(){const seg=upiSeg('sales');if(U.salesView==='upi'){const d=U.salesDate||today();return seg+vUpiAlerts(d,d,U.salesScope)}return seg+vSalesMain()}
+function vSalesMain(){
   const d=U.salesDate||today(),sc=U.salesScope;const s=salesFor(d,sc),p=salesFor(addDays(d,-1),sc);const diff=s.tot-p.tot;
   const days=[...Array(7)].map((_,i)=>addDays(d,i-6)).map(x=>({d:x,t:salesFor(x,sc).tot}));const mx=Math.max(1,...days.map(x=>x.t));
   const top=Object.entries(s.items).sort((a,b)=>b[1]-a[1]).slice(0,6);const cols=SALE_COLS;
@@ -4768,7 +4777,8 @@ function repTbl(t,max){const rows=max?t.rows.slice(0,max):t.rows;
   return `<div class="tw"><table class="stk ordtbl reptbl"><thead><tr>${t.h.map((h,i)=>{const c=t.rows[0]?.[i];return `<th${i&&(typeof c==='number'||/^₹/.test(String(c)))?' class="r"':''}>${esc(h)}</th>`}).join('')}</tr></thead><tbody>
   ${rows.map(r=>`<tr>${r.map((c,i)=>`<td class="${i&&(typeof c==='number'||/^₹/.test(String(c)))?'r num':''}">${esc(String(c))}</td>`).join('')}</tr>`).join('')||`<tr><td colspan="${t.h.length}" class="empty">Nothing in this period.</td></tr>`}
   </tbody></table></div>${max&&t.rows.length>max?`<div class="small muted" style="padding:6px 2px">Showing ${max} of ${t.rows.length}. The Excel and PDF have all of them.</div>`:''}`}
-function vReports(){const R=repU(),r=repData(),T=repTables(r);const cols=SALE_COLS.filter(k=>r.by[k]);
+function vReports(){const seg=upiSeg('rep');if(U.repView==='upi'){const R=repU(),[f,t]=repRange(R);return seg+vUpiAlerts(f,t,R.sc)}return seg+vReportsMain()}
+function vReportsMain(){const R=repU(),r=repData(),T=repTables(r);const cols=SALE_COLS.filter(k=>r.by[k]);
   return `<div class="ph1"><h2>Sales reports</h2><span class="muted small">Pick a period, then save it as Excel or PDF.</span></div>
   <div class="card" style="padding:12px;display:flex;flex-direction:column;gap:10px;margin-bottom:12px">
     <div class="seg repseg" style="flex-wrap:wrap;border-radius:16px">${REP_P.map(([k,n])=>`<button data-act="rep-p" data-v="${k}" aria-pressed="${R.p===k}">${n}</button>`).join('')}</div>
@@ -5403,6 +5413,10 @@ document.addEventListener('click',e=>{
     case 'st-step':{const x=stockOf().find(y=>y.id===el.dataset.id);if(x)stockSet(x,'qty',Math.max(0,Math.round(((+x.qty||0)+ +el.dataset.v)*100)/100));break}
     case 'del':openDelete(find(el.dataset.id));break;
     case 'scope':U.salesScope=el.dataset.v;render();break;
+    case 'upi-view':{const [w,v]=el.dataset.v.split(':');if(w==='sales')U.salesView=v;else U.repView=v;render();break}
+    case 'ua-open':{const a=S.upialerts.find(x=>x.id===el.dataset.id);if(a)openUpiAlert(a,true);break}
+    case 'ua-setup':upiSetup(el.dataset.v);break;
+    case 'ua-ud':{const v=el.dataset.v;if(v)U.uaDate=v;render();break}
     case 'rep-p':repU().p=el.dataset.v;if(el.dataset.v==='custom'){const[a,b]=repRange({p:'today'});repU().from=repU().from||a;repU().to=repU().to||b}render();break;
     case 'rep-sc':repU().sc=el.dataset.v;render();break;
     case 'rep-xls':repExcel();break;
@@ -5734,12 +5748,137 @@ function pushOutlet(){const t=pushTok();if(PUSH&&t)api('/api/push/refresh',{old:
 function startPolling(){setInterval(async()=>{
   if(U.trackId&&mroot.innerHTML&&document.querySelector('canvas[data-scratch]'))return;
   let changed=false;try{changed=await refresh()}catch(_){}
-  checkNewOnline();
+  checkNewOnline();try{checkUpiAlerts()}catch(e){console.error(e)}
   if(U.trackId&&mroot.innerHTML){openTrack();return}
   if(U.board){renderBoard();return}
   if(S.mode==='pos'&&['kitchen','counter','orders'].includes(U.pos.tab)&&!mroot.innerHTML&&!isBusy()){render();return}
   if(changed&&!mroot.innerHTML&&!isBusy())render();
 },5000)}
+
+/* ================= UPI payment alerts =================
+   The Admin app on a shop phone reads the shop UPI app's "Received ₹450 from ..." alerts and sends
+   them to the server (server/upi-alerts.js), which saves them in S.upialerts and marks the one unpaid
+   order with that amount paid. Tills pop up who paid; the cashier can undo, pick the order, or keep
+   the money as unmatched. Day sale and Reports have a UPI alerts tab to match everything. */
+const UPIAL=APP_ROLE==='admin'&&window.Capacitor&&Capacitor.Plugins&&Capacitor.Plugins.UpiAlerts||null;
+const UA_SEEN='cheesy_upi_seen';
+const uaSeen=()=>{try{return new Set(JSON.parse(localStorage.getItem(UA_SEEN)||'[]'))}catch(_){return new Set()}};
+function uaSee(id){const s=[...uaSeen(),id].slice(-300);try{localStorage.setItem(UA_SEEN,JSON.stringify(s))}catch(_){}}
+const uaWho=a=>a.name||a.vpa||'Name not shown';
+const uaOrder=a=>a.orderId&&S.orders.find(o=>o.id===a.orderId);
+const uaNo=a=>(uaOrder(a)||{}).no||a.orderNo||'';
+const uaStatus=a=>a.status==='matched'?(a.orderId?'Matched':'Paid at QR'):a.status==='unmatched'?'Kept unmatched':'To match';
+function uaCands(a){
+  const since=a.ts-12*3600e3;
+  return S.orders.filter(o=>o.outletId===a.outletId&&o.ts>since&&o.status!=='cancelled'&&!o.paid&&!S.upialerts.some(x=>x.orderId===o.id))
+    .sort((x,y)=>(Math.abs(balanceOf(x)-a.amt)<.01?0:1)-(Math.abs(balanceOf(y)-a.amt)<.01?0:1)||y.ts-x.ts).slice(0,10);
+}
+function checkUpiAlerts(){
+  if(S.mode!=='pos'||!S.upialerts||!S.upialerts.length)return;
+  const su=staff();if(!su||!['owner','manager','cashier'].includes(su.role))return;
+  const now=Date.now(),seen=uaSeen();
+  const fresh=S.upialerts.filter(a=>a.outletId===S.cur&&!a.test&&a.ts>now-30*60000&&!seen.has(a.id)).sort((x,y)=>x.ts-y.ts);
+  // The QR is on the customer screen and that amount just came in: it's this customer's payment
+  const qr=mroot.querySelector('.qrpay')&&U.qrWait;
+  if(qr){const a=fresh.find(x=>x.status==='new'&&Math.abs(x.amt-U.qrWait.amt)<.01&&x.ts>=U.qrWait.since);
+    if(a){uaSee(a.id);a.status='matched';a.by='QR';a.orderId='';U.pos.upiAlert=a.id;if(a.ref)U.pos.utr=a.ref;save();U.qrWait=null;
+      openQr(true);csFlashSet({phase:'paid',amt:a.amt},6000);toast('UPI '+rs(a.amt)+' received from '+uaWho(a),4000);return}}
+  if(mroot.innerHTML)return; // wait until the cashier closes what is open
+  const a=fresh.find(x=>x.status==='matched'||(x.status==='new'&&now-x.ts>12000));
+  if(a){uaSee(a.id);openUpiAlert(a)}
+}
+function openUpiAlert(a,fromList){
+  const o=uaOrder(a),c=uaCands(a);
+  const who=`<div class="uawho"><b>From:</b> ${esc(uaWho(a))}${a.name&&a.vpa?' · <span class="num">'+esc(a.vpa)+'</span>':''}<br>${a.ref?`<b>UPI ref:</b> <span class="num">${esc(fmtUtr(a.ref))}</span> · `:''}${fmtTime(a.ts)} · ${esc(a.app||'')}</div>`;
+  const head=(t,chip)=>`<div class="mh"><h3>${t}</h3>${chip}<button class="x" data-act="close" aria-label="Close">×</button></div>`;
+  if(a.status==='matched'&&o){
+    showModal(head('UPI payment received','<span class="chip ready">'+(a.by==='auto'?'Auto-matched':'Matched')+'</span>')+`<div class="mb uasheet">
+      <div class="uaamt num">${rs(a.amt)}</div>${who}
+      <div class="uamatch"><div class="row" style="justify-content:space-between"><b>Order ${esc(o.no)} · ${esc(TYPES[o.type]||o.type)}${o.table?' · Table '+esc(o.table):''}</b><b class="num">${rs(o.total)}</b></div>
+       <div class="small muted">${esc(o.customer.name||'')}${o.customer.phone?' · '+esc(fmtPhone(o.customer.phone)):''} · ${esc(o.items.map(l=>l.qty+'× '+l.name).join(', ').slice(0,90))} · saved ${fmtTime(o.ts)}${o.by?' by '+esc(o.by):''}</div></div>
+      <div class="small">Order ${esc(o.no)} is <b>${o.paid?'Paid · UPI':'not paid'}</b>${a.ref?' and the UPI ref is on the bill':''}.</div>
+      <div class="row" style="gap:8px"><button class="btn ok solid lg" style="flex:1" data-act="close">OK</button><button class="btn lg" style="flex:1" data-act="ua-undo">Undo</button><button class="btn lg" style="flex:1" data-act="ua-wrong">Wrong order</button></div></div>`,
+      {onAct:(act)=>{
+        if(act==='ua-undo'||act==='ua-wrong'){uaUnlink(a);if(act==='ua-wrong')openUpiAlert(a,true);else{closeModal();render();toast('Undone: '+o.no+' is unpaid again')}return true}
+        return false}});
+    return;
+  }
+  showModal(head('UPI '+rs(a.amt)+' received',a.status==='unmatched'?'<span class="chip">Kept unmatched</span>':'<span class="chip amber">Pick the order</span>')+`<div class="mb uasheet">${who}
+    ${c.length?`<div class="grp-h">Unpaid orders</div><div class="uapick">${c.map((x,i)=>`<button data-act="ua-link" data-id="${x.id}" class="${Math.abs(balanceOf(x)-a.amt)<.01?'eq':''}"><span><b>${esc(x.no)}</b> · ${esc(x.customer.name||TYPES[x.type]||'')}${x.table?' · Table '+esc(x.table):''}${x.customer.phone?' · <span class="num">'+esc(fmtPhone(x.customer.phone))+'</span>':''}<small class="muted"> · ${fmtTime(x.ts)}</small></span><b class="num">${rs(balanceOf(x))}</b></button>`).join('')}</div>`
+      :'<div class="small muted">No unpaid order is waiting at this outlet. Keep it as unmatched and link it later from Day sale › UPI alerts.</div>'}
+    <div class="row" style="gap:8px"><button class="btn lg" style="flex:1" data-act="ua-keep">Keep as unmatched</button>${fromList?'':'<button class="btn lg" style="flex:1" data-act="close">Later</button>'}</div></div>`,
+    {onAct:(act,el)=>{
+      if(act==='ua-link'){const x=S.orders.find(y=>y.id===el.dataset.id);if(!x)return true;
+        const diff=Math.abs(balanceOf(x)-a.amt)>=.01;
+        const go=()=>{settleOrder(x,'upi',0,null,a.ref||'');x.upiAlert=a.id;Object.assign(a,{status:'matched',orderId:x.id,orderNo:x.no,by:staff()?.name||''});save();closeModal();render();toast(x.no+' marked paid · UPI '+rs(a.amt))};
+        if(diff)askConfirm('Amounts differ','The order is '+rs(balanceOf(x))+' but '+rs(a.amt)+' came in. Mark '+x.no+' paid by UPI anyway?','Mark paid',go);else go();return true}
+      if(act==='ua-keep'){Object.assign(a,{status:'unmatched',by:staff()?.name||''});save();closeModal();render();toast('Kept as unmatched');return true}
+      return false}});
+}
+function uaUnlink(a){
+  const o=uaOrder(a);
+  if(o&&o.upiAlert===a.id){o.paid=false;o.pay={mode:'pending',given:0,change:0};delete o.paidAt;delete o.paidBy;delete o.upiAlert}
+  Object.assign(a,{status:'new',orderId:'',orderNo:'',by:''});save();
+}
+function upiSeg(w){const v=(w==='sales'?U.salesView:U.repView)||'sale';const n=S.upialerts.filter(a=>a.outletId===S.cur&&a.status==='new'&&!a.test).length;
+  return `<div class="seg upiseg" role="tablist"><button data-act="upi-view" data-v="${w}:sale" aria-pressed="${v!=='upi'}">${w==='sales'?'Day sale':'Sales report'}</button><button data-act="upi-view" data-v="${w}:upi" aria-pressed="${v==='upi'}">UPI alerts${n?` <span class="badge">${n}</span>`:''}</button></div>`}
+function vUpiAlerts(from,to,sc){
+  const inR=a=>{const d=today(new Date(a.ts));return d>=from&&d<=to};
+  const list=S.upialerts.filter(a=>inR(a)&&(sc==='all'||a.outletId===S.cur)).sort((x,y)=>y.ts-x.ts);
+  const real=list.filter(a=>!a.test),sum=f=>r2(real.filter(f).reduce((t,a)=>t+a.amt,0));
+  const got=sum(()=>true),mat=sum(a=>a.status==='matched'),open=sum(a=>a.status==='new'),kept=sum(a=>a.status==='unmatched');
+  let upiOrders=0;for(let d=from;d<=to;d=addDays(d,1))upiOrders+=salesFor(d,sc).by.upi||0;upiOrders=r2(upiOrders);
+  const gap=r2(got-upiOrders);
+  return `<div class="ph1"><h2>UPI alerts</h2><span class="muted small">${from===to?fmtDate(from):fmtDate(from)+' – '+fmtDate(to)} · payments read from the shop phone's UPI app</span></div>
+  ${upiSetupCard()}
+  <div class="stats">
+    <div class="card stat hero"><div class="k">Received per UPI alerts</div><div class="v num">${rs(got)}</div><div class="d num">${real.length} payments</div></div>
+    <div class="card stat"><div class="k">Matched to orders</div><div class="v num" style="color:var(--ok)">${rs(mat)}</div><div class="d muted num">${real.filter(a=>a.status==='matched').length} payments</div></div>
+    <div class="card stat"><div class="k">To match</div><div class="v num" style="color:${open?'var(--bad)':'inherit'}">${rs(open)}</div><div class="d muted num">${real.filter(a=>a.status==='new').length} payments</div></div>
+    <div class="card stat"><div class="k">Kept unmatched</div><div class="v num">${rs(kept)}</div><div class="d muted num">${real.filter(a=>a.status==='unmatched').length} payments</div></div>
+    <div class="card stat"><div class="k">UPI in orders vs alerts</div><div class="v num">${rs(upiOrders)}</div><div class="d num" style="color:${Math.abs(gap)<1?'var(--ok)':'var(--bad)'}">${Math.abs(gap)<1?'Matches the alerts':(gap>0?rs(gap)+' more came in than billed':rs(-gap)+' billed as UPI but no alert')}</div></div>
+  </div>
+  <div class="card tw" style="margin-top:12px"><table class="stk uatable"><thead><tr><th>Time</th><th>Amount</th><th>From</th><th>UPI ref</th><th>App</th><th>Status</th><th>Order</th><th></th></tr></thead><tbody>
+  ${list.length?list.map(a=>{const o=uaOrder(a);return `<tr class="${a.status==='new'&&!a.test?'uanew':''}"><td data-l="Time">${from===to?'':fmtDate(today(new Date(a.ts)))+' '}${fmtTime(a.ts)}</td><td data-l="Amount" class="num"><b>${rs(a.amt)}</b></td><td data-l="From">${esc(uaWho(a))}${a.name&&a.vpa?'<br><small class="muted num">'+esc(a.vpa)+'</small>':''}</td><td data-l="UPI ref" class="num">${a.ref?esc(fmtUtr(a.ref)):'—'}</td><td data-l="App">${esc(a.app||'')}</td>
+    <td data-l="Status"><span class="chip ${a.status==='matched'?'ready':a.status==='new'?'amber':''}">${a.test?'Test':uaStatus(a)}</span>${a.by&&a.by!=='auto'?'<br><small class="muted">'+esc(a.by)+'</small>':a.by==='auto'?'<br><small class="muted">automatic</small>':''}</td>
+    <td data-l="Order">${o?`<b>${esc(o.no)}</b><br><small class="muted">${esc(o.customer.name||TYPES[o.type]||'')} · ${rs(o.total)}</small>`:'—'}</td>
+    <td>${a.test?'':`<button class="btn sm ${a.status==='new'?'pri':''}" data-act="ua-open" data-id="${a.id}">${a.status==='matched'?'Check':'Link to order'}</button>`}</td></tr>`}).join(''):`<tr><td colspan="8" class="muted" style="text-align:center;padding:18px">No UPI alerts ${from===to?'on this day':'in this period'}.</td></tr>`}
+  </tbody></table></div>`;
+}
+// Setup on the shop phone (Admin app); other devices only show whether alerts are coming in
+function upiSetupCard(){
+  const last=S.upialerts.filter(a=>a.outletId===S.cur).sort((x,y)=>y.ts-x.ts)[0];
+  const lastTxt=last?`Last alert ${fmtDate(today(new Date(last.ts)))} ${fmtTime(last.ts)}.`:'No alert has come in yet.';
+  if(!UPIAL)return `<div class="card uasetup"><b>How it works</b><span class="small">Set it up once in the <b>Cheesy Pizza Admin</b> app on the shop phone that gets your UPI app's alerts (Day sale › UPI alerts › Turn on). ${lastTxt}</span></div>`;
+  const st=U.uaSt;if(!st){UPIAL.status().then(r=>{U.uaSt=r;render()}).catch(()=>{U.uaSt={supported:false}});return '<div class="card uasetup small muted">Checking this phone…</div>'}
+  if(!st.supported)return '<div class="card uasetup small">Update the Admin app to read UPI alerts on this phone.</div>';
+  const apps=new Set((st.apps||'').split(',').filter(Boolean));
+  return `<div class="card uasetup"><div class="row" style="justify-content:space-between;gap:8px;flex-wrap:wrap"><b>Read UPI alerts on this phone</b><span class="chip ${st.on&&st.access?'ready':'amber'}">${st.on&&st.access?'On':'Off'}</span></div>
+   <div class="small">${st.on?'Sending alerts for <b>'+esc((S.outlets.find(o=>o.id===st.outletId)||{}).name||'')+'</b>. ':''}${lastTxt}${st.waiting?' '+st.waiting+' alerts waiting for internet.':''}</div>
+   <div class="row" style="gap:8px;flex-wrap:wrap">${(st.installed||[]).map(x=>`<label class="opt"><input type="checkbox" data-uaapp="${esc(x.pkg)}" ${apps.has(x.pkg)?'checked':''}> ${esc(x.name)}</label>`).join('')||'<span class="small muted">No UPI app found on this phone.</span>'}</div>
+   <div class="row" style="gap:8px;flex-wrap:wrap">
+    ${st.access?'<span class="small" style="color:var(--ok)">✓ Notification access allowed</span>':'<button class="btn pri" data-act="ua-setup" data-v="access">1. Allow notification access</button>'}
+    ${st.on?'<button class="btn" data-act="ua-setup" data-v="test">Send a test alert</button><button class="btn bad" data-act="ua-setup" data-v="off">Turn off</button>':'<button class="btn pri" data-act="ua-setup" data-v="on">'+(st.access?'':'2. ')+'Turn on for '+esc(cur().name)+'</button>'}</div>
+   <span class="small muted">Only alerts that mention an amount, from the apps ticked above, are sent to your Cheesy Pizza server.</span></div>`;
+}
+async function upiSetup(v){
+  const st=U.uaSt||{};
+  try{
+    if(v==='access'){await UPIAL.openSettings();toast('Find Cheesy Pizza Admin in the list and allow it, then come back');setTimeout(()=>{U.uaSt=null;render()},4000);return}
+    if(v==='off'){await UPIAL.off();U.uaSt=null;render();toast('UPI alerts turned off on this phone');return}
+    if(v==='test'){await UPIAL.test({amt:'1'});toast('Test alert sent. It shows in this list in a few seconds.');return}
+    if(v==='on'){
+      const su=staff();if(!su||!['owner','manager'].includes(su.role)){toast('The owner or a manager turns this on');return}
+      const pin=prompt('Enter your PIN to turn on UPI alerts for '+cur().name);if(!pin)return;
+      const r=await api('/api/upi-alerts/key',{staffId:su.id,pin,outletId:S.cur});
+      const picked=[...document.querySelectorAll('[data-uaapp]:checked')].map(x=>x.dataset.uaapp);
+      const apps=picked.length?picked:(st.installed||[]).filter(x=>!/messaging/.test(x.pkg)).map(x=>x.pkg);
+      await UPIAL.setup({base:location.origin,key:r.key,outletId:S.cur,apps:apps.join(',')});U.uaSt=null;render();toast('UPI alerts are on for '+cur().name);
+    }
+  }catch(e){toast(e.message||'Could not do that')}
+}
+document.addEventListener('change',e=>{const t=e.target;if(!t.dataset||!t.dataset.uaapp||!UPIAL)return;
+  const apps=[...document.querySelectorAll('[data-uaapp]:checked')].map(x=>x.dataset.uaapp).join(',');UPIAL.setup({apps}).then(()=>{if(U.uaSt)U.uaSt.apps=apps;toast('Saved')})});
 
 /* ================= v4: accounts, wallet, staff login, fun ================= */
 const ROLES={owner:'Owner',manager:'Manager',cashier:'Cashier',kitchen:'Kitchen',rider:'Rider'};
@@ -5747,6 +5886,7 @@ const ROLE_TABS={owner:TABS.map(t=>t[0]),manager:TABS.map(t=>t[0]).filter(k=>k!=
 function ensureCust(ph,name){const c=S.customers[ph]||(S.customers[ph]={phone:ph,name:name||'',due:0,coins:0});
   c.wallet=c.wallet||0;c.tx=c.tx||[];c.myCodes=c.myCodes||[];c.ref=c.ref||('CP'+ph.slice(-5));if(name&&!c.name)c.name=name;return c}
 function migrate(){
+  if(!Array.isArray(S.upialerts))S.upialerts=[];
   Object.keys(S.customers).forEach(ph=>ensureCust(ph));
   if(!S.users.some(u=>u.id===S.staffId))S.staffId=null;
   if(S.me&&!S.customers[S.me])S.me=null;

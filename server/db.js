@@ -17,6 +17,7 @@ const SPECS = {
   users: { model: M.Staff, key: 'id', pin: true },
   customers: { model: M.Customer, map: true, pin: true },
   orders: { model: M.Order, key: 'id' },
+  upialerts: { model: M.UpiAlert, key: 'id' }, // UPI payments read from the shop phone's UPI app alerts
 };
 // Order matters: outlets before orders so new orders can be numbered.
 const COLLECTIONS = Object.keys(SPECS);
