@@ -4755,7 +4755,7 @@ function openModeDetail(k){
     <div class="row" style="justify-content:flex-end">${ownerBtn(modeText(s,k,d,sc))}</div>
   </div>`);
 }
-function vSales(){const seg=upiSeg('sales');if(U.salesView==='upi'){const d=U.salesDate||today();return seg+vUpiAlerts(d,d,U.salesScope)}return seg+vSalesMain()}
+function vSales(){if(!UPI_ALERTS)return vSalesMain();const seg=upiSeg('sales');if(U.salesView==='upi'){const d=U.salesDate||today();return seg+vUpiAlerts(d,d,U.salesScope)}return seg+vSalesMain()}
 function vSalesMain(){
   const d=U.salesDate||today(),sc=U.salesScope;const s=salesFor(d,sc),p=salesFor(addDays(d,-1),sc);const diff=s.tot-p.tot;
   const days=[...Array(7)].map((_,i)=>addDays(d,i-6)).map(x=>({d:x,t:salesFor(x,sc).tot}));const mx=Math.max(1,...days.map(x=>x.t));
@@ -4847,7 +4847,7 @@ function repTbl(t,max){const rows=max?t.rows.slice(0,max):t.rows;
   ${rows.map(r=>`<tr>${r.map((c,i)=>`<td class="${i&&(typeof c==='number'||/^₹/.test(String(c)))?'r num':''}">${esc(String(c))}</td>`).join('')}</tr>`).join('')||`<tr><td colspan="${t.h.length}" class="empty">Nothing in this period.</td></tr>`}
   </tbody></table></div>${max&&t.rows.length>max?`<div class="small muted" style="padding:6px 2px">Showing ${max} of ${t.rows.length}. The Excel and PDF have all of them.</div>`:''}`}
 function vReports(){const seg=upiSeg('rep'),R=repU(),[f,t]=repRange(R);
-  if(U.repView==='upi')return seg+vUpiAlerts(f,t,R.sc);
+  if(U.repView==='upi'&&UPI_ALERTS)return seg+vUpiAlerts(f,t,R.sc);
   if(U.repView==='cx')return seg+vCancelRep(f,t,R.sc);
   if(U.repView==='bk')return seg+vBackup();
   return seg+vReportsMain()}
@@ -5833,7 +5833,7 @@ function pushOutlet(){const t=pushTok();if(PUSH&&t)api('/api/push/refresh',{old:
 function startPolling(){setInterval(async()=>{
   if(U.trackId&&mroot.innerHTML&&document.querySelector('canvas[data-scratch]'))return;
   let changed=false;try{changed=await refresh()}catch(_){}
-  checkNewOnline();try{checkUpiAlerts()}catch(e){console.error(e)}
+  checkNewOnline();if(UPI_ALERTS)try{checkUpiAlerts()}catch(e){console.error(e)}
   if(U.trackId&&mroot.innerHTML){openTrack();return}
   if(U.board){renderBoard();return}
   if(S.mode==='pos'&&['kitchen','counter','orders'].includes(U.pos.tab)&&!mroot.innerHTML&&!isBusy()){render();return}
@@ -5845,7 +5845,10 @@ function startPolling(){setInterval(async()=>{
    them to the server (server/upi-alerts.js), which saves them in S.upialerts and marks the one unpaid
    order with that amount paid. Tills pop up who paid; the cashier can undo, pick the order, or keep
    the money as unmatched. Day sale and Reports have a UPI alerts tab to match everything. */
-const UPIAL=APP_ROLE==='admin'&&window.Capacitor&&Capacitor.Plugins&&Capacitor.Plugins.UpiAlerts||null;
+// UPI alerts (reading the UPI app's notifications) are switched off: the owner removed the feature,
+// since Play Protect blocks a sideloaded app that reads notifications. Set true to bring the screens back.
+const UPI_ALERTS=false;
+const UPIAL=UPI_ALERTS&&APP_ROLE==='admin'&&window.Capacitor&&Capacitor.Plugins&&Capacitor.Plugins.UpiAlerts||null;
 const UA_SEEN='cheesy_upi_seen';
 const uaSeen=()=>{try{return new Set(JSON.parse(localStorage.getItem(UA_SEEN)||'[]'))}catch(_){return new Set()}};
 function uaSee(id){const s=[...uaSeen(),id].slice(-300);try{localStorage.setItem(UA_SEEN,JSON.stringify(s))}catch(_){}}
@@ -5907,7 +5910,7 @@ function uaUnlink(a){
 }
 function upiSeg(w){const v=(w==='sales'?U.salesView:U.repView)||'sale';const n=S.upialerts.filter(a=>a.outletId===S.cur&&a.status==='new'&&!a.test).length;
   const own=staff()?.role==='owner';
-  return `<div class="seg upiseg" role="tablist"><button data-act="upi-view" data-v="${w}:sale" aria-pressed="${!['upi','cx','bk'].includes(v)}">${w==='sales'?'Day sale':'Sales report'}</button>${w==='rep'?`<button data-act="upi-view" data-v="rep:cx" aria-pressed="${v==='cx'}">Cancelled & refunds</button>`:''}<button data-act="upi-view" data-v="${w}:upi" aria-pressed="${v==='upi'}">UPI alerts${n?` <span class="badge">${n}</span>`:''}</button>${w==='rep'&&own?`<button data-act="upi-view" data-v="rep:bk" aria-pressed="${v==='bk'}">Backup & export</button>`:''}</div>`}
+  return `<div class="seg upiseg" role="tablist"><button data-act="upi-view" data-v="${w}:sale" aria-pressed="${!['upi','cx','bk'].includes(v)}">${w==='sales'?'Day sale':'Sales report'}</button>${w==='rep'?`<button data-act="upi-view" data-v="rep:cx" aria-pressed="${v==='cx'}">Cancelled & refunds</button>`:''}${UPI_ALERTS?`<button data-act="upi-view" data-v="${w}:upi" aria-pressed="${v==='upi'}">UPI alerts${n?` <span class="badge">${n}</span>`:''}</button>`:''}${w==='rep'&&own?`<button data-act="upi-view" data-v="rep:bk" aria-pressed="${v==='bk'}">Backup & export</button>`:''}</div>`}
 // Cancelled orders (with who, when, why and whether money was taken) and wallet refunds for a period
 function vCancelRep(from,to,sc){
   const os=S.orders.filter(o=>o.date>=from&&o.date<=to&&(sc==='all'||o.outletId===S.cur)&&o.status==='cancelled').sort((a,b)=>b.ts-a.ts);
@@ -5993,7 +5996,7 @@ function upiSetupCard(){
   const lastTxt=last?`Last alert ${fmtDate(today(new Date(last.ts)))} ${fmtTime(last.ts)}.`:'No alert has come in yet.';
   if(!UPIAL)return `<div class="card uasetup"><b>How it works</b><span class="small">Set it up once in the <b>Cheesy Pizza Admin</b> app on the shop phone that gets your UPI app's alerts (Day sale › UPI alerts › Turn on). ${lastTxt}</span></div>`;
   const st=U.uaSt;if(!st){UPIAL.status().then(r=>{U.uaSt=r;render()}).catch(()=>{U.uaSt={supported:false}});return '<div class="card uasetup small muted">Checking this phone…</div>'}
-  if(!st.supported)return '<div class="card uasetup small"><b>This phone has the standard Admin app, which does not read UPI alerts.</b> On the one shop phone that gets your UPI app\'s payment alerts, install the UPI version instead: open <b>cheesypizza.online/admin-upi.apk</b> in Chrome. Google Play Protect blocks it unless you first turn off Play Store › profile › Play Protect › Settings › <i>Scan apps with Play Protect</i>; turn it back on after installing.</div>';
+  if(!st.supported)return '<div class="card uasetup small">Update the Admin app to read UPI alerts on this phone.</div>';
   const apps=new Set((st.apps||'').split(',').filter(Boolean));
   return `<div class="card uasetup"><div class="row" style="justify-content:space-between;gap:8px;flex-wrap:wrap"><b>Read UPI alerts on this phone</b><span class="chip ${st.on&&st.access?'ready':'amber'}">${st.on&&st.access?'On':'Off'}</span></div>
    <div class="small">${st.on?'Sending alerts for <b>'+esc((S.outlets.find(o=>o.id===st.outletId)||{}).name||'')+'</b>. ':''}${lastTxt}${st.waiting?' '+st.waiting+' alerts waiting for internet.':''}</div>

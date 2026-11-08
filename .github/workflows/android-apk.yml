@@ -84,14 +84,12 @@ jobs:
             rm -f "$UPLOAD_KEYSTORE_FILE"
             cp app/build/outputs/apk/customer/release/app-customer-release.apk ../../cheesy-pizza.apk
             cp app/build/outputs/apk/admin/release/app-admin-release.apk ../../cheesy-pizza-admin.apk
-            cp app/build/outputs/apk/adminupi/release/app-adminupi-release.apk ../../cheesy-pizza-admin-upi.apk
             echo "Built release APKs signed with the upload key"
           else
             echo "::warning::No upload key: building debug APKs, which Play Protect may flag"
             ./gradlew assembleDebug -PversionCode=${{ github.run_number }} --no-daemon
             cp app/build/outputs/apk/customer/debug/app-customer-debug.apk ../../cheesy-pizza.apk
             cp app/build/outputs/apk/admin/debug/app-admin-debug.apk ../../cheesy-pizza-admin.apk
-            cp app/build/outputs/apk/adminupi/debug/app-adminupi-debug.apk ../../cheesy-pizza-admin-upi.apk
           fi
 
       - name: Check each app knows which one it is
@@ -99,10 +97,8 @@ jobs:
         run: |
           unzip -p cheesy-pizza.apk assets/capacitor.config.json | grep -q 'CheesyApp/customer'
           unzip -p cheesy-pizza-admin.apk assets/capacitor.config.json | grep -q 'CheesyApp/admin'
-          unzip -p cheesy-pizza-admin-upi.apk assets/capacitor.config.json | grep -q 'CheesyApp/admin'
-          # Play Protect blocks sideloaded apps that read notifications: only the -upi build may
+          # Play Protect blocks sideloaded apps that read notifications, so the Admin app must never ask for notification access
           if unzip -p cheesy-pizza-admin.apk AndroidManifest.xml | tr -d '\0' | grep -q UpiAlertService; then echo "::error::The plain Admin app must not read notifications"; exit 1; fi
-          unzip -p cheesy-pizza-admin-upi.apk AndroidManifest.xml | tr -d '\0' | grep -q UpiAlertService
           echo "Customer and Admin apps are set up correctly"
 
       # Checks the Play Store release build and its signing still work, with a throwaway key
@@ -121,7 +117,6 @@ jobs:
           path: |
             cheesy-pizza.apk
             cheesy-pizza-admin.apk
-            cheesy-pizza-admin-upi.apk
           if-no-files-found: error
 
       # Builds from main and manual runs are also published as a release, so the APK
@@ -137,10 +132,10 @@ jobs:
         run: |
           if [ "$SERVER_URL" = offline ]; then SERVER_URL=; fi
           if [ -n "$SERVER_URL" ]; then mode="Opens $SERVER_URL"; else mode="Offline: runs on the phone, data stays on that phone"; fi
-          notes="Latest Cheesy Pizza Android app (build ${{ github.run_number }} from ${{ github.ref_name }}). $mode. cheesy-pizza.apk is the customer app (Cheesy Pizza); cheesy-pizza-admin.apk is the owner's POS app (Cheesy Pizza Admin) for every till and staff phone; cheesy-pizza-admin-upi.apk is the same Admin app plus UPI payment alerts, only for the one shop phone that gets the UPI app's alerts (pause Play Protect scanning to install it). Download one on the phone and open it to install."
+          notes="Latest Cheesy Pizza Android app (build ${{ github.run_number }} from ${{ github.ref_name }}). $mode. cheesy-pizza.apk is the customer app (Cheesy Pizza); cheesy-pizza-admin.apk is the owner's POS app (Cheesy Pizza Admin). Download one on the phone and open it to install."
           if gh release view android-latest >/dev/null 2>&1; then
             gh release edit android-latest --title "Cheesy Pizza Android app" --notes "$notes"
           else
             gh release create android-latest --target "$GITHUB_SHA" --title "Cheesy Pizza Android app" --notes "$notes"
           fi
-          gh release upload android-latest cheesy-pizza.apk cheesy-pizza-admin.apk cheesy-pizza-admin-upi.apk --clobber
+          gh release upload android-latest cheesy-pizza.apk cheesy-pizza-admin.apk --clobber

@@ -48,19 +48,6 @@ android {
             dimension "app"
             applicationId "com.cheesypizza.admin"
         }
-        // The same Admin app plus UPI payment alerts (reads the shop UPI app's notifications).
-        // Play Protect blocks sideloaded apps that read notifications, so only the one shop phone
-        // that gets the UPI alerts installs this build; every other phone uses the plain Admin app.
-        adminupi {
-            dimension "app"
-            applicationId "com.cheesypizza.admin"
-        }
-    }
-    sourceSets {
-        adminupi {
-            res.srcDirs += 'src/admin/res'
-            assets.srcDirs += 'src/admin/assets'
-        }
     }
     buildTypes {
         release {
@@ -93,7 +80,7 @@ apply from: 'capacitor.build.gradle'
 
 // scripts/firebase-config.js puts each app's Firebase config in src/customer or src/admin.
 // An app without one builds without notifications instead of failing the build.
-def firebaseApps = ['customer', 'admin', 'adminupi'].findAll { file("src/$it/google-services.json").exists() } + (file('google-services.json').exists() ? ['all'] : [])
+def firebaseApps = ['customer', 'admin'].findAll { file("src/$it/google-services.json").exists() } + (file('google-services.json').exists() ? ['all'] : [])
 if (firebaseApps) {
     apply plugin: 'com.google.gms.google-services'
     googleServices {

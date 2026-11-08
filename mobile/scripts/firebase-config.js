@@ -5,8 +5,7 @@
 const fs = require('fs');
 const path = require('path');
 
-// adminupi is the Admin app with UPI alerts (same package as admin)
-const FLAVORS = { customer: 'com.cheesypizza.app', admin: 'com.cheesypizza.admin', adminupi: 'com.cheesypizza.admin' };
+const FLAVORS = { customer: 'com.cheesypizza.app', admin: 'com.cheesypizza.admin' };
 const SRC = path.join(__dirname, '..', 'android', 'app', 'src');
 const file = process.argv[2] || path.join(__dirname, '..', 'firebase', 'google-services.json');
 
@@ -17,7 +16,6 @@ for (const [flavor, pkg] of Object.entries(FLAVORS)) {
     c.client_info.android_client_info.package_name === pkg);
   if (!client.length) {
     fs.rmSync(out, { force: true });
-    if (flavor === 'adminupi') continue;
     console.log(`::warning::${pkg} is not in the Firebase project, so this app is built without notifications. Add it in Firebase > Project settings > Add app > Android.`);
     continue;
   }
