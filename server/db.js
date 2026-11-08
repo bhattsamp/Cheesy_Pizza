@@ -22,6 +22,9 @@ const SPECS = {
 const COLLECTIONS = Object.keys(SPECS);
 
 /* ---------- PINs ---------- */
+// A + date (ddmmyyyy) + outlet code + a 6-digit count for that outlet and day, e.g. A08112026A000001
+const orderNo = (code, date, n) => 'A' + String(date).split('-').reverse().join('') + code + String(n).padStart(6, '0');
+
 function hashPin(pin) {
   const salt = crypto.randomBytes(16).toString('hex');
   return 'scrypt:' + salt + ':' + crypto.scryptSync(String(pin), salt, 32).toString('hex');
@@ -98,7 +101,7 @@ class Store {
     const out = await M.Outlet.findById(String(outletId)).lean();
     if (!out || !date) return null;
     const n = await this.bump('seq:' + outletId + '|' + date);
-    return out.code + '-' + String(n).padStart(3, '0');
+    return orderNo(out.code, date, n);
   }
 
   // Saves run one at a time in this server, so two tills saving together
@@ -221,4 +224,4 @@ class Store {
   }
 }
 
-module.exports = { Store, SPECS, COLLECTIONS, hashPin, checkPin };
+module.exports = { Store, SPECS, COLLECTIONS, hashPin, checkPin, orderNo };

@@ -241,6 +241,7 @@ textarea.inp{resize:vertical}
 .lane-h .n{font-family:var(--display);font-weight:800;font-size:20px;background:var(--surface2);border-radius:10px;padding:0 10px}
 .ctk{border:1px solid var(--line);border-radius:14px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;background:var(--bg)}
 .ctk .no{font-family:var(--display);font-weight:800;font-size:24px;line-height:1}
+.kt .no .np,.ctk .no .np{display:block;font-size:12px;font-weight:600;letter-spacing:.04em;color:var(--muted);margin-bottom:2px}
 .ctk.ready{border-left:5px solid var(--ok)}
 .ctk.prep{border-left:5px solid var(--warn)}
 .ctk.out{border-left:5px solid var(--teal)}
@@ -2568,10 +2569,14 @@ function comboWorth(c){
 }
 
 /* ===== ORDERS ===== */
+// Order number: A + date (ddmmyyyy) + outlet code + a 6-digit count for that outlet and day, e.g. A08112026A000001
+const orderNo=(out,date,n)=>'A'+date.split('-').reverse().join('')+out.code+String(n).padStart(6,'0');
+// On kitchen and counter cards the date and outlet part is small, so the count stands out
+const noHtml=no=>{const m=/^(A\d{8}[A-Z]+)(\d{6})$/.exec(no||'');return m?`<small class="np">${m[1]}</small>${m[2]}`:esc(no||'')};
 function commitOrder(o){
   const out=S.outlets.find(x=>x.id===o.outletId);
   const k=o.outletId+'|'+o.date;S.seq[k]=(S.seq[k]||0)+1;
-  o.no=out.code+'-'+String(S.seq[k]).padStart(3,'0');
+  o.no=orderNo(out,o.date,S.seq[k]);
   const b=computeBill(o.items,o.date,{...(o.extra||{}),phone:o.customer.phone,outletId:o.outletId});o.subtotal=b.subtotal;o.discounts=b.discounts;o.total=b.total;if(b.gst)o.gst=b.gst;else delete o.gst;o.coinsUsed=b.coinsUsed;o.coinsEarned=(o.customer.phone||'').length===10?b.earn:0;
   o.times=o.times||{};o.times.placed=o.times.placed||o.ts;if(o.status==='preparing')o.times.preparing=o.times.preparing||o.ts;
   S.orders.push(o);if((o.customer.phone||'').length===10)releaseSpinHold(o.customer.phone,o.no);
@@ -3893,7 +3898,7 @@ function vNew(){
   const ci=custInfo(P.phone);const todays=activeOffers(dow);
   const n=P.cart.reduce((a,l)=>a+l.qty,0);
   const optsOn=P.opts||P.note||P.code||(P.wait&&P.wait!==PREP_MIN);
-  return `<div class="ph1"><h2>New order</h2><span class="muted small">${esc(cur().name)} · next no. <b class="num">${cur().code}-${String((S.seq[S.cur+'|'+today()]||0)+1).padStart(3,'0')}</b></span>${!CAP&&CS_CH?'<span class="grow"></span><button class="btn sm" data-act="cs-open" title="Open the screen the customer sees on your second monitor">Customer screen ↗</button>':''}</div>
+  return `<div class="ph1"><h2>New order</h2><span class="muted small">${esc(cur().name)} · next no. <b class="num">${orderNo(cur(),today(),(S.seq[S.cur+'|'+today()]||0)+1)}</b></span>${!CAP&&CS_CH?'<span class="grow"></span><button class="btn sm" data-act="cs-open" title="Open the screen the customer sees on your second monitor">Customer screen ↗</button>':''}</div>
   ${todays.length?`<div class="row" style="margin-bottom:10px"><span class="grp-h">Live today</span>${todays.map(o=>`<span class="chip ${o.type==='bogo'?'r':o.type==='item'?'c':'t'}">${esc(o.name)}</span>`).join('')}</div>`:''}
   <div class="neworder">
     <div class="menucol">
@@ -4210,7 +4215,7 @@ function vKitchen(){
     // green when the order comes in, turning yellow then red as the waiting time runs out
     const h=o.status==='placed'?265:Math.round(130*Math.max(0,Math.min(1,1-mins/w)));
     return `<div class="kt ${o.status==='placed'?'placed':''} ${o.status==='preparing'&&left<0?'late':''}" style="--h:${h}" ${o.status==='preparing'?`data-act="ktap" data-id="${o.id}"`:''}>
-    <div class="row"><span class="no num">${o.no}</span><span class="grow"></span><span class="chip ${o.type==='zomato'?'r':'t'}">${TYPES[o.type]}${o.table?' · T'+esc(o.table):''}</span></div>
+    <div class="row"><span class="no num">${noHtml(o.no)}</span><span class="grow"></span><span class="chip ${o.type==='zomato'?'r':'t'}">${TYPES[o.type]}${o.table?' · T'+esc(o.table):''}</span></div>
     <div class="row"><span class="small muted num grow">${fmtTime(o.ts)} · ${mins<1?'just now':mins+' min'}${o.source==='online'?' · online':''}${o.zomatoId?' · Zomato '+esc(o.zomatoId):''}</span>${o.status==='preparing'?`<span class="left num">${leftText(left)}</span>`:''}<button class="btn sm" data-act="set-wait" data-id="${o.id}" title="Change waiting time">⏱ ${w} min</button></div>
     ${o.scheduled?`<span class="chip c" style="align-self:flex-start">Scheduled for ${esc(o.scheduled)}</span>`:''}
     ${o.status==='preparing'?`<div class="pbar" title="Waiting time ${w} min"><i style="width:${Math.min(100,mins/w*100)}%;background:hsl(${h} 65% 42%)"></i></div>`:''}
@@ -4265,7 +4270,7 @@ function vCounter(){
   const del=mine.filter(o=>o.type==='delivery'&&['preparing','ready'].includes(o.status)).sort((a,b)=>a.ts-b.ts);
   const out=mine.filter(o=>o.status==='out');
   const riders=cur().riders||[];const busy=new Set(out.map(o=>o.rider?.name));
-  const ct=(o,cls,body)=>`<div class="ctk ${cls}"><div class="row"><span class="no num">${o.no}</span><span class="grow"></span><span class="chip ${o.status}">${statusName(o.status,o.type)}</span></div>
+  const ct=(o,cls,body)=>`<div class="ctk ${cls}"><div class="row"><span class="no num">${noHtml(o.no)}</span><span class="grow"></span><span class="chip ${o.status}">${statusName(o.status,o.type)}</span></div>
     <div class="small">${esc(o.customer.name||'Walk-in')} ${o.customer.phone?'· <span class="num">'+fmtPhone(o.customer.phone)+'</span>':''}${o.table?' · Table '+esc(o.table):''} · ${TYPES[o.type]}</div>
     ${o.address?`<div class="small muted">${esc(o.address)}</div>`:''}
     ${o.zomatoId?`<div class="small">Zomato ID <b class="num">${esc(o.zomatoId)}</b></div>`:''}
