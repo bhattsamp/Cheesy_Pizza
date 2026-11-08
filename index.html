@@ -722,6 +722,7 @@ html:has(#modalRoot:not(:empty)),html:has(#boardRoot:not(:empty)),html:has(#choo
 .tord{border:1px solid var(--line);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:6px}
 .tord.cx{opacity:.55}
 .cxrow{padding:6px 0;border-top:1px dashed var(--line)}
+.wipelist{max-height:40vh;overflow:auto;display:flex;flex-direction:column;gap:6px;border:1px solid var(--line);border-radius:10px;padding:10px}
 .tround{display:flex;flex-direction:column;gap:2px;padding-left:8px;border-left:3px solid var(--line)}
 .addto{background:var(--cheese-soft);color:var(--cheese-ink);border-radius:10px;padding:8px 10px;font-weight:700;font-size:13px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .kt{--h:130;border-color:hsl(var(--h) 65% 42%);background:hsl(var(--h) 70% 45% / .10)}
@@ -4650,9 +4651,9 @@ const LIBS={};function loadLib(u){return LIBS[u]||(LIBS[u]=new Promise((ok,bad)=
 // hands a made file to the person: the share sheet on phones, a download on computers
 async function saveFile(blob,name,mime){
   const file=new File([blob],name,{type:mime});
-  if(navigator.canShare&&navigator.canShare({files:[file]})&&/Android|iPhone|iPad/i.test(navigator.userAgent)){try{await navigator.share({files:[file],title:name});return}catch(e){if(e.name==='AbortError')return}}
-  if(CAP){toast('Saving files works on the website. Open cheesypizza.online in Chrome, sign in and save the report there.');return}
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000);toast('Report saved: '+name)}
+  if(navigator.canShare&&navigator.canShare({files:[file]})&&/Android|iPhone|iPad/i.test(navigator.userAgent)){try{await navigator.share({files:[file],title:name});return true}catch(e){if(e.name==='AbortError')return false}}
+  if(CAP){toast('Saving files works on the website. Open cheesypizza.online in Chrome, sign in and save the report there.');return false}
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000);toast('Report saved: '+name);return true}
 const repName=(r,ext)=>`cheesy-pizza-sales-${r.from}${r.to!==r.from?'-to-'+r.to:''}.${ext}`;
 async function repExcel(){const r=repData();toast('Making the Excel file…');
   try{await loadLib('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js')}catch(e){toast('Could not load the Excel maker. Check the internet and try again.');return}
@@ -5254,6 +5255,7 @@ document.addEventListener('click',e=>{
     case 'st-del':{const o=cur();o.stock=stockOf(o).filter(x=>x.id!==el.dataset.id);save();render();break}
     case 'st-step':{const x=stockOf().find(y=>y.id===el.dataset.id);if(x)stockSet(x,'qty',Math.max(0,Math.round(((+x.qty||0)+ +el.dataset.v)*100)/100));break}
     case 'del':openDelete(find(el.dataset.id));break;
+    case 'wipe-open':openWipe();break;
     case 'scope':U.salesScope=el.dataset.v;render();break;
     case 'rep-p':repU().p=el.dataset.v;if(el.dataset.v==='custom'){const[a,b]=repRange({p:'today'});repU().from=repU().from||a;repU().to=repU().to||b}render();break;
     case 'rep-sc':repU().sc=el.dataset.v;render();break;
@@ -5893,7 +5895,39 @@ function vStaff(){
    <div class="small">Give every cashier their own name and PIN, and don't share PINs. Then bills, cancels and day closes show who did them, and Reports can show each person's sales.${S.users.some(u=>/^(abcd|test|staff|cashier|new staff|user)\d*$/i.test(u.name.trim()))?` <b style="color:var(--bad)">Rename: ${S.users.filter(u=>/^(abcd|test|staff|cashier|new staff|user)\d*$/i.test(u.name.trim())).map(u=>esc(u.name)).join(', ')}.</b>`:''}</div>
    <div class="field" style="max-width:360px"><label for="al-min">Lock the till when nobody taps it for</label><select class="inp" id="al-min" data-autolock="1">${[[0,'Never'],[2,'2 minutes'],[5,'5 minutes'],[10,'10 minutes'],[15,'15 minutes'],[30,'30 minutes']].map(([v,n])=>`<option value="${v}" ${(+cur().autoLock||0)===v?'selected':''}>${n}</option>`).join('')}</select>
     <span class="small muted">The next person then has to sign in with their own PIN. Kitchen and rider screens never lock.</span></div></div>
-  <p class="small muted">A new PIN is saved when you leave the box. New staff start with PIN 0000.</p>`;
+  <p class="small muted">A new PIN is saved when you leave the box. New staff start with PIN 0000.</p>
+  ${meU.role==='owner'?`<div class="card" style="padding:14px;margin-top:14px;display:flex;flex-direction:column;gap:8px;border-color:var(--bad)"><div class="grp-h" style="color:var(--bad)">Clear test data</div>
+   <div class="small">Removes test orders and customers before you start for real. Menu, offers, outlets, staff and settings stay. A backup file of everything removed is saved first.</div>
+   <button class="btn bad" style="align-self:flex-start" data-act="wipe-open">Clear test data…</button></div>`:''}`;
+}
+/* Owner only: keep the real customers (and their orders that weren't cancelled), delete every other
+   order and customer. A backup file is saved before anything is deleted; kept orders are renumbered
+   in the order number format from the first one of each outlet and day. */
+function openWipe(){
+  if(staff()?.role!=='owner')return;
+  const custs=Object.values(S.customers).sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+  const keep=new Set(custs.filter(c=>/ripal/i.test(c.name||'')).map(c=>c.phone));
+  const draw=()=>{const ko=S.orders.filter(o=>keep.has(o.customer.phone)&&o.status!=='cancelled');
+    showModal(`<div class="mh"><h3>Clear test data</h3><button class="x" data-act="close" aria-label="Close">×</button></div>
+    <div class="mb"><div class="small">Tick the real customers to keep. Their orders stay (cancelled ones go). Every other order and customer is deleted.</div>
+    <div class="wipelist">${custs.map(c=>{const n=S.orders.filter(o=>o.customer.phone===c.phone&&o.status!=='cancelled').length;return `<label class="row" style="gap:8px"><input type="checkbox" data-wk="${esc(c.phone)}" ${keep.has(c.phone)?'checked':''}><span class="grow">${esc(c.name||'No name')} <span class="muted num">${esc(fmtPhone(c.phone))}</span></span><span class="small muted">${n} order${n===1?'':'s'}</span></label>`}).join('')||'<div class="small muted">No customers</div>'}</div>
+    <div class="notice"><b>Keeps ${ko.length} order${ko.length===1?'':'s'} and ${keep.size} customer${keep.size===1?'':'s'}. Deletes ${S.orders.length-ko.length} orders and ${custs.length-keep.size} customers.</b> This can't be undone, so a backup file is saved first.</div>
+    <div class="field"><label for="wipe-ok">Type DELETE to confirm</label><input class="inp" id="wipe-ok" autocomplete="off"></div>
+    <div class="row" style="gap:8px"><button class="btn lg grow" data-act="close">Keep everything</button><button class="btn bad solid lg grow" data-act="wipe-yes">Back up and clear</button></div></div>`,{
+    onAct:act=>{if(act!=='wipe-yes')return false;doWipe();return true},
+    onChange:e=>{const ph=e.target.dataset.wk;if(ph==null)return;if(e.target.checked)keep.add(ph);else keep.delete(ph);draw()}})};
+  const doWipe=async()=>{
+      if((document.getElementById('wipe-ok').value||'').trim().toUpperCase()!=='DELETE'){toast('Type DELETE to confirm');return}
+      const stamp=new Date().toISOString().slice(0,16).replace(/[-:T]/g,'');
+      const backup=JSON.stringify({savedAt:new Date().toISOString(),orders:S.orders,customers:S.customers},null,1);
+      if(CAP){toast('Open cheesypizza.online in Chrome to clear test data, so the backup file can be saved');return}
+      let ok=false;try{ok=await saveFile(new Blob([backup],{type:'application/json'}),'cheesy-pizza-backup-'+stamp+'.json','application/json')}catch(e){}
+      if(!ok){toast('The backup was not saved, so nothing was deleted');return}
+      const kept=S.orders.filter(o=>keep.has(o.customer.phone)&&o.status!=='cancelled').sort((a,b)=>a.ts-b.ts);
+      const n={};kept.forEach(o=>{const k=o.outletId+'|'+o.date;n[k]=(n[k]||0)+1;const out=S.outlets.find(x=>x.id===o.outletId);if(out)o.no=orderNo(out,o.date,n[k])});
+      S.orders=kept;Object.keys(S.customers).forEach(ph=>{if(!keep.has(ph))delete S.customers[ph]});
+      save();closeModal();toast('Test data cleared · kept '+kept.length+' order'+(kept.length===1?'':'s'));render()};
+  draw();
 }
 
 /* ----- extra events ----- */

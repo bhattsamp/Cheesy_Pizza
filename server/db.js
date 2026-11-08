@@ -84,7 +84,7 @@ class Store {
 
   async readSeq() {
     const seq = {};
-    (await M.Counter.find({ _id: /^seq:/ }).lean()).forEach(c => { seq[c._id.slice(4)] = c.n; });
+    (await M.Counter.find({ _id: /^no:/ }).lean()).forEach(c => { seq[c._id.slice(3)] = c.n; });
     return seq;
   }
 
@@ -100,7 +100,8 @@ class Store {
   async nextOrderNo(outletId, date) {
     const out = await M.Outlet.findById(String(outletId)).lean();
     if (!out || !date) return null;
-    const n = await this.bump('seq:' + outletId + '|' + date);
+    // 'no:' counters belong to the A + date + outlet format, so it starts at 000001
+    const n = await this.bump('no:' + outletId + '|' + date);
     return orderNo(out.code, date, n);
   }
 
