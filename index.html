@@ -628,6 +628,7 @@ html:has(#modalRoot:not(:empty)),html:has(#boardRoot:not(:empty)),html:has(#choo
 /* POS: left menu stays put while the page scrolls; phone layout */
 .tkjump{display:none}
 .moregrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+@media (min-width:761px){.moregrid{grid-template-columns:repeat(4,1fr)}}
 .moregrid button{display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 6px;border:1px solid var(--line);border-radius:14px;background:var(--surface);font-weight:600;color:var(--ink);font-size:14px}
 .moregrid button svg{width:22px;height:22px;color:var(--teal)}
 .moregrid button[aria-current="page"]{background:var(--teal-soft);border-color:var(--teal);color:var(--teal)}
@@ -1195,6 +1196,8 @@ html:has(body:not(.pubmode) .pos){scroll-padding-top:calc(env(safe-area-inset-to
 .pos .side-foot{flex:none;flex-direction:row;align-items:center;margin:0 0 0 auto;padding:0 0 0 14px;gap:6px;white-space:nowrap}
 .pos .side-foot>span{display:inline}
 .pos .side-foot .sdemo{display:none}
+.pos .side .tmore{margin-left:2px;border:1.5px solid var(--line)!important;background:var(--surface2)}.pos .side .tmore .tmc{font-size:12px;opacity:.7}
+@media (max-width:1099px){.pos .side .tx{display:none}}
 .pos .side-foot .btn.sm{font-size:13px;padding:6px 10px;white-space:nowrap}
 @media (min-width:761px){.mobnav{display:none!important}}
 .mbar{top:calc(env(safe-area-inset-top,0px) + var(--toph,61px) + var(--navh))}
@@ -3857,8 +3860,12 @@ function renderPOS(){
   U.posMore=()=>showModal(`<div class="mh"><h3>All sections</h3><button class="x" data-act="close" aria-label="Close">×</button></div><div class="mb"><div class="moregrid">${allowed.map(([t,n])=>`<button data-act="tab" data-v="${t}" ${U.pos.tab===t?'aria-current="page"':''}>${I[t]}<span>${n}</span></button>`).join('')}</div>
     <div class="row small muted"><span class="grow">Signed in as <b>${esc(su.name)}</b> · ${ROLES[su.role]}</span>${CAP?'<button class="btn sm" data-act="perms">Alerts & location</button>':''}<button class="btn sm" data-act="lock">Lock screen</button></div></div>`);
   const views={new:vNew,kitchen:vKitchen,counter:vCounter,orders:vOrders,tables:vTables,sales:vSales,reports:vReports,stock:vStock,offers:vOffers,cust:vCust,menu:vMenu,home:vHomeAdm,display:vDisplayAdm,outlet:vOutlets,staff:vStaff,review:vReview,trips:vTrips};
-  return `<div class="pos"><nav class="side" aria-label="POS sections" data-ks="side">${nav()}
-    <div class="side-foot small muted"><span>Signed in as <b>${esc(su.name)}</b> · ${ROLES[su.role]}</span>${CAP?'<button class="btn sm" data-act="perms">Alerts & location</button>':''}<button class="btn sm" data-act="lock">Lock screen</button></div></nav>
+  // Big screens: the everyday sections stay in the top bar and the rest open from More, so the bar never scrolls sideways
+  const topNav=()=>{if(allowed.length<=8)return nav();const top=allowed.slice(0,7),more=allowed.slice(7),here=more.find(([t])=>t===U.pos.tab);
+    return top.map(([t,n],i)=>{const cnt=t==='kitchen'?k:t==='counter'?c:0;return `<button data-act="tab" data-v="${t}" class="${t==='new'?'tnew':''}${i>=5?' tx':''}" ${U.pos.tab===t?'aria-current="page"':''}>${I[t]}<span>${n}</span>${cnt?`<span class="cnt num">${cnt}</span>`:''}</button>`}).join('')+
+      `<button data-act="pos-more" class="tmore" ${here||top.slice(5).some(([t])=>t===U.pos.tab)?'aria-current="page"':''}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span>${here?esc(here[1])+' · More':'More'}</span><span class="tmc">▾</span></button>`};
+  return `<div class="pos"><nav class="side" aria-label="POS sections" data-ks="side">${topNav()}
+    <div class="side-foot small muted">${allowed.length<=8?`<span>Signed in as <b>${esc(su.name)}</b> · ${ROLES[su.role]}</span>${CAP?'<button class="btn sm" data-act="perms">Alerts & location</button>':''}<button class="btn sm" data-act="lock">Lock screen</button>`:''}</div></nav>
   <section class="main">${U.pos.tab!=='kitchen'&&U.pos.tab!=='trips'&&su.role!=='kitchen'&&su.role!=='rider'?onlineBanner():''}${!(ROLE_TABS[su.role]||[]).includes('stock')&&U.pos.tab!=='stock'&&su.role!=='kitchen'&&su.role!=='rider'?lowStockBanner():''}${views[U.pos.tab]()}</section>${U.addPop&&U.pos.tab==='orders'?addPopHtml():''}</div>
   <nav class="mobnav" aria-label="POS sections">${mobNav()}</nav>`;
 }
