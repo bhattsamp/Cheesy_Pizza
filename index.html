@@ -1195,6 +1195,19 @@ html:has(body:not(.pubmode) .pos){scroll-padding-top:calc(env(safe-area-inset-to
 .pos .side-foot{flex:none;flex-direction:row;align-items:center;margin:0 0 0 auto;padding:0 0 0 14px;gap:6px;white-space:nowrap}
 .pos .side-foot>span{display:inline}
 .pos .side-foot .sdemo{display:none}
+.pos .side .tmenu{border:1.5px solid var(--line)!important;background:var(--surface2);font-weight:700}
+.pos .side .tcur{display:inline-flex;align-items:center;gap:7px;padding:0 10px;font-size:16px;color:var(--ink)}.pos .side .tcur svg{width:18px;height:18px;color:var(--teal)}
+.navdim{position:fixed;inset:0;z-index:90;background:rgba(10,23,27,.42);animation:ndFade .18s ease-out}
+.navdrawer{position:fixed;z-index:91;top:0;bottom:0;left:0;width:min(300px,86vw);background:var(--surface);box-shadow:var(--shadow-lg);display:flex;flex-direction:column;padding:calc(12px + env(safe-area-inset-top,0px)) 12px calc(12px + env(safe-area-inset-bottom,0px));animation:ndIn .2s ease-out}
+.navdrawer .ndh{display:flex;align-items:center;justify-content:space-between;padding:4px 6px 10px;font-size:18px;color:var(--teal-deep)}
+.navdrawer .ndl{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:2px}
+.navdrawer .ndl button{display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:0;background:none;border-radius:10px;padding:11px 12px;font:inherit;font-size:16px;font-weight:600;color:var(--ink);cursor:pointer}
+.navdrawer .ndl button svg{width:20px;height:20px;color:var(--teal);flex:none}
+.navdrawer .ndl button:hover{background:var(--surface2)}
+.navdrawer .ndl button[aria-current="page"]{background:var(--teal-soft);color:var(--teal-deep)}
+.navdrawer .ndl .cnt{margin-left:auto}
+.navdrawer .ndf{border-top:1px solid var(--line);padding:10px 6px 0;display:flex;flex-direction:column;gap:8px}
+@keyframes ndIn{from{transform:translateX(-100%)}to{transform:none}}@keyframes ndFade{from{opacity:0}}
 .pos .side-foot .btn.sm{font-size:13px;padding:6px 10px;white-space:nowrap}
 @media (min-width:761px){.mobnav{display:none!important}}
 .mbar{top:calc(env(safe-area-inset-top,0px) + var(--toph,61px) + var(--navh))}
@@ -3857,9 +3870,19 @@ function renderPOS(){
   U.posMore=()=>showModal(`<div class="mh"><h3>All sections</h3><button class="x" data-act="close" aria-label="Close">×</button></div><div class="mb"><div class="moregrid">${allowed.map(([t,n])=>`<button data-act="tab" data-v="${t}" ${U.pos.tab===t?'aria-current="page"':''}>${I[t]}<span>${n}</span></button>`).join('')}</div>
     <div class="row small muted"><span class="grow">Signed in as <b>${esc(su.name)}</b> · ${ROLES[su.role]}</span>${CAP?'<button class="btn sm" data-act="perms">Alerts & location</button>':''}<button class="btn sm" data-act="lock">Lock screen</button></div></div>`);
   const views={new:vNew,kitchen:vKitchen,counter:vCounter,orders:vOrders,tables:vTables,sales:vSales,reports:vReports,stock:vStock,offers:vOffers,cust:vCust,menu:vMenu,home:vHomeAdm,display:vDisplayAdm,outlet:vOutlets,staff:vStaff,review:vReview,trips:vTrips};
-  return `<div class="pos"><nav class="side" aria-label="POS sections" data-ks="side">${nav()}
-    <div class="side-foot small muted"><span>Signed in as <b>${esc(su.name)}</b> · ${ROLES[su.role]}</span>${CAP?'<button class="btn sm" data-act="perms">Alerts & location</button>':''}<button class="btn sm" data-act="lock">Lock screen</button></div></nav>
-  <section class="main">${U.pos.tab!=='kitchen'&&U.pos.tab!=='trips'&&su.role!=='kitchen'&&su.role!=='rider'?onlineBanner():''}${!(ROLE_TABS[su.role]||[]).includes('stock')&&U.pos.tab!=='stock'&&su.role!=='kitchen'&&su.role!=='rider'?lowStockBanner():''}${views[U.pos.tab]()}</section>${U.addPop&&U.pos.tab==='orders'?addPopHtml():''}</div>
+  // Big screens with many sections: one Menu button opens a vertical menu that slides over the page
+  // (the page keeps its full width); phones keep the bottom bar
+  const many=allowed.length>8,curT=allowed.find(([t])=>t===U.pos.tab)||allowed[0];
+  const topNav=()=>{if(!many)return nav();
+    return `<button data-act="nav-open" class="tmenu" aria-expanded="${!!U.navOpen}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg><span>Menu</span>${k+c?`<span class="cnt num">${k+c}</span>`:''}</button>
+      <span class="tcur">${I[curT[0]]}<b>${esc(curT[1])}</b></span>${U.pos.tab!=='new'&&allowed.some(([t])=>t==='new')?`<button data-act="tab" data-v="new" class="tnew">${I.new}<span>New order</span></button>`:''}`};
+  const navDrawer=()=>!many||!U.navOpen?'':`<div class="navdim" data-act="nav-close"></div><aside class="navdrawer" role="dialog" aria-label="All sections">
+    <div class="ndh"><b>Cheesy Pizza</b><button class="x" data-act="nav-close" aria-label="Close">×</button></div>
+    <div class="ndl">${allowed.map(([t,n])=>{const cnt=t==='kitchen'?k:t==='counter'?c:0;return `<button data-act="tab" data-v="${t}" ${U.pos.tab===t?'aria-current="page"':''}>${I[t]}<span>${n}</span>${cnt?`<span class="cnt num">${cnt}</span>`:''}</button>`}).join('')}</div>
+    <div class="ndf small muted"><span>Signed in as <b>${esc(su.name)}</b> · ${ROLES[su.role]}</span><div class="row" style="gap:6px">${CAP?'<button class="btn sm" data-act="perms">Alerts & location</button>':''}<button class="btn sm" data-act="lock">Lock screen</button></div></div></aside>`;
+  return `<div class="pos"><nav class="side" aria-label="POS sections" data-ks="side">${topNav()}
+    <div class="side-foot small muted">${!many?`<span>Signed in as <b>${esc(su.name)}</b> · ${ROLES[su.role]}</span>${CAP?'<button class="btn sm" data-act="perms">Alerts & location</button>':''}<button class="btn sm" data-act="lock">Lock screen</button>`:''}</div></nav>
+  <section class="main">${U.pos.tab!=='kitchen'&&U.pos.tab!=='trips'&&su.role!=='kitchen'&&su.role!=='rider'?onlineBanner():''}${!(ROLE_TABS[su.role]||[]).includes('stock')&&U.pos.tab!=='stock'&&su.role!=='kitchen'&&su.role!=='rider'?lowStockBanner():''}${views[U.pos.tab]()}</section>${U.addPop&&U.pos.tab==='orders'?addPopHtml():''}${navDrawer()}</div>
   <nav class="mobnav" aria-label="POS sections">${mobNav()}</nav>`;
 }
 // Orders placed on the customer site wait here for the owner or cashier to accept
@@ -5445,7 +5468,9 @@ document.addEventListener('click',e=>{
     case 'track':U.trackId=el.dataset.id;openTrack();break;
     case 'order-add':openAddPop(find(el.dataset.id));break;
     case 'addpop-close':closeAddPop();break;
-    case 'tab':P.tab=el.dataset.v;U.confirmCancel=null;U.addPop=null;closeModal();render();window.scrollTo(0,0);break;
+    case 'nav-open':U.navOpen=true;render();break;
+    case 'nav-close':U.navOpen=false;render();break;
+    case 'tab':P.tab=el.dataset.v;U.navOpen=false;U.confirmCancel=null;U.addPop=null;closeModal();render();window.scrollTo(0,0);break;
     case 'pos-more':U.posMore&&U.posMore();break;
     case 'to-ticket':document.getElementById('ticket')?.scrollIntoView({behavior:'smooth',block:'start'});break;
     case 'poscat':P.cat=el.dataset.v;P.q='';render();break;
@@ -5633,6 +5658,7 @@ document.addEventListener('change',e=>{
 });
 function commitLinePrice(t){const i=+t.id.slice(3);const l=U.pos.cart[i];if(l){const v=Math.max(0,+t.value||0);if(v!==l.unit){l.unit=v;l.custom=true}}U.editLine=null;render()}
 document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'&&U.navOpen){U.navOpen=false;render();return}
   if(e.key==='Escape'){if(U.board){U.board=false;renderBoard()}else if(mroot.innerHTML){closeModal();render()}}
   if(e.key==='Enter'&&e.target.id&&e.target.id.startsWith('lp-'))e.target.blur();
 });
