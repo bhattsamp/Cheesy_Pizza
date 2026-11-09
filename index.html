@@ -1019,7 +1019,7 @@ body:has(.addpop){overflow:hidden}
 .pos .tiles .tile2.off{opacity:.55}
 .catrail button{display:flex;justify-content:space-between;align-items:center;gap:6px}.catrail button .cn{font-size:13px;opacity:.65;font-weight:600}
 .cathd{display:flex;align-items:baseline;gap:10px;margin:0 0 8px;flex-wrap:wrap}.cathd h2{font-size:22px;font-weight:800;margin:0}
-@media (max-width:760px){.pos .menucol .cathd{display:none}}
+@media (max-width:760px){.pos .cathd{display:none}}
 .tkhead{background:var(--teal-deep);padding:10px;border-radius:var(--r) var(--r) 0 0}
 .tkhead .types button{background:transparent;color:#fff;border-color:rgba(255,255,255,.22)}
 .tkhead .types button[aria-pressed="true"]{background:#fff;color:var(--teal-deep);border-color:#fff}
@@ -1059,6 +1059,15 @@ body:has(.addpop){overflow:hidden}
 .tkacts.tk5{grid-template-columns:1fr 1fr 1fr 1.35fr 1.35fr;gap:5px}
 .tkacts.tk5 .btn,.tkacts.tk5 .tkbig{grid-column:auto;padding:11px 2px;font-size:14.5px;line-height:1.15;white-space:nowrap}
 .tkacts.tk5 .tkbig{font-weight:800}
+.tkacts.tk3{grid-template-columns:1fr 1.5fr 1.2fr;gap:6px}.tkacts.tk3 .btn,.tkacts.tk3 .tkbig{grid-column:auto;padding:12px 4px;font-size:16px;font-weight:800;white-space:nowrap}
+.srn{display:inline-grid;place-items:center;min-width:22px;height:22px;padding:0 5px;margin-right:6px;border-radius:6px;background:var(--surface2);color:var(--muted);font-size:12.5px;font-weight:800;vertical-align:1px}
+.tkgrip{display:none}
+@media (min-width:761px){
+  .pos .neworder{grid-template-columns:minmax(0,1fr) var(--tkw,clamp(380px,38vw,560px))!important}
+  .tkgrip{display:block;position:absolute;left:0;top:0;bottom:0;width:12px;cursor:col-resize;z-index:3;touch-action:none}
+  .tkgrip i{position:absolute;left:3px;top:50%;width:6px;height:56px;margin-top:-28px;border-radius:4px;background:var(--line);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--muted) 30%,transparent)}
+  .tkgrip:hover i,.tkgrip.on i{background:var(--teal)}
+}
 .tkpay{gap:6px!important;padding:8px 12px 10px!important}
 .tkpay .hint{padding:4px 10px;font-size:13px;border-radius:8px}
 .tkpay .tksum{flex-direction:row;flex-wrap:wrap;gap:2px 12px}.tkpay .tksum .bl{font-size:13.5px;justify-content:flex-start;gap:6px;color:var(--muted)}.tkpay .tksum .bl.disc{color:var(--ok)}
@@ -3885,6 +3894,15 @@ function renderPOS(){
   <section class="main">${U.pos.tab!=='kitchen'&&U.pos.tab!=='trips'&&su.role!=='kitchen'&&su.role!=='rider'?onlineBanner():''}${!(ROLE_TABS[su.role]||[]).includes('stock')&&U.pos.tab!=='stock'&&su.role!=='kitchen'&&su.role!=='rider'?lowStockBanner():''}${views[U.pos.tab]()}</section>${U.addPop&&U.pos.tab==='orders'?addPopHtml():''}${navDrawer()}</div>
   <nav class="mobnav" aria-label="POS sections">${mobNav()}</nav>`;
 }
+// Order panel width on the New order screen: drag the grip on its left edge; kept on this device
+try{U.tkw=+localStorage.getItem('cp_tkw')||0}catch(e){}
+document.addEventListener('pointerdown',e=>{const g=e.target.closest&&e.target.closest('.tkgrip');if(!g)return;e.preventDefault();
+  const no=g.closest('.neworder');if(!no)return;g.classList.add('on');try{g.setPointerCapture(e.pointerId)}catch(_){}
+  const mv=ev=>{const r=no.getBoundingClientRect();const w=Math.round(Math.max(340,Math.min(r.width*0.7,r.right-ev.clientX)));U.tkw=w;no.style.setProperty('--tkw',w+'px')};
+  const up=()=>{g.classList.remove('on');document.removeEventListener('pointermove',mv);document.removeEventListener('pointerup',up);document.removeEventListener('pointercancel',up);try{localStorage.setItem('cp_tkw',String(U.tkw||''))}catch(_){}};
+  document.addEventListener('pointermove',mv);document.addEventListener('pointerup',up);document.addEventListener('pointercancel',up)});
+document.addEventListener('change',e=>{const t=e.target;if(!t.dataset||!t.dataset.poscoupon||staff()?.role!=='owner')return;const o=S.outlets.find(x=>x.id===t.dataset.poscoupon);if(!o)return;o.posCoupon=t.checked;save();toast(t.checked?'Coupon box shown on the till':'Coupon box hidden on the till')});
+document.addEventListener('dblclick',e=>{if(!(e.target.closest&&e.target.closest('.tkgrip')))return;U.tkw=0;try{localStorage.removeItem('cp_tkw')}catch(_){}render()});
 // Orders placed on the customer site wait here for the owner or cashier to accept
 function onlineBanner(){
   const pl=liveOrders().filter(o=>o.status==='placed').sort((a,b)=>a.ts-b.ts);if(!pl.length){U.onlMin=null;return ''}
@@ -4019,14 +4037,14 @@ const posTypes=()=>['delivery','dine','takeaway'].filter(k=>TYPES[k]&&(k!=='deli
 // Pay-by choices on the bill. Card and bank stay inside Split.
 const TK_PAY=[['cash','Cash'],['upi','UPI'],['due','Baki'],['split','Split']];
 // A till tile: tap the name for options; tap a size (pizza) or the price button to add it at once
-const posTile=m=>{
+const posTile=(m,i)=>{
   const tags=`${m.combo?'<span class="tg tgc">Combo</span>':''}${m.tag?'<span class="tg">Offer</span>':''}`;
   const dis=m.off?'disabled':'';let btns;
   if(m.combo)btns=`<button data-act="combo-add" data-id="${m.id}" data-t="pos"><b class="num">${m.label}</b></button>`;
   else if(m.m&&m.m.cat==='pizza'){const sz=S.sizes.filter(z=>+m.m.prices[z.id]);btns=sz.map(z=>`<button data-act="pos-q" data-id="${m.id}" data-v="${z.id}" ${dis} aria-label="Add ${esc(m.name)} ${esc(z.label)}"><small>${esc(z.label)}</small><b class="num">${rs(m.m.prices[z.id])}</b></button>`).join('')}
   else btns=`<button data-act="pos-q" data-id="${m.id}" data-v="" ${dis} aria-label="Add ${esc(m.name)}"><small>Add</small><b class="num">${m.label}</b></button>`;
   const n=m.combo?1:(btns.match(/<button/g)||[]).length;
-  return `<div class="tile tile2${m.off?' off':''}">${tags}<button class="tnm" data-act="${m.combo?'combo-add':'pos-add'}" data-id="${m.id}" data-t="pos" ${dis}>${esc(m.name)}</button>
+  return `<div class="tile tile2${m.off?' off':''}">${tags}<button class="tnm" data-act="${m.combo?'combo-add':'pos-add'}" data-id="${m.id}" data-t="pos" ${dis}>${i!=null?`<span class="srn num">${i+1}</span>`:''}${esc(m.name)}</button>
   ${m.off?'<span class="small muted">Not available</span>':`<div class="tsz" style="grid-template-columns:repeat(${n},minmax(0,1fr))">${btns}</div>`}</div>`;
 };
 function vNew(){
@@ -4040,18 +4058,18 @@ function vNew(){
   const ci=custInfo(P.phone);const todays=activeOffers(dow);
   const n=P.cart.reduce((a,l)=>a+l.qty,0);
   const optsOn=true; // kitchen note, waiting time and coupon stay open on the till
-  return `<div class="ph1 nohead"><span class="muted small">Next no. <b class="num">${orderNo(cur(),today(),(S.seq[S.cur+'|'+today()]||0)+1)}</b></span>${todays.length?`<span class="livechips">${todays.map(o=>`<span class="chip ${o.type==='bogo'?'r':o.type==='item'?'c':'t'}">${esc(o.name)}</span>`).join('')}</span>`:''}<span class="grow"></span>${!CAP&&CS_CH?'<button class="btn sm" data-act="cs-open" title="Open the screen the customer sees on your second monitor">Customer screen ↗</button>':''}</div>
-  <div class="neworder">
+  return `<div class="ph1 nohead">${`<div class="cathd"><h2>${P.cat==='combo'?'Combos':esc((CATS.find(c=>c[0]===P.cat)||[0,''])[1])}</h2><span class="small muted">${P.cat==='pizza'?'Tap a size to add · tap the name for toppings':'Tap the price to add · tap the name for options'}</span></div>`}<span class="muted small">Next no. <b class="num">${orderNo(cur(),today(),(S.seq[S.cur+'|'+today()]||0)+1)}</b></span>${todays.length?`<span class="livechips">${todays.map(o=>`<span class="chip ${o.type==='bogo'?'r':o.type==='item'?'c':'t'}">${esc(o.name)}</span>`).join('')}</span>`:''}<span class="grow"></span>${!CAP&&CS_CH?'<button class="btn sm" data-act="cs-open" title="Open the screen the customer sees on your second monitor">Customer screen ↗</button>':''}</div>
+  <div class="neworder"${U.tkw?` style="--tkw:${U.tkw}px"`:''}>
     <div class="menucol">
       <div class="mbar card">
         <nav class="cats poscats" aria-label="Categories"><button data-act="poscat" data-v="combo" aria-pressed="${P.cat==='combo'&&!P.q}">Combos</button>${CATS.map(([k,nm])=>`<button data-act="poscat" data-v="${k}" aria-pressed="${P.cat===k&&!P.q}">${nm}</button>`).join('')}</nav>
       </div>
       <nav class="card catrail" aria-label="Item categories" data-ks="catrail"><button data-act="poscat" data-v="combo" aria-pressed="${P.cat==='combo'&&!P.q}"><span>Combos</span><span class="cn num">${S.combos.filter(c=>c.active).length}</span></button>${CATS.map(([k,nm])=>`<button data-act="poscat" data-v="${k}" aria-pressed="${P.cat===k&&!P.q}"><span>${nm}</span><span class="cn num">${S.menu.filter(m=>m.cat===k).length}</span></button>`).join('')}</nav>
-      <div class="cathd"><h2>${P.cat==='combo'?'Combos':esc((CATS.find(c=>c[0]===P.cat)||[0,''])[1])}</h2><span class="small muted">${P.cat==='pizza'?'Tap a size to add · tap the name for toppings':'Tap the price to add · tap the name for options'}</span></div>
-      <div class="tiles">${items.map(posTile).join('')||'<div class="empty">No items</div>'}</div>
+      <div class="tiles">${items.map((m,i)=>posTile(m,i)).join('')||'<div class="empty">No items</div>'}</div>
     </div>
     ${P.cart.length?`<button class="tkjump" data-act="to-ticket"><b class="num">${n} item${n>1?'s':''} · ${rs(t)}</b><span>View order ↓</span></button>`:''}
     <aside class="card ticket order" id="ticket" data-ks="ticket">
+      <div class="tkgrip" title="Drag to make the order panel wider or narrower · double-tap to reset" aria-hidden="true"><i></i></div>
       <div class="tkhead">
         <div class="types" style="grid-template-columns:repeat(${posTypes().length},minmax(0,1fr))">${posTypes().map(([k,nm])=>`<button data-act="pos-type" data-v="${k}" aria-pressed="${P.type===k}">${nm}</button>`).join('')}</div>
       </div>
@@ -4077,7 +4095,7 @@ function vNew(){
         ${optsOn?`<input class="inp" id="pos-note" placeholder="Kitchen note (optional)" value="${esc(P.note||'')}" aria-label="Kitchen note">
         <div class="codes">${['Extra crispy','Less spicy','Jain','Pack separately','Rush order'].map(c=>`<button data-act="pos-chip" data-v="${c}" style="font-family:inherit">+ ${c}</button>`).join('')}</div>
         ${run?'':`<div class="waits"><span class="lbl" style="margin-right:4px">Waiting time</span>${WAITS.map(w=>`<button data-act="pos-wait" data-v="${w}" aria-pressed="${(P.wait||PREP_MIN)===w}">${w} min</button>`).join('')}<input class="inp num" id="pos-wait" type="number" min="1" placeholder="min" value="${P.wait&&!WAITS.includes(P.wait)?P.wait:''}" aria-label="Other waiting time in minutes"></div>`}
-        <div class="row"><input class="inp grow" id="pc-code" placeholder="Coupon code" value="${esc(P.code)}" style="text-transform:uppercase;width:auto" aria-label="Coupon code"><button class="btn sm" data-act="pc-apply">Apply</button></div>`
+        ${cur().posCoupon?`<div class="row"><input class="inp grow" id="pc-code" placeholder="Coupon code" value="${esc(P.code)}" style="text-transform:uppercase;width:auto" aria-label="Coupon code"><button class="btn sm" data-act="pc-apply">Apply</button></div>`:''}`
         :`<button class="optbtn" data-act="pos-opts">+ Kitchen note · waiting time ${PREP_MIN} min · coupon</button>`}
         ${b.codeMsg?`<div class="${b.codeOk?'msg-ok':'msg-bad'}">${esc(b.codeMsg)}</div>`:''}
         ${coins&&!run?`<label class="opt"><input type="checkbox" id="pc-coins" ${P.useCoins?'checked':''}><span class="coin sm">C</span> Use Cheese Coins <span class="small muted num">(${coins})</span></label>`:''}
@@ -4087,12 +4105,10 @@ function vNew(){
         <div class="tksum">${b.subtotal!==t||(b.discounts||[]).length?`<div class="bl"><span>Item total</span><span class="num">${rs(b.subtotal)}</span></div>`:''}${(b.discounts||[]).map(d=>`<div class="bl disc"><span>${esc(d.name)}</span><span class="num">−${rs(d.amt)}</span></div>`).join('')}${b.gst&&b.gst.mode==='excl'?`<div class="bl"><span>GST ${b.gst.rate}%</span><span class="num">+${rs2(b.gst.tax)}</span></div>`:''}${P.already?`<div class="bl disc"><span>Paid earlier</span><span class="num">−${rs(P.already)}</span></div>`:''}</div>
         <div class="tktot"><span>Total${n?` <small class="num">· ${n} item${n>1?'s':''}</small>`:''}</span><span class="grow"></span>${btp()&&btGet()?'<button class="tklink" data-act="drawer-open">Drawer</button>':''}<button class="tklink" data-act="pos-pay" ${can?'':'disabled'}>More ways</button><button class="tklink" data-act="pos-clear" ${P.cart.length||run?'':'disabled'}>Clear</button><b class="num">${rs(t)}</b></div>
         <div class="tkpm" role="group" aria-label="Pay by">${TK_PAY.map(([k,nm])=>`<button data-act="pos-pm" data-v="${k}" aria-pressed="${P.pay===k}">${nm}</button>`).join('')}</div>
-        <div class="tkacts tk5">
-          <button class="btn" data-act="pos-go" data-v="save" ${P.cart.length?'':'disabled'} title="Save the order without printing">Save</button>
-          <button class="btn chzs" data-act="pos-go" data-v="kot" ${P.cart.length?'':'disabled'} title="Save and print the kitchen slip">KOT</button>
+        <div class="tkacts tk3">
           <button class="btn" data-act="pos-hold" ${P.cart.length?'':'disabled'} title="Add these items to a table, paid or pending">Hold</button>
-          <button class="btn pri tkbig" data-act="pos-bill" data-v="bill" ${can?'':'disabled'}>Save &amp; Bill</button>
-          <button class="btn chz tkbig" data-act="pos-bill" data-v="kotbill" ${P.cart.length?'':'disabled'}>KOT &amp; Bill</button>
+          <button class="btn pri tkbig" data-act="pos-bill" data-v="bill" ${can?'':'disabled'} title="Save, take payment and send the e-bill">Save &amp; E-Bill</button>
+          <button class="btn chz tkbig" data-act="pos-go" data-v="kot" ${P.cart.length?'':'disabled'} title="Save and print the kitchen slip">KOT</button>
         </div>
       </div>
     </aside>
@@ -5325,6 +5341,8 @@ function vOutlets(){const own=staff()?.role==='owner';
     <div class="row"><div class="field grow"><label for="olt1-${o.id}">First tap</label><input class="inp" id="olt1-${o.id}" data-ou="${o.id}" data-f="lt1" value="${esc(o.lt1||'')}" placeholder="L&amp;T" maxlength="20" ${own?'':'readonly'}></div>
     <div class="field grow"><label for="olt2-${o.id}">Second tap</label><input class="inp" id="olt2-${o.id}" data-ou="${o.id}" data-f="lt2" value="${esc(o.lt2||'')}" placeholder="Super L&amp;T" maxlength="20" ${own?'':'readonly'}></div></div>
     <span class="small muted">The tag button on the order screen. It shows beside the name on the till, kitchen and order screens only, never on a bill, KOT or WhatsApp. ${own?'':'Only the owner can change the wording.'}</span>
+    <div class="grp-h">Till options</div>
+    <label class="opt"><input type="checkbox" data-poscoupon="${o.id}" ${o.posCoupon?'checked':''} ${own?'':'disabled'}> Show the coupon code box on the New order screen</label>
     <div class="grp-h">Bill & GST details</div>
     <div class="field"><label for="olg-${o.id}">Company name on bill</label><input class="inp" id="olg-${o.id}" data-ou="${o.id}" data-f="legal" value="${esc(o.legal||'')}" placeholder="CHEESY PIZZA" ${own?'':'readonly'}></div>
     <div class="row"><div class="field grow"><label for="ogs-${o.id}">GSTIN</label><input class="inp" id="ogs-${o.id}" data-ou="${o.id}" data-f="gstin" value="${esc(o.gstin||'')}" maxlength="15" autocapitalize="characters" placeholder="15 characters" ${own?'':'readonly'}></div>
