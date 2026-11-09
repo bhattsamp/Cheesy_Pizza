@@ -227,6 +227,8 @@ textarea.inp{resize:vertical}
 .types button{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:7px 2px;font-size:14px;font-weight:600}
 .types button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 
+.ksort{display:flex;flex-wrap:wrap;align-items:center;gap:6px}.ksort button{border:1.5px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 12px;font:inherit;font-size:14px;font-weight:600;color:var(--ink);cursor:pointer}.ksort button[aria-pressed=true]{background:var(--teal);border-color:var(--teal);color:#fff}
+.kt.kc{cursor:default}.kt.kc li{cursor:default}
 .kds{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
 .kt{border-radius:14px;border:2px solid var(--warn);background:var(--surface);padding:12px;display:flex;flex-direction:column;gap:8px;user-select:none;-webkit-user-select:none;touch-action:manipulation;cursor:pointer;transition:transform .12s}
 .kt:active{transform:scale(.98)}
@@ -237,7 +239,7 @@ textarea.inp{resize:vertical}
 .kt li{font-size:16px;font-weight:600}
 .kt li small{display:block;font-weight:500;color:var(--muted);font-size:13px}
 .kt li .q{display:inline-block;min-width:26px;background:var(--ink);color:var(--bg);border-radius:6px;text-align:center;margin-right:6px}
-.kcol-h{display:flex;align-items:center;gap:8px;margin:6px 0 10px}
+.kcol-h{display:flex;align-items:center;gap:8px;margin:6px 0 10px;flex-wrap:wrap}
 .kcol-h h3{font-size:21px}
 .counter{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;align-items:start}
 .lane{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:12px;display:flex;flex-direction:column;gap:10px}
@@ -1220,6 +1222,7 @@ html:has(body:not(.pubmode) .pos){scroll-padding-top:calc(env(safe-area-inset-to
 .navdim{position:fixed;inset:0;z-index:90;background:rgba(10,23,27,.42);animation:ndFade .18s ease-out}
 .navdrawer{position:fixed;z-index:91;top:0;bottom:0;left:0;width:min(300px,86vw);background:var(--surface);box-shadow:var(--shadow-lg);display:flex;flex-direction:column;padding:calc(12px + env(safe-area-inset-top,0px)) 12px calc(12px + env(safe-area-inset-bottom,0px));animation:ndIn .2s ease-out}
 .navdrawer .ndh{display:flex;align-items:center;justify-content:space-between;padding:4px 6px 10px;font-size:18px;color:var(--teal-deep)}
+.navdrawer .ndlock{flex:none;width:42px}
 .navdrawer .ndrow{display:flex;align-items:center;gap:10px;padding:4px 6px}.navdrawer .ndrow svg{width:20px;height:20px;flex:none;color:var(--teal)}.navdrawer .ndrow .inp{flex:1;min-width:0;padding:8px 10px;font-size:15px}.navdrawer .ndrow.off .inp{opacity:.5;text-decoration:line-through}
 .navdrawer .ndl{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:2px}
 .navdrawer .ndl>button{display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:0;background:none;border-radius:10px;padding:11px 12px;font:inherit;font-size:16px;font-weight:600;color:var(--ink);cursor:pointer}
@@ -3881,16 +3884,18 @@ function openTrackFind(){
 }
 
 /* ===== POS SHELL ===== */
+// Sections that can be renamed but never switched off
+const NAV_LOCK=['new','kitchen','counter','orders','tables','cust','home','menu','display','reports','outlet'];
 const navCfg=()=>catRec('_nav')||{};
 function navRec(){S.cats=S.cats||[];let r=catRec('_nav');if(!r){r={id:'_nav',names:{},off:[]};S.cats.push(r)}r.names=r.names||{};r.off=r.off||[];return r}
 document.addEventListener('change',e=>{const t=e.target;if(!t.dataset||staff()?.role!=='owner')return;
   if(t.dataset.navname){const r=navRec(),k=t.dataset.navname,v=t.value.trim(),def=(TABS.find(x=>x[0]===k)||[0,''])[1];if(!v||v===def)delete r.names[k];else r.names[k]=v.slice(0,30);save();render();toast('Menu name saved')}
-  if(t.dataset.navoff){const r=navRec(),k=t.dataset.navoff;if(t.checked)r.off=r.off.filter(x=>x!==k);else if(k==='outlet'){t.checked=true;toast('Outlets stays on so you can always reach settings');return}else if(!r.off.includes(k))r.off.push(k);save();render();toast(t.checked?'Section shown':'Section hidden for everyone')}});
+  if(t.dataset.navoff){const r=navRec(),k=t.dataset.navoff;if(t.checked)r.off=r.off.filter(x=>x!==k);else if(NAV_LOCK.includes(k)){t.checked=true;toast('This section is always on');return}else if(!r.off.includes(k))r.off.push(k);save();render();toast(t.checked?'Section shown':'Section hidden for everyone')}});
 function renderPOS(){
   const su=staff();if(!su)return renderLogin();
   // The owner can rename menu sections and switch them off for everyone (kept in one hidden S.cats record)
   const nv=navCfg(),roleTabs=TABS.filter(([k])=>ROLE_TABS[su.role].includes(k)&&(k!=='trips'||delOn()||su.role==='rider')).map(([k,n])=>[k,(nv.names||{})[k]||n]);
-  let allowed=roleTabs.filter(([k])=>!(nv.off||[]).includes(k));if(!allowed.length)allowed=roleTabs;if(!allowed.some(([k])=>k===U.pos.tab))U.pos.tab=allowed[0][0];
+  let allowed=roleTabs.filter(([k])=>NAV_LOCK.includes(k)||!(nv.off||[]).includes(k));if(!allowed.length)allowed=roleTabs;if(!allowed.some(([k])=>k===U.pos.tab))U.pos.tab=allowed[0][0];
   const mine=liveOrders();
   const k=mine.filter(o=>o.status==='placed'||o.status==='preparing').length;
   const c=mine.filter(o=>o.status==='ready'||o.status==='out').length;
@@ -3910,7 +3915,7 @@ function renderPOS(){
       <span class="tcur">${I[curT[0]]}<b>${esc(curT[1])}</b></span>${U.pos.tab!=='new'&&allowed.some(([t])=>t==='new')?`<button data-act="tab" data-v="new" class="tnew">${I.new}<span>New order</span></button>`:''}`};
   const navDrawer=()=>!many||!U.navOpen?'':`<div class="navdim" data-act="nav-close"></div><aside class="navdrawer" role="dialog" aria-label="All sections">
     <div class="ndh"><b>Cheesy Pizza</b><button class="x" data-act="nav-close" aria-label="Close">×</button></div>
-    ${U.navEdit&&su.role==='owner'?`<div class="ndl ndedit"><div class="small muted" style="padding:2px 6px 8px">Rename a section or switch it off. Switched-off sections are hidden for everyone.</div>${roleTabs.map(([t,n])=>{const off=(nv.off||[]).includes(t);return `<div class="ndrow${off?' off':''}">${I[t]}<input class="inp" data-navname="${t}" value="${esc(n)}" aria-label="Name for ${esc(TABS.find(x=>x[0]===t)[1])}"><label class="switch"><input type="checkbox" data-navoff="${t}" ${off?'':'checked'} aria-label="Show ${esc(n)}"><span></span></label></div>`}).join('')}<div class="row" style="gap:6px;padding:8px 6px"><button class="btn sm" data-act="nav-reset">Reset names</button><span class="grow"></span><button class="btn sm pri" data-act="nav-edit">Done</button></div></div>`:
+    ${U.navEdit&&su.role==='owner'?`<div class="ndl ndedit"><div class="small muted" style="padding:2px 6px 8px">Rename a section or switch it off. Switched-off sections are hidden for everyone.</div>${roleTabs.map(([t,n])=>{const off=!NAV_LOCK.includes(t)&&(nv.off||[]).includes(t);return `<div class="ndrow${off?' off':''}">${I[t]}<input class="inp" data-navname="${t}" value="${esc(n)}" aria-label="Name for ${esc(TABS.find(x=>x[0]===t)[1])}">${NAV_LOCK.includes(t)?'<span class="ndlock" aria-hidden="true"></span>':`<label class="switch"><input type="checkbox" data-navoff="${t}" ${off?'':'checked'} aria-label="Show ${esc(n)}"><span></span></label>`}</div>`}).join('')}<div class="row" style="gap:6px;padding:8px 6px"><button class="btn sm" data-act="nav-reset">Reset names</button><span class="grow"></span><button class="btn sm pri" data-act="nav-edit">Done</button></div></div>`:
     `<div class="ndl">${allowed.map(([t,n])=>{const cnt=t==='kitchen'?k:t==='counter'?c:0;return `<button data-act="tab" data-v="${t}" ${U.pos.tab===t?'aria-current="page"':''}>${I[t]}<span>${n}</span>${cnt?`<span class="cnt num">${cnt}</span>`:''}</button>`}).join('')}</div>`}
     <div class="ndf small muted"><span>Signed in as <b>${esc(su.name)}</b> · ${ROLES[su.role]}</span><div class="row" style="gap:6px">${su.role==='owner'&&!U.navEdit?'<button class="btn sm" data-act="nav-edit">Edit menu</button>':''}${CAP?'<button class="btn sm" data-act="perms">Alerts & location</button>':''}<button class="btn sm" data-act="lock">Lock screen</button></div></div></aside>`;
   return `<div class="pos"><nav class="side" aria-label="POS sections" data-ks="side">${topNav()}
@@ -4437,36 +4442,43 @@ function payTag(o){
   if(partPaid(o))return `<span class="chip amber paid-chip">${rs(paidSoFar(o))} paid · ${rs(balanceOf(o))} left</span>`;
   return o.paid?'<span class="chip ready paid-chip">Payment done</span>':`<span class="chip r paid-chip">Baki ${rs(o.total)}</span>`}
 // Kitchen lanes, like the Counter screen: one column for each kind of order
-function kLanes(list){const L=[['Dine-in',o=>o.type==='dine'],['Takeaway',o=>o.type==='takeaway'||o.type==='zomato'],['Delivery',o=>o.type==='delivery']];
-  const used=new Set();const out=L.map(([n,f])=>{const os=list.filter(o=>f(o));os.forEach(o=>used.add(o));return [n,os]}).filter(([n,os])=>os.length||n!=='Delivery'||delOn());
-  const rest=list.filter(o=>!used.has(o));if(rest.length)out.push(['Other',rest]);return out}
 // L&T tag: an in-house marker on an order (Off › L&T › Super L&T). Shown on the till, kitchen and order screens only;
 // never printed on a bill, KOT or WhatsApp message. The owner sets the wording per outlet.
 function ltName(o,lvl){lvl=lvl==null?(+o.lt||0):lvl;if(!lvl)return '';const out=S.outlets.find(x=>x.id===o.outletId)||cur();return lvl===2?(out.lt2||'Super L&T'):(out.lt1||'L&T')}
 function ltChip(o){const t=ltName(o);return t?` <span class="ltchip${+o.lt===2?' l2':''}">${esc(t)}</span>`:''}
 function posLt(){const P=U.pos,run=P.addTo&&S.orders.find(o=>o.id===P.addTo);return P.lt==null?(run?+run.lt||0:0):+P.lt||0}
 const kName=o=>o.customer.name||'Walk-in';
+// Kitchen and counter share one card and one sort bar; the list is one grid (no dine-in / takeaway lanes)
+const KSORTS=[['left','Time left'],['old','Oldest first'],['new','Newest first'],['type','Order type'],['unpaid','Baki first']];
+try{U.kSort=localStorage.getItem('cp_ksort')||'left'}catch(e){U.kSort='left'}
+function kSorted(list){const k=U.kSort||'left',T={dine:0,takeaway:1,zomato:2,delivery:3};
+  const f={left:(a,b)=>minsLeft(a)-minsLeft(b),old:(a,b)=>a.ts-b.ts,new:(a,b)=>b.ts-a.ts,type:(a,b)=>(T[a.type]??9)-(T[b.type]??9)||minsLeft(a)-minsLeft(b),unpaid:(a,b)=>(a.paid?1:0)-(b.paid?1:0)||minsLeft(a)-minsLeft(b)}[k]||((a,b)=>minsLeft(a)-minsLeft(b));
+  return list.slice().sort((a,b)=>f(a,b)||a.ts-b.ts)}
+const kSortBar=()=>`<div class="ksort" role="group" aria-label="Sort orders"><span class="small muted">Sort</span>${KSORTS.map(([k,n])=>`<button data-act="ksort" data-v="${k}" aria-pressed="${(U.kSort||'left')===k}">${n}</button>`).join('')}</div>`;
+function kItems(o,tap){const last=Math.max(1,...o.items.map(l=>l.round||1));
+  return `<ul>${o.items.map((l,i)=>`<li class="${l.kdone?'kd':''}" ${tap?`data-act="kitem" data-id="${o.id}" data-i="${i}" title="Tap when this item is done"`:''}><span class="q num">${l.qty}</span><div>${l.size?`<span class="szc" style="background:${sizeColor(l.size)}">${esc(sizeLabel(l.size))}</span>`:''}${esc(l.name)}${last>1&&(l.round||1)===last?' <span class="new">NEW</span>':''}${extrasText(l)?`<small>${esc(extrasText(l))}</small>`:''}${noteText(l)?`<small class="cook">» ${esc(noteText(l))}</small>`:''}</div></li>`).join('')}</ul>${o.note?`<div class="knote">Order note: ${esc(o.note)}</div>`:''}`}
+// where: 'kitchen' (tap items, Ready → counter) or 'counter' (the next step in the flow as the button)
+function kCard(o,where,foot){const kit=where==='kitchen';const mins=Math.floor((Date.now()-(o.times.preparing||o.ts))/60000);const w=waitOf(o);const left=minsLeft(o);
+  const live=o.status==='preparing'||o.status==='ready';
+  // green when the order comes in, turning yellow then red as the waiting time runs out
+  const h=o.status==='placed'?265:o.status==='out'?200:Math.round(130*Math.max(0,Math.min(1,1-mins/w)));
+  return `<div class="kt ${o.status==='placed'?'placed':''} ${live&&left<0?'late':''} ${kit?'':'kc'}" style="--h:${h}" ${kit&&o.status==='preparing'?`data-act="ktap" data-id="${o.id}"`:''}>
+    <div class="kfoot ktop"><span class="kwho">${esc(kName(o))}${ltChip(o)}</span><span class="num">${esc(o.customer.phone?fmtPhone(o.customer.phone):'—')}</span><span>${TYPES[o.type]}${o.table?' · T'+esc(o.table):''}</span><span class="${o.paid?'pd':'bk'}">${o.paid?'Payment done':'Baki'}</span></div>
+    <div class="row"><span class="no num">${noHtml(o.no)}</span><span class="grow"></span>${kit?`<span class="chip ${o.type==='zomato'?'r':'t'}">${TYPES[o.type]}${o.table?' · T'+esc(o.table):''}</span>`:`<span class="chip ${o.status}">${statusName(o.status,o.type)}</span>`}</div>
+    <div class="row"><span class="small muted num grow">${fmtTime(o.ts)} · ${mins<1?'just now':mins+' min'}${o.source==='online'?' · online':''}${o.zomatoId?' · Zomato '+esc(o.zomatoId):''}</span>${live?`<span class="left num">${leftText(left)}</span>`:''}${o.status!=='out'?`<button class="btn sm" data-act="set-wait" data-id="${o.id}" title="Change waiting time">⏱ ${w} min</button>`:''}</div>
+    ${o.scheduled?`<span class="chip c" style="align-self:flex-start">Scheduled for ${esc(o.scheduled)}</span>`:''}
+    ${live?`<div class="pbar" title="Waiting time ${w} min"><i style="width:${Math.min(100,mins/w*100)}%;background:hsl(${h} 65% 42%)"></i></div>`:''}
+    ${o.address&&!kit?`<div class="small muted">${esc(o.address)}</div>`:''}
+    ${kItems(o,kit)}
+    ${kit?(o.status==='placed'?`<div class="row"><button class="btn ok grow" data-act="accept" data-id="${o.id}">Accept</button><button class="btn bad" data-act="reject" data-id="${o.id}">Reject</button></div>`:`<button class="btn ok" data-act="kready" data-id="${o.id}">Ready → counter</button>`):foot}
+  </div>`}
 function vKitchen(){
   const list=liveOrders().filter(o=>o.status==='placed'||o.status==='preparing').sort((a,b)=>a.ts-b.ts);
-  const pl=list.filter(o=>o.status==='placed'),pr=list.filter(o=>o.status==='preparing');
-  const items=o=>{const last=Math.max(1,...o.items.map(l=>l.round||1));
-    return `<ul>${o.items.map((l,i)=>`<li class="${l.kdone?'kd':''}" data-act="kitem" data-id="${o.id}" data-i="${i}" title="Tap when this item is done"><span class="q num">${l.qty}</span><div>${l.size?`<span class="szc" style="background:${sizeColor(l.size)}">${esc(sizeLabel(l.size))}</span>`:''}${esc(l.name)}${last>1&&(l.round||1)===last?' <span class="new">NEW</span>':''}${extrasText(l)?`<small>${esc(extrasText(l))}</small>`:''}${noteText(l)?`<small class="cook">» ${esc(noteText(l))}</small>`:''}</div></li>`).join('')}</ul>${o.note?`<div class="knote">Order note: ${esc(o.note)}</div>`:''}`};
-  const card=o=>{const mins=Math.floor((Date.now()-(o.times.preparing||o.ts))/60000);const w=waitOf(o);const left=minsLeft(o);
-    // green when the order comes in, turning yellow then red as the waiting time runs out
-    const h=o.status==='placed'?265:Math.round(130*Math.max(0,Math.min(1,1-mins/w)));
-    return `<div class="kt ${o.status==='placed'?'placed':''} ${o.status==='preparing'&&left<0?'late':''}" style="--h:${h}" ${o.status==='preparing'?`data-act="ktap" data-id="${o.id}"`:''}>
-    <div class="kfoot ktop"><span class="kwho">${esc(kName(o))}${ltChip(o)}</span><span class="num">${esc(o.customer.phone?fmtPhone(o.customer.phone):'—')}</span><span>${TYPES[o.type]}${o.table?' · T'+esc(o.table):''}</span><span class="${o.paid?'pd':'bk'}">${o.paid?'Payment done':'Baki'}</span></div>
-    <div class="row"><span class="no num">${noHtml(o.no)}</span><span class="grow"></span><span class="chip ${o.type==='zomato'?'r':'t'}">${TYPES[o.type]}${o.table?' · T'+esc(o.table):''}</span></div>
-    <div class="row"><span class="small muted num grow">${fmtTime(o.ts)} · ${mins<1?'just now':mins+' min'}${o.source==='online'?' · online':''}${o.zomatoId?' · Zomato '+esc(o.zomatoId):''}</span>${o.status==='preparing'?`<span class="left num">${leftText(left)}</span>`:''}<button class="btn sm" data-act="set-wait" data-id="${o.id}" title="Change waiting time">⏱ ${w} min</button></div>
-    ${o.scheduled?`<span class="chip c" style="align-self:flex-start">Scheduled for ${esc(o.scheduled)}</span>`:''}
-    ${o.status==='preparing'?`<div class="pbar" title="Waiting time ${w} min"><i style="width:${Math.min(100,mins/w*100)}%;background:hsl(${h} 65% 42%)"></i></div>`:''}
-    ${items(o)}
-    ${o.status==='placed'?`<div class="row"><button class="btn ok grow" data-act="accept" data-id="${o.id}">Accept</button><button class="btn bad" data-act="reject" data-id="${o.id}">Reject</button></div>`:`<button class="btn ok" data-act="kready" data-id="${o.id}">Ready → counter</button>`}
-  </div>`};
+  const pl=list.filter(o=>o.status==='placed'),pr=kSorted(list.filter(o=>o.status==='preparing'));
   return `<div class="ph1"><h2>Kitchen display</h2><span class="muted small">${esc(cur().name)} · tap an item when it is done · green turns red as the waiting time runs out</span></div>
-  ${pl.length?`<div class="kcol-h"><span class="chip placed num">${pl.length}</span><h3>New online orders</h3>${ringTimer||ringAudio?'<button class="btn sm" data-act="mute-ring">Stop ringing</button>':''}</div><div class="kds" style="margin-bottom:22px">${pl.map(card).join('')}</div>`:''}
-  <div class="kcol-h"><span class="chip preparing num">${pr.length}</span><h3>Preparing</h3></div>
-  <div class="counter klanes">${kLanes(pr).map(([n,os])=>`<div class="lane"><div class="lane-h"><h3>${n}</h3><span class="n num">${os.length}</span></div>${os.map(card).join('')||'<div class="empty small">No orders.</div>'}</div>`).join('')}</div>`;
+  ${pl.length?`<div class="kcol-h"><span class="chip placed num">${pl.length}</span><h3>New online orders</h3>${ringTimer||ringAudio?'<button class="btn sm" data-act="mute-ring">Stop ringing</button>':''}</div><div class="kds" style="margin-bottom:22px">${pl.map(o=>kCard(o,'kitchen')).join('')}</div>`:''}
+  <div class="kcol-h"><span class="chip preparing num">${pr.length}</span><h3>Preparing</h3><span class="grow"></span>${kSortBar()}</div>
+  <div class="kds">${pr.map(o=>kCard(o,'kitchen')).join('')||'<div class="empty small">No orders being prepared.</div>'}</div>`;
 }
 
 function collectRow(o){return o.paid||upiPending(o)?'':`<div class="small" style="font-weight:700;color:var(--bad)">Collect ${rs(balanceOf(o))}${o.pay.mode==='due'?' (on baki account)':partPaid(o)?' (rest of the bill)':''}:</div><div class="row" style="gap:4px">${COUNTER_MODES.map(k=>`<button class="btn sm" data-act="collect" data-id="${o.id}" data-v="${k}">${PAY[k]}</button>`).join('')}</div>`}
@@ -4506,28 +4518,18 @@ function openCollect(o){
 }
 function vCounter(){
   const mine=liveOrders();
-  const pick=mine.filter(o=>o.status==='ready'&&o.type!=='delivery').sort((a,b)=>(a.times.ready||0)-(b.times.ready||0));
-  const del=mine.filter(o=>o.type==='delivery'&&['preparing','ready'].includes(o.status)).sort((a,b)=>a.ts-b.ts);
-  const out=mine.filter(o=>o.status==='out');
-  const riders=cur().riders||[];const busy=new Set(out.map(o=>o.rider?.name));
-  const ct=(o,cls,body)=>`<div class="ctk ${cls}"><div class="row"><span class="no num">${noHtml(o.no)}</span><span class="grow"></span><span class="chip ${o.status}">${statusName(o.status,o.type)}</span></div>
-    <div class="small">${esc(o.customer.name||'Walk-in')}${ltChip(o)} ${o.customer.phone?'· <span class="num">'+fmtPhone(o.customer.phone)+'</span>':''}${o.table?' · Table '+esc(o.table):''} · ${TYPES[o.type]}</div>
-    ${o.address?`<div class="small muted">${esc(o.address)}</div>`:''}
-    ${o.zomatoId?`<div class="small">Zomato ID <b class="num">${esc(o.zomatoId)}</b></div>`:''}
-    <div class="small muted">${o.items.map(l=>l.qty+'× '+esc(l.name)+(l.size?' '+sizeLabel(l.size):'')).join(', ')} · <b class="num">${rs(o.total)}</b></div>
-    <div class="row">${payTag(o)}${o.paid?`<span class="small muted">${esc(payName(o))}</span>`:''}</div>${collectRow(o)}${o.note?`<div class="knote">${esc(o.note)}</div>`:''}${body}</div>`;
+  const riders=cur().riders||[];const busy=new Set(mine.filter(o=>o.status==='out').map(o=>o.rider?.name));
+  // Everything the counter acts on, in one list: ready pickups and dine-in, deliveries waiting or ready to send, riders on the road
+  const list=kSorted(mine.filter(o=>(o.status==='ready'&&o.type!=='delivery')||(o.type==='delivery'&&['preparing','ready','out'].includes(o.status))));
+  const foot=o=>{const pay=collectRow(o);
+    if(o.status==='ready'&&o.type!=='delivery')return pay+`<button class="btn ok" data-act="handover" data-id="${o.id}">${o.type==='dine'?'Served to table':o.type==='zomato'?'Given to Zomato rider':'Handed to customer'}</button>`;
+    if(o.status==='ready')return pay+`<div class="row"><select class="inp grow" id="rs-${o.id}" aria-label="Rider">${riders.map(r=>`<option value="${esc(r.name)}">${esc(r.name)}${busy.has(r.name)?' (on a trip)':''}</option>`).join('')}</select><button class="btn pri" data-act="dispatch" data-id="${o.id}" ${riders.length?'':'disabled'}>Send out</button></div>${riders.length?'':'<div class="small muted">Add riders on the Outlets screen.</div>'}`;
+    if(o.status==='out'){const m=Math.floor((Date.now()-(o.times.out||Date.now()))/60000);return pay+`<div class="small">Rider <b>${esc(o.rider?.name||'—')}</b> · left ${m} min ago · ETA ${Math.max(1,RIDE_MIN-m)} min</div><div class="row"><button class="btn ok grow" data-act="delivered" data-id="${o.id}">Mark delivered</button><button class="btn" data-act="track" data-id="${o.id}">Live view</button></div>`}
+    return pay+'<div class="small muted">In the kitchen…</div>'};
   return `<div class="ph1"><h2>Counter</h2><span class="muted small">${delOn()?'Hand over pickups, dispatch deliveries, track riders':'Hand over pickups and dine-in orders'}</span><button class="btn ink" data-act="board">Open customer display</button></div>
-  <div class="counter">
-    <div class="lane"><div class="lane-h"><h3>Pickup & dine-in</h3><span class="n num">${pick.length}</span></div>
-      ${pick.map(o=>ct(o,'ready',`<button class="btn ok" data-act="handover" data-id="${o.id}">${o.type==='dine'?'Served to table':o.type==='zomato'?'Given to Zomato rider':'Handed to customer'}</button>`)).join('')||'<div class="empty small">Ready orders appear here after the kitchen double-taps them.</div>'}</div>
-    ${delOn()||del.length||out.length?`<div class="lane"><div class="lane-h"><h3>Delivery dispatch</h3><span class="n num">${del.length}</span></div>
-      ${del.map(o=>ct(o,o.status==='ready'?'ready':'prep',o.status==='ready'?`<div class="row"><select class="inp grow" id="rs-${o.id}" aria-label="Rider">${riders.map(r=>`<option value="${esc(r.name)}">${esc(r.name)}${busy.has(r.name)?' (on a trip)':''}</option>`).join('')}</select><button class="btn pri" data-act="dispatch" data-id="${o.id}" ${riders.length?'':'disabled'}>Send out</button></div>${riders.length?'':'<div class="small muted">Add riders on the Outlets screen.</div>'}`:'<div class="small muted">In the kitchen…</div>')).join('')||'<div class="empty small">No delivery orders waiting.</div>'}</div>
-    <div class="lane"><div class="lane-h"><h3>Out for delivery</h3><span class="n num">${out.length}</span></div>
-      ${out.map(o=>{const m=Math.floor((Date.now()-(o.times.out||Date.now()))/60000);return ct(o,'out',`<div class="small">Rider <b>${esc(o.rider?.name||'—')}</b> · left ${m} min ago · ETA ${Math.max(1,RIDE_MIN-m)} min</div><div class="row"><button class="btn ok grow" data-act="delivered" data-id="${o.id}">Mark delivered</button><button class="btn" data-act="track" data-id="${o.id}">Live view</button></div>`)}).join('')||'<div class="empty small">No riders on the road.</div>'}
-      <div class="grp-h" style="margin-top:6px">Riders</div>
-      <div class="row">${riders.map(r=>`<span class="chip ${busy.has(r.name)?'out':'ready'}">${esc(r.name)} · ${busy.has(r.name)?'on trip':'free'}</span>`).join('')||'<span class="small muted">None added</span>'}</div>
-    </div>`:''}
-  </div>`;
+  <div class="kcol-h"><span class="chip ready num">${list.length}</span><h3>At the counter</h3><span class="grow"></span>${kSortBar()}</div>
+  <div class="kds">${list.map(o=>kCard(o,'counter',foot(o))).join('')||'<div class="empty small">Ready orders appear here after the kitchen marks them ready.</div>'}</div>
+  ${delOn()&&riders.length?`<div class="grp-h" style="margin-top:14px">Riders</div><div class="row">${riders.map(r=>`<span class="chip ${busy.has(r.name)?'out':'ready'}">${esc(r.name)} · ${busy.has(r.name)?'on trip':'free'}</span>`).join('')}</div>`:''}`;
 }
 function renderBoard(){
   const root=document.getElementById('boardRoot');
@@ -5485,6 +5487,7 @@ document.addEventListener('click',e=>{
     case 'collect':{const o=find(el.dataset.id);if(o.paid){closeModal();render();break}
       const cu=el.dataset.v==='upi'&&U.colSp&&U.colSp.id===o.id?utrClean(U.colSp.utr):'';if(utrBad(cu)){toast(utrBad(cu));break}
       const amt=balanceOf(o);settleOrder(o,el.dataset.v,0,null,cu);save();closeModal();toast(o.no+' · '+rs(amt)+' paid by '+PAY[el.dataset.v]);render();if(el.dataset.v==='cash')openDrawer();break}
+    case 'ksort':U.kSort=el.dataset.v;try{localStorage.setItem('cp_ksort',U.kSort)}catch(e){}render();break;
     case 'kitem':{const o=find(el.dataset.id);const l=o.items[+el.dataset.i];l.kdone=!l.kdone;save();render();break}
     case 'kready':{const o=find(el.dataset.id);if(o.status==='preparing'){setStatus(o,'ready');toast(o.no+' ready → counter');render()}break}
     case 'od-scope':U.ordersScope=el.dataset.v;render();break;
