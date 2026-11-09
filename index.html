@@ -1222,6 +1222,7 @@ html:has(body:not(.pubmode) .pos){scroll-padding-top:calc(env(safe-area-inset-to
 .navdim{position:fixed;inset:0;z-index:90;background:rgba(10,23,27,.42);animation:ndFade .18s ease-out}
 .navdrawer{position:fixed;z-index:91;top:0;bottom:0;left:0;width:min(300px,86vw);background:var(--surface);box-shadow:var(--shadow-lg);display:flex;flex-direction:column;padding:calc(12px + env(safe-area-inset-top,0px)) 12px calc(12px + env(safe-area-inset-bottom,0px));animation:ndIn .2s ease-out}
 .navdrawer .ndh{display:flex;align-items:center;justify-content:space-between;padding:4px 6px 10px;font-size:18px;color:var(--teal-deep)}
+.navdrawer .ndlock{flex:none;width:52px;text-align:center;font-size:11px;line-height:1.1}
 .navdrawer .ndrow{display:flex;align-items:center;gap:10px;padding:4px 6px}.navdrawer .ndrow svg{width:20px;height:20px;flex:none;color:var(--teal)}.navdrawer .ndrow .inp{flex:1;min-width:0;padding:8px 10px;font-size:15px}.navdrawer .ndrow.off .inp{opacity:.5;text-decoration:line-through}
 .navdrawer .ndl{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:2px}
 .navdrawer .ndl>button{display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:0;background:none;border-radius:10px;padding:11px 12px;font:inherit;font-size:16px;font-weight:600;color:var(--ink);cursor:pointer}
@@ -3883,16 +3884,18 @@ function openTrackFind(){
 }
 
 /* ===== POS SHELL ===== */
+// Sections that can be renamed but never switched off
+const NAV_LOCK=['new','kitchen','counter','orders','tables','cust','home','menu','display','reports','outlet'];
 const navCfg=()=>catRec('_nav')||{};
 function navRec(){S.cats=S.cats||[];let r=catRec('_nav');if(!r){r={id:'_nav',names:{},off:[]};S.cats.push(r)}r.names=r.names||{};r.off=r.off||[];return r}
 document.addEventListener('change',e=>{const t=e.target;if(!t.dataset||staff()?.role!=='owner')return;
   if(t.dataset.navname){const r=navRec(),k=t.dataset.navname,v=t.value.trim(),def=(TABS.find(x=>x[0]===k)||[0,''])[1];if(!v||v===def)delete r.names[k];else r.names[k]=v.slice(0,30);save();render();toast('Menu name saved')}
-  if(t.dataset.navoff){const r=navRec(),k=t.dataset.navoff;if(t.checked)r.off=r.off.filter(x=>x!==k);else if(k==='outlet'){t.checked=true;toast('Outlets stays on so you can always reach settings');return}else if(!r.off.includes(k))r.off.push(k);save();render();toast(t.checked?'Section shown':'Section hidden for everyone')}});
+  if(t.dataset.navoff){const r=navRec(),k=t.dataset.navoff;if(t.checked)r.off=r.off.filter(x=>x!==k);else if(NAV_LOCK.includes(k)){t.checked=true;toast('This section is always on');return}else if(!r.off.includes(k))r.off.push(k);save();render();toast(t.checked?'Section shown':'Section hidden for everyone')}});
 function renderPOS(){
   const su=staff();if(!su)return renderLogin();
   // The owner can rename menu sections and switch them off for everyone (kept in one hidden S.cats record)
   const nv=navCfg(),roleTabs=TABS.filter(([k])=>ROLE_TABS[su.role].includes(k)&&(k!=='trips'||delOn()||su.role==='rider')).map(([k,n])=>[k,(nv.names||{})[k]||n]);
-  let allowed=roleTabs.filter(([k])=>!(nv.off||[]).includes(k));if(!allowed.length)allowed=roleTabs;if(!allowed.some(([k])=>k===U.pos.tab))U.pos.tab=allowed[0][0];
+  let allowed=roleTabs.filter(([k])=>NAV_LOCK.includes(k)||!(nv.off||[]).includes(k));if(!allowed.length)allowed=roleTabs;if(!allowed.some(([k])=>k===U.pos.tab))U.pos.tab=allowed[0][0];
   const mine=liveOrders();
   const k=mine.filter(o=>o.status==='placed'||o.status==='preparing').length;
   const c=mine.filter(o=>o.status==='ready'||o.status==='out').length;
@@ -3912,7 +3915,7 @@ function renderPOS(){
       <span class="tcur">${I[curT[0]]}<b>${esc(curT[1])}</b></span>${U.pos.tab!=='new'&&allowed.some(([t])=>t==='new')?`<button data-act="tab" data-v="new" class="tnew">${I.new}<span>New order</span></button>`:''}`};
   const navDrawer=()=>!many||!U.navOpen?'':`<div class="navdim" data-act="nav-close"></div><aside class="navdrawer" role="dialog" aria-label="All sections">
     <div class="ndh"><b>Cheesy Pizza</b><button class="x" data-act="nav-close" aria-label="Close">×</button></div>
-    ${U.navEdit&&su.role==='owner'?`<div class="ndl ndedit"><div class="small muted" style="padding:2px 6px 8px">Rename a section or switch it off. Switched-off sections are hidden for everyone.</div>${roleTabs.map(([t,n])=>{const off=(nv.off||[]).includes(t);return `<div class="ndrow${off?' off':''}">${I[t]}<input class="inp" data-navname="${t}" value="${esc(n)}" aria-label="Name for ${esc(TABS.find(x=>x[0]===t)[1])}"><label class="switch"><input type="checkbox" data-navoff="${t}" ${off?'':'checked'} aria-label="Show ${esc(n)}"><span></span></label></div>`}).join('')}<div class="row" style="gap:6px;padding:8px 6px"><button class="btn sm" data-act="nav-reset">Reset names</button><span class="grow"></span><button class="btn sm pri" data-act="nav-edit">Done</button></div></div>`:
+    ${U.navEdit&&su.role==='owner'?`<div class="ndl ndedit"><div class="small muted" style="padding:2px 6px 8px">Rename a section or switch it off. Switched-off sections are hidden for everyone.</div>${roleTabs.map(([t,n])=>{const off=!NAV_LOCK.includes(t)&&(nv.off||[]).includes(t);return `<div class="ndrow${off?' off':''}">${I[t]}<input class="inp" data-navname="${t}" value="${esc(n)}" aria-label="Name for ${esc(TABS.find(x=>x[0]===t)[1])}">${NAV_LOCK.includes(t)?'<span class="small muted ndlock" title="This section is always on">Always on</span>':`<label class="switch"><input type="checkbox" data-navoff="${t}" ${off?'':'checked'} aria-label="Show ${esc(n)}"><span></span></label>`}</div>`}).join('')}<div class="row" style="gap:6px;padding:8px 6px"><button class="btn sm" data-act="nav-reset">Reset names</button><span class="grow"></span><button class="btn sm pri" data-act="nav-edit">Done</button></div></div>`:
     `<div class="ndl">${allowed.map(([t,n])=>{const cnt=t==='kitchen'?k:t==='counter'?c:0;return `<button data-act="tab" data-v="${t}" ${U.pos.tab===t?'aria-current="page"':''}>${I[t]}<span>${n}</span>${cnt?`<span class="cnt num">${cnt}</span>`:''}</button>`}).join('')}</div>`}
     <div class="ndf small muted"><span>Signed in as <b>${esc(su.name)}</b> · ${ROLES[su.role]}</span><div class="row" style="gap:6px">${su.role==='owner'&&!U.navEdit?'<button class="btn sm" data-act="nav-edit">Edit menu</button>':''}${CAP?'<button class="btn sm" data-act="perms">Alerts & location</button>':''}<button class="btn sm" data-act="lock">Lock screen</button></div></div></aside>`;
   return `<div class="pos"><nav class="side" aria-label="POS sections" data-ks="side">${topNav()}
