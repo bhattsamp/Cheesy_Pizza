@@ -1220,11 +1220,12 @@ html:has(body:not(.pubmode) .pos){scroll-padding-top:calc(env(safe-area-inset-to
 .navdim{position:fixed;inset:0;z-index:90;background:rgba(10,23,27,.42);animation:ndFade .18s ease-out}
 .navdrawer{position:fixed;z-index:91;top:0;bottom:0;left:0;width:min(300px,86vw);background:var(--surface);box-shadow:var(--shadow-lg);display:flex;flex-direction:column;padding:calc(12px + env(safe-area-inset-top,0px)) 12px calc(12px + env(safe-area-inset-bottom,0px));animation:ndIn .2s ease-out}
 .navdrawer .ndh{display:flex;align-items:center;justify-content:space-between;padding:4px 6px 10px;font-size:18px;color:var(--teal-deep)}
+.navdrawer .ndrow{display:flex;align-items:center;gap:10px;padding:4px 6px}.navdrawer .ndrow svg{width:20px;height:20px;flex:none;color:var(--teal)}.navdrawer .ndrow .inp{flex:1;min-width:0;padding:8px 10px;font-size:15px}.navdrawer .ndrow.off .inp{opacity:.5;text-decoration:line-through}
 .navdrawer .ndl{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:2px}
-.navdrawer .ndl button{display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:0;background:none;border-radius:10px;padding:11px 12px;font:inherit;font-size:16px;font-weight:600;color:var(--ink);cursor:pointer}
-.navdrawer .ndl button svg{width:20px;height:20px;color:var(--teal);flex:none}
-.navdrawer .ndl button:hover{background:var(--surface2)}
-.navdrawer .ndl button[aria-current="page"]{background:var(--teal-soft);color:var(--teal-deep)}
+.navdrawer .ndl>button{display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:0;background:none;border-radius:10px;padding:11px 12px;font:inherit;font-size:16px;font-weight:600;color:var(--ink);cursor:pointer}
+.navdrawer .ndl>button svg{width:20px;height:20px;color:var(--teal);flex:none}
+.navdrawer .ndl>button:hover{background:var(--surface2)}
+.navdrawer .ndl>button[aria-current="page"]{background:var(--teal-soft);color:var(--teal-deep)}
 .navdrawer .ndl .cnt{margin-left:auto}
 .navdrawer .ndf{border-top:1px solid var(--line);padding:10px 6px 0;display:flex;flex-direction:column;gap:8px}
 @keyframes ndIn{from{transform:translateX(-100%)}to{transform:none}}@keyframes ndFade{from{opacity:0}}
@@ -3880,9 +3881,16 @@ function openTrackFind(){
 }
 
 /* ===== POS SHELL ===== */
+const navCfg=()=>catRec('_nav')||{};
+function navRec(){S.cats=S.cats||[];let r=catRec('_nav');if(!r){r={id:'_nav',names:{},off:[]};S.cats.push(r)}r.names=r.names||{};r.off=r.off||[];return r}
+document.addEventListener('change',e=>{const t=e.target;if(!t.dataset||staff()?.role!=='owner')return;
+  if(t.dataset.navname){const r=navRec(),k=t.dataset.navname,v=t.value.trim(),def=(TABS.find(x=>x[0]===k)||[0,''])[1];if(!v||v===def)delete r.names[k];else r.names[k]=v.slice(0,30);save();render();toast('Menu name saved')}
+  if(t.dataset.navoff){const r=navRec(),k=t.dataset.navoff;if(t.checked)r.off=r.off.filter(x=>x!==k);else if(k==='outlet'){t.checked=true;toast('Outlets stays on so you can always reach settings');return}else if(!r.off.includes(k))r.off.push(k);save();render();toast(t.checked?'Section shown':'Section hidden for everyone')}});
 function renderPOS(){
   const su=staff();if(!su)return renderLogin();
-  const allowed=TABS.filter(([k])=>ROLE_TABS[su.role].includes(k)&&(k!=='trips'||delOn()||su.role==='rider'));if(!allowed.some(([k])=>k===U.pos.tab))U.pos.tab=allowed[0][0];
+  // The owner can rename menu sections and switch them off for everyone (kept in one hidden S.cats record)
+  const nv=navCfg(),roleTabs=TABS.filter(([k])=>ROLE_TABS[su.role].includes(k)&&(k!=='trips'||delOn()||su.role==='rider')).map(([k,n])=>[k,(nv.names||{})[k]||n]);
+  let allowed=roleTabs.filter(([k])=>!(nv.off||[]).includes(k));if(!allowed.length)allowed=roleTabs;if(!allowed.some(([k])=>k===U.pos.tab))U.pos.tab=allowed[0][0];
   const mine=liveOrders();
   const k=mine.filter(o=>o.status==='placed'||o.status==='preparing').length;
   const c=mine.filter(o=>o.status==='ready'||o.status==='out').length;
@@ -3896,14 +3904,15 @@ function renderPOS(){
   const views={new:vNew,kitchen:vKitchen,counter:vCounter,orders:vOrders,tables:vTables,sales:vSales,reports:vReports,stock:vStock,offers:vOffers,cust:vCust,menu:vMenu,home:vHomeAdm,display:vDisplayAdm,outlet:vOutlets,staff:vStaff,review:vReview,trips:vTrips};
   // Big screens with many sections: one Menu button opens a vertical menu that slides over the page
   // (the page keeps its full width); phones keep the bottom bar
-  const many=allowed.length>8,curT=allowed.find(([t])=>t===U.pos.tab)||allowed[0];
+  const many=roleTabs.length>8,curT=allowed.find(([t])=>t===U.pos.tab)||allowed[0];
   const topNav=()=>{if(!many)return nav();
     return `<button data-act="nav-open" class="tmenu" aria-expanded="${!!U.navOpen}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg><span>Menu</span>${k+c?`<span class="cnt num">${k+c}</span>`:''}</button>
       <span class="tcur">${I[curT[0]]}<b>${esc(curT[1])}</b></span>${U.pos.tab!=='new'&&allowed.some(([t])=>t==='new')?`<button data-act="tab" data-v="new" class="tnew">${I.new}<span>New order</span></button>`:''}`};
   const navDrawer=()=>!many||!U.navOpen?'':`<div class="navdim" data-act="nav-close"></div><aside class="navdrawer" role="dialog" aria-label="All sections">
     <div class="ndh"><b>Cheesy Pizza</b><button class="x" data-act="nav-close" aria-label="Close">×</button></div>
-    <div class="ndl">${allowed.map(([t,n])=>{const cnt=t==='kitchen'?k:t==='counter'?c:0;return `<button data-act="tab" data-v="${t}" ${U.pos.tab===t?'aria-current="page"':''}>${I[t]}<span>${n}</span>${cnt?`<span class="cnt num">${cnt}</span>`:''}</button>`}).join('')}</div>
-    <div class="ndf small muted"><span>Signed in as <b>${esc(su.name)}</b> · ${ROLES[su.role]}</span><div class="row" style="gap:6px">${CAP?'<button class="btn sm" data-act="perms">Alerts & location</button>':''}<button class="btn sm" data-act="lock">Lock screen</button></div></div></aside>`;
+    ${U.navEdit&&su.role==='owner'?`<div class="ndl ndedit"><div class="small muted" style="padding:2px 6px 8px">Rename a section or switch it off. Switched-off sections are hidden for everyone.</div>${roleTabs.map(([t,n])=>{const off=(nv.off||[]).includes(t);return `<div class="ndrow${off?' off':''}">${I[t]}<input class="inp" data-navname="${t}" value="${esc(n)}" aria-label="Name for ${esc(TABS.find(x=>x[0]===t)[1])}"><label class="switch"><input type="checkbox" data-navoff="${t}" ${off?'':'checked'} aria-label="Show ${esc(n)}"><span></span></label></div>`}).join('')}<div class="row" style="gap:6px;padding:8px 6px"><button class="btn sm" data-act="nav-reset">Reset names</button><span class="grow"></span><button class="btn sm pri" data-act="nav-edit">Done</button></div></div>`:
+    `<div class="ndl">${allowed.map(([t,n])=>{const cnt=t==='kitchen'?k:t==='counter'?c:0;return `<button data-act="tab" data-v="${t}" ${U.pos.tab===t?'aria-current="page"':''}>${I[t]}<span>${n}</span>${cnt?`<span class="cnt num">${cnt}</span>`:''}</button>`}).join('')}</div>`}
+    <div class="ndf small muted"><span>Signed in as <b>${esc(su.name)}</b> · ${ROLES[su.role]}</span><div class="row" style="gap:6px">${su.role==='owner'&&!U.navEdit?'<button class="btn sm" data-act="nav-edit">Edit menu</button>':''}${CAP?'<button class="btn sm" data-act="perms">Alerts & location</button>':''}<button class="btn sm" data-act="lock">Lock screen</button></div></div></aside>`;
   return `<div class="pos"><nav class="side" aria-label="POS sections" data-ks="side">${topNav()}
     <div class="side-foot small muted">${U.pos.tab==='new'?`<span class="nxtno">Next no. <b class="num">${orderNo(cur(),today(),(S.seq[S.cur+'|'+today()]||0)+1)}</b></span>`:''}${U.pos.tab==='new'&&!CAP&&CS_CH?'<button class="csico" data-act="cs-open" title="Customer screen: open the screen the customer sees on your second monitor" aria-label="Customer screen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg></button>':''}${!many?`<span>Signed in as <b>${esc(su.name)}</b> · ${ROLES[su.role]}</span>${CAP?'<button class="btn sm" data-act="perms">Alerts & location</button>':''}<button class="btn sm" data-act="lock">Lock screen</button>`:''}</div></nav>
   <section class="main">${U.pos.tab!=='kitchen'&&U.pos.tab!=='trips'&&su.role!=='kitchen'&&su.role!=='rider'?onlineBanner():''}${!(ROLE_TABS[su.role]||[]).includes('stock')&&U.pos.tab!=='stock'&&su.role!=='kitchen'&&su.role!=='rider'?lowStockBanner():''}${views[U.pos.tab]()}</section>${U.addPop&&U.pos.tab==='orders'?addPopHtml():''}${navDrawer()}</div>
@@ -5510,7 +5519,9 @@ document.addEventListener('click',e=>{
     case 'order-add':openAddPop(find(el.dataset.id));break;
     case 'addpop-close':closeAddPop();break;
     case 'nav-open':U.navOpen=true;render();break;
-    case 'nav-close':U.navOpen=false;render();break;
+    case 'nav-edit':U.navEdit=!U.navEdit;U.navOpen=true;render();break;
+    case 'nav-reset':{const r=navRec();r.names={};save();render();toast('Menu names reset');break}
+    case 'nav-close':U.navOpen=false;U.navEdit=false;render();break;
     case 'tab':P.tab=el.dataset.v;U.navOpen=false;U.confirmCancel=null;U.addPop=null;closeModal();render();window.scrollTo(0,0);break;
     case 'pos-more':U.posMore&&U.posMore();break;
     case 'to-ticket':document.getElementById('ticket')?.scrollIntoView({behavior:'smooth',block:'start'});break;
