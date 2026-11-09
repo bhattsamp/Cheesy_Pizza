@@ -1236,7 +1236,7 @@ html:has(body:not(.pubmode) .pos){scroll-padding-top:calc(env(safe-area-inset-to
   .catrail{display:flex;flex-direction:column;gap:3px;padding:6px;position:sticky;top:calc(var(--toph,61px) + var(--navh) + 12px);max-height:calc(100vh - var(--toph,61px) - var(--navh) - 24px);overflow-y:auto;overscroll-behavior:contain}
   .catrail button{border:0;background:transparent;text-align:left;padding:10px 12px;border-radius:10px;font-weight:700;color:var(--muted);line-height:1.2}
   .catrail button[aria-pressed="true"]{background:var(--teal-soft);color:var(--teal)}
-  .menucol>.catrail{grid-column:1;grid-row:1/span 2}.menucol>.cathd{grid-column:2;grid-row:1;margin:0}.menucol>.tiles{grid-column:2;grid-row:2}
+  .menucol>.catrail{grid-column:1;grid-row:1/span 2}.menucol>.cathd{grid-column:2;grid-row:1;margin:0}.menucol>.tiles{grid-column:2;grid-row:1/span 2;align-self:start}
 }
 @media (min-width:761px) and (min-height:540px){
   .pos .ticket.order{top:calc(var(--toph,61px) + var(--navh) + 12px);max-height:var(--tkh,calc(100vh - var(--toph,61px) - var(--navh) - 24px))}
