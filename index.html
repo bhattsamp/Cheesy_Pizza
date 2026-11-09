@@ -4046,7 +4046,7 @@ function posCalc(){
   return {P,run,coins,b,t,zom,modes,can:!!(P.cart.length||run)};
 }
 // The till's order types, in this order: Delivery (when delivery is on) | Dine-in | Takeaway
-const posTypes=()=>['delivery','dine','takeaway'].filter(k=>TYPES[k]&&(k!=='delivery'||delOn())).map(k=>[k,TYPES[k]]);
+const posTypes=()=>['delivery','dine','takeaway','zomato'].filter(k=>TYPES[k]&&(k!=='delivery'||delOn())).map(k=>[k,TYPES[k]]);
 // Pay-by choices on the bill. Card and bank stay inside Split.
 const TK_PAY=[['cash','Cash'],['upi','UPI'],['due','Baki'],['split','Split']];
 // A till tile: tap the name for options; tap a size (pizza) or the price button to add it at once
