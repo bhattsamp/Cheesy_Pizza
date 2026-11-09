@@ -2369,6 +2369,8 @@ function mergeCats(){const base=(S.config&&S.config.categories)||[],own=(S.cats|
   GU=Object.fromEntries([...base,...own].map(x=>[x.id,x.labelGu||'']))}
 const catRec=k=>(S.cats||[]).find(c=>c.id===k);
 const catOff=k=>!!catRec(k)?.off;
+// Combos are one category the owner can switch off as a whole in Menu & sizes
+const liveCombos=()=>catOff('combo')?[]:S.combos.filter(c=>c.active);
 const isOwnCat=k=>!((S.config&&S.config.categories)||[]).some(b=>b.id===k);
 // Switching a category off turns off each of its items that is on, and remembers which, so switching it
 // back on brings back exactly those (an item the owner had switched off by itself stays off)
@@ -2942,7 +2944,7 @@ function matchFilter(m,dow){
 // while the mouse is over it or a finger is on it, so customers can read it.
 function offerTicker(){
   const dow=new Date().getDay();
-  const tick=[...activeOffers(dow).map(x=>`<span><b>${x.type==='code'?'CODE '+esc(x.code):'TODAY'}</b> ${esc(x.name)}: ${esc(offerText(x))}</span>`),...S.combos.filter(c=>c.active).map(c=>`<span><b>COMBO</b> ${esc(c.name)} at ${rs(c.price)}</span>`),`<span><b>CHEESE COINS</b> ${coinRules().per100} coins per ₹100 · 1 coin = ${coinValTxt()}</span>`,'<span><b>PURE VEG</b> No mayonnaise products</span>'];
+  const tick=[...activeOffers(dow).map(x=>`<span><b>${x.type==='code'?'CODE '+esc(x.code):'TODAY'}</b> ${esc(x.name)}: ${esc(offerText(x))}</span>`),...liveCombos().map(c=>`<span><b>COMBO</b> ${esc(c.name)} at ${rs(c.price)}</span>`),`<span><b>CHEESE COINS</b> ${coinRules().per100} coins per ₹100 · 1 coin = ${coinValTxt()}</span>`,'<span><b>PURE VEG</b> No mayonnaise products</span>'];
   const secs=Math.max(45,Math.round(tick.join('').replace(/<[^>]+>/g,'').length*.32));
   // the delay keeps its place when the page re-renders, instead of starting over
   return `<div class="ticker${U.tickHold?' hold':''}" aria-label="Offers" title="Hold to pause"><div class="tk" style="animation-duration:${secs}s;animation-delay:-${(Date.now()/1000%secs).toFixed(1)}s">${tick.join('')}${tick.join('')}</div></div>`;
@@ -2950,7 +2952,7 @@ function offerTicker(){
 function renderPublic(){
   const o=cur();const open=isOpen();const dow=new Date().getDay();
   const live=S.offers.filter(x=>x.active);const liveToday=activeOffers(dow);
-  const combos=S.combos.filter(c=>c.active);
+  const combos=liveCombos();
   const cats=CATS.filter(([k])=>U.pubCat==='all'||U.pubCat===k);
   const cartN=U.cart.reduce((s,l)=>s+l.qty,0);const b=computeBill(U.cart);setTimeout(()=>{U.lastCartN=cartN},0);
   const best=liveToday.find(x=>x.type==='bogo')||liveToday.find(x=>x.type==='day')||liveToday.find(x=>x.type!=='code');
@@ -3112,7 +3114,7 @@ function renderHome(){if(HOME2)return renderHome2();
   const o=cur(),ph=o.phone||'7778043066',open=isOpen(),dow=new Date().getDay(),addr=shopAddr(o),mapUrl='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent('Cheesy Pizza, '+addr);
   const pizzas=S.menu.filter(m=>m.cat==='pizza'&&!m.off);
   const lead=leadOffer(dow);const live=S.offers.filter(x=>x.active).sort((a,b)=>dayOK(b,dow)-dayOK(a,dow));
-  const combos=S.combos.filter(c=>c.active);const best=S.menu.filter(m=>m.best&&!m.off);
+  const combos=liveCombos();const best=S.menu.filter(m=>m.best&&!m.off);
   const feat=pizzas.find(m=>m.best&&m.img)||pizzas.find(m=>m.img)||pizzas[0];
   const sig=[...pizzas.filter(m=>m.img),...pizzas.filter(m=>!m.img)].slice(0,7);
   // the gallery: the pizzas, then one of each side that has a photo (garlic bread, pockets, fries…)
@@ -4053,9 +4055,9 @@ function vNew(){
   U.pos.q=''; // the till has no menu search box now; categories pick the items
   const {P,run,coins,b,t,zom,can}=posCalc();const dow=new Date().getDay();
   const mk=m=>({m,id:m.id,name:m.name,off:m.off,tag:itemOfferTags(m,dow).length,label:priceLabel(m)});
-  let items;
+  let items;if(P.cat==='combo'&&catOff('combo'))P.cat=(CATS[0]||['pizza'])[0];
   if(P.q)items=S.menu.filter(m=>m.name.toLowerCase().includes(P.q.toLowerCase())).map(mk);
-  else if(P.cat==='combo')items=S.combos.filter(c=>c.active).map(c=>({combo:1,id:c.id,name:c.name,label:rs(c.price)}));
+  else if(P.cat==='combo')items=liveCombos().map(c=>({combo:1,id:c.id,name:c.name,label:rs(c.price)}));
   else items=S.menu.filter(m=>m.cat===P.cat).map(mk);
   const ci=custInfo(P.phone);const todays=activeOffers(dow);
   const n=P.cart.reduce((a,l)=>a+l.qty,0);
@@ -4064,9 +4066,9 @@ function vNew(){
   <div class="neworder"${U.tkw?` style="--tkw:${U.tkw}px"`:''}>
     <div class="menucol">
       <div class="mbar card">
-        <nav class="cats poscats" aria-label="Categories"><button data-act="poscat" data-v="combo" aria-pressed="${P.cat==='combo'&&!P.q}">Combos</button>${CATS.map(([k,nm])=>`<button data-act="poscat" data-v="${k}" aria-pressed="${P.cat===k&&!P.q}">${nm}</button>`).join('')}</nav>
+        <nav class="cats poscats" aria-label="Categories">${catOff('combo')?'':`<button data-act="poscat" data-v="combo" aria-pressed="${P.cat==='combo'&&!P.q}">Combos</button>`}${CATS.map(([k,nm])=>`<button data-act="poscat" data-v="${k}" aria-pressed="${P.cat===k&&!P.q}">${nm}</button>`).join('')}</nav>
       </div>
-      <nav class="card catrail" aria-label="Item categories" data-ks="catrail"><button data-act="poscat" data-v="combo" aria-pressed="${P.cat==='combo'&&!P.q}"><span>Combos</span><span class="cn num">${S.combos.filter(c=>c.active).length}</span></button>${CATS.map(([k,nm])=>`<button data-act="poscat" data-v="${k}" aria-pressed="${P.cat===k&&!P.q}"><span>${nm}</span><span class="cn num">${S.menu.filter(m=>m.cat===k).length}</span></button>`).join('')}</nav>
+      <nav class="card catrail" aria-label="Item categories" data-ks="catrail">${catOff('combo')?'':`<button data-act="poscat" data-v="combo" aria-pressed="${P.cat==='combo'&&!P.q}"><span>Combos</span><span class="cn num">${liveCombos().length}</span></button>`}${CATS.map(([k,nm])=>`<button data-act="poscat" data-v="${k}" aria-pressed="${P.cat===k&&!P.q}"><span>${nm}</span><span class="cn num">${S.menu.filter(m=>m.cat===k).length}</span></button>`).join('')}</nav>
       <div class="tiles">${items.map((m,i)=>posTile(m,i)).join('')||'<div class="empty">No items</div>'}</div>
     </div>
     ${P.cart.length?`<button class="tkjump" data-act="to-ticket"><b class="num">${n} item${n>1?'s':''} · ${rs(t)}</b><span>View order ↓</span></button>`:''}
@@ -5113,6 +5115,8 @@ function vMenu(){
     </tbody></table></div>
   </div>
   ${extrasEditor(sz)}
+  ${(()=>{const off=catOff('combo'),n=S.combos.filter(c=>c.active).length;return `<div class="cathead${off?' off':''}"><label class="switch"><input type="checkbox" data-catoff="combo" ${off?'':'checked'} aria-label="Combos available"><span></span></label><b>Combos</b>
+    <span class="small ${off?'':'muted'}" style="${off?'color:var(--bad);font-weight:700':''}">${off?'Switched off: hidden from customers and the till':n+' combo'+(n===1?'':'s')+' on'}</span><span class="grow"></span><button class="btn sm" data-act="tab" data-v="offers">Edit combos in Offers & combos</button></div>`})()}
   ${CATS.map(([cat,cn],ci)=>{const items=S.menu.filter(m=>m.cat===cat),off=catOff(cat),own=isOwnCat(cat);return `<div class="cathead${off?' off':''}"><span class="catmv"><button class="btn sm" data-act="cat-mv" data-v="${cat}" data-d="-1" aria-label="Move ${esc(cn)} up" ${ci===0?'disabled':''}>↑</button><button class="btn sm" data-act="cat-mv" data-v="${cat}" data-d="1" aria-label="Move ${esc(cn)} down" ${ci===CATS.length-1?'disabled':''}>↓</button></span><label class="switch"><input type="checkbox" data-catoff="${cat}" ${off?'':'checked'} aria-label="${esc(cn)} available"><span></span></label>
     ${own?`<input class="inp" data-catname="${cat}" value="${esc(cn)}" aria-label="Category name" style="max-width:240px;font-weight:700"><input class="inp" data-catgu="${cat}" value="${esc(GU[cat]||'')}" placeholder="Gujarati name (optional)" aria-label="Gujarati name" style="max-width:220px">`:`<b>${esc(cn)}</b>`}
     <span class="small ${off?'':'muted'}" style="${off?'color:var(--bad);font-weight:700':''}">${off?'Switched off: hidden from customers and the till':items.length+' item'+(items.length===1?'':'s')}</span><span class="grow"></span>
