@@ -1204,6 +1204,8 @@ html:has(body:not(.pubmode) .pos){scroll-padding-top:calc(env(safe-area-inset-to
 .pos .side-foot{flex:none;flex-direction:row;align-items:center;margin:0 0 0 auto;padding:0 0 0 14px;gap:6px;white-space:nowrap}
 .pos .side-foot>span{display:inline}
 .pos .side-foot .sdemo{display:none}
+.pos .side-foot .nxtno{font-size:15px;color:var(--muted);margin-right:4px}.pos .side-foot .nxtno b{color:var(--ink);font-size:16px}
+.pos .side .csico{padding:7px!important;border:1.5px solid var(--line)!important;border-radius:10px;background:var(--surface2);color:var(--teal)}.pos .side .csico svg{width:22px;height:22px}
 .pos .side .tmenu{border:1.5px solid var(--line)!important;background:var(--surface2);font-weight:700}
 .pos .side .tcur{display:inline-flex;align-items:center;gap:7px;padding:0 10px;font-size:16px;color:var(--ink)}.pos .side .tcur svg{width:18px;height:18px;color:var(--teal)}
 .navdim{position:fixed;inset:0;z-index:90;background:rgba(10,23,27,.42);animation:ndFade .18s ease-out}
@@ -3890,7 +3892,7 @@ function renderPOS(){
     <div class="ndl">${allowed.map(([t,n])=>{const cnt=t==='kitchen'?k:t==='counter'?c:0;return `<button data-act="tab" data-v="${t}" ${U.pos.tab===t?'aria-current="page"':''}>${I[t]}<span>${n}</span>${cnt?`<span class="cnt num">${cnt}</span>`:''}</button>`}).join('')}</div>
     <div class="ndf small muted"><span>Signed in as <b>${esc(su.name)}</b> · ${ROLES[su.role]}</span><div class="row" style="gap:6px">${CAP?'<button class="btn sm" data-act="perms">Alerts & location</button>':''}<button class="btn sm" data-act="lock">Lock screen</button></div></div></aside>`;
   return `<div class="pos"><nav class="side" aria-label="POS sections" data-ks="side">${topNav()}
-    <div class="side-foot small muted">${!many?`<span>Signed in as <b>${esc(su.name)}</b> · ${ROLES[su.role]}</span>${CAP?'<button class="btn sm" data-act="perms">Alerts & location</button>':''}<button class="btn sm" data-act="lock">Lock screen</button>`:''}</div></nav>
+    <div class="side-foot small muted">${U.pos.tab==='new'?`<span class="nxtno">Next no. <b class="num">${orderNo(cur(),today(),(S.seq[S.cur+'|'+today()]||0)+1)}</b></span>`:''}${U.pos.tab==='new'&&!CAP&&CS_CH?'<button class="csico" data-act="cs-open" title="Customer screen: open the screen the customer sees on your second monitor" aria-label="Customer screen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg></button>':''}${!many?`<span>Signed in as <b>${esc(su.name)}</b> · ${ROLES[su.role]}</span>${CAP?'<button class="btn sm" data-act="perms">Alerts & location</button>':''}<button class="btn sm" data-act="lock">Lock screen</button>`:''}</div></nav>
   <section class="main">${U.pos.tab!=='kitchen'&&U.pos.tab!=='trips'&&su.role!=='kitchen'&&su.role!=='rider'?onlineBanner():''}${!(ROLE_TABS[su.role]||[]).includes('stock')&&U.pos.tab!=='stock'&&su.role!=='kitchen'&&su.role!=='rider'?lowStockBanner():''}${views[U.pos.tab]()}</section>${U.addPop&&U.pos.tab==='orders'?addPopHtml():''}${navDrawer()}</div>
   <nav class="mobnav" aria-label="POS sections">${mobNav()}</nav>`;
 }
@@ -4058,7 +4060,7 @@ function vNew(){
   const ci=custInfo(P.phone);const todays=activeOffers(dow);
   const n=P.cart.reduce((a,l)=>a+l.qty,0);
   const optsOn=true; // kitchen note, waiting time and coupon stay open on the till
-  return `<div class="ph1 nohead">${`<div class="cathd"><h2>${P.cat==='combo'?'Combos':esc((CATS.find(c=>c[0]===P.cat)||[0,''])[1])}</h2><span class="small muted">${P.cat==='pizza'?'Tap a size to add · tap the name for toppings':'Tap the price to add · tap the name for options'}</span></div>`}<span class="muted small">Next no. <b class="num">${orderNo(cur(),today(),(S.seq[S.cur+'|'+today()]||0)+1)}</b></span>${todays.length?`<span class="livechips">${todays.map(o=>`<span class="chip ${o.type==='bogo'?'r':o.type==='item'?'c':'t'}">${esc(o.name)}</span>`).join('')}</span>`:''}<span class="grow"></span>${!CAP&&CS_CH?'<button class="btn sm" data-act="cs-open" title="Open the screen the customer sees on your second monitor">Customer screen ↗</button>':''}</div>
+  return `
   <div class="neworder"${U.tkw?` style="--tkw:${U.tkw}px"`:''}>
     <div class="menucol">
       <div class="mbar card">
