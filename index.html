@@ -2372,10 +2372,12 @@ let PREP_MIN=15,RIDE_MIN=20,COIN_RATE=0.05,OPEN_H=12,CLOSE_H=22;
 /* Menu categories: the built-in ones from the server's config, then the ones the owner adds (S.cats).
    S.cats also remembers when the owner switched a whole category off for the day. */
 function mergeCats(){const base=(S.config&&S.config.categories)||[],own=(S.cats||[]).filter(c=>c.label&&!base.some(b=>b.id===c.id)).sort((a,b)=>(a.pos||0)-(b.pos||0));
-  CATS=[...base.map(x=>[x.id,x.label]),...own.map(x=>[x.id,x.label])];
+  // the owner can rename the built-in categories too; the new name is kept in S.cats
+  const ren=x=>{const r=catRec(x.id);return r&&r.label?r.label:x.label};
+  CATS=[...base.map(x=>[x.id,ren(x)]),...own.map(x=>[x.id,x.label])];
   // The owner's chosen order (Menu & sizes ↑ ↓), kept in one hidden record; categories not in it keep their place at the end
   const ord=catRec('_order')?.order;if(Array.isArray(ord)&&ord.length){const at=k=>{const i=ord.indexOf(k);return i<0?1e6:i};CATS=CATS.map((c,i)=>[c,i]).sort((a,b)=>at(a[0][0])-at(b[0][0])||a[1]-b[1]).map(x=>x[0])}
-  GU=Object.fromEntries([...base,...own].map(x=>[x.id,x.labelGu||'']))}
+  GU=Object.fromEntries([...base,...own].map(x=>{const r=catRec(x.id);return [x.id,(r&&r.labelGu!=null?r.labelGu:x.labelGu)||'']}))}
 const catRec=k=>(S.cats||[]).find(c=>c.id===k);
 const catOff=k=>!!catRec(k)?.off;
 // Combos are one category the owner can switch off as a whole in Menu & sizes
@@ -5132,7 +5134,7 @@ function vMenu(){
   ${(()=>{const off=catOff('combo'),n=S.combos.filter(c=>c.active).length;return `<div class="cathead${off?' off':''}"><label class="switch"><input type="checkbox" data-catoff="combo" ${off?'':'checked'} aria-label="Combos available"><span></span></label><b>Combos</b>
     <span class="small ${off?'':'muted'}" style="${off?'color:var(--bad);font-weight:700':''}">${off?'Switched off: hidden from customers and the till':n+' combo'+(n===1?'':'s')+' on'}</span><span class="grow"></span><button class="btn sm" data-act="tab" data-v="offers">Edit combos in Offers & combos</button></div>`})()}
   ${CATS.map(([cat,cn],ci)=>{const items=S.menu.filter(m=>m.cat===cat),off=catOff(cat),own=isOwnCat(cat);return `<div class="cathead${off?' off':''}"><span class="catmv"><button class="btn sm" data-act="cat-mv" data-v="${cat}" data-d="-1" aria-label="Move ${esc(cn)} up" ${ci===0?'disabled':''}>↑</button><button class="btn sm" data-act="cat-mv" data-v="${cat}" data-d="1" aria-label="Move ${esc(cn)} down" ${ci===CATS.length-1?'disabled':''}>↓</button></span><label class="switch"><input type="checkbox" data-catoff="${cat}" ${off?'':'checked'} aria-label="${esc(cn)} available"><span></span></label>
-    ${own?`<input class="inp" data-catname="${cat}" value="${esc(cn)}" aria-label="Category name" style="max-width:240px;font-weight:700"><input class="inp" data-catgu="${cat}" value="${esc(GU[cat]||'')}" placeholder="Gujarati name (optional)" aria-label="Gujarati name" style="max-width:220px">`:`<b>${esc(cn)}</b>`}
+    ${staff()?.role==='owner'||own?`<input class="inp" data-catname="${cat}" value="${esc(cn)}" aria-label="Category name" style="max-width:240px;font-weight:700"><input class="inp" data-catgu="${cat}" value="${esc(GU[cat]||'')}" placeholder="Gujarati name (optional)" aria-label="Gujarati name" style="max-width:220px">`:`<b>${esc(cn)}</b>`}
     <span class="small ${off?'':'muted'}" style="${off?'color:var(--bad);font-weight:700':''}">${off?'Switched off: hidden from customers and the till':items.length+' item'+(items.length===1?'':'s')}</span><span class="grow"></span>
     ${own?`<button class="btn sm bad" data-act="cat-del" data-v="${cat}">Remove</button>`:''}</div>
   <div class="card tw" style="margin-bottom:12px${off?';opacity:.6':''}"><table class="stk"><thead><tr><th>${cn}</th><th>Short description</th>${cat==='pizza'?sz.map(s=>`<th class="r">${esc(s.label)}</th>`).join(''):'<th class="r">Price</th>'}<th>On</th><th></th></tr></thead><tbody>
@@ -5673,7 +5675,7 @@ document.addEventListener('change',e=>{
     const k=t.dataset.spin;if(k==='w'){r.w={...(r.w||{}),[t.dataset.i]:+t.value}}else r[k]=t.type==='checkbox'?t.checked:+t.value;r.active=false;save();render();toast('Spin & win updated')}
   if(t.dataset.st){const x=stockOf().find(y=>y.id===t.dataset.st);if(x){const f=t.dataset.f;stockSet(x,f,f==='name'||f==='unit'?t.value.trim():Math.max(0,+t.value||0))}}
   if(t.dataset.catoff){setCatOff(t.dataset.catoff,!t.checked);toast(t.checked?'Category is on again':'Category switched off for now');}
-  if(t.dataset.catname||t.dataset.catgu){const r=catRec(t.dataset.catname||t.dataset.catgu);if(r){if(t.dataset.catname){const v=t.value.trim();if(v)r.label=v}else r.labelGu=t.value.trim();save();render()}}
+  if(t.dataset.catname||t.dataset.catgu){const k=t.dataset.catname||t.dataset.catgu;S.cats=S.cats||[];let r=catRec(k);if(!r){r={id:k};S.cats.push(r)}if(r){if(t.dataset.catname){const v=t.value.trim();if(v)r.label=v}else r.labelGu=t.value.trim();save();render()}}
   if(t.dataset.autolock&&staff()?.role==='owner'){cur().autoLock=+t.value;save();toast(+t.value?'Till locks after '+t.value+' minutes idle':'Auto lock off');render()}
   if(t.dataset.coin&&staff()?.role==='owner'){const v=+t.value;if(!(v>=0)||(t.dataset.coin!=='per100'&&!(v>0))){toast('Enter a number above 0');render();return}
     let r=S.offers.find(o=>o.type==='coins');if(!r){r={id:'coinrules',type:'coins',name:'Cheese Coins rules',active:false};S.offers.push(r)}
