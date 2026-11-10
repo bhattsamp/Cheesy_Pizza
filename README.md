@@ -31,7 +31,7 @@ npm test                   # API tests (wipes the database in MONGODB_TEST_URI,
 
 Settings (in `.env`): `MONGODB_URI` (default `mongodb://localhost:27017/ChessyPizza`) and `PORT` (default 3000).
 
-Demo logins: staff PINs Owner 1234, Cashier 1111, Kitchen 2222; customer 9825011111 with PIN 1234.
+Demo logins: staff PINs (6 digits) Owner 000000, Cashier 999999, Kitchen 888888; customer 9825011111 with PIN 1234.
 
 ## Mobile app
 

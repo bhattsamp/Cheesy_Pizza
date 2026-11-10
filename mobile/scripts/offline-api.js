@@ -16,14 +16,14 @@
   function apply(db,ch){const up=ch.upsert||{},del=ch.delete||{},ren={};
     for(const n of COLS){const spec=SPECS[n];(del[n]||[]).forEach(k=>delete db.c[n][String(k)]);const items=up[n];if(!items)continue;
       const ents=Array.isArray(items)?items.map(o=>[o[spec.key],o]):Object.entries(items);
-      for(const [k0,obj] of ents){const k=String(k0);const old=db.c[n][k];const {pin,_newPin,...rest}=obj;const d={...JSON.parse(JSON.stringify(rest)),_pos:old?old._pos:++db.pos};
+      for(const [k0,obj] of ents){const k=String(k0);const old=db.c[n][k];const {pin,_newPin,pinOld,...rest}=obj;const d={...JSON.parse(JSON.stringify(rest)),_pos:old?old._pos:++db.pos};
         if(n==='extras'&&d.items)d.items=d.items.map(({from,...it})=>it);
-        if(spec.pin){if(_newPin)d._pin=String(_newPin);else if(pin&&old)d._pin=old._pin}
+        if(spec.pin){if(_newPin&&(n!=='users'||/^\d{6}$/.test(String(_newPin))))d._pin=String(_newPin);else if(pin&&old)d._pin=old._pin}
         if(n==='orders'&&!old){const out=db.c.outlets[String(obj.outletId)];if(out&&obj.date){const key=obj.outletId+'|'+obj.date;db.seq[key]=(db.seq[key]||0)+1;const dp=String(obj.date).split('-');const no=out.code+'-'+dp[2]+dp[1]+dp[0].slice(2)+'-'+String(db.seq[key]).padStart(3,'0');if(no!==obj.no){d.no=no;ren[k]=no}}}
         db.c[n][k]=d}}
     db.v++;return {prev:db.v-1,version:db.v,renumbered:ren,seq:{...db.seq}}}
   function read(db,n){const spec=SPECS[n];const docs=Object.entries(db.c[n]).sort((a,b)=>a[1]._pos-b[1]._pos);
-    const toApp=d=>{const {_pos,_pin,...o}=JSON.parse(JSON.stringify(d));if(spec.pin&&_pin)o.pin=true;return o};
+    const toApp=d=>{const {_pos,_pin,...o}=JSON.parse(JSON.stringify(d));if(spec.pin&&_pin)o.pin=true;if(n==='users'&&_pin&&_pin.length!==6)o.pinOld=true;return o};
     return spec.map?Object.fromEntries(docs.map(([k,d])=>[k,toApp(d)])):docs.map(([,d])=>toApp(d))}
   function state(db){const st={};COLS.forEach(n=>st[n]=read(db,n));st.seq={...db.seq};st.config=db.cfg;return {version:db.v,demoPending:db.demo,state:st}}
   const ok=b=>new Response(JSON.stringify(b),{status:200,headers:{'Content-Type':'application/json'}});
@@ -36,7 +36,7 @@
     if(path==='state')return ok(state(db));
     if(path==='version')return ok({version:db.v});
     if(path==='sync'){const r=apply(db,body);keep(db);return ok(r)}
-    if(path==='auth/staff'){const s=db.c.users[String(body.id)];return ok({ok:!!s&&s._pin===String(body.pin)})}
+    if(path==='auth/staff'){const s=db.c.users[String(body.id)];const pn=String(body.pin==null?'':body.pin),was=!!s&&!!s._pin&&s._pin.length!==6;const good=!!s&&s._pin===pn&&(was?/^\d{4}$/.test(pn):/^\d{6}$/.test(pn));return ok(good&&was?{ok:true,change:true}:{ok:good})}
     if(path==='auth/customer'){const c=db.c.customers[String(body.phone)];return ok({ok:!!c&&c._pin===String(body.pin)})}
     if(path==='images'){const d=String(body.data||'');if(!/^data:image\/(jpeg|png|webp);base64,/.test(d))return bad(400,'Send a JPEG, PNG or WebP image');if(d.length>4.2e6)return bad(413,'Image is too big');return ok({url:d})}
     if(path==='demo/claim'){const r=db.demo;db.demo=false;keep(db);return ok({ok:r})}

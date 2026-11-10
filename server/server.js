@@ -21,6 +21,7 @@ async function openStore(uri = process.env.MONGODB_URI || DEFAULT_URI) {
   store.uri = uri.replace(/\/\/[^@/]*@/, '//***@'); // hide credentials in logs
   if (!(await store.isSeeded())) await store.seed(seedData());
   else await store.addExtraMenus(seedData().state.extras);
+  if (await store.upgradeStarterPins(seedData().state.users)) console.log('Starting staff moved to their 6-digit PINs');
   return store;
 }
 
@@ -80,7 +81,7 @@ function createApp(store) {
   // A phone signs up when staff log in, so the PIN is checked here
   app.post('/api/push/register', async (req, res) => {
     const { token, staffId, pin, outletId } = req.body || {};
-    if (!token || !outletId || !(await store.checkStaffPin(staffId, pin))) return res.status(403).json({ error: 'Not allowed' });
+    if (!token || !outletId || !(await store.checkStaffPin(staffId, pin, { allowOld: true }))) return res.status(403).json({ error: 'Not allowed' });
     await push.saveToken(String(token), outletId, staffId);
     res.json({ ok: true });
   });
@@ -153,7 +154,9 @@ function createApp(store) {
   });
   app.post('/api/auth/staff', async (req, res) => {
     const { id, pin } = req.body || {};
-    res.json({ ok: await store.checkStaffPin(id, pin) });
+    // An old 4-digit PIN still signs in once; `change` tells the app to ask for a 6-digit one
+    const r = await store.staffPin(id, pin, { allowOld: true });
+    res.json(r.ok && r.old ? { ok: true, change: true } : { ok: r.ok });
   });
 
   /* ----- menu photos: { data: 'data:image/jpeg;base64,...' } -> { url } ----- */
