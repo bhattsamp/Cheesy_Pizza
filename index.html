@@ -2483,7 +2483,9 @@ function applyState(d){
 }
 function saveLocal(){try{localStorage.setItem(LKEY,JSON.stringify(Object.fromEntries(LOCAL_KEYS.map(k=>[k,S[k]]))))}catch(e){}}
 // A new PIN is sent to the server once, which stores only its hash
-function setPin(o,pin){o.pin=true;o._newPin=pin}
+function setPin(o,pin){o.pin=true;o._newPin=pin;delete o.pinOld}
+// Staff PINs are 6 digits. Someone still on an old 4-digit PIN (pinOld) signs in with it once, then must choose a 6-digit one.
+const STAFF_PIN=6,OLD_PIN=4,staffPinLen=u=>u&&u.pinOld?OLD_PIN:STAFF_PIN;
 function save(){saveLocal();if(!pendingFlush)pendingFlush=setTimeout(flush,0)}
 // Send only the records that changed since the last save
 function diff(){
@@ -3892,7 +3894,7 @@ document.addEventListener('change',e=>{const t=e.target;if(!t.dataset||staff()?.
   if(t.dataset.navname){const r=navRec(),k=t.dataset.navname,v=t.value.trim(),def=(TABS.find(x=>x[0]===k)||[0,''])[1];if(!v||v===def)delete r.names[k];else r.names[k]=v.slice(0,30);save();render();toast('Menu name saved')}
   if(t.dataset.navoff){const r=navRec(),k=t.dataset.navoff;if(t.checked)r.off=r.off.filter(x=>x!==k);else if(NAV_LOCK.includes(k)){t.checked=true;toast('This section is always on');return}else if(!r.off.includes(k))r.off.push(k);save();render();toast(t.checked?'Section shown':'Section hidden for everyone')}});
 function renderPOS(){
-  const su=staff();if(!su)return renderLogin();
+  const su=staff();if(!su)return renderLogin();if(su.pinOld)return renderNewPin(su);
   // The owner can rename menu sections and switch them off for everyone (kept in one hidden S.cats record)
   const nv=navCfg(),roleTabs=TABS.filter(([k])=>ROLE_TABS[su.role].includes(k)&&(k!=='trips'||delOn()||su.role==='rider')).map(([k,n])=>[k,(nv.names||{})[k]||n]);
   let allowed=roleTabs.filter(([k])=>NAV_LOCK.includes(k)||!(nv.off||[]).includes(k));if(!allowed.length)allowed=roleTabs;if(!allowed.some(([k])=>k===U.pos.tab))U.pos.tab=allowed[0][0];
@@ -4609,11 +4611,11 @@ function askOwnerPin(what,cb){const su=staff();if(su&&su.role==='owner'){cb(su.n
   const draw=()=>showModal(`<div class="mh"><h3>Owner PIN needed</h3><button class="x" data-act="close" aria-label="Close">×</button></div>
   <div class="mb"><div class="small">${esc(what)}</div>
    ${owners.length>1?`<div class="field"><label for="op-u">Owner</label><select class="inp" id="op-u">${owners.map(u=>`<option value="${u.id}" ${u.id===uid?'selected':''}>${esc(u.name)}</option>`).join('')}</select></div>`:`<div class="small muted">Ask ${esc(owners[0].name)} to type their PIN.</div>`}
-   <input class="inp num" id="op-pin" type="password" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="4-digit PIN" style="font-size:24px;letter-spacing:.4em;text-align:center">
+   <input class="inp num" id="op-pin" type="password" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="6-digit PIN" style="font-size:24px;letter-spacing:.4em;text-align:center">
    ${err?`<div class="msg-bad">${esc(err)}</div>`:''}
    <div class="row" style="gap:8px"><button class="btn lg grow" data-act="close">Back</button><button class="btn pri lg grow" data-act="op-ok" ${busy?'disabled':''}>Allow</button></div></div>`,
    {onAct:act=>{if(act!=='op-ok')return false;pin=(document.getElementById('op-pin')?.value||'').trim();uid=document.getElementById('op-u')?.value||uid;
-     if(pin.length!==4){err='Type the 4-digit PIN';draw();return true}busy=true;
+     const need=staffPinLen(S.users.find(x=>x.id===uid));if(pin.length!==need||!/^\d+$/.test(pin)){err='Type the '+need+'-digit PIN';draw();return true}busy=true;
      api('/api/auth/staff',{id:uid,pin}).then(r=>{busy=false;if(r.ok){const u=S.users.find(x=>x.id===uid);closeModal();cb(u?u.name:'Owner')}else{err='Wrong PIN';draw()}},()=>{busy=false;err='Could not check the PIN. Check the internet.';draw()});return true}});
   draw();setTimeout(()=>document.getElementById('op-pin')?.focus(),60)}
 const CANCEL_WHY=['Billed twice / made again','Wrong items or bill','Customer left','Kitchen could not make it'];
@@ -5813,7 +5815,7 @@ const BC={title:'',body:'',img:null,busy:false,pin:'',n:null};
 const BC_IDEAS=[['🍕 Pizza party tonight!','Buy 2 large pizzas and get garlic bread free. Order in the app now.'],['🔥 Flash sale: 25% off','Only for the next 3 hours on every pizza. Don\'t miss it!'],['🎉 New on the menu','Say hello to our new pizza. Be the first to try it today.'],['⏰ Happy hours 3 to 6 pm','Every pizza 20% off this afternoon. Tap to order.'],['🪔 Festival special','Celebrate with family: combo deals and free delivery today.']];
 function openBcast(){
   if(BC.n===null)api('/api/push/stats').then(r=>{BC.n=r.enabled?r.customers:-1;if(mroot.querySelector('.bcast'))openBcast()}).catch(()=>{BC.n=-1});
-  const ok=BC.title.trim()&&BC.body.trim()&&BC.pin.length===4&&!BC.busy;
+  const ok=BC.title.trim()&&BC.body.trim()&&BC.pin.length===STAFF_PIN&&!BC.busy;
   showModal(`<div class="mh"><h3>Send a notification</h3><button class="x" data-act="close" aria-label="Close">×</button></div>
   <div class="mb bcast">
     <div class="small muted">Quick ideas</div><div class="ideas">${BC_IDEAS.map((x,i)=>`<button data-act="bc-idea" data-i="${i}">${esc(x[0])}</button>`).join('')}</div>
@@ -5822,12 +5824,12 @@ function openBcast(){
     <div class="row" style="gap:8px;align-items:center"><label class="btn sm">${BC.img?'Change picture':'+ Add a picture'}<input type="file" id="bc-img" accept="image/*" hidden></label>${BC.img?'<button class="btn sm" data-act="bc-noimg">Remove</button>':''}<span class="small muted">Optional. Shows large in the notification.</span></div>
     <div class="small muted">Preview</div>
     <div class="npv"><div class="npv-h"><span class="npv-i">C</span>Cheesy Pizza · now</div><b>${esc(BC.title||'Your title')}</b><div>${esc(BC.body||'Your message')}</div>${BC.img?`<img src="${esc(BC.img)}" alt="">`:''}</div>
-    <div class="field"><label for="bc-pin">Your PIN to confirm</label><input class="inp num" id="bc-pin" type="password" inputmode="numeric" maxlength="4" value="${esc(BC.pin)}" style="max-width:140px"></div>
+    <div class="field"><label for="bc-pin">Your PIN to confirm</label><input class="inp num" id="bc-pin" type="password" inputmode="numeric" maxlength="6" placeholder="6 digits" value="${esc(BC.pin)}" style="max-width:140px"></div>
     <div id="bc-err" class="small" style="color:var(--bad)"></div>
     <button class="btn pri lg block" data-act="bc-send" ${ok?'':'disabled'}>${BC.busy?'Sending…':BC.n>0?`Send to ${BC.n} customer phone${BC.n>1?'s':''}`:'Send to all customers'}</button>
     ${BC.n===0?'<div class="small muted">No customer phone has turned on notifications yet. They will get it once they install the app and allow notifications.</div>':BC.n===-1?'<div class="small" style="color:var(--bad)">Notifications are not set up on the server yet.</div>':''}
   </div>`,{onInput:e=>{const id=e.target.id;if(id==='bc-title')BC.title=e.target.value;if(id==='bc-body')BC.body=e.target.value;if(id==='bc-pin'){BC.pin=e.target.value.replace(/\D/g,'');e.target.value=BC.pin}
-      const b=mroot.querySelector('[data-act=bc-send]');if(b)b.disabled=!(BC.title.trim()&&BC.body.trim()&&BC.pin.length===4&&!BC.busy);
+      const b=mroot.querySelector('[data-act=bc-send]');if(b)b.disabled=!(BC.title.trim()&&BC.body.trim()&&BC.pin.length===STAFF_PIN&&!BC.busy);
       const pv=mroot.querySelector('.npv');if(pv&&id!=='bc-pin'){pv.querySelector('b').textContent=BC.title||'Your title';pv.querySelector('div:not(.npv-h)').textContent=BC.body||'Your message'}},
     onChange:e=>{if(e.target.id!=='bc-img'||!e.target.files[0])return;shrinkImage(e.target.files[0]).then(d=>api('/api/images',{data:d})).then(r=>{BC.img=r.url;openBcast()},er=>toast(er.message||'Could not add the picture'))},
     onAct:(act,el)=>{
@@ -6390,21 +6392,40 @@ const worksAt=(u,id)=>u.role==='owner'||!(u.outlets&&u.outlets.length)||u.outlet
 function renderLogin(){
   const lock=U.lockOutlet&&S.outlets.find(o=>o.id===U.lockOutlet);
   const list=lock?S.users.filter(u=>worksAt(u,lock.id)):S.users;
-  return `<div class="login"><div class="card ${L.err?'shake':''}"><h2 style="font-size:28px">${lock?esc(lock.name):'Outlet login'}</h2><div class="small muted">${lock?'Staff login for this outlet. ':''}Choose your name, then enter your 4-digit PIN.</div>
+  const selU=L.uid&&S.users.find(u=>u.id===L.uid);
+  return `<div class="login"><div class="card ${L.err?'shake':''}"><h2 style="font-size:28px">${lock?esc(lock.name):'Outlet login'}</h2><div class="small muted">${lock?'Staff login for this outlet. ':''}Choose your name, then enter your 6-digit PIN.</div>
     ${STAFF_PATH&&STAFF_CODE&&!lock?'<div class="msg-bad">This outlet link is not right, or the outlet is inactive. Ask the owner for the outlet\'s staff link.</div>':''}
     <div class="users">${list.map(u=>`<button data-act="lg-user" data-v="${u.id}" aria-pressed="${L.uid===u.id}"><span class="av">${esc(u.name[0])}</span>${esc(u.name)}<small>${ROLES[u.role]}</small></button>`).join('')}</div>
-    <div class="dots" aria-label="PIN entered">${[0,1,2,3].map(i=>`<i class="${L.buf.length>i?'on':''}"></i>`).join('')}</div>
+    ${selU&&selU.pinOld?'<div class="msg-warn small" style="text-align:center">PINs are now 6 digits. Type your old 4-digit PIN this one time, then choose a new 6-digit PIN.</div>':''}
+    <div class="dots" aria-label="PIN entered">${Array.from({length:staffPinLen(selU)},(_,i)=>`<i class="${L.buf.length>i?'on':''}"></i>`).join('')}</div>
     ${L.err?`<div class="msg-bad" style="text-align:center">${esc(L.err)}</div>`:''}
     <div class="keypad">${['1','2','3','4','5','6','7','8','9','C','0','←'].map(k=>`<button data-act="lg-key" data-v="${k}" aria-label="${k==='C'?'Clear':k==='←'?'Delete':k}">${k}</button>`).join('')}</div>
-    <div class="demo">Demo PINs · Owner 1234 · Cashier 1111 · Kitchen 2222. Owners can change staff and PINs in the Staff screen.</div></div></div>`;
+    <div class="demo">Demo PINs · Owner 000000 · Cashier 999999 · Kitchen 888888. Owners can change staff and PINs in the Staff screen.</div></div></div>`;
 }
 function lgKey(k){
   if(!L.uid){L.err='Choose your name first.';render();return}
-  if(L.busy)return;if(k==='C')L.buf='';else if(k==='←')L.buf=L.buf.slice(0,-1);else if(L.buf.length<4)L.buf+=k;L.err='';
-  if(L.buf.length===4&&!L.busy){const u=S.users.find(x=>x.id===L.uid);L.busy=true;
-    api('/api/auth/staff',{id:L.uid,pin:L.buf}).then(r=>{if(r.ok&&u){S.staffId=u.id;if(!U.lockOutlet&&!worksAt(u,S.cur)){const ok=liveOutlets().find(o=>worksAt(u,o.id));if(ok)S.cur=ok.id}pushLogin(L.buf);L.uid=null;saveLocal();U.pos.tab=ROLE_TABS[u.role][0];toast('Welcome, '+u.name)}else L.err='Wrong PIN. Try again.'},()=>{L.err='Could not reach the server.'}).finally(()=>{L.buf='';L.busy=false;render()})}
+  if(L.busy)return;if(k==='C')L.buf='';else if(k==='←')L.buf=L.buf.slice(0,-1);else if(L.buf.length<staffPinLen(S.users.find(x=>x.id===L.uid)))L.buf+=k;L.err='';
+  const u=S.users.find(x=>x.id===L.uid);
+  if(L.buf.length===staffPinLen(u)&&!L.busy){L.busy=true;
+    api('/api/auth/staff',{id:L.uid,pin:L.buf}).then(r=>{if(r.ok&&u){if(r.change)u.pinOld=true;S.staffId=u.id;if(!U.lockOutlet&&!worksAt(u,S.cur)){const ok=liveOutlets().find(o=>worksAt(u,o.id));if(ok)S.cur=ok.id}pushLogin(L.buf);L.uid=null;saveLocal();U.pos.tab=ROLE_TABS[u.role][0];toast('Welcome, '+u.name)}else L.err='Wrong PIN. Try again.'},()=>{L.err='Could not reach the server.'}).finally(()=>{L.buf='';L.busy=false;render()})}
   render();
 }
+// Shown after someone signs in with an old 4-digit PIN: they must choose a 6-digit PIN before using the app
+const NP={a:'',b:'',err:''};
+function renderNewPin(u){
+  const step=NP.a.length<STAFF_PIN?0:1,buf=step?NP.b:NP.a;
+  return `<div class="login"><div class="card ${NP.err?'shake':''}"><h2 style="font-size:28px">Choose a new PIN</h2>
+    <div class="small muted">Hi ${esc(u.name)}. Staff PINs are now 6 digits. ${step?'Type the same 6 digits again.':'Type a new 6-digit PIN you will remember.'}</div>
+    <div class="dots" aria-label="PIN entered">${Array.from({length:STAFF_PIN},(_,i)=>`<i class="${buf.length>i?'on':''}"></i>`).join('')}</div>
+    ${NP.err?`<div class="msg-bad" style="text-align:center">${esc(NP.err)}</div>`:''}
+    <div class="keypad">${['1','2','3','4','5','6','7','8','9','C','0','←'].map(k=>`<button data-act="np-key" data-v="${k}" aria-label="${k==='C'?'Clear':k==='←'?'Delete':k}">${k}</button>`).join('')}</div>
+    <button class="btn" data-act="np-out">Log out</button></div></div>`;
+}
+function npKey(k){const u=staff();if(!u||!u.pinOld)return;
+  const f=NP.a.length<STAFF_PIN?'a':'b';NP.err='';
+  if(k==='C'){NP.a='';NP.b=''}else if(k==='←'){if(f==='b'&&!NP.b)NP.a=NP.a.slice(0,-1);else NP[f]=NP[f].slice(0,-1)}else if(NP[f].length<STAFF_PIN)NP[f]+=k;
+  if(NP.b.length===STAFF_PIN){if(NP.a===NP.b){setPin(u,NP.a);NP.a=NP.b='';save();toast('New PIN saved. Use it next time you sign in.')}else{NP.a=NP.b='';NP.err='The two PINs did not match. Start again.'}}
+  render()}
 function vStaff(){
   const meU=staff();
   return `<div class="ph1"><h2>Staff & logins</h2><span class="muted small">Owners see everything. Cashiers: orders, counter, customers. Kitchen: kitchen and counter. Riders: their deliveries, sharing live location; give them the same name as in the outlet's rider list.</span></div>
@@ -6412,7 +6433,7 @@ function vStaff(){
   ${S.users.map(u=>`<tr><td><input class="inp" data-us="${u.id}" data-f="name" value="${esc(u.name)}" aria-label="Name" style="min-width:140px"></td>
     <td><select class="inp" data-us="${u.id}" data-f="role" aria-label="Role" ${u.id===meU.id?'disabled':''}>${Object.entries(ROLES).map(([k,n])=>`<option value="${k}" ${u.role===k?'selected':''}>${n}</option>`).join('')}</select></td>
     <td>${u.role==='owner'?'<span class="small muted">All outlets</span>':`<div class="uouts">${liveOutlets().map(o=>`<label class="opt"><input type="checkbox" data-uo="${u.id}" data-o="${o.id}" ${(u.outlets||[]).includes(o.id)?'checked':''}> ${esc(o.name)}</label>`).join('')}${(u.outlets||[]).length?'':'<span class="small muted">None ticked = all</span>'}</div>`}</td>
-    <td><input class="inp num" data-us="${u.id}" data-f="pin" type="password" inputmode="numeric" maxlength="4" placeholder="4 digits" aria-label="New PIN" style="max-width:120px"></td>
+    <td><input class="inp num" data-us="${u.id}" data-f="pin" type="password" inputmode="numeric" maxlength="6" placeholder="${u.pinOld?'Old PIN · set 6':'6 digits'}" aria-label="New PIN" style="max-width:130px"></td>
     <td>${u.id===meU.id?'<span class="chip ready">You</span>':`<button class="btn sm bad" data-act="del-user" data-id="${u.id}">Remove</button>`}</td></tr>`).join('')}
   </tbody></table></div>
   <button class="btn pri" style="margin-top:12px" data-act="add-user">+ Add staff</button>
@@ -6424,7 +6445,7 @@ function vStaff(){
    <div class="small">Open the outlet's link on that outlet's till or tablet. It shows only the staff ticked for that outlet, and they can't switch to another outlet.</div>
    ${liveOutlets().map(o=>`<div class="row" style="gap:8px;flex-wrap:wrap"><b style="min-width:120px">${esc(o.name)}</b><a class="num small" href="${esc(staffLink(o))}" target="_blank" rel="noopener">${esc(staffLink(o).replace(/^https?:\/\//,''))}</a><button class="btn sm" data-act="copy-staff-link" data-v="${esc(staffLink(o))}">Copy</button></div>`).join('')}
    <span class="small muted">Renaming an outlet changes its link.</span></div>
-  <p class="small muted">A new PIN is saved when you leave the box. New staff start with PIN 0000.</p>`;
+  <p class="small muted">A new PIN is saved when you leave the box. New staff start with PIN 000000. Staff still on an old 4-digit PIN choose a 6-digit one the next time they sign in.</p>`;
 }
 /* ----- extra events ----- */
 document.addEventListener('click',e=>{
@@ -6464,7 +6485,9 @@ document.addEventListener('click',e=>{
     case 'lock':askConfirm('Log out?',APP_ROLE==='admin'?'This phone will stop ringing for new orders until someone logs in again.':'You will need your PIN to log in again.','Log out',()=>{pushLogout();riderStop();S.staffId=null;save();render()});break;
     case 'lg-user':L.uid=el.dataset.v;L.buf='';L.err='';render();break;
     case 'lg-key':lgKey(el.dataset.v);break;
-    case 'add-user':{const u={id:uid('u'),name:'New staff',role:'cashier'};setPin(u,'0000');S.users.push(u)}save();render();break;
+    case 'np-key':npKey(el.dataset.v);break;
+    case 'np-out':NP.a=NP.b=NP.err='';pushLogout();S.staffId=null;save();render();break;
+    case 'add-user':{const u={id:uid('u'),name:'New staff',role:'cashier'};setPin(u,'000000');S.users.push(u)}save();render();break;
     case 'del-user':S.users=S.users.filter(u=>u.id!==el.dataset.id);save();render();break;
     case 'topup-pos':{const ph=el.dataset.ph;const v=Math.round(+document.getElementById('tw-amt').value||0);if(v<=0){toast('Enter an amount');break}walletAdd(ph,v,'Cash top-up at '+cur().name);save();toast(rs(v)+' added to wallet');render();break}
     case 'reset-pin':{const c=S.customers[el.dataset.ph];delete c.pin;delete c._newPin;if(S.me===c.phone)S.me=null;save();toast('PIN reset. Customer can sign up again with the same number.');render();break}
@@ -6474,7 +6497,7 @@ document.addEventListener('change',e=>{
   const t=e.target;
   if(t.dataset.uo){const u=S.users.find(x=>x.id===t.dataset.uo);if(!u||staff()?.role!=='owner')return;const set=new Set(u.outlets||[]);if(t.checked)set.add(t.dataset.o);else set.delete(t.dataset.o);u.outlets=[...set];save();render();toast(u.name+': '+(u.outlets.length?u.outlets.map(id=>(S.outlets.find(o=>o.id===id)||{}).name).join(', '):'all outlets'));return}
   if(!t.dataset.us)return;const u=S.users.find(x=>x.id===t.dataset.us);if(!u)return;
-  if(t.dataset.f==='pin'){if(/^\d{4}$/.test(t.value)){setPin(u,t.value);t.value='';toast('PIN updated for '+u.name)}else toast('PIN must be 4 digits')}
+  if(t.dataset.f==='pin'){if(/^\d{6}$/.test(t.value)){setPin(u,t.value);t.value='';toast('PIN updated for '+u.name)}else toast('PIN must be 6 digits')}
   else u[t.dataset.f]=t.value;
   save();if(t.dataset.f!=='name')render();
 });
@@ -6485,7 +6508,7 @@ document.addEventListener('input',e=>{const id=e.target.id||'';if(!id.startsWith
   if(k==='pin'&&U.au.pin.length===4){if(U.au.m==='in'&&U.au.phone.length===10)authGo();else document.getElementById('au-pin2')?.focus()}});
 document.addEventListener('change',e=>{if(e.target.id==='au-bday'&&U.au)U.au.bday=e.target.value});
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.target.id||'').startsWith('au-')&&U.au){e.preventDefault();if(e.target.id==='au-email'&&OTP_ON&&!U.au.sent)auSend();else authGo()}});
-document.addEventListener('keydown',e=>{if(S.mode==='pos'&&!staff()&&!mroot.innerHTML&&/^[0-9]$/.test(e.key))lgKey(e.key);else if(S.mode==='pos'&&!staff()&&e.key==='Backspace')lgKey('←')});
+document.addEventListener('keydown',e=>{if(S.mode==='pos'&&staff()?.pinOld&&!mroot.innerHTML&&(/^[0-9]$/.test(e.key)||e.key==='Backspace')){npKey(e.key==='Backspace'?'←':e.key);return}if(S.mode==='pos'&&!staff()&&!mroot.innerHTML&&/^[0-9]$/.test(e.key))lgKey(e.key);else if(S.mode==='pos'&&!staff()&&e.key==='Backspace')lgKey('←')});
 
 // Touch on the offers strip pauses it until the finger lifts, then a moment longer
 let tickT;

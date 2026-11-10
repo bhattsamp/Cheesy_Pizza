@@ -120,11 +120,11 @@ function seedData(now = Date.now()) {
         { id: 'c2', name: 'Duo Date', desc: 'Any two 7" pizzas + Cheesy Garlic Bread + Chocolava', price: 649, pizzas: 2, size: '7', tier: 320, extras: ['b1', 'd1'], active: true },
         { id: 'c3', name: 'Family Feast', desc: 'Any two 10" pizzas up to ₹450 + Indian Masala Bread + Peri Peri Fries', price: 999, pizzas: 2, size: '10', tier: 450, extras: ['b2', 'f2'], active: true },
       ],
-      // Demo PINs: Owner 1234, Cashier 1111, Kitchen 2222 (stored hashed)
+      // Demo PINs: Owner 000000, Cashier 999999, Kitchen 888888 (stored hashed)
       users: [
-        { id: 'u1', name: 'Owner', role: 'owner', _newPin: '1234' },
-        { id: 'u2', name: 'Cashier', role: 'cashier', _newPin: '1111' },
-        { id: 'u3', name: 'Kitchen', role: 'kitchen', _newPin: '2222' },
+        { id: 'u1', name: 'Owner', role: 'owner', _newPin: '000000' },
+        { id: 'u2', name: 'Cashier', role: 'cashier', _newPin: '999999' },
+        { id: 'u3', name: 'Kitchen', role: 'kitchen', _newPin: '888888' },
       ],
       // Demo customer account: 9825011111, PIN 1234, birthday today
       customers: {

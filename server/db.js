@@ -22,9 +22,19 @@ const SPECS = {
 // Order matters: outlets before orders so new orders can be numbered.
 const COLLECTIONS = Object.keys(SPECS);
 
-/* ---------- PINs ---------- */
 // Outlet code - date (ddmmyy) - a 3-digit count for that outlet and day, e.g. A-081126-001
 const orderNo = (code, date, n) => { const [y, m, d] = String(date).split('-'); return code + '-' + d + m + y.slice(2) + '-' + String(n).padStart(3, '0'); };
+
+/* ---------- PINs ---------- */
+// Staff PINs are 6 digits. PINs set before the switch were 4 digits; they are
+// kept (as hashes, so they can't be converted) and marked old: the owner of
+// one can still sign in with it once, and the app then makes them choose a
+// 6-digit PIN before doing anything else. Customer PINs stay 4 digits.
+const STAFF_PIN_LEN = 6, OLD_STAFF_PIN_LEN = 4;
+const isStaffPin = p => typeof p === 'string' && new RegExp('^\\d{' + STAFF_PIN_LEN + '}$').test(p);
+const isOldStaffPin = p => typeof p === 'string' && new RegExp('^\\d{' + OLD_STAFF_PIN_LEN + '}$').test(p);
+// A staff record whose PIN hash was made before 6-digit PINs (no pinLen saved)
+const hasOldPin = s => !!(s && s.pinHash && s.pinLen !== STAFF_PIN_LEN);
 
 function hashPin(pin) {
   const salt = crypto.randomBytes(16).toString('hex');
@@ -40,8 +50,9 @@ function checkPin(pin, stored) {
 
 // Turn a stored document back into the object the app saved
 function toApp(d, spec) {
-  const { _id, _pos, pinHash, ...obj } = d;
+  const { _id, _pos, pinHash, pinLen, ...obj } = d;
   if (spec.pin && pinHash) obj.pin = true;
+  if (spec === SPECS.users && hasOldPin(d)) obj.pinOld = true; // must choose a 6-digit PIN
   return obj;
 }
 
@@ -142,7 +153,7 @@ class Store {
       if ((del[name] || []).length) await spec.model.deleteMany({ _id: { $in: del[name].map(String) } });
       const entries = batches[name];
       if (!entries) continue;
-      const existing = new Map((await spec.model.find({ _id: { $in: entries.map(e => e[0]) } }, { _pos: 1, pinHash: 1, _rev: 1 }).lean())
+      const existing = new Map((await spec.model.find({ _id: { $in: entries.map(e => e[0]) } }, { _pos: 1, pinHash: 1, pinLen: 1, _rev: 1 }).lean())
         .map(d => [d._id, d]));
       const isNew = entries.filter(([k]) => !existing.has(k)).length;
       let pos = isNew ? await this.bump('pos', isNew) - isNew : 0;
@@ -151,12 +162,19 @@ class Store {
         const old = existing.get(key);
         const oldRev = (old && old._rev) || 0;
         if (old && typeof obj._rev === 'number' && obj._rev < oldRev) { conflicts.push({ coll: name, id: key, no: obj.no || obj.name || key }); continue; }
-        const { pin, _newPin, ...rest } = obj;
+        const { pin, _newPin, pinOld, pinLen, ...rest } = obj;
         const d = { ...rest, _id: key, _pos: old ? old._pos : ++pos, _rev: oldRev + 1 };
         (revs[name] = revs[name] || {})[key] = d._rev;
         if (spec.pin) {
-          if (typeof _newPin === 'string' && _newPin) d.pinHash = hashPin(_newPin);
-          else if (pin && old && old.pinHash) d.pinHash = old.pinHash;
+          // Staff PINs must be exactly 6 digits; anything else keeps the PIN they had
+          const okNew = typeof _newPin === 'string' && _newPin && (name !== 'users' || isStaffPin(_newPin));
+          if (okNew) {
+            d.pinHash = hashPin(_newPin);
+            if (name === 'users') d.pinLen = STAFF_PIN_LEN;
+          } else if ((pin || _newPin) && old && old.pinHash) {
+            d.pinHash = old.pinHash;
+            if (old.pinLen) d.pinLen = old.pinLen;
+          }
         }
         if (name === 'orders' && !old) {
           const no = await this.nextOrderNo(obj.outletId, obj.date);
@@ -183,9 +201,34 @@ class Store {
     const c = await M.Customer.findById(String(phone), { pinHash: 1 }).lean();
     return !!c && checkPin(pin, c.pinHash);
   }
-  async checkStaffPin(id, pin) {
-    const s = await M.Staff.findById(String(id), { pinHash: 1 }).lean();
-    return !!s && checkPin(pin, s.pinHash);
+  // Checks a staff PIN: 6 digits, or (only with allowOld, for signing in)
+  // the old 4-digit PIN of someone who hasn't chosen a 6-digit one yet.
+  async checkStaffPin(id, pin, { allowOld = false } = {}) {
+    return (await this.staffPin(id, pin, { allowOld })).ok;
+  }
+  async staffPin(id, pin, { allowOld = false } = {}) {
+    const s = await M.Staff.findById(String(id), { pinHash: 1, pinLen: 1 }).lean();
+    if (!s) return { ok: false };
+    pin = String(pin == null ? '' : pin);
+    const old = hasOldPin(s);
+    const shapeOk = old ? allowOld && isOldStaffPin(pin) : isStaffPin(pin);
+    return { ok: shapeOk && checkPin(pin, s.pinHash), old };
+  }
+
+  // One-time switch to 6-digit PINs for the starting staff (Owner, Cashier, Kitchen):
+  // if they are still on an old 4-digit PIN, give them their new 6-digit PIN from the
+  // starting data. Other staff keep their old PIN until they sign in and choose one.
+  async upgradeStarterPins(users) {
+    let changed = 0;
+    for (const u of users || []) {
+      if (!u || !isStaffPin(u._newPin)) continue;
+      const s = await M.Staff.findById(String(u.id), { pinHash: 1, pinLen: 1 }).lean();
+      if (!hasOldPin(s)) continue;
+      await M.Staff.updateOne({ _id: String(u.id) }, { $set: { pinHash: hashPin(u._newPin), pinLen: STAFF_PIN_LEN } });
+      changed++;
+    }
+    if (changed) await this.bump('version');
+    return changed;
   }
 
   /* ----- seeding ----- */
@@ -235,4 +278,4 @@ class Store {
   }
 }
 
-module.exports = { Store, SPECS, COLLECTIONS, hashPin, checkPin, orderNo };
+module.exports = { Store, SPECS, COLLECTIONS, hashPin, checkPin, orderNo, STAFF_PIN_LEN };

@@ -41,13 +41,35 @@ test('seeded state matches the old hardcoded data', () => withServer(async ({ ge
 }));
 
 test('PINs are checked on the server', () => withServer(async ({ post }) => {
-  assert.equal((await post('/api/auth/staff', { id: 'u1', pin: '1234' })).ok, true);
+  assert.equal((await post('/api/auth/staff', { id: 'u1', pin: '000000' })).ok, true);
   assert.equal((await post('/api/auth/staff', { id: 'u1', pin: '0000' })).ok, false);
+  assert.equal((await post('/api/auth/staff', { id: 'u1', pin: '111111' })).ok, false);
   assert.equal((await post('/api/auth/customer', { phone: '9825011111', pin: '1234' })).ok, true);
-  await post('/api/sync', { upsert: { users: [{ id: 'u2', name: 'Cashier', role: 'cashier', pin: true, _newPin: '4321' }] } });
-  assert.equal((await post('/api/auth/staff', { id: 'u2', pin: '4321' })).ok, true);
+  await post('/api/sync', { upsert: { users: [{ id: 'u2', name: 'Cashier', role: 'cashier', pin: true, _newPin: '654321' }] } });
+  assert.equal((await post('/api/auth/staff', { id: 'u2', pin: '654321' })).ok, true);
   await post('/api/sync', { upsert: { users: [{ id: 'u2', name: 'Cashier 2', role: 'cashier', pin: true }] } });
-  assert.equal((await post('/api/auth/staff', { id: 'u2', pin: '4321' })).ok, true, 'pin kept when not changed');
+  assert.equal((await post('/api/auth/staff', { id: 'u2', pin: '654321' })).ok, true, 'pin kept when not changed');
+  await post('/api/sync', { upsert: { users: [{ id: 'u2', name: 'Cashier 2', role: 'cashier', pin: true, _newPin: '4321' }] } });
+  assert.equal((await post('/api/auth/staff', { id: 'u2', pin: '654321' })).ok, true, 'a 4-digit staff PIN is refused');
+}));
+
+test('old 4-digit staff PINs sign in once, then must change', () => withServer(async ({ post, get, store }) => {
+  const M = require('../server/models');
+  const { hashPin } = require('../server/db');
+  await M.Staff.updateOne({ _id: 'u2' }, { $set: { pinHash: hashPin('1111') }, $unset: { pinLen: 1 } });
+  let { state } = await get('/api/state');
+  assert.equal(state.users.find(u => u.id === 'u2').pinOld, true);
+  assert.deepEqual(await post('/api/auth/staff', { id: 'u2', pin: '1111' }), { status: 200, ok: true, change: true });
+  assert.equal(await store.checkStaffPin('u2', '1111'), false, 'old PIN does not work for owner checks');
+  await post('/api/sync', { upsert: { users: [{ ...state.users.find(u => u.id === 'u2'), _newPin: '246810' }] } });
+  ({ state } = await get('/api/state'));
+  assert.equal(state.users.find(u => u.id === 'u2').pinOld, undefined);
+  assert.equal((await post('/api/auth/staff', { id: 'u2', pin: '1111' })).ok, false);
+  assert.deepEqual(await post('/api/auth/staff', { id: 'u2', pin: '246810' }), { status: 200, ok: true });
+  // Starting staff still on an old PIN get their new 6-digit PIN on start up
+  await M.Staff.updateOne({ _id: 'u1' }, { $set: { pinHash: hashPin('1234') }, $unset: { pinLen: 1 } });
+  assert.equal(await store.upgradeStarterPins(require('../server/seed-data').seedData().state.users), 1);
+  assert.equal(await store.checkStaffPin('u1', '000000'), true);
 }));
 
 test('orders round-trip and get numbered per outlet per day', () => withServer(async ({ get, post }) => {

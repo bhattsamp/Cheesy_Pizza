@@ -26,14 +26,14 @@
       (del[n]||[]).forEach(k=>{k=String(k);if(M.c[n][k]){delete M.c[n][k];writes.push(['rec_'+n+'/'+enc(k),null])}});
       const items=up[n];if(!items)continue;
       const ents=Array.isArray(items)?items.map(o=>[o[spec.key],o]):Object.entries(items);
-      for(const [k0,obj] of ents){const k=String(k0);const old=M.c[n][k];const {pin,_newPin,...rest}=obj;const d={...clone(rest),_pos:old?old._pos:newPos()};
+      for(const [k0,obj] of ents){const k=String(k0);const old=M.c[n][k];const {pin,_newPin,pinOld,...rest}=obj;const d={...clone(rest),_pos:old?old._pos:newPos()};
         if(n==='extras'&&d.items)d.items=d.items.map(({from,...it})=>it);
-        if(spec.pin){if(_newPin)d._pin=String(_newPin);else if(pin&&old&&old._pin)d._pin=old._pin}
+        if(spec.pin){if(_newPin&&(n!=='users'||/^\d{6}$/.test(String(_newPin))))d._pin=String(_newPin);else if(pin&&old&&old._pin)d._pin=old._pin}
         if(n==='orders'&&!old){const out=M.c.outlets[String(obj.outletId)];if(out&&obj.date){const key=obj.outletId+'|'+obj.date;seq[key]=(seq[key]||0)+1;const dp=String(obj.date).split('-');const no=out.code+'-'+dp[2]+dp[1]+dp[0].slice(2)+'-'+String(seq[key]).padStart(3,'0');if(no!==obj.no){d.no=no;ren[k]=no}}}
         M.c[n][k]=d;writes.push(['rec_'+n+'/'+enc(k),d])}}
     M.v++;return {prev:M.v-1,version:M.v,renumbered:ren,seq}}
   function read(n){const spec=SPECS[n];const docs=Object.entries(M.c[n]).sort((a,b)=>a[1]._pos-b[1]._pos);
-    const toApp=d=>{const {_pos,_pin,...o}=clone(d);if(spec.pin&&_pin)o.pin=true;return o};
+    const toApp=d=>{const {_pos,_pin,...o}=clone(d);if(spec.pin&&_pin)o.pin=true;if(n==='users'&&_pin&&_pin.length!==6)o.pinOld=true;return o};
     return spec.map?Object.fromEntries(docs.map(([k,d])=>[k,toApp(d)])):docs.map(([,d])=>toApp(d))}
   function state(){const st={};COLS.forEach(n=>st[n]=read(n));st.seq=seqMap();st.config=M.cfg;return {version:M.v,demoPending:M.demo,state:st}}
   function seedWrites(){const data=seedData();M.cfg={categories:data.categories,orderTypes:data.orderTypes,payModes:data.payModes,...data.config};M.demo=true;
@@ -87,7 +87,7 @@
     if(path==='state')return ok(state());
     if(path==='version')return ok({version:M.v});
     if(path==='sync'){const w=[];const r=apply(body,w);try{await save(w)}catch(e){return bad(e&&e.code==='quota_exceeded'?507:403,e&&e.code==='quota_exceeded'?'The shop database is full':'You can view this shop but not change it')}return ok(r)}
-    if(path==='auth/staff'){const s=M.c.users[String(body.id)];return ok({ok:!!s&&s._pin===String(body.pin)})}
+    if(path==='auth/staff'){const s=M.c.users[String(body.id)];const pn=String(body.pin==null?'':body.pin),was=!!s&&!!s._pin&&s._pin.length!==6;const good=!!s&&s._pin===pn&&(was?/^\d{4}$/.test(pn):/^\d{6}$/.test(pn));return ok(good&&was?{ok:true,change:true}:{ok:good})}
     if(path==='auth/customer'){const c=M.c.customers[String(body.phone)];return ok({ok:!!c&&c._pin===String(body.pin)})}
     if(path==='images'){let d=String(body.data||'');if(!/^data:image\/(jpeg|png|webp);base64,/.test(d))return bad(400,'Send a JPEG, PNG or WebP image');
       try{d=await shrink(d,M.shared?160000:4.2e6)}catch(e){return bad(413,'Image is too big')}return ok({url:d})}
