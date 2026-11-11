@@ -4155,8 +4155,8 @@ function vNew(){
       </div>
       <div class="sec tkcust">
         ${zom?`<div class="field"><label for="pos-zid">Zomato order ID</label><input class="inp num" id="pos-zid" value="${esc(P.zid)}" placeholder="e.g. 5123456789"></div>`:''}
-        <div class="row"><div class="field grow"><label for="pos-ph">Mobile${zom?' (optional)':needPhone()?' *':''}</label><input class="inp num" id="pos-ph" inputmode="numeric" maxlength="10" value="${esc(P.phone)}" placeholder="Mobile · 10 digits"></div>
-        <div class="field grow"><label for="pos-nm">Name${zom?' (optional)':''}</label><input class="inp" id="pos-nm" value="${esc(P.name)}" placeholder="Customer name"></div></div>
+        <div class="row"><div class="field grow"><label for="pos-ph">Mobile${needPhone()?' *':' (optional)'}</label><input class="inp num" id="pos-ph" inputmode="numeric" maxlength="10" value="${esc(P.phone)}" placeholder="Mobile · 10 digits"></div>
+        <div class="field grow"><label for="pos-nm">Name${needName()?' *':zom?' (optional)':''}</label><input class="inp" id="pos-nm" value="${esc(P.name)}" placeholder="Customer name"></div></div>
         ${(()=>{const lv=posLt(),o0={outletId:S.cur};return `<button class="btn sm ltbtn${lv===2?' l2':''}" data-act="pos-lt" aria-pressed="${lv>0}" title="Tap to change: Off › ${esc(ltName(o0,1))} › ${esc(ltName(o0,2))} › Off">${lv?'★ '+esc(ltName(o0,lv)):esc(ltName(o0,1))+': Off'}</button>`})()}
         <div id="custbox">${custBox(ci)}</div>
         ${P.type==='dine'?tablePicker(P):''}
@@ -4227,7 +4227,9 @@ function openPay(){
   });
   if(P.pay==='cash')setTimeout(()=>document.getElementById('pos-given')?.focus(),50);
 }// Cashiers must enter the customer's mobile, so every bill can be checked later
-const needPhone=()=>staff()?.role==='cashier'&&U.pos.type!=='zomato';
+// Dine-in and takeaway: the customer's name is required and the mobile number optional. A cashier's delivery still needs the number.
+const needPhone=()=>staff()?.role==='cashier'&&U.pos.type==='delivery';
+const needName=()=>['dine','takeaway'].includes(U.pos.type);
 function printText(txt,o){if(btp())return btPrint(txt,o&&o.drawer);const r=document.getElementById('printRoot');r.innerHTML=`<pre>${esc(txt)}</pre>`;try{window.print()}catch(_){}}
 /* Admin app: bills and KOTs go straight to the receipt printer (Bluetooth or USB, chosen once, kept
    on this device), and cash payments open the cash drawer plugged into that printer. The website
@@ -4340,6 +4342,7 @@ function posGo(kind){
   if(!P.cart.length&&!(run&&kind!=='kot'&&kind!=='save'))return;
   if(P.phone&&P.phone.length!==10){toast('Mobile number should be 10 digits');return}
   if(!run){
+    if(needName()&&!P.name.trim()){toast('Enter the customer name');document.getElementById('pos-nm')?.focus();return}
     if(needPhone()&&P.phone.length!==10){toast('Enter the customer mobile number');document.getElementById('pos-ph')?.focus();return}
     if(P.type==='zomato'&&!P.zid.trim()){toast('Enter the Zomato order ID');document.getElementById('pos-zid')?.focus();return}
     if(P.type==='delivery'&&!P.address.trim()){toast('Add the delivery address');return}
