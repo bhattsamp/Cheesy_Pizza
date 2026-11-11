@@ -255,6 +255,9 @@ textarea.inp{resize:vertical}
 .board{position:fixed;inset:0;z-index:70}
 /* Customer order display (Counter → Open customer display): Preparing | Please collect */
 #obs{position:fixed;inset:0;z-index:9999}
+#ptr{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 6px);z-index:10000;width:40px;height:40px;border-radius:50%;background:#fff;color:var(--teal,#1a93a8);box-shadow:0 4px 14px rgba(0,0,0,.2);display:grid;place-items:center;opacity:0;transform:translate(-50%,-50px);pointer-events:none}
+#ptr svg{width:22px;height:22px}#ptr.go{background:var(--teal,#1a93a8);color:#fff}#ptr.spin{opacity:1!important;transform:translate(-50%,40px)!important;animation:ptrspin .7s linear infinite}
+@keyframes ptrspin{to{rotate:360deg}}
 .ob{position:absolute;inset:0;display:grid;grid-template-rows:auto 1fr auto;gap:2.2vh;padding:2.6vh 2.6vw;padding-top:calc(2.6vh + env(safe-area-inset-top,0px));background:radial-gradient(circle at 70% 30%,#14606e,#0b3a43 72%);color:#fff;font-family:'Baloo Bhai 2',system-ui,sans-serif;overflow:hidden}
 .ob-h{display:flex;align-items:center;gap:1.6vw}.ob-h .grow{flex:1}
 .ob-logo{height:clamp(54px,10vh,120px)}
@@ -2489,7 +2492,7 @@ const APP_LINK='https://github.com/bhattsamp/Cheesy_Pizza/releases/download/andr
 const APP_ROLE=(/CheesyApp\/(customer|admin)/.exec(navigator.userAgent)||[])[1]||null;
 // Each outlet's staff link keeps its own login on this device, so two outlet tabs never log each other in or out
 const LKEY='cheesy_local_v1'+((location.pathname.match(/^\/staff\/([^\/?#]+)/)||[])[1]?':'+decodeURIComponent(location.pathname.match(/^\/staff\/([^\/?#]+)/)[1]).toLowerCase():'');
-const LOCAL_KEYS=['cur','mode','me','staffId'];
+const LOCAL_KEYS=['cur','mode','me','staffId','pick']; // pick: the outlet last chosen by hand, and on which staff link
 const SYNCED=['sizes','outlets','menu','addons','offers','combos','extras','cats','users','customers','orders','upialerts'];
 const MAPS={addons:1,customers:1};
 let S,VER=0,SNAP={},pendingFlush=null,inFlight=0,syncQ=Promise.resolve();
@@ -2830,7 +2833,7 @@ function render(){
   const ks={};app.querySelectorAll('[data-ks]').forEach(el=>{ks[el.dataset.ks]=[el.scrollTop,el.scrollLeft]});
   app.innerHTML=S.mode==='public'?pubNav()+(U.pubView==='account'&&me()?renderAccount():U.pubView==='auth'&&!me()?renderAuth():U.pubView==='home'?renderHome():renderPublic()):renderPOS();renderAcct();
   app.querySelectorAll('[data-ks]').forEach(el=>{const v=ks[el.dataset.ks];if(v){el.scrollTop=v[0];el.scrollLeft=v[1]}});
-  renderChrome();renderBoard();renderRing();afterRender();navTrack();sideBar();fitTicket();csSend();
+  renderChrome();renderBoard();renderRing();afterRender();navTrack();sideBar();fitTicket();catBar();csSend();
 }
 /* ===== Customer screen: a second window on the till's front monitor that the customer faces.
    It shows the bill as the cashier builds it, the UPI QR with the amount at payment, and a thank-you
@@ -2879,6 +2882,14 @@ function sideBar(){
   let sd=app.querySelector('.pos .side');if(sd&&!sd.offsetHeight)sd=null;document.documentElement.style.setProperty('--navh',(sd?sd.offsetHeight:0)+'px');
   const on=sd&&sd.querySelector('[aria-current="page"]');if(!on||U.sideFor===U.pos.tab)return;U.sideFor=U.pos.tab;
   const l=on.offsetLeft,r=l+on.offsetWidth;if(l<sd.scrollLeft||r>sd.scrollLeft+sd.clientWidth)sd.scrollLeft=Math.max(0,l-sd.clientWidth/2+on.offsetWidth/2);
+}
+// Phone category bar on New order: keeps its scroll across re-renders, and a tapped category slides to the middle
+function catBar(){
+  const nav=app.querySelector('.poscats');if(!nav||!nav.offsetWidth)return;const on=nav.querySelector('[aria-pressed="true"]');
+  const k=U.pos.cat+'|'+U.pos.tab;if(!on||U.catFor===k)return;const first=U.catFor===undefined;U.catFor=k;
+  const nr=nav.getBoundingClientRect(),br=on.getBoundingClientRect();
+  const to=Math.max(0,nav.scrollLeft+(br.left-nr.left)-(nav.clientWidth-br.width)/2);
+  nav.scrollTo({left:to,behavior:first?'auto':'smooth'});
 }
 function fitTicket(){
   const tk=document.getElementById('ticket');if(!tk)return;
@@ -4117,7 +4128,7 @@ function vNew(){
   <div class="neworder"${U.tkw?` style="--tkw:${U.tkw}px"`:''}>
     <div class="menucol">
       <div class="mbar card">
-        <nav class="cats poscats" aria-label="Categories">${catOff('combo')?'':`<button data-act="poscat" data-v="combo" aria-pressed="${P.cat==='combo'&&!P.q}">Combos</button>`}${CATS.map(([k,nm])=>`<button data-act="poscat" data-v="${k}" aria-pressed="${P.cat===k&&!P.q}">${nm}</button>`).join('')}</nav>
+        <nav class="cats poscats" aria-label="Categories" data-ks="poscats">${catOff('combo')?'':`<button data-act="poscat" data-v="combo" aria-pressed="${P.cat==='combo'&&!P.q}">Combos</button>`}${CATS.map(([k,nm])=>`<button data-act="poscat" data-v="${k}" aria-pressed="${P.cat===k&&!P.q}">${nm}</button>`).join('')}</nav>
       </div>
       <nav class="card catrail" aria-label="Item categories" data-ks="catrail">${catOff('combo')?'':`<button data-act="poscat" data-v="combo" aria-pressed="${P.cat==='combo'&&!P.q}"><span>Combos</span><span class="cn num">${liveCombos().length}</span></button>`}${CATS.map(([k,nm])=>`<button data-act="poscat" data-v="${k}" aria-pressed="${P.cat===k&&!P.q}"><span>${nm}</span><span class="cn num">${S.menu.filter(m=>m.cat===k).length}</span></button>`).join('')}</nav>
       <div class="tiles">${items.map((m,i)=>posTile(m,i)).join('')||'<div class="empty">No items</div>'}</div>
@@ -5775,7 +5786,7 @@ document.addEventListener('change',e=>{
   if(t.dataset.al&&staff()?.role==='owner'){const o=S.outlets.find(x=>x.id===t.dataset.al);const c=alertCfg(o);c[t.dataset.f]=t.type==='checkbox'?t.checked:t.dataset.f==='vol'?+t.value:t.value;o.alert=c;save();render();if(t.dataset.f!=='loop')playTone(o);toast('Alert saved')}
   if(t.dataset.alsnd&&t.files[0]&&staff()?.role==='owner'){const o=S.outlets.find(x=>x.id===t.dataset.alsnd),f=t.files[0];
     if(f.size>1048576){toast('That sound is over 1 MB. Pick a shorter one.')}else{const r=new FileReader();r.onload=()=>{o.alertSound=r.result;o.alert={...alertCfg(o),tone:'custom'};save();render();playTone(o);toast('Ringtone saved')};r.readAsDataURL(f)}}
-  if(t.id==='outletSel'){S.cur=t.value;save();pushOutlet();U.pos.cart=[];render();toast('Switched to '+cur().name)}
+  if(t.id==='outletSel'){S.cur=t.value;S.pick={link:STAFF_CODE,id:t.value};save();pushOutlet();U.pos.cart=[];render();toast('Switched to '+cur().name)}
   if(t.id==='od-date'&&t.value){U.ordersDate=t.value===today()?null:t.value;render()}
   if(t.id==='tb-date'&&t.value){U.tblDate=t.value>=today()?null:t.value;render()}
   if(t.id==='sd-date'&&t.value){U.salesDate=t.value===today()?null:t.value;render()}
@@ -6573,6 +6584,21 @@ document.addEventListener('touchstart',e=>{const t=e.target.closest('.ticker');i
 document.addEventListener('touchend',e=>{const t=document.querySelector('.ticker.hold');if(t){clearTimeout(tickT);tickT=setTimeout(()=>{U.tickHold=false;document.querySelectorAll('.ticker.hold').forEach(x=>x.classList.remove('hold'))},2500)}},{passive:true});
 // After the invoice goes out, the thank-you button becomes the main one
 document.addEventListener('click',e=>{const a=e.target.closest('[data-wa1]');if(!a)return;const b=a.parentNode.querySelector('[data-wa2]');a.classList.remove('pri');a.textContent='✓ Invoice sent';if(b)b.classList.add('pri')});
+/* Pull to refresh in the Android apps: on any screen, pull down from the very top and let go to reload.
+   The app comes back on the same screen. Browsers have their own, so this only runs inside the apps. */
+(function pullToRefresh(){
+  if(!APP_ROLE||CS_MODE||OB_MODE)return;
+  const el=document.createElement('div');el.id='ptr';el.setAttribute('aria-hidden','true');el.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>';document.body.appendChild(el);
+  const GO=80;let y0=null,d=0,busy=false;
+  const scrolledUp=t=>{for(let n=t;n&&n!==document.body;n=n.parentElement)if(n.scrollTop>0&&n.scrollHeight>n.clientHeight)return true;return false};
+  const show=v=>{el.style.transform=`translate(-50%,${Math.min(v,GO*1.4)-50}px) rotate(${v*3}deg)`;el.style.opacity=Math.min(1,v/GO);el.classList.toggle('go',v>=GO)};
+  document.addEventListener('touchstart',e=>{y0=null;if(busy||e.touches.length!==1||window.scrollY>0||mroot.innerHTML||U.drawer||document.querySelector('#boardRoot:not(:empty)'))return;
+    if(scrolledUp(e.target))return;y0=e.touches[0].clientY;d=0},{passive:true});
+  document.addEventListener('touchmove',e=>{if(y0===null)return;d=(e.touches[0].clientY-y0)*0.5;if(d<=0||window.scrollY>0){show(0);return}show(d)},{passive:true});
+  document.addEventListener('touchend',()=>{if(y0===null)return;y0=null;
+    if(d>=GO){busy=true;el.classList.add('spin');try{sessionStorage.setItem('cp-ptr',JSON.stringify({tab:U.pos.tab,pv:U.pubView,acc:U.accTab,cat:U.pos.cat}))}catch(_){}setTimeout(()=>location.reload(),250)}
+    else{el.style.transition='transform .2s,opacity .2s';show(0);setTimeout(()=>el.style.transition='',220)}d=0},{passive:true});
+})();
 (async function boot(){
   let loc={};try{loc=JSON.parse(localStorage.getItem(LKEY))||{}}catch(_){}
   let d;try{d=await api('/api/state')}catch(_){
@@ -6582,7 +6608,11 @@ document.addEventListener('click',e=>{const a=e.target.closest('[data-wa1]');if(
   migrate();
   if(location.hash==='#pos'||location.hash==='#public')S.mode=location.hash.slice(1);
   if(STAFF_PATH){S.mode='pos';document.body.classList.add('staffurl');const o=outletByCode(STAFF_CODE);
-    if(o&&isLive(o)){S.cur=o.id;U.lockOutlet=o.id;const su=staff();if(su&&!worksAt(su,o.id))S.staffId=null}else if(STAFF_CODE)S.staffId=null;save()}
+    // The link's outlet, unless the outlet was changed by hand on this same link (an owner switching outlets): that choice survives a refresh
+    const pk=S.pick,su0=staff(),keep=pk&&pk.link===STAFF_CODE&&S.outlets.some(x=>x.id===pk.id&&isLive(x))&&su0&&(su0.role==='owner'||worksAt(su0,pk.id));
+    if(o&&isLive(o)){S.cur=keep?pk.id:o.id;U.lockOutlet=o.id;const su=staff();if(su&&!worksAt(su,o.id))S.staffId=null}else if(STAFF_CODE)S.staffId=null;save()}
+  try{const k=JSON.parse(sessionStorage.getItem('cp-ptr')||'null');sessionStorage.removeItem('cp-ptr');
+    if(k){const su=staff();if(k.tab&&su&&ROLE_TABS[su.role].includes(k.tab))U.pos.tab=k.tab;if(k.pv)U.pubView=k.pv;if(k.acc)U.accTab=k.acc;if(k.cat)U.pos.cat=k.cat}}catch(_){}
   render();startPolling();introDone();
   if(S.staffId&&pushTok())pushSetup(); // keeps this phone's alert sign-up current
   cpushSetup();
