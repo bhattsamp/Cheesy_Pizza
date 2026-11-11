@@ -5470,7 +5470,7 @@ function vOutlets(){const own=staff()?.role==='owner';
   return head+`
   <div class="grid">${(own?liveOutlets():liveOutlets().filter(o=>worksAt(staff(),o.id))).map(o=>{const t=S.orders.filter(x=>x.outletId===o.id&&x.date===today()&&x.status!=='cancelled');return `<div class="card" style="padding:14px;display:flex;flex-direction:column;gap:8px">
     <div class="row"><span class="chip t num">Code ${esc(o.code)}</span>${isMainOutlet(o)?'<span class="chip c">Main</span>':''}${o.id===cur().id?'<span class="chip ready">Current</span>':''}</div>
-    ${own?`<div class="row small" style="gap:6px;flex-wrap:wrap"><span class="muted">Staff login:</span><a class="num" href="${esc(staffLink(o))}" target="_blank" rel="noopener">${esc(staffLink(o).replace(/^https?:\/\//,''))}</a><button class="btn sm" data-act="copy-staff-link" data-v="${esc(staffLink(o))}">Copy</button></div>`:''}
+    ${own||staff()?.role==='oowner'?`<div class="row small" style="gap:6px;flex-wrap:wrap"><span class="muted">Staff login:</span><a class="num" href="${esc(staffLink(o))}" target="_blank" rel="noopener">${esc(staffLink(o).replace(/^https?:\/\//,''))}</a><button class="btn sm" data-act="copy-staff-link" data-v="${esc(staffLink(o))}">Copy</button></div>`:''}
     <div class="field"><label for="on-${o.id}">Name</label><input class="inp" id="on-${o.id}" data-ou="${o.id}" data-f="name" value="${esc(o.name)}"></div>
     <div class="field"><label for="oa-${o.id}">Full address (shown on bills)</label><input class="inp" id="oa-${o.id}" data-ou="${o.id}" data-f="area" value="${esc(o.area)}" ${own?'':'readonly'}></div>
     <div class="row"><div class="field grow"><label for="op-${o.id}">Phone</label><input class="inp num" id="op-${o.id}" data-ou="${o.id}" data-f="phone" value="${esc(o.phone)}"></div>
@@ -6226,7 +6226,7 @@ document.addEventListener('change',e=>{const t=e.target;if(!t.dataset||!t.datase
 // Staff tree: Admin (every outlet) > Owner (only their own outlets) > Manager, Cashier, Kitchen, Rider at each outlet
 const ROLES={owner:'Admin',oowner:'Owner',manager:'Manager',cashier:'Cashier',kitchen:'Kitchen',rider:'Rider'};
 const ROLE_ORDER=['owner','oowner','manager','cashier','kitchen','rider'];
-const ROLE_TABS={owner:TABS.map(t=>t[0]),oowner:TABS.map(t=>t[0]).filter(k=>k!=='staff'&&k!=='review'&&k!=='display'),manager:TABS.map(t=>t[0]).filter(k=>k!=='staff'&&k!=='review'&&k!=='display'),cashier:['new','counter','orders','tables','cust','stock'],kitchen:['kitchen','counter'],rider:['trips']};
+const ROLE_TABS={owner:TABS.map(t=>t[0]),oowner:TABS.map(t=>t[0]).filter(k=>k!=='review'&&k!=='display'),manager:TABS.map(t=>t[0]).filter(k=>k!=='staff'&&k!=='review'&&k!=='display'),cashier:['new','counter','orders','tables','cust','stock'],kitchen:['kitchen','counter'],rider:['trips']};
 function ensureCust(ph,name){const c=S.customers[ph]||(S.customers[ph]={phone:ph,name:name||'',due:0,coins:0});
   c.wallet=c.wallet||0;c.tx=c.tx||[];c.myCodes=c.myCodes||[];c.ref=c.ref||('CP'+ph.slice(-5));if(name&&!c.name)c.name=name;return c}
 function migrate(){
@@ -6516,7 +6516,7 @@ function renderLogin(){
     <div class="dots" aria-label="PIN entered">${[0,1,2,3].map(i=>`<i class="${L.buf.length>i?'on':''}"></i>`).join('')}</div>
     ${L.err?`<div class="msg-bad" style="text-align:center">${esc(L.err)}</div>`:''}
     <div class="keypad">${['1','2','3','4','5','6','7','8','9','C','0','←'].map(k=>`<button data-act="lg-key" data-v="${k}" aria-label="${k==='C'?'Clear':k==='←'?'Delete':k}">${k}</button>`).join('')}</div>
-    ${ADMIN_PATH?'':'<div class="demo">Demo PINs · Cashier 1111 · Kitchen 2222. The admin can change staff and PINs in the Staff screen.</div>'}
+    ${ADMIN_PATH?'':'<div class="demo">Demo PINs · Cashier 1111 · Kitchen 2222. The admin or outlet owner can change staff and PINs in the Staff screen.</div>'}
     <a class="lg-alt" href="${ADMIN_PATH?'/staff':'/admin'}">${ADMIN_PATH?'← Staff login':'Admin login'}</a></div></div>`;
 }
 function lgKey(k){
@@ -6572,7 +6572,7 @@ function vStaff(){
     return `<div class="st-o"><div class="st-oh"><span class="st-ico" aria-hidden="true">🏪</span><b>${esc(o.name)}</b><span class="small muted">${ppl.length} ${ppl.length===1?'person':'people'}</span><span class="grow"></span><button class="btn sm" data-act="sf-add" data-o="${o.id}">+ Add staff</button></div>
       <div class="st-kids"><div class="st-g"><div class="st-gh">Owner</div>${oo.map(u=>staffRow(u,meU)).join('')||'<div class="small muted st-none">No owner yet. Tap + Add staff and pick Owner.</div>'}</div>
       <div class="st-kids2">${['manager','cashier','kitchen','rider'].map(grp).join('')||'<div class="small muted st-none">No staff yet.</div>'}</div></div></div>`};
-  return `<div class="ph1"><h2>Staff & logins</h2><span class="muted small">${main?'The admin sees every outlet. An owner sees only their own outlets. Only the admin can change staff. Tap a person to change their name, role, outlets or PIN.':'You run the staff of your outlets. Tap a person to change their name, role or PIN.'}</span></div>
+  return `<div class="ph1"><h2>Staff & logins</h2><span class="muted small">${main?'The admin sees every outlet. An owner sees only their own outlets. Each owner manages the staff of their own outlet. Tap a person to change their name, role, outlets or PIN.':'You run the staff of your outlets. Tap a person to change their name, role or PIN.'}</span></div>
   <div class="st-tree">
     ${main?`<div class="st-root"><div class="st-oh"><span class="st-ico" aria-hidden="true">👑</span><b>Admin</b><span class="small muted">All outlets</span><span class="grow"></span><button class="btn sm" data-act="sf-add" data-o="" data-r="owner">+ Add</button></div><div class="st-kids">${owners.map(u=>staffRow(u,meU)).join('')}</div></div>`:''}
     <div class="${main?'st-outs':'st-outs st-top'}">${outs.map(outletNode).join('')||'<div class="empty small">No outlets are ticked for you yet. Ask the main owner.</div>'}</div>
