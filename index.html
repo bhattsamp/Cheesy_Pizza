@@ -801,7 +801,9 @@ body:has(.addpop){overflow:hidden}
 .chip.r-owner{background:#f2b632;color:#3a2800}.chip.r-oowner{background:#6a4fc9;color:#fff}
 .st-roles{display:flex;flex-wrap:wrap;gap:6px}.st-roles button{padding:8px 12px;border-radius:10px;border:1.5px solid var(--line);background:var(--surface2);font:inherit;color:inherit;cursor:pointer}.st-roles button[aria-pressed="true"]{background:var(--teal,#1a93a8);border-color:var(--teal,#1a93a8);color:#fff}
 @media (max-width:600px){.st-outs{margin-left:6px;padding-left:8px}.st-kids,.st-kids2{margin-left:4px;padding-left:8px}}
-.kt .kwait{gap:8px}.kt .ktools{gap:6px}.kt .kwait .btn{flex:1}
+.kt .kwait{gap:8px}
+.kt .kr1{align-items:center;gap:6px;flex-wrap:nowrap}.kt .kr1 .left{font-size:18px;white-space:nowrap}.kt .kr1 .no .np{display:inline;font-size:12px;margin:0 2px 0 0}.kt .kr1 .no{font-size:26px}
+.kt .kr2{align-items:center;gap:6px;flex-wrap:nowrap}.kt .kr2 .grow{min-width:0;line-height:1.25}.kt .kr2 .btn{flex:none;padding:5px 9px;min-height:0}.kt .ktools{gap:6px}.kt .kwait .btn{flex:1}
 .kt .left{font-family:var(--display);font-weight:800;font-size:20px;color:hsl(var(--h) 70% 34%)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .kt .left{color:hsl(var(--h) 70% 65%)}}
 :root[data-theme="dark"] .kt .left{color:hsl(var(--h) 70% 65%)}
@@ -4518,9 +4520,10 @@ function kCard(o,where,foot){const kit=where==='kitchen';const mins=Math.floor((
   const h=o.status==='placed'?265:o.status==='out'?200:Math.round(130*Math.max(0,Math.min(1,1-mins/w)));
   return `<div class="kt ${o.status==='placed'?'placed':''} ${live&&left<0?'late':''} ${kit?'':'kc'}" style="--h:${h}" ${kit&&o.status==='preparing'?`data-act="ktap" data-id="${o.id}"`:''}>
     <div class="kfoot ktop"><span class="kwho">${esc(kName(o))}${ltChip(o)}</span><span class="num">${esc(o.customer.phone?fmtPhone(o.customer.phone):'—')}</span><span>${TYPES[o.type]}${o.table?' · T'+esc(o.table):''}</span><span class="${o.paid?'pd':'bk'}">${o.paid?'Payment done':'Baki'}</span></div>
-    <div class="row"><span class="no num">${noHtml(o.no)}</span><span class="grow"></span>${kit?`<span class="chip ${o.type==='zomato'?'r':'t'}">${TYPES[o.type]}${o.table?' · T'+esc(o.table):''}</span>`:`<span class="chip ${o.status}">${statusName(o.status,o.type)}</span>`}</div>
-    <div class="row"><span class="small muted num grow">${fmtTime(o.ts)} · ${mins<1?'just now':mins+' min'}${o.source==='online'?' · online':''}${o.zomatoId?' · Zomato '+esc(o.zomatoId):''}</span>${live?`<span class="left num">${leftText(left)}</span>`:''}${o.status!=='out'&&!(kit&&(o.status==='preparing'||o.status==='placed'))?`<button class="btn sm" data-act="set-wait" data-id="${o.id}" title="Change waiting time">⏱ ${w} min</button>`:''}</div>
-    ${kit&&(o.status==='preparing'||o.status==='placed')?`<div class="row kwait"><button class="btn sm" data-act="set-wait" data-id="${o.id}" title="Change waiting time">⏱ ${w} min</button><button class="btn sm ok" data-act="wait-5" data-id="${o.id}" title="Add 5 minutes to the waiting time (tap again for more)">+5 min</button></div><div class="row ktools">${obHideBtn(o)}</div>`:''}
+    ${kit?`<div class="row kr1"><span class="no num">${noHtml(o.no)}</span><span class="grow"></span>${live?`<span class="left num">${leftText(left)}</span>`:`<span class="chip ${o.type==='zomato'?'r':'t'}">${TYPES[o.type]}${o.table?' · T'+esc(o.table):''}</span>`}</div>
+    <div class="row kr2"><span class="small muted num grow">${fmtTime(o.ts)} · ${mins<1?'now':mins+' min'}${o.source==='online'?' · online':''}${o.zomatoId?' · Z '+esc(o.zomatoId):''}</span>${o.status==='preparing'||o.status==='placed'?`<button class="btn sm" data-act="set-wait" data-id="${o.id}" title="Change waiting time">⏱ ${w}</button><button class="btn sm ok" data-act="wait-5" data-id="${o.id}" title="Add 5 minutes to the waiting time (tap again for more)">+5</button>${obHideBtn(o,true)}`:''}</div>`
+    :`<div class="row"><span class="no num">${noHtml(o.no)}</span><span class="grow"></span><span class="chip ${o.status}">${statusName(o.status,o.type)}</span></div>
+    <div class="row"><span class="small muted num grow">${fmtTime(o.ts)} · ${mins<1?'just now':mins+' min'}${o.source==='online'?' · online':''}${o.zomatoId?' · Zomato '+esc(o.zomatoId):''}</span>${live?`<span class="left num">${leftText(left)}</span>`:''}${o.status!=='out'?`<button class="btn sm" data-act="set-wait" data-id="${o.id}" title="Change waiting time">⏱ ${w} min</button>`:''}</div>`}
     ${o.scheduled?`<span class="chip c" style="align-self:flex-start">Scheduled for ${esc(o.scheduled)}</span>`:''}
     ${live?`<div class="pbar" title="Waiting time ${w} min"><i style="width:${Math.min(100,mins/w*100)}%;background:hsl(${h} 65% 42%)"></i></div>`:''}
     ${o.address&&!kit?`<div class="small muted">${esc(o.address)}</div>`:''}
@@ -4593,7 +4596,7 @@ function vCounter(){
    to the TV or second monitor; that window loads the shop's orders itself every 5 seconds, so it keeps
    working while the till moves to other screens. Without pop-ups it opens full screen on the till. */
 // Kitchen or counter can hide an order from the customer display (o.obHide) and show it again
-const obHideBtn=o=>`<button class="btn sm ${o.obHide?'pri':''} kobh" data-act="ob-hide" data-id="${o.id}" aria-pressed="${!!o.obHide}" title="${o.obHide?'Hidden from the customer display. Tap to show it again':'Hide this order from the customer display'}">${o.obHide?'🙈 Hidden on display':'👁 Hide on display'}</button>`;
+const obHideBtn=(o,icon)=>`<button class="btn sm ${o.obHide?'pri':''} kobh" data-act="ob-hide" data-id="${o.id}" aria-pressed="${!!o.obHide}" aria-label="${o.obHide?'Show on customer display':'Hide on customer display'}" title="${o.obHide?'Hidden from the customer display. Tap to show it again':'Hide this order from the customer display'}">${o.obHide?'🙈'+(icon?'':' Hidden on display'):'👁'+(icon?'':' Hide on display')}</button>`;
 const obShortNo=no=>{const m=/-(\d{2,})$/.exec(no||'');return m?m[1]:(no||'—')};
 function obName(o){
   const n=(o.customer&&o.customer.name||'').trim().replace(/\s+/g,' ');
