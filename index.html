@@ -784,7 +784,7 @@ body:has(.addpop){overflow:hidden}
 .addto{background:var(--cheese-soft);color:var(--cheese-ink);border-radius:10px;padding:8px 10px;font-weight:700;font-size:14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .kt{--h:130;border-color:hsl(var(--h) 65% 42%);background:hsl(var(--h) 70% 45% / .10)}
 .kt.placed{--h:265}
-.kt .kwait{gap:8px}.kt .kwait .btn{flex:1}
+.kt .kwait{gap:8px}.kt .kback{align-self:flex-start}.kt .kwait .btn{flex:1}
 .kt .left{font-family:var(--display);font-weight:800;font-size:20px;color:hsl(var(--h) 70% 34%)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .kt .left{color:hsl(var(--h) 70% 65%)}}
 :root[data-theme="dark"] .kt .left{color:hsl(var(--h) 70% 65%)}
@@ -4548,7 +4548,7 @@ function vCounter(){
   const riders=cur().riders||[];const busy=new Set(mine.filter(o=>o.status==='out').map(o=>o.rider?.name));
   // Everything the counter acts on, in one list: ready pickups and dine-in, deliveries waiting or ready to send, riders on the road
   const list=kSorted(mine.filter(o=>(o.status==='ready'&&o.type!=='delivery')||(o.type==='delivery'&&['preparing','ready','out'].includes(o.status))));
-  const foot=o=>{const pay=collectRow(o);
+  const foot=o=>{const pay=collectRow(o)+(o.status==='ready'?`<button class="btn sm kback" data-act="back-kitchen" data-id="${o.id}" title="Marked ready by mistake? Send it back to the kitchen">↩ Back to kitchen</button>`:'');
     if(o.status==='ready'&&o.type!=='delivery')return pay+`<button class="btn ok" data-act="handover" data-id="${o.id}">${o.type==='dine'?'Served to table':o.type==='zomato'?'Given to Zomato rider':'Handed to customer'}</button>`;
     if(o.status==='ready')return pay+`<div class="row"><select class="inp grow" id="rs-${o.id}" aria-label="Rider">${riders.map(r=>`<option value="${esc(r.name)}">${esc(r.name)}${busy.has(r.name)?' (on a trip)':''}</option>`).join('')}</select><button class="btn pri" data-act="dispatch" data-id="${o.id}" ${riders.length?'':'disabled'}>Send out</button></div>${riders.length?'':'<div class="small muted">Add riders on the Outlets screen.</div>'}`;
     if(o.status==='out'){const m=Math.floor((Date.now()-(o.times.out||Date.now()))/60000);return pay+`<div class="small">Rider <b>${esc(o.rider?.name||'—')}</b> · left ${m} min ago · ETA ${Math.max(1,RIDE_MIN-m)} min</div><div class="row"><button class="btn ok grow" data-act="delivered" data-id="${o.id}">Mark delivered</button><button class="btn" data-act="track" data-id="${o.id}">Live view</button></div>`}
@@ -5559,6 +5559,8 @@ document.addEventListener('click',e=>{
       const amt=balanceOf(o);settleOrder(o,el.dataset.v,0,null,cu);save();closeModal();toast(o.no+' · '+rs(amt)+' paid by '+PAY[el.dataset.v]);render();if(el.dataset.v==='cash')openDrawer();break}
     case 'ksort':U.kSort=el.dataset.v;try{localStorage.setItem('cp_ksort',U.kSort)}catch(e){}render();break;
     case 'kitem':{const o=find(el.dataset.id);const l=o.items[+el.dataset.i];l.kdone=!l.kdone;save();render();break}
+    // Marked ready by mistake: back into the kitchen's Preparing list (and off Please collect on the customer display)
+    case 'back-kitchen':{const o=find(el.dataset.id);if(o&&o.status==='ready'){o.status='preparing';o.times=o.times||{};delete o.times.ready;save();toast(o.no+' moved back to the kitchen');render()}break}
     case 'kready':{const o=find(el.dataset.id);if(o.status==='preparing'){setStatus(o,'ready');toast(o.no+' ready → counter');render()}break}
     case 'od-scope':U.ordersScope=el.dataset.v;render();break;
     case 'od-new':U.ordersNew=!U.ordersNew;render();break;
