@@ -222,7 +222,7 @@ function createApp(store) {
       require('stream').Readable.fromWeb(r.body).pipe(res);
     } catch (e) { console.error('APK download', e.message); res.status(502).send('Could not get the app right now. Please try again.'); }
   });
-  app.get(['/staff', '/staff/:outlet'], (req, res) => { res.set('X-Robots-Tag', 'noindex'); res.sendFile(path.join(ROOT, 'index.html')); });
+  app.get(['/admin', '/staff', '/staff/:outlet'], (req, res) => { res.set('X-Robots-Tag', 'noindex'); res.sendFile(path.join(ROOT, 'index.html')); });
 
   app.use((err, req, res, next) => { console.error(err); res.status(500).json({ error: 'Server error' }); });
   return app;

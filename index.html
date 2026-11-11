@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset=utf8><script>if(/^\/staff(\/|$)/.test(location.pathname))document.write('<base href="/">')</script><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><meta name="description" content="Cheesy Pizza, Anand: pure veg pizza on fresh, hand-stretched dough, with no mayonnaise in any product. Order online for delivery, takeaway or dine-in."><link rel="canonical" href="https://cheesypizza.online/"><meta name="theme-color" content="#1a93a8"><meta property="og:type" content="website"><meta property="og:site_name" content="Cheesy Pizza"><meta property="og:title" content="Cheesy Pizza · Serious cheese. Pure veg pizza in Anand."><meta property="og:description" content="Fresh dough, soft base, hand stretched, never any mayonnaise. Order online from Cheesy Pizza."><meta property="og:url" content="https://cheesypizza.online/"><meta property="og:image" content="https://cheesypizza.online/img/cheesyspecial.jpg"><meta name="twitter:card" content="summary">
+<!doctype html><html lang="en"><head><meta charset=utf8><script>if(/^\/(staff|admin)(\/|$)/.test(location.pathname))document.write('<base href="/">')</script><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><meta name="description" content="Cheesy Pizza, Anand: pure veg pizza on fresh, hand-stretched dough, with no mayonnaise in any product. Order online for delivery, takeaway or dine-in."><link rel="canonical" href="https://cheesypizza.online/"><meta name="theme-color" content="#1a93a8"><meta property="og:type" content="website"><meta property="og:site_name" content="Cheesy Pizza"><meta property="og:title" content="Cheesy Pizza · Serious cheese. Pure veg pizza in Anand."><meta property="og:description" content="Fresh dough, soft base, hand stretched, never any mayonnaise. Order online from Cheesy Pizza."><meta property="og:url" content="https://cheesypizza.online/"><meta property="og:image" content="https://cheesypizza.online/img/cheesyspecial.jpg"><meta name="twitter:card" content="summary">
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"Restaurant","name":"Cheesy Pizza","url":"https://cheesypizza.online/","image":"https://cheesypizza.online/img/cheesyspecial.jpg","telephone":"+91-7778043066","servesCuisine":["Pizza","Vegetarian"],"address":{"@type":"PostalAddress","streetAddress":"B/H Gopi Cinema, Maniyani Khad","addressLocality":"Anand","addressRegion":"Gujarat","addressCountry":"IN"},"openingHoursSpecification":[{"@type":"OpeningHoursSpecification","dayOfWeek":["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],"opens":"12:00","closes":"22:00"}]}</script></head><body>
 <script>/* In the Android apps, let Android keep the page clear of the status bar and navigation buttons */if(/CheesyApp\//.test(navigator.userAgent))document.querySelectorAll('meta[name=viewport]').forEach(m=>m.content='width=device-width,initial-scale=1')</script>
 <title>Cheesy Pizza · Pure Veg Pizza in Anand · Order Online</title>
@@ -486,6 +486,7 @@ html:has(#modalRoot:not(:empty)),html:has(#boardRoot:not(:empty)),html:has(#choo
 .refcard>.grow{min-width:170px}
 .refcode{font-family:ui-monospace,"Courier New",monospace;font-size:24px;font-weight:800;letter-spacing:.1em;color:var(--teal)}
 .bday{border-radius:18px;padding:14px 16px;background:linear-gradient(120deg,#fde2f3,#fdf1d3);color:#6a2a55;font-weight:700}
+.lg-alt{display:block;text-align:center;font-size:12px;color:var(--muted);margin-top:4px;text-decoration:none}.lg-alt:hover{text-decoration:underline}
 .demo{font-size:13px;color:var(--muted);background:var(--surface2);border-radius:10px;padding:8px 10px}
 @media (max-width:760px){.wgrid{grid-template-columns:1fr}.acct span.nm{display:none}}
 /* ===== v5 ===== */
@@ -5469,7 +5470,7 @@ function vOutlets(){const own=staff()?.role==='owner';
   return head+`
   <div class="grid">${(own?liveOutlets():liveOutlets().filter(o=>worksAt(staff(),o.id))).map(o=>{const t=S.orders.filter(x=>x.outletId===o.id&&x.date===today()&&x.status!=='cancelled');return `<div class="card" style="padding:14px;display:flex;flex-direction:column;gap:8px">
     <div class="row"><span class="chip t num">Code ${esc(o.code)}</span>${isMainOutlet(o)?'<span class="chip c">Main</span>':''}${o.id===cur().id?'<span class="chip ready">Current</span>':''}</div>
-    <div class="row small" style="gap:6px;flex-wrap:wrap"><span class="muted">Staff login:</span><a class="num" href="${esc(staffLink(o))}" target="_blank" rel="noopener">${esc(staffLink(o).replace(/^https?:\/\//,''))}</a><button class="btn sm" data-act="copy-staff-link" data-v="${esc(staffLink(o))}">Copy</button></div>
+    ${own?`<div class="row small" style="gap:6px;flex-wrap:wrap"><span class="muted">Staff login:</span><a class="num" href="${esc(staffLink(o))}" target="_blank" rel="noopener">${esc(staffLink(o).replace(/^https?:\/\//,''))}</a><button class="btn sm" data-act="copy-staff-link" data-v="${esc(staffLink(o))}">Copy</button></div>`:''}
     <div class="field"><label for="on-${o.id}">Name</label><input class="inp" id="on-${o.id}" data-ou="${o.id}" data-f="name" value="${esc(o.name)}"></div>
     <div class="field"><label for="oa-${o.id}">Full address (shown on bills)</label><input class="inp" id="oa-${o.id}" data-ou="${o.id}" data-f="area" value="${esc(o.area)}" ${own?'':'readonly'}></div>
     <div class="row"><div class="field grow"><label for="op-${o.id}">Phone</label><input class="inp num" id="op-${o.id}" data-ou="${o.id}" data-f="phone" value="${esc(o.phone)}"></div>
@@ -6223,9 +6224,9 @@ document.addEventListener('change',e=>{const t=e.target;if(!t.dataset||!t.datase
 
 /* ================= v4: accounts, wallet, staff login, fun ================= */
 // Staff tree: Main owner (every outlet) > Outlet owner (only their outlets, runs their staff) > Manager, Cashier, Kitchen, Rider at each outlet
-const ROLES={owner:'Main owner',oowner:'Outlet owner',manager:'Manager',cashier:'Cashier',kitchen:'Kitchen',rider:'Rider'};
+const ROLES={owner:'Admin',oowner:'Outlet owner',manager:'Manager',cashier:'Cashier',kitchen:'Kitchen',rider:'Rider'};
 const ROLE_ORDER=['owner','oowner','manager','cashier','kitchen','rider'];
-const ROLE_TABS={owner:TABS.map(t=>t[0]),oowner:TABS.map(t=>t[0]).filter(k=>k!=='review'&&k!=='display'),manager:TABS.map(t=>t[0]).filter(k=>k!=='staff'&&k!=='review'&&k!=='display'),cashier:['new','counter','orders','tables','cust','stock'],kitchen:['kitchen','counter'],rider:['trips']};
+const ROLE_TABS={owner:TABS.map(t=>t[0]),oowner:TABS.map(t=>t[0]).filter(k=>k!=='staff'&&k!=='review'&&k!=='display'),manager:TABS.map(t=>t[0]).filter(k=>k!=='staff'&&k!=='review'&&k!=='display'),cashier:['new','counter','orders','tables','cust','stock'],kitchen:['kitchen','counter'],rider:['trips']};
 function ensureCust(ph,name){const c=S.customers[ph]||(S.customers[ph]={phone:ph,name:name||'',due:0,coins:0});
   c.wallet=c.wallet||0;c.tx=c.tx||[];c.myCodes=c.myCodes||[];c.ref=c.ref||('CP'+ph.slice(-5));if(name&&!c.name)c.name=name;return c}
 function migrate(){
@@ -6499,6 +6500,8 @@ const L={uid:null,buf:'',err:''};
 // dashes (main-outlet); its code or id also work. That page logs staff in to that outlet only.
 const outletSlug=o=>String(o.name||o.code||o.id).toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'')||String(o.id);
 const STAFF_PATH=(location.pathname.match(/^\/staff(?:\/([^\/?#]+))?\/?$/)||null);
+// Admin login: cheesypizza.online/admin is the only login that lists the main owner (admin)
+const ADMIN_PATH=/^\/admin\/?$/.test(location.pathname);
 const STAFF_CODE=STAFF_PATH?decodeURIComponent(STAFF_PATH[1]||'').toLowerCase():'';
 const outletByCode=c=>c?S.outlets.find(o=>o.id.toLowerCase()===c||String(o.code||'').toLowerCase()===c||outletSlug(o)===c):null;
 const staffLink=o=>location.origin+'/staff/'+outletSlug(o);
@@ -6506,14 +6509,15 @@ const staffLink=o=>location.origin+'/staff/'+outletSlug(o);
 const worksAt=(u,id)=>u.role==='owner'||!(u.outlets&&u.outlets.length)||u.outlets.includes(id);
 function renderLogin(){
   const lock=U.lockOutlet&&S.outlets.find(o=>o.id===U.lockOutlet);
-  const list=lock?S.users.filter(u=>worksAt(u,lock.id)):S.users;
-  return `<div class="login"><div class="card ${L.err?'shake':''}"><h2 style="font-size:28px">${lock?esc(lock.name):'Outlet login'}</h2><div class="small muted">${lock?'Staff login for this outlet. ':''}Choose your name, then enter your 4-digit PIN.</div>
+  const list=ADMIN_PATH?S.users.filter(u=>u.role==='owner'):(lock?S.users.filter(u=>worksAt(u,lock.id)):S.users).filter(u=>u.role!=='owner');
+  return `<div class="login"><div class="card ${L.err?'shake':''}"><h2 style="font-size:28px">${ADMIN_PATH?'Admin login':lock?esc(lock.name):'Outlet login'}</h2><div class="small muted">${ADMIN_PATH?'Only for the admin. ':lock?'Staff login for this outlet. ':''}Choose your name, then enter your 4-digit PIN.</div>
     ${STAFF_PATH&&STAFF_CODE&&!lock?'<div class="msg-bad">This outlet link is not right, or the outlet is inactive. Ask the owner for the outlet\'s staff link.</div>':''}
     <div class="users">${list.map(u=>`<button data-act="lg-user" data-v="${u.id}" aria-pressed="${L.uid===u.id}"><span class="av">${esc(u.name[0])}</span>${esc(u.name)}<small>${ROLES[u.role]}</small></button>`).join('')}</div>
     <div class="dots" aria-label="PIN entered">${[0,1,2,3].map(i=>`<i class="${L.buf.length>i?'on':''}"></i>`).join('')}</div>
     ${L.err?`<div class="msg-bad" style="text-align:center">${esc(L.err)}</div>`:''}
     <div class="keypad">${['1','2','3','4','5','6','7','8','9','C','0','←'].map(k=>`<button data-act="lg-key" data-v="${k}" aria-label="${k==='C'?'Clear':k==='←'?'Delete':k}">${k}</button>`).join('')}</div>
-    <div class="demo">Demo PINs · Owner 1234 · Cashier 1111 · Kitchen 2222. Owners can change staff and PINs in the Staff screen.</div></div></div>`;
+    ${ADMIN_PATH?'':'<div class="demo">Demo PINs · Cashier 1111 · Kitchen 2222. The admin can change staff and PINs in the Staff screen.</div>'}
+    <a class="lg-alt" href="${ADMIN_PATH?'/staff':'/admin'}">${ADMIN_PATH?'← Staff login':'Admin login'}</a></div></div>`;
 }
 function lgKey(k){
   if(!L.uid){L.err='Choose your name first.';render();return}
@@ -6570,7 +6574,7 @@ function vStaff(){
       <div class="st-kids2">${['manager','cashier','kitchen','rider'].map(grp).join('')||'<div class="small muted st-none">No staff yet.</div>'}</div></div></div>`};
   return `<div class="ph1"><h2>Staff & logins</h2><span class="muted small">${main?'The main owner sees every outlet. An outlet owner sees only their own outlets and runs that outlet\'s staff. Tap a person to change their name, role, outlets or PIN.':'You run the staff of your outlets. Tap a person to change their name, role or PIN.'}</span></div>
   <div class="st-tree">
-    ${main?`<div class="st-root"><div class="st-oh"><span class="st-ico" aria-hidden="true">👑</span><b>Main owner</b><span class="small muted">All outlets</span><span class="grow"></span><button class="btn sm" data-act="sf-add" data-o="" data-r="owner">+ Add</button></div><div class="st-kids">${owners.map(u=>staffRow(u,meU)).join('')}</div></div>`:''}
+    ${main?`<div class="st-root"><div class="st-oh"><span class="st-ico" aria-hidden="true">👑</span><b>Admin (main owner)</b><span class="small muted">All outlets</span><span class="grow"></span><button class="btn sm" data-act="sf-add" data-o="" data-r="owner">+ Add</button></div><div class="st-kids">${owners.map(u=>staffRow(u,meU)).join('')}</div></div>`:''}
     <div class="${main?'st-outs':'st-outs st-top'}">${outs.map(outletNode).join('')||'<div class="empty small">No outlets are ticked for you yet. Ask the main owner.</div>'}</div>
     ${main&&allOut.length?`<div class="st-o"><div class="st-oh"><span class="st-ico" aria-hidden="true">🔀</span><b>Every outlet</b><span class="small muted">No outlet ticked, so they can sign in at any outlet</span></div><div class="st-kids">${allOut.map(u=>staffRow(u,meU)).join('')}</div></div>`:''}
   </div>
@@ -6678,6 +6682,7 @@ document.addEventListener('click',e=>{const a=e.target.closest('[data-wa1]');if(
   if(d.demoPending)try{if((await api('/api/demo/claim',{})).ok)seedDemoOrders()}catch(_){}
   migrate();
   if(location.hash==='#pos'||location.hash==='#public')S.mode=location.hash.slice(1);
+  if(ADMIN_PATH){S.mode='pos';document.body.classList.add('staffurl');const su=staff();if(su&&su.role!=='owner')S.staffId=null;save()}
   if(STAFF_PATH){S.mode='pos';document.body.classList.add('staffurl');const o=outletByCode(STAFF_CODE);
     // The link's outlet, unless the outlet was changed by hand on this same link (an owner switching outlets): that choice survives a refresh
     const pk=S.pick,su0=staff(),keep=pk&&pk.link===STAFF_CODE&&S.outlets.some(x=>x.id===pk.id&&isLive(x))&&su0&&(su0.role==='owner'||worksAt(su0,pk.id));
