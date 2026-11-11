@@ -2448,7 +2448,9 @@ function applyConfig(c){
   WAITS=c.waitTimes||[15,20,30,40];
 }
 let WAITS=[15,20,30,40];
-const COUNTER_MODES=['cash','upi','card','bank'];
+// Card and Bank / Cheque are switched off everywhere the till takes money; old card or bank sales still show in reports
+const OFF_MODES=['card','bank'];
+const COUNTER_MODES=['cash','upi'];
 // Split payment: one bill paid in parts, e.g. ₹100 cash and the rest by UPI.
 // Saved as pay:{mode:'split',splits:[{mode,amt}]}. A 'due' part goes to the customer's baki account.
 const paySplits=o=>o&&o.pay&&o.pay.mode==='split'&&Array.isArray(o.pay.splits)?o.pay.splits:null;
@@ -2580,7 +2582,7 @@ async function refresh(){
 function seedDemoOrders(){
   const s=S;
   const names=[['Ravi Patel','9825011111'],['Nidhi Shah','9898022222'],['Kunal Mehta','9909033333'],['Pooja Joshi','9727044444'],['Harsh Desai','9638055555'],['Meera Trivedi','9016066666']];
-  const modes=['cash','cash','upi','upi','upi','card','zomato'];
+  const modes=['cash','cash','upi','upi','upi','upi','zomato'];
   [[-2,8],[-1,11],[0,10]].forEach(([off,n])=>{
     const date=addDays(today(),off);
     ['o1','o2'].forEach((oid,oi)=>{
@@ -4118,7 +4120,7 @@ function posCalc(){
 }
 // The till's order types, in this order: Delivery (when delivery is on) | Dine-in | Takeaway
 const posTypes=()=>['delivery','dine','takeaway','zomato'].filter(k=>TYPES[k]&&(k!=='delivery'||delOn())).map(k=>[k,TYPES[k]]);
-// Pay-by choices on the bill. Card and bank stay inside Split.
+// Pay-by choices on the bill (Split takes cash and UPI; card and bank are off)
 const TK_PAY=[['cash','Cash'],['upi','UPI'],['due','Baki'],['split','Split']];
 // A till tile: tap the name for options; tap a size (pizza) or the price button to add it at once
 const posTile=(m,i)=>{
@@ -4935,7 +4937,7 @@ function vSales(){if(!UPI_ALERTS)return vSalesMain();const seg=upiSeg('sales');i
 function vSalesMain(){
   const d=U.salesDate||today(),sc=U.salesScope;const s=salesFor(d,sc),p=salesFor(addDays(d,-1),sc);const diff=s.tot-p.tot;
   const days=[...Array(7)].map((_,i)=>addDays(d,i-6)).map(x=>({d:x,t:salesFor(x,sc).tot}));const mx=Math.max(1,...days.map(x=>x.t));
-  const top=Object.entries(s.items).sort((a,b)=>b[1]-a[1]).slice(0,6);const cols=SALE_COLS;
+  const top=Object.entries(s.items).sort((a,b)=>b[1]-a[1]).slice(0,6);const cols=SALE_COLS.filter(k=>!OFF_MODES.includes(k)||s.by[k]);
   return `<div class="ph1"><h2>Whole day sale</h2>
     <input class="inp" type="date" id="sd-date" value="${d}" style="width:auto" aria-label="Date">${closeBtn(d)}
     <div class="seg"><button data-act="scope" data-v="outlet" aria-pressed="${sc==='outlet'}">${esc(cur().name)}</button><button data-act="scope" data-v="all" aria-pressed="${sc==='all'}">All outlets</button></div>${ownerBtn(salesText(s,d,sc))}<a class="btn" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(salesText(s,d,sc))}">Share on WhatsApp</a></div>
