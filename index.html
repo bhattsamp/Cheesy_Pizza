@@ -784,7 +784,7 @@ body:has(.addpop){overflow:hidden}
 .addto{background:var(--cheese-soft);color:var(--cheese-ink);border-radius:10px;padding:8px 10px;font-weight:700;font-size:14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .kt{--h:130;border-color:hsl(var(--h) 65% 42%);background:hsl(var(--h) 70% 45% / .10)}
 .kt.placed{--h:265}
-.kt .kwait{gap:8px}.kt .kback{align-self:flex-start}.kt .kwait .btn{flex:1}
+.kt .kwait{gap:8px}.kt .ktools{gap:6px}.kt .kwait .btn{flex:1}
 .kt .left{font-family:var(--display);font-weight:800;font-size:20px;color:hsl(var(--h) 70% 34%)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .kt .left{color:hsl(var(--h) 70% 65%)}}
 :root[data-theme="dark"] .kt .left{color:hsl(var(--h) 70% 65%)}
@@ -4492,7 +4492,7 @@ function kCard(o,where,foot){const kit=where==='kitchen';const mins=Math.floor((
     <div class="kfoot ktop"><span class="kwho">${esc(kName(o))}${ltChip(o)}</span><span class="num">${esc(o.customer.phone?fmtPhone(o.customer.phone):'—')}</span><span>${TYPES[o.type]}${o.table?' · T'+esc(o.table):''}</span><span class="${o.paid?'pd':'bk'}">${o.paid?'Payment done':'Baki'}</span></div>
     <div class="row"><span class="no num">${noHtml(o.no)}</span><span class="grow"></span>${kit?`<span class="chip ${o.type==='zomato'?'r':'t'}">${TYPES[o.type]}${o.table?' · T'+esc(o.table):''}</span>`:`<span class="chip ${o.status}">${statusName(o.status,o.type)}</span>`}</div>
     <div class="row"><span class="small muted num grow">${fmtTime(o.ts)} · ${mins<1?'just now':mins+' min'}${o.source==='online'?' · online':''}${o.zomatoId?' · Zomato '+esc(o.zomatoId):''}</span>${live?`<span class="left num">${leftText(left)}</span>`:''}${o.status!=='out'&&!(kit&&(o.status==='preparing'||o.status==='placed'))?`<button class="btn sm" data-act="set-wait" data-id="${o.id}" title="Change waiting time">⏱ ${w} min</button>`:''}</div>
-    ${kit&&(o.status==='preparing'||o.status==='placed')?`<div class="row kwait"><button class="btn sm" data-act="set-wait" data-id="${o.id}" title="Change waiting time">⏱ ${w} min</button><button class="btn sm ok" data-act="wait-5" data-id="${o.id}" title="Add 5 minutes to the waiting time (tap again for more)">+5 min</button></div>`:''}
+    ${kit&&(o.status==='preparing'||o.status==='placed')?`<div class="row kwait"><button class="btn sm" data-act="set-wait" data-id="${o.id}" title="Change waiting time">⏱ ${w} min</button><button class="btn sm ok" data-act="wait-5" data-id="${o.id}" title="Add 5 minutes to the waiting time (tap again for more)">+5 min</button></div><div class="row ktools">${obHideBtn(o)}</div>`:''}
     ${o.scheduled?`<span class="chip c" style="align-self:flex-start">Scheduled for ${esc(o.scheduled)}</span>`:''}
     ${live?`<div class="pbar" title="Waiting time ${w} min"><i style="width:${Math.min(100,mins/w*100)}%;background:hsl(${h} 65% 42%)"></i></div>`:''}
     ${o.address&&!kit?`<div class="small muted">${esc(o.address)}</div>`:''}
@@ -4548,7 +4548,8 @@ function vCounter(){
   const riders=cur().riders||[];const busy=new Set(mine.filter(o=>o.status==='out').map(o=>o.rider?.name));
   // Everything the counter acts on, in one list: ready pickups and dine-in, deliveries waiting or ready to send, riders on the road
   const list=kSorted(mine.filter(o=>(o.status==='ready'&&o.type!=='delivery')||(o.type==='delivery'&&['preparing','ready','out'].includes(o.status))));
-  const foot=o=>{const pay=collectRow(o)+(o.status==='ready'?`<button class="btn sm kback" data-act="back-kitchen" data-id="${o.id}" title="Marked ready by mistake? Send it back to the kitchen">↩ Back to kitchen</button>`:'');
+  const foot=o=>{const tools=(o.status==='ready'?`<button class="btn sm kback" data-act="back-kitchen" data-id="${o.id}" title="Marked ready by mistake? Send it back to the kitchen">↩ Back to kitchen</button>`:'')+(o.type!=='delivery'?obHideBtn(o):'');
+    const pay=collectRow(o)+(tools?`<div class="row ktools">${tools}</div>`:'');
     if(o.status==='ready'&&o.type!=='delivery')return pay+`<button class="btn ok" data-act="handover" data-id="${o.id}">${o.type==='dine'?'Served to table':o.type==='zomato'?'Given to Zomato rider':'Handed to customer'}</button>`;
     if(o.status==='ready')return pay+`<div class="row"><select class="inp grow" id="rs-${o.id}" aria-label="Rider">${riders.map(r=>`<option value="${esc(r.name)}">${esc(r.name)}${busy.has(r.name)?' (on a trip)':''}</option>`).join('')}</select><button class="btn pri" data-act="dispatch" data-id="${o.id}" ${riders.length?'':'disabled'}>Send out</button></div>${riders.length?'':'<div class="small muted">Add riders on the Outlets screen.</div>'}`;
     if(o.status==='out'){const m=Math.floor((Date.now()-(o.times.out||Date.now()))/60000);return pay+`<div class="small">Rider <b>${esc(o.rider?.name||'—')}</b> · left ${m} min ago · ETA ${Math.max(1,RIDE_MIN-m)} min</div><div class="row"><button class="btn ok grow" data-act="delivered" data-id="${o.id}">Mark delivered</button><button class="btn" data-act="track" data-id="${o.id}">Live view</button></div>`}
@@ -4563,6 +4564,8 @@ function vCounter(){
    how long they have been waiting. It opens in its own window (?screen=orders) that the cashier drags
    to the TV or second monitor; that window loads the shop's orders itself every 5 seconds, so it keeps
    working while the till moves to other screens. Without pop-ups it opens full screen on the till. */
+// Kitchen or counter can hide an order from the customer display (o.obHide) and show it again
+const obHideBtn=o=>`<button class="btn sm ${o.obHide?'pri':''} kobh" data-act="ob-hide" data-id="${o.id}" aria-pressed="${!!o.obHide}" title="${o.obHide?'Hidden from the customer display. Tap to show it again':'Hide this order from the customer display'}">${o.obHide?'🙈 Hidden on display':'👁 Hide on display'}</button>`;
 const obShortNo=no=>{const m=/-(\d{2,})$/.exec(no||'');return m?m[1]:(no||'—')};
 function obName(o){
   const n=(o.customer&&o.customer.name||'').trim().replace(/\s+/g,' ');
@@ -4575,7 +4578,7 @@ function obName(o){
 const obMin=ms=>Math.max(0,Math.floor(ms/60000));
 const obDur=m=>m<1?'Just now':m<60?m+' min':Math.floor(m/60)+' h '+(m%60)+' min';
 function obLists(outletId){
-  const now=Date.now(),mine=S.orders.filter(o=>o.outletId===outletId&&o.ts>now-16*3600e3&&o.type!=='delivery');
+  const now=Date.now(),mine=S.orders.filter(o=>o.outletId===outletId&&o.ts>now-16*3600e3&&o.type!=='delivery'&&!o.obHide);
   const prep=mine.filter(o=>o.status==='preparing'||o.status==='placed').sort((x,y)=>x.ts-y.ts);
   const ready=mine.filter(o=>o.status==='ready').sort((x,y)=>((y.times&&y.times.ready)||y.ts)-((x.times&&x.times.ready)||x.ts));
   return{prep,ready}}
@@ -5560,6 +5563,7 @@ document.addEventListener('click',e=>{
     case 'ksort':U.kSort=el.dataset.v;try{localStorage.setItem('cp_ksort',U.kSort)}catch(e){}render();break;
     case 'kitem':{const o=find(el.dataset.id);const l=o.items[+el.dataset.i];l.kdone=!l.kdone;save();render();break}
     // Marked ready by mistake: back into the kitchen's Preparing list (and off Please collect on the customer display)
+    case 'ob-hide':{const o=find(el.dataset.id);if(!o)break;o.obHide=!o.obHide;save();toast(o.no+(o.obHide?' hidden from':' shown again on')+' the customer display');render();break}
     case 'back-kitchen':{const o=find(el.dataset.id);if(o&&o.status==='ready'){o.status='preparing';o.times=o.times||{};delete o.times.ready;save();toast(o.no+' moved back to the kitchen');render()}break}
     case 'kready':{const o=find(el.dataset.id);if(o.status==='preparing'){setStatus(o,'ready');toast(o.no+' ready → counter');render()}break}
     case 'od-scope':U.ordersScope=el.dataset.v;render();break;
