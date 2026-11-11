@@ -6223,8 +6223,8 @@ document.addEventListener('change',e=>{const t=e.target;if(!t.dataset||!t.datase
   const apps=[...document.querySelectorAll('[data-uaapp]:checked')].map(x=>x.dataset.uaapp).join(',');UPIAL.setup({apps}).then(()=>{if(U.uaSt)U.uaSt.apps=apps;toast('Saved')})});
 
 /* ================= v4: accounts, wallet, staff login, fun ================= */
-// Staff tree: Main owner (every outlet) > Outlet owner (only their outlets, runs their staff) > Manager, Cashier, Kitchen, Rider at each outlet
-const ROLES={owner:'Admin',oowner:'Outlet owner',manager:'Manager',cashier:'Cashier',kitchen:'Kitchen',rider:'Rider'};
+// Staff tree: Admin (every outlet) > Owner (only their own outlets) > Manager, Cashier, Kitchen, Rider at each outlet
+const ROLES={owner:'Admin',oowner:'Owner',manager:'Manager',cashier:'Cashier',kitchen:'Kitchen',rider:'Rider'};
 const ROLE_ORDER=['owner','oowner','manager','cashier','kitchen','rider'];
 const ROLE_TABS={owner:TABS.map(t=>t[0]),oowner:TABS.map(t=>t[0]).filter(k=>k!=='staff'&&k!=='review'&&k!=='display'),manager:TABS.map(t=>t[0]).filter(k=>k!=='staff'&&k!=='review'&&k!=='display'),cashier:['new','counter','orders','tables','cust','stock'],kitchen:['kitchen','counter'],rider:['trips']};
 function ensureCust(ph,name){const c=S.customers[ph]||(S.customers[ph]={phone:ph,name:name||'',due:0,coins:0});
@@ -6570,11 +6570,11 @@ function vStaff(){
     const oo=ppl.filter(u=>u.role==='oowner'),rest=ppl.filter(u=>u.role!=='oowner');
     const grp=r=>{const g=rest.filter(u=>u.role===r);return g.length?`<div class="st-g"><div class="st-gh">${ROLES[r]}</div>${g.map(u=>staffRow(u,meU)).join('')}</div>`:''};
     return `<div class="st-o"><div class="st-oh"><span class="st-ico" aria-hidden="true">🏪</span><b>${esc(o.name)}</b><span class="small muted">${ppl.length} ${ppl.length===1?'person':'people'}</span><span class="grow"></span><button class="btn sm" data-act="sf-add" data-o="${o.id}">+ Add staff</button></div>
-      <div class="st-kids"><div class="st-g"><div class="st-gh">Outlet owner</div>${oo.map(u=>staffRow(u,meU)).join('')||'<div class="small muted st-none">No outlet owner yet. Tap + Add staff and pick Outlet owner.</div>'}</div>
+      <div class="st-kids"><div class="st-g"><div class="st-gh">Owner</div>${oo.map(u=>staffRow(u,meU)).join('')||'<div class="small muted st-none">No owner yet. Tap + Add staff and pick Owner.</div>'}</div>
       <div class="st-kids2">${['manager','cashier','kitchen','rider'].map(grp).join('')||'<div class="small muted st-none">No staff yet.</div>'}</div></div></div>`};
   return `<div class="ph1"><h2>Staff & logins</h2><span class="muted small">${main?'The main owner sees every outlet. An outlet owner sees only their own outlets and runs that outlet\'s staff. Tap a person to change their name, role, outlets or PIN.':'You run the staff of your outlets. Tap a person to change their name, role or PIN.'}</span></div>
   <div class="st-tree">
-    ${main?`<div class="st-root"><div class="st-oh"><span class="st-ico" aria-hidden="true">👑</span><b>Admin (main owner)</b><span class="small muted">All outlets</span><span class="grow"></span><button class="btn sm" data-act="sf-add" data-o="" data-r="owner">+ Add</button></div><div class="st-kids">${owners.map(u=>staffRow(u,meU)).join('')}</div></div>`:''}
+    ${main?`<div class="st-root"><div class="st-oh"><span class="st-ico" aria-hidden="true">👑</span><b>Admin</b><span class="small muted">All outlets</span><span class="grow"></span><button class="btn sm" data-act="sf-add" data-o="" data-r="owner">+ Add</button></div><div class="st-kids">${owners.map(u=>staffRow(u,meU)).join('')}</div></div>`:''}
     <div class="${main?'st-outs':'st-outs st-top'}">${outs.map(outletNode).join('')||'<div class="empty small">No outlets are ticked for you yet. Ask the main owner.</div>'}</div>
     ${main&&allOut.length?`<div class="st-o"><div class="st-oh"><span class="st-ico" aria-hidden="true">🔀</span><b>Every outlet</b><span class="small muted">No outlet ticked, so they can sign in at any outlet</span></div><div class="st-kids">${allOut.map(u=>staffRow(u,meU)).join('')}</div></div>`:''}
   </div>
