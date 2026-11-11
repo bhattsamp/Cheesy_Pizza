@@ -252,15 +252,39 @@ textarea.inp{resize:vertical}
 .ctk.ready{border-left:5px solid var(--ok)}
 .ctk.prep{border-left:5px solid var(--warn)}
 .ctk.out{border-left:5px solid var(--teal)}
-.board{position:fixed;inset:0;z-index:70;background:#082a31;color:#fff;display:grid;grid-template-rows:auto 1fr;padding:24px;padding-top:calc(24px + env(safe-area-inset-top,0px))}
-.board h2{font-size:clamp(26px,4vw,48px)}
-.board .cols{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:18px;min-height:0}
-.board .col{background:rgba(255,255,255,.06);border-radius:24px;padding:20px;overflow:auto}
-.board .col h3{font-size:clamp(22px,3vw,36px);margin-bottom:14px;text-transform:uppercase;letter-spacing:.06em}
-.board .nums{display:flex;flex-wrap:wrap;gap:14px}
-.board .nums span{font-family:var(--display);font-weight:800;font-size:clamp(34px,5vw,64px);line-height:1;padding:10px 18px;border-radius:16px;background:rgba(255,255,255,.08)}
-.board .col.rd h3{color:#7ee2a2}
-.board .col.rd .nums span{background:#1f8a4c;animation:glow 2s infinite}
+.board{position:fixed;inset:0;z-index:70}
+/* Customer order display (Counter → Open customer display): Preparing | Please collect */
+#obs{position:fixed;inset:0;z-index:9999}
+.ob{position:absolute;inset:0;display:grid;grid-template-rows:auto 1fr auto;gap:2.2vh;padding:2.6vh 2.6vw;padding-top:calc(2.6vh + env(safe-area-inset-top,0px));background:radial-gradient(circle at 70% 30%,#14606e,#0b3a43 72%);color:#fff;font-family:'Baloo Bhai 2',system-ui,sans-serif;overflow:hidden}
+.ob-h{display:flex;align-items:center;gap:1.6vw}.ob-h .grow{flex:1}
+.ob-logo{height:clamp(54px,10vh,120px)}
+.ob-t h1{font-size:clamp(28px,4.4vw,64px);line-height:1;margin:0}.ob-t span{font-size:clamp(14px,1.5vw,22px);opacity:.75}
+.ob-clock{font-size:clamp(22px,3vw,44px);font-weight:800;color:#f2b632}
+.ob-cols{display:grid;grid-template-columns:1fr 1fr;gap:2vw;min-height:0}
+.ob-col{display:flex;flex-direction:column;min-height:0;border-radius:28px;padding:2.2vh 1.6vw;background:rgba(255,255,255,.06);border:2px solid rgba(255,255,255,.08)}
+.ob-col.rd{background:rgba(31,138,76,.16);border-color:rgba(126,226,162,.35)}
+.ob-col h2{display:flex;align-items:center;gap:14px;margin:0 0 1.6vh;font-size:clamp(24px,3.2vw,48px);text-transform:uppercase;letter-spacing:.05em;line-height:1}
+.ob-col.pr h2{color:#f2b632}.ob-col.rd h2{color:#7ee2a2}
+.ob-col h2 b{font-size:.6em;min-width:1.8em;text-align:center;padding:.25em .5em .15em;border-radius:99px;background:rgba(255,255,255,.12);color:#fff}
+.ob-list{display:grid;grid-template-columns:1fr;gap:1.2vh;align-content:start;overflow:hidden;min-height:0}
+.ob-list.many{grid-template-columns:1fr 1fr}
+.ob-o{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:1.2vw;padding:1.2vh 1.2vw;border-radius:20px;background:rgba(255,255,255,.08)}
+.ob-no{font-weight:800;font-size:clamp(30px,4.2vw,68px);line-height:1;min-width:2.2em;text-align:center;padding:.12em .3em 0;border-radius:14px;background:rgba(0,0,0,.22);color:#f2b632}
+.ob-nm{display:flex;flex-direction:column;min-width:0}
+.ob-nm b{font-size:clamp(20px,2.4vw,38px);line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ob-nm small{font-size:clamp(13px,1.3vw,20px);opacity:.8}
+.ob-w{display:flex;flex-direction:column;align-items:flex-end;text-align:right}
+.ob-w small{font-size:clamp(11px,1vw,16px);text-transform:uppercase;letter-spacing:.08em;opacity:.7}
+.ob-w b{font-size:clamp(18px,2.1vw,34px);line-height:1.1;white-space:nowrap}
+.ob-list.many .ob-no{font-size:clamp(24px,3vw,48px)}.ob-list.many .ob-nm b{font-size:clamp(16px,1.7vw,28px)}.ob-list.many .ob-w b{font-size:clamp(15px,1.5vw,24px)}
+.ob-o.rd{background:#1f8a4c}.ob-o.rd .ob-no{color:#fff;background:rgba(0,0,0,.18)}
+.ob-o.new{animation:obpop 1.4s ease-in-out infinite}
+@keyframes obpop{50%{background:#2fb866;box-shadow:0 0 0 6px rgba(126,226,162,.35)}}
+.ob-empty{font-size:clamp(18px,2vw,28px);opacity:.55;padding:2vh .5vw}
+.ob-f{text-align:center;font-size:clamp(14px,1.5vw,22px);opacity:.8}
+.ob .btn{font-size:16px}
+@media (max-width:700px){.ob-cols{grid-template-columns:1fr;overflow:auto}.ob-list.many{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){.ob-o.new{animation:none}}
 @keyframes glow{50%{background:#27a45c}}
 
 .tw{overflow-x:auto}
@@ -760,6 +784,7 @@ body:has(.addpop){overflow:hidden}
 .addto{background:var(--cheese-soft);color:var(--cheese-ink);border-radius:10px;padding:8px 10px;font-weight:700;font-size:14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .kt{--h:130;border-color:hsl(var(--h) 65% 42%);background:hsl(var(--h) 70% 45% / .10)}
 .kt.placed{--h:265}
+.kt .kwait{gap:8px}.kt .ktools{gap:6px}.kt .kwait .btn{flex:1}
 .kt .left{font-family:var(--display);font-weight:800;font-size:20px;color:hsl(var(--h) 70% 34%)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .kt .left{color:hsl(var(--h) 70% 65%)}}
 :root[data-theme="dark"] .kt .left{color:hsl(var(--h) 70% 65%)}
@@ -2791,6 +2816,7 @@ const TABS=[['new','New order'],['kitchen','Kitchen'],['counter','Counter'],['or
 const app=document.getElementById('app');
 function render(){
   if(CS_MODE){renderCS();return}
+  if(OB_MODE){renderOB();return}
   mergeCats();syncHours();
   if(APP_ROLE){S.mode=APP_ROLE==='admin'?'pos':'public';document.body.classList.add('app-'+APP_ROLE)}
   document.getElementById('m-pub').setAttribute('aria-pressed',S.mode==='public');
@@ -2809,7 +2835,7 @@ function render(){
 /* ===== Customer screen: a second window on the till's front monitor that the customer faces.
    It shows the bill as the cashier builds it, the UPI QR with the amount at payment, and a thank-you
    when it's paid. The till and the window talk through a BroadcastChannel in the same browser. ===== */
-const CS_MODE=new URLSearchParams(location.search).get('screen')==='customer';
+const SCREEN_Q=new URLSearchParams(location.search),CS_MODE=SCREEN_Q.get('screen')==='customer',OB_MODE=SCREEN_Q.get('screen')==='orders';
 const CS_CH=typeof BroadcastChannel!=='undefined'?new BroadcastChannel('cheesy-cs'):null;
 let csLast='',csFlash=null; // csFlash: {phase:'qr'|'paid'|'failed'|'thanks', ..., until}
 function csState(){
@@ -4465,7 +4491,8 @@ function kCard(o,where,foot){const kit=where==='kitchen';const mins=Math.floor((
   return `<div class="kt ${o.status==='placed'?'placed':''} ${live&&left<0?'late':''} ${kit?'':'kc'}" style="--h:${h}" ${kit&&o.status==='preparing'?`data-act="ktap" data-id="${o.id}"`:''}>
     <div class="kfoot ktop"><span class="kwho">${esc(kName(o))}${ltChip(o)}</span><span class="num">${esc(o.customer.phone?fmtPhone(o.customer.phone):'—')}</span><span>${TYPES[o.type]}${o.table?' · T'+esc(o.table):''}</span><span class="${o.paid?'pd':'bk'}">${o.paid?'Payment done':'Baki'}</span></div>
     <div class="row"><span class="no num">${noHtml(o.no)}</span><span class="grow"></span>${kit?`<span class="chip ${o.type==='zomato'?'r':'t'}">${TYPES[o.type]}${o.table?' · T'+esc(o.table):''}</span>`:`<span class="chip ${o.status}">${statusName(o.status,o.type)}</span>`}</div>
-    <div class="row"><span class="small muted num grow">${fmtTime(o.ts)} · ${mins<1?'just now':mins+' min'}${o.source==='online'?' · online':''}${o.zomatoId?' · Zomato '+esc(o.zomatoId):''}</span>${live?`<span class="left num">${leftText(left)}</span>`:''}${o.status!=='out'?`<button class="btn sm" data-act="set-wait" data-id="${o.id}" title="Change waiting time">⏱ ${w} min</button>`:''}</div>
+    <div class="row"><span class="small muted num grow">${fmtTime(o.ts)} · ${mins<1?'just now':mins+' min'}${o.source==='online'?' · online':''}${o.zomatoId?' · Zomato '+esc(o.zomatoId):''}</span>${live?`<span class="left num">${leftText(left)}</span>`:''}${o.status!=='out'&&!(kit&&(o.status==='preparing'||o.status==='placed'))?`<button class="btn sm" data-act="set-wait" data-id="${o.id}" title="Change waiting time">⏱ ${w} min</button>`:''}</div>
+    ${kit&&(o.status==='preparing'||o.status==='placed')?`<div class="row kwait"><button class="btn sm" data-act="set-wait" data-id="${o.id}" title="Change waiting time">⏱ ${w} min</button><button class="btn sm ok" data-act="wait-5" data-id="${o.id}" title="Add 5 minutes to the waiting time (tap again for more)">+5 min</button></div><div class="row ktools">${obHideBtn(o)}</div>`:''}
     ${o.scheduled?`<span class="chip c" style="align-self:flex-start">Scheduled for ${esc(o.scheduled)}</span>`:''}
     ${live?`<div class="pbar" title="Waiting time ${w} min"><i style="width:${Math.min(100,mins/w*100)}%;background:hsl(${h} 65% 42%)"></i></div>`:''}
     ${o.address&&!kit?`<div class="small muted">${esc(o.address)}</div>`:''}
@@ -4521,7 +4548,8 @@ function vCounter(){
   const riders=cur().riders||[];const busy=new Set(mine.filter(o=>o.status==='out').map(o=>o.rider?.name));
   // Everything the counter acts on, in one list: ready pickups and dine-in, deliveries waiting or ready to send, riders on the road
   const list=kSorted(mine.filter(o=>(o.status==='ready'&&o.type!=='delivery')||(o.type==='delivery'&&['preparing','ready','out'].includes(o.status))));
-  const foot=o=>{const pay=collectRow(o);
+  const foot=o=>{const tools=(o.status==='ready'?`<button class="btn sm kback" data-act="back-kitchen" data-id="${o.id}" title="Marked ready by mistake? Send it back to the kitchen">↩ Back to kitchen</button>`:'')+(o.type!=='delivery'?obHideBtn(o):'');
+    const pay=collectRow(o)+(tools?`<div class="row ktools">${tools}</div>`:'');
     if(o.status==='ready'&&o.type!=='delivery')return pay+`<button class="btn ok" data-act="handover" data-id="${o.id}">${o.type==='dine'?'Served to table':o.type==='zomato'?'Given to Zomato rider':'Handed to customer'}</button>`;
     if(o.status==='ready')return pay+`<div class="row"><select class="inp grow" id="rs-${o.id}" aria-label="Rider">${riders.map(r=>`<option value="${esc(r.name)}">${esc(r.name)}${busy.has(r.name)?' (on a trip)':''}</option>`).join('')}</select><button class="btn pri" data-act="dispatch" data-id="${o.id}" ${riders.length?'':'disabled'}>Send out</button></div>${riders.length?'':'<div class="small muted">Add riders on the Outlets screen.</div>'}`;
     if(o.status==='out'){const m=Math.floor((Date.now()-(o.times.out||Date.now()))/60000);return pay+`<div class="small">Rider <b>${esc(o.rider?.name||'—')}</b> · left ${m} min ago · ETA ${Math.max(1,RIDE_MIN-m)} min</div><div class="row"><button class="btn ok grow" data-act="delivered" data-id="${o.id}">Mark delivered</button><button class="btn" data-act="track" data-id="${o.id}">Live view</button></div>`}
@@ -4531,16 +4559,61 @@ function vCounter(){
   <div class="kds">${list.map(o=>kCard(o,'counter',foot(o))).join('')||'<div class="empty small">Ready orders appear here after the kitchen marks them ready.</div>'}</div>
   ${delOn()&&riders.length?`<div class="grp-h" style="margin-top:14px">Riders</div><div class="row">${riders.map(r=>`<span class="chip ${busy.has(r.name)?'out':'ready'}">${esc(r.name)} · ${busy.has(r.name)?'on trip':'free'}</span>`).join('')}</div>`:''}`;
 }
+/* Customer order display: the screen the waiting customers face, opened from the Counter.
+   Two sections, Preparing and Please collect; each order shows its number, the customer's name and
+   how long they have been waiting. It opens in its own window (?screen=orders) that the cashier drags
+   to the TV or second monitor; that window loads the shop's orders itself every 5 seconds, so it keeps
+   working while the till moves to other screens. Without pop-ups it opens full screen on the till. */
+// Kitchen or counter can hide an order from the customer display (o.obHide) and show it again
+const obHideBtn=o=>`<button class="btn sm ${o.obHide?'pri':''} kobh" data-act="ob-hide" data-id="${o.id}" aria-pressed="${!!o.obHide}" title="${o.obHide?'Hidden from the customer display. Tap to show it again':'Hide this order from the customer display'}">${o.obHide?'🙈 Hidden on display':'👁 Hide on display'}</button>`;
+const obShortNo=no=>{const m=/-(\d{2,})$/.exec(no||'');return m?m[1]:(no||'—')};
+function obName(o){
+  const n=(o.customer&&o.customer.name||'').trim().replace(/\s+/g,' ');
+  // first name and the initial of the last name: enough for the customer to spot their order
+  const parts=n.split(' ').filter(Boolean),nm=parts.length?parts[0]+(parts.length>1?' '+parts[parts.length-1][0].toUpperCase()+'.':''):'';
+  if(o.type==='zomato')return nm?nm+' · Zomato':'Zomato';
+  if(o.type==='dine'&&o.table)return (nm||'Table '+o.table)+(nm?' · T'+o.table:'');
+  return nm||'Guest';
+}
+const obMin=ms=>Math.max(0,Math.floor(ms/60000));
+const obDur=m=>m<1?'Just now':m<60?m+' min':Math.floor(m/60)+' h '+(m%60)+' min';
+function obLists(outletId){
+  const now=Date.now(),mine=S.orders.filter(o=>o.outletId===outletId&&o.ts>now-16*3600e3&&o.type!=='delivery'&&!o.obHide);
+  const prep=mine.filter(o=>o.status==='preparing'||o.status==='placed').sort((x,y)=>x.ts-y.ts);
+  const ready=mine.filter(o=>o.status==='ready').sort((x,y)=>((y.times&&y.times.ready)||y.ts)-((x.times&&x.times.ready)||x.ts));
+  return{prep,ready}}
+function obCard(o,rd){
+  const now=Date.now(),waited=obMin(now-o.ts),rdAt=(o.times&&o.times.ready)||now,since=obMin(now-rdAt);
+  const left=minsLeft(o),fresh=rd&&now-rdAt<45e3;
+  const sub=rd?(since<1?'Ready now':'Ready '+since+' min ago'):o.status==='placed'?'Order received':left>0?'Ready in about '+left+' min':'Almost ready';
+  return `<div class="ob-o${rd?' rd':''}${fresh?' new':''}"><span class="ob-no num">${esc(obShortNo(o.no))}</span>
+    <span class="ob-nm"><b>${esc(obName(o))}</b><small>${sub}</small></span>
+    <span class="ob-w"><small>Waiting</small><b class="num">${obDur(waited)}</b></span></div>`}
+function obHtml(outletId,closeBtn){
+  const {prep,ready}=obLists(outletId),out=S.outlets.find(o=>o.id===outletId)||cur();
+  const col=(cls,title,list,rd,empty)=>`<section class="ob-col ${cls}"><h2><span>${title}</span><b class="num">${list.length}</b></h2>
+    <div class="ob-list${list.length>6?' many':''}">${list.map(o=>obCard(o,rd)).join('')||`<div class="ob-empty">${empty}</div>`}</div></section>`;
+  return `<div class="ob"><header class="ob-h"><img class="ob-logo" src="img/logo-stack-light.png" alt="Cheesy Pizza"><div class="ob-t"><h1>Order status</h1><span>${esc(out?out.name:'')}</span></div>
+    <span class="grow"></span><span class="ob-clock num">${fmtTime(Date.now())}</span>${closeBtn?'<button class="btn" data-act="board-x">Close display</button>':''}</header>
+    <div class="ob-cols">${col('pr','Preparing',prep,false,'No orders in the kitchen')}${col('rd','Please collect',ready,true,'Ready orders show here')}</div>
+    <footer class="ob-f">Listen for your order number · Pure veg · We don't use mayonnaise in any product</footer></div>`}
 function renderBoard(){
   const root=document.getElementById('boardRoot');
   if(!U.board||S.mode!=='pos'){root.innerHTML='';return}
-  const mine=liveOrders();
-  const prep=mine.filter(o=>o.status==='preparing'||o.status==='placed').map(o=>o.no);
-  const ready=mine.filter(o=>o.status==='ready'&&o.type!=='delivery').map(o=>o.no);
-  root.innerHTML=`<div class="board" role="dialog" aria-label="Customer display"><div class="row"><h2>CHEESY PIZZA · ${esc(cur().name)}</h2><span class="grow"></span><button class="btn" data-act="board-x">Close display</button></div>
-  <div class="cols"><div class="col"><h3>Preparing</h3><div class="nums">${prep.map(n=>`<span class="num">${n}</span>`).join('')||'<span style="font-size:22px;background:none">—</span>'}</div></div>
-  <div class="col rd"><h3>Please collect</h3><div class="nums">${ready.map(n=>`<span class="num">${n}</span>`).join('')||'<span style="font-size:22px;background:none;animation:none">—</span>'}</div></div></div></div>`;
+  root.innerHTML=`<div class="board" role="dialog" aria-label="Customer display">${obHtml(S.cur,true)}</div>`;
 }
+function renderOB(){
+  const out=SCREEN_Q.get('outlet');if(out&&S.outlets.some(o=>o.id===out))S.cur=out;
+  if(!document.getElementById('obs')){document.body.insertAdjacentHTML('beforeend','<div id="obs"></div>');document.title='Cheesy Pizza · Order display';
+    document.addEventListener('click',()=>{if(!document.fullscreenElement)document.documentElement.requestFullscreen?.().catch(()=>{})});
+    setInterval(renderOB,15000)}
+  document.getElementById('obs').innerHTML=obHtml(S.cur,false)}
+async function openOrderScreen(){
+  let feat='popup=yes,width=1280,height=800';
+  try{if(window.getScreenDetails){const sd=await getScreenDetails();const other=sd.screens.find(x=>x!==sd.currentScreen);if(other)feat=`popup=yes,left=${other.availLeft},top=${other.availTop},width=${other.availWidth},height=${other.availHeight}`}}catch(e){}
+  const w=CAP?null:window.open(location.pathname+'?screen=orders&outlet='+encodeURIComponent(S.cur),'cheesy-ob',feat);
+  if(!w){U.board=true;renderBoard();return}
+  toast('Drag the new window to the customer screen and tap it once for full screen')}
 
 /* Tables: every table's day at a glance, and tap one for what it was served that day:
    each order, the items in each round with the time and who took them, the customer and the bill */
@@ -5489,6 +5562,9 @@ document.addEventListener('click',e=>{
       const amt=balanceOf(o);settleOrder(o,el.dataset.v,0,null,cu);save();closeModal();toast(o.no+' · '+rs(amt)+' paid by '+PAY[el.dataset.v]);render();if(el.dataset.v==='cash')openDrawer();break}
     case 'ksort':U.kSort=el.dataset.v;try{localStorage.setItem('cp_ksort',U.kSort)}catch(e){}render();break;
     case 'kitem':{const o=find(el.dataset.id);const l=o.items[+el.dataset.i];l.kdone=!l.kdone;save();render();break}
+    // Marked ready by mistake: back into the kitchen's Preparing list (and off Please collect on the customer display)
+    case 'ob-hide':{const o=find(el.dataset.id);if(!o)break;o.obHide=!o.obHide;save();toast(o.no+(o.obHide?' hidden from':' shown again on')+' the customer display');render();break}
+    case 'back-kitchen':{const o=find(el.dataset.id);if(o&&o.status==='ready'){o.status='preparing';o.times=o.times||{};delete o.times.ready;save();toast(o.no+' moved back to the kitchen');render()}break}
     case 'kready':{const o=find(el.dataset.id);if(o.status==='preparing'){setStatus(o,'ready');toast(o.no+' ready → counter');render()}break}
     case 'od-scope':U.ordersScope=el.dataset.v;render();break;
     case 'od-new':U.ordersNew=!U.ordersNew;render();break;
@@ -5563,7 +5639,7 @@ document.addEventListener('click',e=>{
     case 'reject':{const o=find(el.dataset.id);refundOrder(o);{const c=S.customers[o.customer.phone];if(c)c.coins=Math.max(0,(c.coins||0)+(o.coinsUsed||0)-(o.coinsEarned||0))}setStatus(o,'cancelled');ringDone(o.id);toast(o.no+' rejected');render();break}
     case 'handover':case 'delivered':{const o=find(el.dataset.id);setStatus(o,'done');toast(o.no+' · '+doneLabel(o.type));render();break}
     case 'dispatch':{const o=find(el.dataset.id);const nm=document.getElementById('rs-'+o.id).value;o.rider=(cur().riders||[]).find(r=>r.name===nm);setStatus(o,'out');toast(o.no+' out with '+nm);render();break}
-    case 'board':U.board=true;renderBoard();break;
+    case 'board':openOrderScreen();break;
     case 'board-x':U.board=false;renderBoard();break;
     case 'cancel':openCancel(find(el.dataset.id));break;
     case 'day-close':openDayClose(el.dataset.v);break;
@@ -5604,6 +5680,8 @@ document.addEventListener('click',e=>{
     case 'mi-edit':U.menuDD=null;render();openItemForm(el.dataset.id);break;
     case 'mi-move':moveItem(el.dataset.id,+el.dataset.v);render();break;
     case 'set-wait':{const o=S.orders.find(x=>x.id===el.dataset.id);if(o)openWait(o);break}
+    // Kitchen: +5 min on the waiting time, as many times as needed; the customer display follows it
+    case 'wait-5':{const o=S.orders.find(x=>x.id===el.dataset.id);if(!o)break;o.wait=Math.min(600,waitOf(o)+5);save();toast('#'+o.no+' waiting time now '+o.wait+' min');render();break}
     case 'xg-add':{S.extras=S.extras||[];const g={id:uid('x'),name:'New extra menu',active:true,pizzas:'all',items:[{name:'',prices:{}}]};S.extras.push(g);save();render();const el2=document.querySelector(`[data-xg="${g.id}"][data-f=name]`);if(el2){el2.select();el2.scrollIntoView({block:'center'})}break}
     case 'xi-add':{const g=S.extras.find(x=>x.id===el.dataset.id);g.items.push({name:'',prices:{}});save();render();const ins=document.querySelectorAll(`[data-xg="${g.id}"][data-xi][data-f=name]`);ins[ins.length-1]?.focus();break}
     case 'xi-del':{const g=S.extras.find(x=>x.id===el.dataset.id);g.items.splice(+el.dataset.v,1);save();render();toast('Item removed');break}
@@ -5914,6 +5992,8 @@ function pushOutlet(){const t=pushTok();if(PUSH&&t)api('/api/push/refresh',{old:
 function startPolling(){setInterval(async()=>{
   if(U.trackId&&mroot.innerHTML&&document.querySelector('canvas[data-scratch]'))return;
   let changed=false;try{changed=await refresh()}catch(_){}
+  if(OB_MODE){renderOB();return}
+  if(CS_MODE)return;
   checkNewOnline();if(UPI_ALERTS)try{checkUpiAlerts()}catch(e){console.error(e)}
   if(U.trackId&&mroot.innerHTML){openTrack();return}
   if(U.board){renderBoard();return}
