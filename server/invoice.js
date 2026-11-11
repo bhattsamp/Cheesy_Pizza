@@ -45,17 +45,21 @@ function invoicePage(o, outlet, { sizes = [], addons = {} } = {}) {
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Invoice ${esc(o.no)} · ${esc(shop)}</title><meta name="robots" content="noindex">
 <style>*{box-sizing:border-box}body{margin:0;background:#fff;color:#1f2a37;font:15px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif}.w{max-width:560px;margin:0 auto;padding:18px 14px 28px}
-h1{font-size:16px;text-align:center;margin:4px 0 18px;letter-spacing:.3px;text-transform:uppercase}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px}.g{border-left:3px solid #e5e7eb;padding:2px 0 2px 12px}
+.hd{text-align:center;margin:0 0 18px;padding-bottom:14px;border-bottom:2px dashed #e5e7eb}.lg{display:block;width:150px;height:auto;margin:-14px auto -18px}
+h1{font-size:18px;text-align:center;margin:4px 0 2px;letter-spacing:.3px;text-transform:uppercase;color:#0f4a55}.on{font-weight:800;font-size:17px;color:#e09a12;margin-top:4px}
+.oa{margin:6px auto 0;max-width:420px;color:#374151;font-size:14px;line-height:1.45}.op{margin-top:3px;font-size:14px}.op a{color:#1a93a8;text-decoration:none;font-weight:600}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px}.g{border-left:3px solid #e5e7eb;padding:2px 0 2px 12px}
 .k{color:#6b7280;font-size:14px}.v{margin-top:2px;font-size:15px}.cu{margin:16px 0}.cu .v{text-transform:uppercase}.cu .p{text-transform:none}
 .box{border:1px solid #e5e7eb;border-radius:12px;padding:16px 14px}.ad{text-align:center;font-weight:600;line-height:1.5}.tt{text-align:center;font-weight:700;margin:18px 0 10px}
 table{width:100%;border-collapse:collapse;font-size:14px}th{font-weight:500;text-align:left;padding:8px 4px;border-top:2px solid #e5e7eb;border-bottom:2px solid #e5e7eb}td{padding:9px 4px;border-bottom:1px solid #f0f1f3;vertical-align:top}
 .n{font-weight:600}.x{font-weight:400;color:#6b7280;font-size:12px}.c{text-align:center}.r{text-align:right;white-space:nowrap}th.c{text-align:center}th.r{text-align:right}
 .sums{border-top:2px solid #e5e7eb;margin-top:2px;padding-top:6px}.s{display:flex;justify-content:space-between;padding:5px 0;font-weight:600}.tot{border-top:2px solid #e5e7eb;margin-top:6px;padding-top:8px}
 .pm{font-weight:600;padding:6px 0}.ids{text-align:center;color:#374151;margin-top:8px;font-size:14px;line-height:1.6}.ft{text-align:center;color:#6b7280;font-size:13px;margin-top:16px;border-top:1px solid #e5e7eb;padding-top:12px}</style></head>
-<body><div class="w"><h1>${esc(shop)}</h1>
+<body><div class="w"><header class="hd"><img class="lg" src="/img/logo-badge.png" alt="Cheesy Pizza" width="150" height="154">
+${/^cheesy pizza$/i.test(shop.trim()) ? '' : `<h1>${esc(shop)}</h1>`}${outlet.name ? `<div class="on">${esc(outlet.name)}</div>` : ''}
+${outlet.area ? `<div class="oa">📍 ${esc(outlet.area)}</div>` : ''}${outlet.phone ? `<div class="op">📞 <a href="tel:${esc(String(outlet.phone).replace(/\s/g, ''))}">${esc(outlet.phone)}</a></div>` : ''}</header>
 <div class="grid">${cell('Order Number', o.no || '')}${cell('Date', when(o.ts))}${cell('Order amount', rs(total))}${cell('Order type', TYPES[o.type] || '')}${cell('Biller Name', o.source === 'online' ? 'Online order' : (o.by || 'Counter'))}${cell('Token No.', token || '-')}</div>
 <div class="cu"><div class="k">Customer Details</div>${o.customer && o.customer.name ? `<div class="v">${esc(o.customer.name)}</div>` : ''}${o.customer && o.customer.phone ? `<div class="v p">${esc(o.customer.phone)}</div>` : ''}${o.address ? `<div class="v p">${esc(o.address)}</div>` : ''}</div>
-<div class="box"><div class="ad">${esc(outlet.area || '')}${outlet.phone ? `<br>CONTACT NO ${esc(outlet.phone)}` : ''}${outlet.gstin ? `<br><br>GSTIN : ${esc(outlet.gstin)}` : ''}</div>
+<div class="box">${outlet.gstin ? `<div class="ad">GSTIN : ${esc(outlet.gstin)}</div>` : ''}
 <div class="tt">${rate ? 'TAX INVOICE' : 'INVOICE'}</div>
 <table><thead><tr><th>No.</th><th>Name</th><th class="c">Qty.</th><th class="r">Rate(₹)</th><th class="r">Price(₹)</th></tr></thead><tbody>${rows}</tbody></table>
 <div class="sums">${sums}<div class="s tot"><span>Total Payable Amount:</span><span>${rs(total)}</span></div><div class="pm">${pay}</div></div>

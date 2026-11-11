@@ -787,6 +787,20 @@ body:has(.addpop){overflow:hidden}
 .addto{background:var(--cheese-soft);color:var(--cheese-ink);border-radius:10px;padding:8px 10px;font-weight:700;font-size:14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .kt{--h:130;border-color:hsl(var(--h) 65% 42%);background:hsl(var(--h) 70% 45% / .10)}
 .kt.placed{--h:265}
+.st-tree{display:flex;flex-direction:column;gap:12px}
+.st-root,.st-o{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:12px 14px}
+.st-root{border-color:color-mix(in srgb,#f2b632 60%,var(--line))}
+.st-oh{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.st-oh b{font-size:17px}.st-ico{font-size:20px}
+.st-outs{display:flex;flex-direction:column;gap:12px;margin-left:18px;padding-left:14px;border-left:2px dashed var(--line)}.st-outs.st-top{margin-left:0;padding-left:0;border-left:0}
+.st-kids{display:flex;flex-direction:column;gap:8px;margin:10px 0 0 10px;padding-left:12px;border-left:2px solid var(--line)}
+.st-kids2{display:flex;flex-direction:column;gap:8px;margin-left:12px;padding-left:12px;border-left:2px solid var(--line)}
+.st-g{display:flex;flex-direction:column;gap:4px}.st-gh{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.st-p{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:8px 10px;border-radius:12px;border:1px solid var(--line);background:var(--surface2);color:inherit;font:inherit;cursor:pointer}
+.st-p:disabled{cursor:default;opacity:.75}.st-p .av{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:var(--teal,#1a93a8);color:#fff;font-weight:800;flex:none}
+.st-n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.st-e{font-size:20px;color:var(--muted)}.st-none{padding:2px 0}
+.chip.r-owner{background:#f2b632;color:#3a2800}.chip.r-oowner{background:#6a4fc9;color:#fff}
+.st-roles{display:flex;flex-wrap:wrap;gap:6px}.st-roles button{padding:8px 12px;border-radius:10px;border:1.5px solid var(--line);background:var(--surface2);font:inherit;color:inherit;cursor:pointer}.st-roles button[aria-pressed="true"]{background:var(--teal,#1a93a8);border-color:var(--teal,#1a93a8);color:#fff}
+@media (max-width:600px){.st-outs{margin-left:6px;padding-left:8px}.st-kids,.st-kids2{margin-left:4px;padding-left:8px}}
 .kt .kwait{gap:8px}.kt .ktools{gap:6px}.kt .kwait .btn{flex:1}
 .kt .left{font-family:var(--display);font-weight:800;font-size:20px;color:hsl(var(--h) 70% 34%)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .kt .left{color:hsl(var(--h) 70% 65%)}}
@@ -4687,8 +4701,8 @@ function openMoveTable(t){
    cancelled it, when and why on the order. Cancelled orders stay in history and Day sale lists them. */
 // Asks for the owner's PIN before a cashier or manager changes money that was already taken.
 // The owner signed in themselves goes straight through. cb gets the name of the owner who allowed it.
-function askOwnerPin(what,cb){const su=staff();if(su&&su.role==='owner'){cb(su.name);return}
-  const owners=S.users.filter(u=>u.role==='owner');if(!owners.length){cb('');return}
+function askOwnerPin(what,cb){const su=staff();if(su&&(su.role==='owner'||su.role==='oowner'&&worksAt(su,S.cur))){cb(su.name);return}
+  const owners=S.users.filter(u=>u.role==='owner'||u.role==='oowner'&&worksAt(u,S.cur));if(!owners.length){cb('');return}
   let uid=owners[0].id,pin='',busy=false,err='';
   const draw=()=>showModal(`<div class="mh"><h3>Owner PIN needed</h3><button class="x" data-act="close" aria-label="Close">×</button></div>
   <div class="mb"><div class="small">${esc(what)}</div>
@@ -4807,7 +4821,7 @@ const INV_ICON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strok
 function lowStockBanner(){const L=lowStock();if(!L.length)return '';const MAX=6,more=L.length-MAX;
   return `<button class="card lowstock" data-act="tab" data-v="stock"><span class="ls-h"><span class="ls-ic" aria-hidden="true">!</span>Low stock · ${L.length} item${L.length>1?'s':''}</span><span class="ls-go">Update ›</span>
   <span class="ls-l">${L.slice(0,MAX).map(x=>`<span class="ls-c">${esc(x.name)} <b class="num">${+x.qty} ${esc(x.unit||'')}</b></span>`).join('')}${more>0?`<span class="ls-c ls-more">+${more} more</span>`:''}</span></button>`}
-function vStock(){const L=stockOf(),own=['owner','manager'].includes(staff()?.role);
+function vStock(){const L=stockOf(),own=['owner','oowner','manager'].includes(staff()?.role);
   return `<div class="ph1"><h2>Stock</h2><span class="muted small">Update the count when you open, when stock comes in, and at closing. Items at or below their warning level show at the top of every screen.</span></div>
   <div class="card tw"><table class="stk ordtbl stkc"><thead><tr><th>Item</th><th>Unit</th><th class="r">In stock now</th><th class="r">Warn at</th><th>Updated</th>${own?'<th></th>':''}</tr></thead><tbody>
   ${L.map(x=>{const low=x.low>0&&+x.qty<=+x.low;return `<tr${low?' class="lowrow"':''}><td>${own?`<input class="inp" data-st="${x.id}" data-f="name" value="${esc(x.name)}" style="min-width:140px">`:`<b>${esc(x.name)}</b>`}</td>
@@ -5078,7 +5092,7 @@ function vOffers(){
   const dow=new Date().getDay();
   const card=(o,isCombo)=>`<div class="card" style="padding:12px;display:flex;flex-direction:column;gap:10px">${coupon(o,dow,isCombo)}
     <div class="row"><label class="switch"><input type="checkbox" data-toggle="${isCombo?'c':'o'}:${o.id}" ${o.active?'checked':''} aria-label="${esc(o.name)} active"><span></span></label><span class="small">${o.active?'Active':'Paused'}</span><span class="grow"></span><button class="btn sm" data-act="${isCombo?'edit-combo':'edit-offer'}" data-id="${o.id}">Edit</button></div></div>`;
-  const su=staff();const canSend=su&&(su.role==='owner'||su.role==='manager');
+  const su=staff();const canSend=su&&['owner','oowner','manager'].includes(su.role);
   return `<div class="ph1"><h2>Offers & combos</h2><span class="muted small">Only the best cart offer applies. Pizza deals and combos are not discounted again.</span></div>
   ${canSend?`<button class="card bcast-cta" data-act="bcast"><span aria-hidden="true">📣</span><span class="grow"><b>Send a notification to customers</b><span class="small muted">Tell everyone with the app about a deal, a new pizza or a festival offer.</span></span><span aria-hidden="true">›</span></button>`:''}
   <div class="row" style="margin-bottom:12px"><button class="btn pri" data-act="new-offer" data-v="day">+ Day-wise % offer</button><button class="btn pri" data-act="new-offer" data-v="bogo">+ BOGO offer</button><button class="btn pri" data-act="new-offer" data-v="item">+ Specific pizza offer</button><button class="btn pri" data-act="new-offer" data-v="code">+ Coupon code</button><button class="btn chz" data-act="edit-combo" data-id="">+ Combo</button></div>
@@ -5443,7 +5457,7 @@ function vOutlets(){const own=staff()?.role==='owner';
     ${own?`<div class="row"><button class="btn pri" data-act="outlet-on" data-id="${o.id}">Make active again</button><button class="btn bad" data-act="del-outlet" data-id="${o.id}">Delete</button></div>`:'<span class="small muted">Only the owner can change this.</span>'}
   </div>`}).join('')||'<div class="empty card">No inactive outlets. Use "Make inactive" on an outlet to move it here.</div>'}</div>`;
   return head+`
-  <div class="grid">${liveOutlets().map(o=>{const t=S.orders.filter(x=>x.outletId===o.id&&x.date===today()&&x.status!=='cancelled');return `<div class="card" style="padding:14px;display:flex;flex-direction:column;gap:8px">
+  <div class="grid">${(own?liveOutlets():liveOutlets().filter(o=>worksAt(staff(),o.id))).map(o=>{const t=S.orders.filter(x=>x.outletId===o.id&&x.date===today()&&x.status!=='cancelled');return `<div class="card" style="padding:14px;display:flex;flex-direction:column;gap:8px">
     <div class="row"><span class="chip t num">Code ${esc(o.code)}</span>${isMainOutlet(o)?'<span class="chip c">Main</span>':''}${o.id===cur().id?'<span class="chip ready">Current</span>':''}</div>
     <div class="row small" style="gap:6px;flex-wrap:wrap"><span class="muted">Staff login:</span><a class="num" href="${esc(staffLink(o))}" target="_blank" rel="noopener">${esc(staffLink(o).replace(/^https?:\/\//,''))}</a><button class="btn sm" data-act="copy-staff-link" data-v="${esc(staffLink(o))}">Copy</button></div>
     <div class="field"><label for="on-${o.id}">Name</label><input class="inp" id="on-${o.id}" data-ou="${o.id}" data-f="name" value="${esc(o.name)}"></div>
@@ -5482,7 +5496,7 @@ function vOutlets(){const own=staff()?.role==='owner';
     ${o.id!==cur().id?`<button class="btn pri" data-act="use-outlet" data-id="${o.id}">Switch to this outlet</button>`:''}
     ${own&&!isMainOutlet(o)?`<button class="btn bad" data-act="outlet-off" data-id="${o.id}">Make inactive</button>`:''}
   </div>`}).join('')}
-  <button class="card btn" style="min-height:180px;border-style:dashed" data-act="add-outlet">+ Add outlet</button></div>`;
+  ${staff()?.role==='oowner'?'':'<button class="card btn" style="min-height:180px;border-style:dashed" data-act="add-outlet">+ Add outlet</button>'}</div>`;
 }
 
 const mroot=document.getElementById('modalRoot');let mh={};
@@ -5712,7 +5726,7 @@ document.addEventListener('click',e=>{
     case 'del-outlet':{const o=S.outlets.find(x=>x.id===el.dataset.id);if(!o||staff()?.role!=='owner'||isMainOutlet(o)||o.active!==false)break;
       askConfirm('Delete '+o.name+'?','It is hidden everywhere. Its past orders stay in history and reports.','Delete',()=>{
         o.visible=false;save();toast(o.name+' deleted');render()});break}
-    case 'add-outlet':{const used=new Set(S.outlets.map(x=>x.code));let i=0;while(used.has(String.fromCharCode(65+i)))i++;const code=String.fromCharCode(65+i);S.outlets.push({id:uid('o'),code,name:'Outlet '+code,area:'Set your address',phone:'',upi:'',riders:[]});save();render();break}
+    case 'add-outlet':{if(staff()?.role==='oowner')break;const used=new Set(S.outlets.map(x=>x.code));let i=0;while(used.has(String.fromCharCode(65+i)))i++;const code=String.fromCharCode(65+i);S.outlets.push({id:uid('o'),code,name:'Outlet '+code,area:'Set your address',phone:'',upi:'',riders:[]});save();render();break}
     case 'test-ring':{const o=S.outlets.find(x=>x.id===el.dataset.o);audioCtx();playTone(o);break}
     case 'mute-ring':clearInterval(ringTimer);ringTimer=null;if(ringAudio){ringAudio.pause();ringAudio=null}renderRing();render();break;
     case 'hide-ring':stopRing();break;
@@ -6035,7 +6049,7 @@ function uaCands(a){
 }
 function checkUpiAlerts(){
   if(S.mode!=='pos'||!S.upialerts||!S.upialerts.length)return;
-  const su=staff();if(!su||!['owner','manager','cashier'].includes(su.role))return;
+  const su=staff();if(!su||!['owner','oowner','manager','cashier'].includes(su.role))return;
   const now=Date.now(),seen=uaSeen();
   const fresh=S.upialerts.filter(a=>a.outletId===S.cur&&!a.test&&a.ts>now-30*60000&&!seen.has(a.id)).sort((x,y)=>x.ts-y.ts);
   // The QR is on the customer screen and that amount just came in: it's this customer's payment
@@ -6185,7 +6199,7 @@ async function upiSetup(v){
     if(v==='off'){await UPIAL.off();U.uaSt=null;render();toast('UPI alerts turned off on this phone');return}
     if(v==='test'){await UPIAL.test({amt:'1'});toast('Test alert sent. It shows in this list in a few seconds.');return}
     if(v==='on'){
-      const su=staff();if(!su||!['owner','manager'].includes(su.role)){toast('The owner or a manager turns this on');return}
+      const su=staff();if(!su||!['owner','oowner','manager'].includes(su.role)){toast('The owner or a manager turns this on');return}
       const pin=prompt('Enter your PIN to turn on UPI alerts for '+cur().name);if(!pin)return;
       const r=await api('/api/upi-alerts/key',{staffId:su.id,pin,outletId:S.cur});
       const picked=[...document.querySelectorAll('[data-uaapp]:checked')].map(x=>x.dataset.uaapp);
@@ -6198,8 +6212,10 @@ document.addEventListener('change',e=>{const t=e.target;if(!t.dataset||!t.datase
   const apps=[...document.querySelectorAll('[data-uaapp]:checked')].map(x=>x.dataset.uaapp).join(',');UPIAL.setup({apps}).then(()=>{if(U.uaSt)U.uaSt.apps=apps;toast('Saved')})});
 
 /* ================= v4: accounts, wallet, staff login, fun ================= */
-const ROLES={owner:'Owner',manager:'Manager',cashier:'Cashier',kitchen:'Kitchen',rider:'Rider'};
-const ROLE_TABS={owner:TABS.map(t=>t[0]),manager:TABS.map(t=>t[0]).filter(k=>k!=='staff'&&k!=='review'&&k!=='display'),cashier:['new','counter','orders','tables','cust','stock'],kitchen:['kitchen','counter'],rider:['trips']};
+// Staff tree: Main owner (every outlet) > Outlet owner (only their outlets, runs their staff) > Manager, Cashier, Kitchen, Rider at each outlet
+const ROLES={owner:'Main owner',oowner:'Outlet owner',manager:'Manager',cashier:'Cashier',kitchen:'Kitchen',rider:'Rider'};
+const ROLE_ORDER=['owner','oowner','manager','cashier','kitchen','rider'];
+const ROLE_TABS={owner:TABS.map(t=>t[0]),oowner:TABS.map(t=>t[0]).filter(k=>k!=='review'&&k!=='display'),manager:TABS.map(t=>t[0]).filter(k=>k!=='staff'&&k!=='review'&&k!=='display'),cashier:['new','counter','orders','tables','cust','stock'],kitchen:['kitchen','counter'],rider:['trips']};
 function ensureCust(ph,name){const c=S.customers[ph]||(S.customers[ph]={phone:ph,name:name||'',due:0,coins:0});
   c.wallet=c.wallet||0;c.tx=c.tx||[];c.myCodes=c.myCodes||[];c.ref=c.ref||('CP'+ph.slice(-5));if(name&&!c.name)c.name=name;return c}
 function migrate(){
@@ -6496,26 +6512,67 @@ function lgKey(k){
     api('/api/auth/staff',{id:L.uid,pin:L.buf}).then(r=>{if(r.ok&&u){S.staffId=u.id;if(!U.lockOutlet&&!worksAt(u,S.cur)){const ok=liveOutlets().find(o=>worksAt(u,o.id));if(ok)S.cur=ok.id}pushLogin(L.buf);L.uid=null;saveLocal();U.pos.tab=ROLE_TABS[u.role][0];toast('Welcome, '+u.name)}else L.err='Wrong PIN. Try again.'},()=>{L.err='Could not reach the server.'}).finally(()=>{L.buf='';L.busy=false;render()})}
   render();
 }
+// Who the signed-in person may manage: the main owner everyone; an outlet owner the staff of their outlets below them
+const myOutlets=()=>{const su=staff();return su&&su.role==='owner'?liveOutlets():liveOutlets().filter(o=>su&&(su.outlets||[]).includes(o.id))};
+const canRoles=()=>staff()?.role==='owner'?ROLE_ORDER:['manager','cashier','kitchen','rider'];
+function canEditUser(u){const su=staff();if(!su)return false;if(su.role==='owner')return true;if(su.role!=='oowner')return false;
+  if(u.id===su.id)return true;if(!canRoles().includes(u.role))return false;const mine=new Set(myOutlets().map(o=>o.id));return (u.outlets||[]).some(id=>mine.has(id))}
+function staffRow(u,meU){const ed=canEditUser(u);
+  return `<button class="st-p" ${ed?`data-act="sf-edit" data-id="${u.id}"`:'disabled'}><span class="av">${esc((u.name||'?')[0])}</span><span class="st-n"><b>${esc(u.name)}</b>${u.id===meU.id?' <span class="chip ready">You</span>':''}</span><span class="chip r-${u.role}">${ROLES[u.role]||u.role}</span>${ed?'<span class="st-e" aria-hidden="true">›</span>':''}</button>`}
+function openStaffEdit(orig,isNew){
+  const su=staff(),me=orig.id===su.id,d={name:orig.name||'',role:orig.role,outlets:[...(orig.outlets||[])],pin:''};let err='';
+  const outs=myOutlets(),roles=canRoles();
+  const draw=()=>showModal(`<div class="mh"><h3>${isNew?'Add staff':'Edit '+esc(orig.name)}</h3><button class="x" data-act="close" aria-label="Close">×</button></div>
+  <div class="mb"><div class="field"><label for="se-n">Name</label><input class="inp" id="se-n" value="${esc(d.name)}" placeholder="e.g. Ravi" autocomplete="off"></div>
+   <div class="field"><label>Role</label><div class="st-roles">${(me?[d.role]:roles).map(r=>`<button data-act="se-role" data-v="${r}" aria-pressed="${d.role===r}">${ROLES[r]}</button>`).join('')}</div>${me?'<span class="small muted">You can\'t change your own role.</span>':''}</div>
+   ${d.role==='owner'?'<div class="small muted">The main owner works at every outlet.</div>':`<div class="field"><label>Outlets</label><div class="uouts">${outs.map(o=>`<label class="opt"><input type="checkbox" data-se-o="${o.id}" ${d.outlets.includes(o.id)?'checked':''} ${me&&su.role!=='owner'?'disabled':''}> ${esc(o.name)}</label>`).join('')}</div>
+     ${su.role==='owner'&&d.role!=='oowner'?'<span class="small muted">None ticked = can sign in at every outlet.</span>':''}</div>`}
+   <div class="field"><label for="se-pin">${isNew?'PIN':'New PIN'}</label><input class="inp num" id="se-pin" type="password" inputmode="numeric" maxlength="4" placeholder="${isNew?'4 digits (blank = 0000)':'Leave blank to keep'}" autocomplete="new-password"></div>
+   ${err?`<div class="msg-bad">${esc(err)}</div>`:''}
+   <div class="row" style="gap:8px">${!isNew&&!me?'<button class="btn bad" data-act="se-del">Remove</button>':''}<span class="grow"></span><button class="btn" data-act="close">Cancel</button><button class="btn pri" data-act="se-save">Save</button></div></div>`,{
+    onAct:(a,el)=>{const keep=()=>{d.name=document.getElementById('se-n')?.value??d.name;d.pin=document.getElementById('se-pin')?.value||''};
+      if(a==='se-role'){keep();d.role=el.dataset.v;if(d.role==='owner')d.outlets=[];err='';draw();return true}
+      if(a==='se-del'){closeModal();askConfirm('Remove '+orig.name+'?','They will not be able to sign in any more.','Remove',()=>{S.users=S.users.filter(u=>u.id!==orig.id);save();toast(orig.name+' removed');render()});return true}
+      if(a==='se-save'){keep();const nm=d.name.trim();
+        if(!nm){err='Type a name';draw();return true}
+        if(d.pin&&!/^\d{4}$/.test(d.pin)){err='PIN must be 4 digits';draw();return true}
+        if(!me&&d.role!=='owner'&&!d.outlets.length&&(su.role!=='owner'||d.role==='oowner')){err='Tick at least one outlet';draw();return true}
+        if(!me&&!roles.includes(d.role)){err='You can\'t give that role';draw();return true}
+        const u=isNew?{id:orig.id}:S.users.find(x=>x.id===orig.id);if(!u){closeModal();return true}
+        u.name=nm;
+        if(!me){u.role=d.role;
+          if(su.role==='owner')u.outlets=d.role==='owner'?[]:d.outlets;
+          else{const mine=new Set(outs.map(o=>o.id));u.outlets=[...(orig.outlets||[]).filter(id=>!mine.has(id)),...d.outlets]}} // an outlet owner never touches outlets they can't see
+        if(d.pin)setPin(u,d.pin);else if(isNew)setPin(u,'0000');
+        if(isNew)S.users.push(u);save();closeModal();toast(nm+' saved · '+ROLES[u.role]+(isNew&&!d.pin?' · PIN 0000':''));render();return true}
+      return false},
+    onInput:e=>{const t=e.target;if(t.dataset.seO){const id=t.dataset.seO;d.outlets=t.checked?[...new Set([...d.outlets,id])]:d.outlets.filter(x=>x!==id)}}});
+  draw();
+}
 function vStaff(){
-  const meU=staff();
-  return `<div class="ph1"><h2>Staff & logins</h2><span class="muted small">Owners see everything. Cashiers: orders, counter, customers. Kitchen: kitchen and counter. Riders: their deliveries, sharing live location; give them the same name as in the outlet's rider list.</span></div>
-  <div class="card tw"><table class="stk"><thead><tr><th>Name</th><th>Role</th><th>Outlets</th><th>New PIN</th><th></th></tr></thead><tbody>
-  ${S.users.map(u=>`<tr><td><input class="inp" data-us="${u.id}" data-f="name" value="${esc(u.name)}" aria-label="Name" style="min-width:140px"></td>
-    <td><select class="inp" data-us="${u.id}" data-f="role" aria-label="Role" ${u.id===meU.id?'disabled':''}>${Object.entries(ROLES).map(([k,n])=>`<option value="${k}" ${u.role===k?'selected':''}>${n}</option>`).join('')}</select></td>
-    <td>${u.role==='owner'?'<span class="small muted">All outlets</span>':`<div class="uouts">${liveOutlets().map(o=>`<label class="opt"><input type="checkbox" data-uo="${u.id}" data-o="${o.id}" ${(u.outlets||[]).includes(o.id)?'checked':''}> ${esc(o.name)}</label>`).join('')}${(u.outlets||[]).length?'':'<span class="small muted">None ticked = all</span>'}</div>`}</td>
-    <td><input class="inp num" data-us="${u.id}" data-f="pin" type="password" inputmode="numeric" maxlength="4" placeholder="4 digits" aria-label="New PIN" style="max-width:120px"></td>
-    <td>${u.id===meU.id?'<span class="chip ready">You</span>':`<button class="btn sm bad" data-act="del-user" data-id="${u.id}">Remove</button>`}</td></tr>`).join('')}
-  </tbody></table></div>
-  <button class="btn pri" style="margin-top:12px" data-act="add-user">+ Add staff</button>
+  const meU=staff(),main=meU.role==='owner',outs=myOutlets(),byRole=(a,b)=>ROLE_ORDER.indexOf(a.role)-ROLE_ORDER.indexOf(b.role)||String(a.name).localeCompare(String(b.name));
+  const owners=S.users.filter(u=>u.role==='owner'),allOut=S.users.filter(u=>u.role!=='owner'&&!(u.outlets||[]).length).sort(byRole);
+  const outletNode=o=>{const ppl=S.users.filter(u=>u.role!=='owner'&&(u.outlets||[]).includes(o.id)).sort(byRole);
+    const oo=ppl.filter(u=>u.role==='oowner'),rest=ppl.filter(u=>u.role!=='oowner');
+    const grp=r=>{const g=rest.filter(u=>u.role===r);return g.length?`<div class="st-g"><div class="st-gh">${ROLES[r]}</div>${g.map(u=>staffRow(u,meU)).join('')}</div>`:''};
+    return `<div class="st-o"><div class="st-oh"><span class="st-ico" aria-hidden="true">🏪</span><b>${esc(o.name)}</b><span class="small muted">${ppl.length} ${ppl.length===1?'person':'people'}</span><span class="grow"></span><button class="btn sm" data-act="sf-add" data-o="${o.id}">+ Add staff</button></div>
+      <div class="st-kids"><div class="st-g"><div class="st-gh">Outlet owner</div>${oo.map(u=>staffRow(u,meU)).join('')||'<div class="small muted st-none">No outlet owner yet. Tap + Add staff and pick Outlet owner.</div>'}</div>
+      <div class="st-kids2">${['manager','cashier','kitchen','rider'].map(grp).join('')||'<div class="small muted st-none">No staff yet.</div>'}</div></div></div>`};
+  return `<div class="ph1"><h2>Staff & logins</h2><span class="muted small">${main?'The main owner sees every outlet. An outlet owner sees only their own outlets and runs that outlet\'s staff. Tap a person to change their name, role, outlets or PIN.':'You run the staff of your outlets. Tap a person to change their name, role or PIN.'}</span></div>
+  <div class="st-tree">
+    ${main?`<div class="st-root"><div class="st-oh"><span class="st-ico" aria-hidden="true">👑</span><b>Main owner</b><span class="small muted">All outlets</span><span class="grow"></span><button class="btn sm" data-act="sf-add" data-o="" data-r="owner">+ Add</button></div><div class="st-kids">${owners.map(u=>staffRow(u,meU)).join('')}</div></div>`:''}
+    <div class="${main?'st-outs':'st-outs st-top'}">${outs.map(outletNode).join('')||'<div class="empty small">No outlets are ticked for you yet. Ask the main owner.</div>'}</div>
+    ${main&&allOut.length?`<div class="st-o"><div class="st-oh"><span class="st-ico" aria-hidden="true">🔀</span><b>Every outlet</b><span class="small muted">No outlet ticked, so they can sign in at any outlet</span></div><div class="st-kids">${allOut.map(u=>staffRow(u,meU)).join('')}</div></div>`:''}
+  </div>
   <div class="card" style="padding:14px;margin-top:14px;display:flex;flex-direction:column;gap:8px"><div class="grp-h">One login for each person</div>
    <div class="small">Give every cashier their own name and PIN, and don't share PINs. Then bills, cancels and day closes show who did them, and Reports can show each person's sales.${S.users.some(u=>/^(abcd|test|staff|cashier|new staff|user)\d*$/i.test(u.name.trim()))?` <b style="color:var(--bad)">Rename: ${S.users.filter(u=>/^(abcd|test|staff|cashier|new staff|user)\d*$/i.test(u.name.trim())).map(u=>esc(u.name)).join(', ')}.</b>`:''}</div>
    <div class="field" style="max-width:360px"><label for="al-min">Lock the till when nobody taps it for</label><select class="inp" id="al-min" data-autolock="1">${[[0,'Never'],[2,'2 minutes'],[5,'5 minutes'],[10,'10 minutes'],[15,'15 minutes'],[30,'30 minutes']].map(([v,n])=>`<option value="${v}" ${(+cur().autoLock||0)===v?'selected':''}>${n}</option>`).join('')}</select>
     <span class="small muted">The next person then has to sign in with their own PIN. Kitchen and rider screens never lock.</span></div></div>
   <div class="card" style="padding:14px;margin-top:14px;display:flex;flex-direction:column;gap:8px"><div class="grp-h">Staff login link for each outlet</div>
    <div class="small">Open the outlet's link on that outlet's till or tablet. It shows only the staff ticked for that outlet, and they can't switch to another outlet.</div>
-   ${liveOutlets().map(o=>`<div class="row" style="gap:8px;flex-wrap:wrap"><b style="min-width:120px">${esc(o.name)}</b><a class="num small" href="${esc(staffLink(o))}" target="_blank" rel="noopener">${esc(staffLink(o).replace(/^https?:\/\//,''))}</a><button class="btn sm" data-act="copy-staff-link" data-v="${esc(staffLink(o))}">Copy</button></div>`).join('')}
+   ${myOutlets().map(o=>`<div class="row" style="gap:8px;flex-wrap:wrap"><b style="min-width:120px">${esc(o.name)}</b><a class="num small" href="${esc(staffLink(o))}" target="_blank" rel="noopener">${esc(staffLink(o).replace(/^https?:\/\//,''))}</a><button class="btn sm" data-act="copy-staff-link" data-v="${esc(staffLink(o))}">Copy</button></div>`).join('')}
    <span class="small muted">Renaming an outlet changes its link.</span></div>
-  <p class="small muted">A new PIN is saved when you leave the box. New staff start with PIN 0000.</p>`;
+  <p class="small muted">New staff start with PIN 0000 unless you type one.</p>`;
 }
 /* ----- extra events ----- */
 document.addEventListener('click',e=>{
@@ -6556,6 +6613,10 @@ document.addEventListener('click',e=>{
     case 'lg-user':L.uid=el.dataset.v;L.buf='';L.err='';render();break;
     case 'lg-key':lgKey(el.dataset.v);break;
     case 'add-user':{const u={id:uid('u'),name:'New staff',role:'cashier'};setPin(u,'0000');S.users.push(u)}save();render();break;
+    case 'sf-add':{const su=staff();if(!su||!['owner','oowner'].includes(su.role))break;const r=el.dataset.r==='owner'&&su.role==='owner'?'owner':'cashier';
+      const o=el.dataset.o||'';if(o&&!myOutlets().some(x=>x.id===o))break;
+      openStaffEdit({id:uid('u'),name:'',role:r,outlets:o?[o]:[]},true);break}
+    case 'sf-edit':{const u=S.users.find(x=>x.id===el.dataset.id);if(u&&canEditUser(u))openStaffEdit(u,false);break}
     case 'del-user':S.users=S.users.filter(u=>u.id!==el.dataset.id);save();render();break;
     case 'topup-pos':{const ph=el.dataset.ph;const v=Math.round(+document.getElementById('tw-amt').value||0);if(v<=0){toast('Enter an amount');break}walletAdd(ph,v,'Cash top-up at '+cur().name);save();toast(rs(v)+' added to wallet');render();break}
     case 'reset-pin':{const c=S.customers[el.dataset.ph];delete c.pin;delete c._newPin;if(S.me===c.phone)S.me=null;save();toast('PIN reset. Customer can sign up again with the same number.');render();break}

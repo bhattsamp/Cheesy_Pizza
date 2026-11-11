@@ -41,7 +41,7 @@ function routes(app, store, M) {
   app.post('/api/upi-alerts/key', async (req, res) => {
     const { staffId, pin, outletId } = req.body || {};
     const s = staffId && await M.Staff.findById(String(staffId)).lean();
-    if (!s || !['owner', 'manager'].includes(s.role) || !(await store.checkStaffPin(staffId, pin))) return res.status(403).json({ error: 'Only the owner or a manager can turn this on' });
+    if (!s || !['owner', 'oowner', 'manager'].includes(s.role) || !(await store.checkStaffPin(staffId, pin))) return res.status(403).json({ error: 'Only the owner or a manager can turn this on' });
     if (!(await M.Outlet.findById(String(outletId)).lean())) return res.status(400).json({ error: 'Unknown outlet' });
     const key = 'cpu_' + crypto.randomBytes(18).toString('hex');
     const keys = await store.getSetting('upiKeys', {});
