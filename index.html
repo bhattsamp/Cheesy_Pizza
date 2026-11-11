@@ -801,7 +801,9 @@ body:has(.addpop){overflow:hidden}
 .chip.r-owner{background:#f2b632;color:#3a2800}.chip.r-oowner{background:#6a4fc9;color:#fff}
 .st-roles{display:flex;flex-wrap:wrap;gap:6px}.st-roles button{padding:8px 12px;border-radius:10px;border:1.5px solid var(--line);background:var(--surface2);font:inherit;color:inherit;cursor:pointer}.st-roles button[aria-pressed="true"]{background:var(--teal,#1a93a8);border-color:var(--teal,#1a93a8);color:#fff}
 @media (max-width:600px){.st-outs{margin-left:6px;padding-left:8px}.st-kids,.st-kids2{margin-left:4px;padding-left:8px}}
-.kt .kwait{gap:8px}.kt .ktools{gap:6px}.kt .kwait .btn{flex:1}
+.kt .kwait{gap:8px}
+.kt .kr1{align-items:center;gap:6px;flex-wrap:nowrap}.kt .kr1 .left{font-size:18px;white-space:nowrap}.kt .kr1 .no .np{display:inline;font-size:12px;margin:0 2px 0 0}.kt .kr1 .no{font-size:26px}
+.kt .kr2{align-items:center;gap:6px;flex-wrap:nowrap}.kt .kr2 .grow{min-width:0;line-height:1.25}.kt .kr2 .btn{flex:none;padding:5px 9px;min-height:0}.kt .ktools{gap:6px}.kt .kwait .btn{flex:1}
 .kt .left{font-family:var(--display);font-weight:800;font-size:20px;color:hsl(var(--h) 70% 34%)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .kt .left{color:hsl(var(--h) 70% 65%)}}
 :root[data-theme="dark"] .kt .left{color:hsl(var(--h) 70% 65%)}
@@ -2446,7 +2448,9 @@ function applyConfig(c){
   WAITS=c.waitTimes||[15,20,30,40];
 }
 let WAITS=[15,20,30,40];
-const COUNTER_MODES=['cash','upi','card','bank'];
+// Card and Bank / Cheque are switched off everywhere the till takes money; old card or bank sales still show in reports
+const OFF_MODES=['card','bank'];
+const COUNTER_MODES=['cash','upi'];
 // Split payment: one bill paid in parts, e.g. ₹100 cash and the rest by UPI.
 // Saved as pay:{mode:'split',splits:[{mode,amt}]}. A 'due' part goes to the customer's baki account.
 const paySplits=o=>o&&o.pay&&o.pay.mode==='split'&&Array.isArray(o.pay.splits)?o.pay.splits:null;
@@ -2578,7 +2582,7 @@ async function refresh(){
 function seedDemoOrders(){
   const s=S;
   const names=[['Ravi Patel','9825011111'],['Nidhi Shah','9898022222'],['Kunal Mehta','9909033333'],['Pooja Joshi','9727044444'],['Harsh Desai','9638055555'],['Meera Trivedi','9016066666']];
-  const modes=['cash','cash','upi','upi','upi','card','zomato'];
+  const modes=['cash','cash','upi','upi','upi','upi','zomato'];
   [[-2,8],[-1,11],[0,10]].forEach(([off,n])=>{
     const date=addDays(today(),off);
     ['o1','o2'].forEach((oid,oi)=>{
@@ -2756,6 +2760,8 @@ function comboWorth(c){
 // Order number: outlet code - date (ddmmyy) - a 3-digit count for that outlet and day, e.g. A-081126-001
 const orderNo=(out,date,n)=>{const [y,m,d]=String(date).split('-');return out.code+'-'+d+m+y.slice(2)+'-'+String(n).padStart(3,'0')};
 // On kitchen and counter cards the date and outlet part is small, so the count stands out
+// Zomato orders go by Zomato's own order ID on the kitchen, counter and customer screens
+const zNo=o=>o.type==='zomato'&&o.zomatoId?`<small class="np">Zomato</small>${esc(o.zomatoId)}`:noHtml(o.no);
 const noHtml=no=>{const m=/^([A-Z]+-\d{6}-)(\d{3,})$/.exec(no||'');return m?`<small class="np">${m[1]}</small>${m[2]}`:esc(no||'')};
 function commitOrder(o){
   const out=S.outlets.find(x=>x.id===o.outletId);
@@ -4114,7 +4120,7 @@ function posCalc(){
 }
 // The till's order types, in this order: Delivery (when delivery is on) | Dine-in | Takeaway
 const posTypes=()=>['delivery','dine','takeaway','zomato'].filter(k=>TYPES[k]&&(k!=='delivery'||delOn())).map(k=>[k,TYPES[k]]);
-// Pay-by choices on the bill. Card and bank stay inside Split.
+// Pay-by choices on the bill (Split takes cash and UPI; card and bank are off)
 const TK_PAY=[['cash','Cash'],['upi','UPI'],['due','Baki'],['split','Split']];
 // A till tile: tap the name for options; tap a size (pizza) or the price button to add it at once
 const posTile=(m,i)=>{
@@ -4155,8 +4161,8 @@ function vNew(){
       </div>
       <div class="sec tkcust">
         ${zom?`<div class="field"><label for="pos-zid">Zomato order ID</label><input class="inp num" id="pos-zid" value="${esc(P.zid)}" placeholder="e.g. 5123456789"></div>`:''}
-        <div class="row"><div class="field grow"><label for="pos-ph">Mobile${zom?' (optional)':needPhone()?' *':''}</label><input class="inp num" id="pos-ph" inputmode="numeric" maxlength="10" value="${esc(P.phone)}" placeholder="Mobile · 10 digits"></div>
-        <div class="field grow"><label for="pos-nm">Name${zom?' (optional)':''}</label><input class="inp" id="pos-nm" value="${esc(P.name)}" placeholder="Customer name"></div></div>
+        <div class="row"><div class="field grow"><label for="pos-ph">Mobile${needPhone()?' *':' (optional)'}</label><input class="inp num" id="pos-ph" inputmode="numeric" maxlength="10" value="${esc(P.phone)}" placeholder="Mobile · 10 digits"></div>
+        <div class="field grow"><label for="pos-nm">Name${needName()?' *':zom?' (optional)':''}</label><input class="inp" id="pos-nm" value="${esc(P.name)}" placeholder="Customer name"></div></div>
         ${(()=>{const lv=posLt(),o0={outletId:S.cur};return `<button class="btn sm ltbtn${lv===2?' l2':''}" data-act="pos-lt" aria-pressed="${lv>0}" title="Tap to change: Off › ${esc(ltName(o0,1))} › ${esc(ltName(o0,2))} › Off">${lv?'★ '+esc(ltName(o0,lv)):esc(ltName(o0,1))+': Off'}</button>`})()}
         <div id="custbox">${custBox(ci)}</div>
         ${P.type==='dine'?tablePicker(P):''}
@@ -4227,7 +4233,9 @@ function openPay(){
   });
   if(P.pay==='cash')setTimeout(()=>document.getElementById('pos-given')?.focus(),50);
 }// Cashiers must enter the customer's mobile, so every bill can be checked later
-const needPhone=()=>staff()?.role==='cashier'&&U.pos.type!=='zomato';
+// Dine-in and takeaway: the customer's name is required and the mobile number optional. A cashier's delivery still needs the number.
+const needPhone=()=>staff()?.role==='cashier'&&U.pos.type==='delivery';
+const needName=()=>['dine','takeaway'].includes(U.pos.type);
 function printText(txt,o){if(btp())return btPrint(txt,o&&o.drawer);const r=document.getElementById('printRoot');r.innerHTML=`<pre>${esc(txt)}</pre>`;try{window.print()}catch(_){}}
 /* Admin app: bills and KOTs go straight to the receipt printer (Bluetooth or USB, chosen once, kept
    on this device), and cash payments open the cash drawer plugged into that printer. The website
@@ -4340,6 +4348,7 @@ function posGo(kind){
   if(!P.cart.length&&!(run&&kind!=='kot'&&kind!=='save'))return;
   if(P.phone&&P.phone.length!==10){toast('Mobile number should be 10 digits');return}
   if(!run){
+    if(needName()&&!P.name.trim()){toast('Enter the customer name');document.getElementById('pos-nm')?.focus();return}
     if(needPhone()&&P.phone.length!==10){toast('Enter the customer mobile number');document.getElementById('pos-ph')?.focus();return}
     if(P.type==='zomato'&&!P.zid.trim()){toast('Enter the Zomato order ID');document.getElementById('pos-zid')?.focus();return}
     if(P.type==='delivery'&&!P.address.trim()){toast('Add the delivery address');return}
@@ -4515,9 +4524,10 @@ function kCard(o,where,foot){const kit=where==='kitchen';const mins=Math.floor((
   const h=o.status==='placed'?265:o.status==='out'?200:Math.round(130*Math.max(0,Math.min(1,1-mins/w)));
   return `<div class="kt ${o.status==='placed'?'placed':''} ${live&&left<0?'late':''} ${kit?'':'kc'}" style="--h:${h}" ${kit&&o.status==='preparing'?`data-act="ktap" data-id="${o.id}"`:''}>
     <div class="kfoot ktop"><span class="kwho">${esc(kName(o))}${ltChip(o)}</span><span class="num">${esc(o.customer.phone?fmtPhone(o.customer.phone):'—')}</span><span>${TYPES[o.type]}${o.table?' · T'+esc(o.table):''}</span><span class="${o.paid?'pd':'bk'}">${o.paid?'Payment done':'Baki'}</span></div>
-    <div class="row"><span class="no num">${noHtml(o.no)}</span><span class="grow"></span>${kit?`<span class="chip ${o.type==='zomato'?'r':'t'}">${TYPES[o.type]}${o.table?' · T'+esc(o.table):''}</span>`:`<span class="chip ${o.status}">${statusName(o.status,o.type)}</span>`}</div>
-    <div class="row"><span class="small muted num grow">${fmtTime(o.ts)} · ${mins<1?'just now':mins+' min'}${o.source==='online'?' · online':''}${o.zomatoId?' · Zomato '+esc(o.zomatoId):''}</span>${live?`<span class="left num">${leftText(left)}</span>`:''}${o.status!=='out'&&!(kit&&(o.status==='preparing'||o.status==='placed'))?`<button class="btn sm" data-act="set-wait" data-id="${o.id}" title="Change waiting time">⏱ ${w} min</button>`:''}</div>
-    ${kit&&(o.status==='preparing'||o.status==='placed')?`<div class="row kwait"><button class="btn sm" data-act="set-wait" data-id="${o.id}" title="Change waiting time">⏱ ${w} min</button><button class="btn sm ok" data-act="wait-5" data-id="${o.id}" title="Add 5 minutes to the waiting time (tap again for more)">+5 min</button></div><div class="row ktools">${obHideBtn(o)}</div>`:''}
+    ${kit?`<div class="row kr1"><span class="no num">${zNo(o)}</span><span class="grow"></span>${live?`<span class="left num">${leftText(left)}</span>`:`<span class="chip ${o.type==='zomato'?'r':'t'}">${TYPES[o.type]}${o.table?' · T'+esc(o.table):''}</span>`}</div>
+    <div class="row kr2"><span class="small muted num grow">${fmtTime(o.ts)} · ${mins<1?'now':mins+' min'}${o.source==='online'?' · online':''}</span>${o.status==='preparing'||o.status==='placed'?`<button class="btn sm" data-act="set-wait" data-id="${o.id}" title="Change waiting time">⏱ ${w}</button><button class="btn sm ok" data-act="wait-5" data-id="${o.id}" title="Add 5 minutes to the waiting time (tap again for more)">+5</button>${obHideBtn(o,true)}`:''}</div>`
+    :`<div class="row"><span class="no num">${zNo(o)}</span><span class="grow"></span><span class="chip ${o.status}">${statusName(o.status,o.type)}</span></div>
+    <div class="row"><span class="small muted num grow">${fmtTime(o.ts)} · ${mins<1?'just now':mins+' min'}${o.source==='online'?' · online':''}</span>${live?`<span class="left num">${leftText(left)}</span>`:''}${o.status!=='out'?`<button class="btn sm" data-act="set-wait" data-id="${o.id}" title="Change waiting time">⏱ ${w} min</button>`:''}</div>`}
     ${o.scheduled?`<span class="chip c" style="align-self:flex-start">Scheduled for ${esc(o.scheduled)}</span>`:''}
     ${live?`<div class="pbar" title="Waiting time ${w} min"><i style="width:${Math.min(100,mins/w*100)}%;background:hsl(${h} 65% 42%)"></i></div>`:''}
     ${o.address&&!kit?`<div class="small muted">${esc(o.address)}</div>`:''}
@@ -4590,7 +4600,7 @@ function vCounter(){
    to the TV or second monitor; that window loads the shop's orders itself every 5 seconds, so it keeps
    working while the till moves to other screens. Without pop-ups it opens full screen on the till. */
 // Kitchen or counter can hide an order from the customer display (o.obHide) and show it again
-const obHideBtn=o=>`<button class="btn sm ${o.obHide?'pri':''} kobh" data-act="ob-hide" data-id="${o.id}" aria-pressed="${!!o.obHide}" title="${o.obHide?'Hidden from the customer display. Tap to show it again':'Hide this order from the customer display'}">${o.obHide?'🙈 Hidden on display':'👁 Hide on display'}</button>`;
+const obHideBtn=(o,icon)=>`<button class="btn sm ${o.obHide?'pri':''} kobh" data-act="ob-hide" data-id="${o.id}" aria-pressed="${!!o.obHide}" aria-label="${o.obHide?'Show on customer display':'Hide on customer display'}" title="${o.obHide?'Hidden from the customer display. Tap to show it again':'Hide this order from the customer display'}">${o.obHide?'🙈'+(icon?'':' Hidden on display'):'👁'+(icon?'':' Hide on display')}</button>`;
 const obShortNo=no=>{const m=/-(\d{2,})$/.exec(no||'');return m?m[1]:(no||'—')};
 function obName(o){
   const n=(o.customer&&o.customer.name||'').trim().replace(/\s+/g,' ');
@@ -4611,7 +4621,7 @@ function obCard(o,rd){
   const now=Date.now(),waited=obMin(now-o.ts),rdAt=(o.times&&o.times.ready)||now,since=obMin(now-rdAt);
   const left=minsLeft(o),fresh=rd&&now-rdAt<45e3;
   const sub=rd?(since<1?'Ready now':'Ready '+since+' min ago'):o.status==='placed'?'Order received':left>0?'Ready in about '+left+' min':'Almost ready';
-  return `<div class="ob-o${rd?' rd':''}${fresh?' new':''}"><span class="ob-no num">${esc(obShortNo(o.no))}</span>
+  return `<div class="ob-o${rd?' rd':''}${fresh?' new':''}"><span class="ob-no num">${esc(o.type==='zomato'&&o.zomatoId?o.zomatoId:obShortNo(o.no))}</span>
     <span class="ob-nm"><b>${esc(obName(o))}</b><small>${sub}</small></span>
     <span class="ob-w"><small>Waiting</small><b class="num">${obDur(waited)}</b></span></div>`}
 function obHtml(outletId,closeBtn){
@@ -4927,7 +4937,7 @@ function vSales(){if(!UPI_ALERTS)return vSalesMain();const seg=upiSeg('sales');i
 function vSalesMain(){
   const d=U.salesDate||today(),sc=U.salesScope;const s=salesFor(d,sc),p=salesFor(addDays(d,-1),sc);const diff=s.tot-p.tot;
   const days=[...Array(7)].map((_,i)=>addDays(d,i-6)).map(x=>({d:x,t:salesFor(x,sc).tot}));const mx=Math.max(1,...days.map(x=>x.t));
-  const top=Object.entries(s.items).sort((a,b)=>b[1]-a[1]).slice(0,6);const cols=SALE_COLS;
+  const top=Object.entries(s.items).sort((a,b)=>b[1]-a[1]).slice(0,6);const cols=SALE_COLS.filter(k=>!OFF_MODES.includes(k)||s.by[k]);
   return `<div class="ph1"><h2>Whole day sale</h2>
     <input class="inp" type="date" id="sd-date" value="${d}" style="width:auto" aria-label="Date">${closeBtn(d)}
     <div class="seg"><button data-act="scope" data-v="outlet" aria-pressed="${sc==='outlet'}">${esc(cur().name)}</button><button data-act="scope" data-v="all" aria-pressed="${sc==='all'}">All outlets</button></div>${ownerBtn(salesText(s,d,sc))}<a class="btn" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(salesText(s,d,sc))}">Share on WhatsApp</a></div>
