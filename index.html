@@ -2758,6 +2758,8 @@ function comboWorth(c){
 // Order number: outlet code - date (ddmmyy) - a 3-digit count for that outlet and day, e.g. A-081126-001
 const orderNo=(out,date,n)=>{const [y,m,d]=String(date).split('-');return out.code+'-'+d+m+y.slice(2)+'-'+String(n).padStart(3,'0')};
 // On kitchen and counter cards the date and outlet part is small, so the count stands out
+// Zomato orders go by Zomato's own order ID on the kitchen, counter and customer screens
+const zNo=o=>o.type==='zomato'&&o.zomatoId?`<small class="np">Zomato</small>${esc(o.zomatoId)}`:noHtml(o.no);
 const noHtml=no=>{const m=/^([A-Z]+-\d{6}-)(\d{3,})$/.exec(no||'');return m?`<small class="np">${m[1]}</small>${m[2]}`:esc(no||'')};
 function commitOrder(o){
   const out=S.outlets.find(x=>x.id===o.outletId);
@@ -4520,10 +4522,10 @@ function kCard(o,where,foot){const kit=where==='kitchen';const mins=Math.floor((
   const h=o.status==='placed'?265:o.status==='out'?200:Math.round(130*Math.max(0,Math.min(1,1-mins/w)));
   return `<div class="kt ${o.status==='placed'?'placed':''} ${live&&left<0?'late':''} ${kit?'':'kc'}" style="--h:${h}" ${kit&&o.status==='preparing'?`data-act="ktap" data-id="${o.id}"`:''}>
     <div class="kfoot ktop"><span class="kwho">${esc(kName(o))}${ltChip(o)}</span><span class="num">${esc(o.customer.phone?fmtPhone(o.customer.phone):'—')}</span><span>${TYPES[o.type]}${o.table?' · T'+esc(o.table):''}</span><span class="${o.paid?'pd':'bk'}">${o.paid?'Payment done':'Baki'}</span></div>
-    ${kit?`<div class="row kr1"><span class="no num">${noHtml(o.no)}</span><span class="grow"></span>${live?`<span class="left num">${leftText(left)}</span>`:`<span class="chip ${o.type==='zomato'?'r':'t'}">${TYPES[o.type]}${o.table?' · T'+esc(o.table):''}</span>`}</div>
-    <div class="row kr2"><span class="small muted num grow">${fmtTime(o.ts)} · ${mins<1?'now':mins+' min'}${o.source==='online'?' · online':''}${o.zomatoId?' · Z '+esc(o.zomatoId):''}</span>${o.status==='preparing'||o.status==='placed'?`<button class="btn sm" data-act="set-wait" data-id="${o.id}" title="Change waiting time">⏱ ${w}</button><button class="btn sm ok" data-act="wait-5" data-id="${o.id}" title="Add 5 minutes to the waiting time (tap again for more)">+5</button>${obHideBtn(o,true)}`:''}</div>`
-    :`<div class="row"><span class="no num">${noHtml(o.no)}</span><span class="grow"></span><span class="chip ${o.status}">${statusName(o.status,o.type)}</span></div>
-    <div class="row"><span class="small muted num grow">${fmtTime(o.ts)} · ${mins<1?'just now':mins+' min'}${o.source==='online'?' · online':''}${o.zomatoId?' · Zomato '+esc(o.zomatoId):''}</span>${live?`<span class="left num">${leftText(left)}</span>`:''}${o.status!=='out'?`<button class="btn sm" data-act="set-wait" data-id="${o.id}" title="Change waiting time">⏱ ${w} min</button>`:''}</div>`}
+    ${kit?`<div class="row kr1"><span class="no num">${zNo(o)}</span><span class="grow"></span>${live?`<span class="left num">${leftText(left)}</span>`:`<span class="chip ${o.type==='zomato'?'r':'t'}">${TYPES[o.type]}${o.table?' · T'+esc(o.table):''}</span>`}</div>
+    <div class="row kr2"><span class="small muted num grow">${fmtTime(o.ts)} · ${mins<1?'now':mins+' min'}${o.source==='online'?' · online':''}</span>${o.status==='preparing'||o.status==='placed'?`<button class="btn sm" data-act="set-wait" data-id="${o.id}" title="Change waiting time">⏱ ${w}</button><button class="btn sm ok" data-act="wait-5" data-id="${o.id}" title="Add 5 minutes to the waiting time (tap again for more)">+5</button>${obHideBtn(o,true)}`:''}</div>`
+    :`<div class="row"><span class="no num">${zNo(o)}</span><span class="grow"></span><span class="chip ${o.status}">${statusName(o.status,o.type)}</span></div>
+    <div class="row"><span class="small muted num grow">${fmtTime(o.ts)} · ${mins<1?'just now':mins+' min'}${o.source==='online'?' · online':''}</span>${live?`<span class="left num">${leftText(left)}</span>`:''}${o.status!=='out'?`<button class="btn sm" data-act="set-wait" data-id="${o.id}" title="Change waiting time">⏱ ${w} min</button>`:''}</div>`}
     ${o.scheduled?`<span class="chip c" style="align-self:flex-start">Scheduled for ${esc(o.scheduled)}</span>`:''}
     ${live?`<div class="pbar" title="Waiting time ${w} min"><i style="width:${Math.min(100,mins/w*100)}%;background:hsl(${h} 65% 42%)"></i></div>`:''}
     ${o.address&&!kit?`<div class="small muted">${esc(o.address)}</div>`:''}
@@ -4617,7 +4619,7 @@ function obCard(o,rd){
   const now=Date.now(),waited=obMin(now-o.ts),rdAt=(o.times&&o.times.ready)||now,since=obMin(now-rdAt);
   const left=minsLeft(o),fresh=rd&&now-rdAt<45e3;
   const sub=rd?(since<1?'Ready now':'Ready '+since+' min ago'):o.status==='placed'?'Order received':left>0?'Ready in about '+left+' min':'Almost ready';
-  return `<div class="ob-o${rd?' rd':''}${fresh?' new':''}"><span class="ob-no num">${esc(obShortNo(o.no))}</span>
+  return `<div class="ob-o${rd?' rd':''}${fresh?' new':''}"><span class="ob-no num">${esc(o.type==='zomato'&&o.zomatoId?o.zomatoId:obShortNo(o.no))}</span>
     <span class="ob-nm"><b>${esc(obName(o))}</b><small>${sub}</small></span>
     <span class="ob-w"><small>Waiting</small><b class="num">${obDur(waited)}</b></span></div>`}
 function obHtml(outletId,closeBtn){
