@@ -105,7 +105,7 @@ function createApp(store) {
     const { staffId, pin, title, body, image } = req.body || {};
     if (!(await store.checkStaffPin(staffId, pin))) return res.status(403).json({ error: 'Wrong PIN' });
     const who = await Staff.findById(String(staffId), { role: 1 }).lean();
-    if (!who || !['owner', 'manager'].includes(who.role)) return res.status(403).json({ error: 'Only the owner or a manager can send notifications' });
+    if (!who || !['owner', 'oowner', 'manager'].includes(who.role)) return res.status(403).json({ error: 'Only the owner or a manager can send notifications' });
     const t = String(title || '').trim().slice(0, 65), b = String(body || '').trim().slice(0, 240);
     if (!t || !b) return res.status(400).json({ error: 'Write a title and a message' });
     if (!push.pushEnabled()) return res.status(503).json({ error: 'Notifications are not set up on the server' });
