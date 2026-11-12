@@ -2865,6 +2865,8 @@ const app=document.getElementById('app');
 function render(){
   if(CS_MODE){renderCS();return}
   if(OB_MODE){renderOB();return}
+  // Remember the open screen in this browser tab, so a refresh comes back to it
+  if(U.booted)try{sessionStorage.setItem('cp-ptr',JSON.stringify({tab:U.pos.tab,pv:U.pubView,acc:U.accTab,cat:U.pos.cat}))}catch(_){}
   mergeCats();syncHours();
   if(APP_ROLE){S.mode=APP_ROLE==='admin'?'pos':'public';document.body.classList.add('app-'+APP_ROLE)}
   document.getElementById('m-pub').setAttribute('aria-pressed',S.mode==='public');
@@ -6732,9 +6734,9 @@ document.addEventListener('click',e=>{const a=e.target.closest('[data-wa1]');if(
     // The link's outlet, unless the outlet was changed by hand on this same link (an owner switching outlets): that choice survives a refresh
     const pk=S.pick,su0=staff(),keep=pk&&pk.link===STAFF_CODE&&S.outlets.some(x=>x.id===pk.id&&isLive(x))&&su0&&(su0.role==='owner'||worksAt(su0,pk.id));
     if(o&&isLive(o)){S.cur=keep?pk.id:o.id;U.lockOutlet=o.id;const su=staff();if(su&&!worksAt(su,o.id))S.staffId=null}else if(STAFF_CODE)S.staffId=null;save()}
-  try{const k=JSON.parse(sessionStorage.getItem('cp-ptr')||'null');sessionStorage.removeItem('cp-ptr');
+  try{const k=JSON.parse(sessionStorage.getItem('cp-ptr')||'null');
     if(k){const su=staff();if(k.tab&&su&&ROLE_TABS[su.role].includes(k.tab))U.pos.tab=k.tab;if(k.pv)U.pubView=k.pv;if(k.acc)U.accTab=k.acc;if(k.cat)U.pos.cat=k.cat}}catch(_){}
-  render();startPolling();introDone();
+  U.booted=1;render();startPolling();introDone();
   if(S.staffId&&pushTok())pushSetup(); // keeps this phone's alert sign-up current
   cpushSetup();
   setTimeout(autoPerms,2500);
