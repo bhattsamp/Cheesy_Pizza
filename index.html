@@ -833,6 +833,8 @@ body:has(.addpop){overflow:hidden}
    so the whole pizza fits on screen without scrolling; Add stays pinned at the bottom */
 @media (min-width:761px){
   .modal:has(.czp){width:min(880px,94vw)}
+  /* staff can drag the bottom-right corner to set the window's width and height; remembered on this device */
+  .modal:has(.czp){resize:both;min-width:420px;min-height:320px;max-width:98vw}
   .modal:has(.czp) .mh{padding-top:12px;padding-bottom:6px}
   .mb.czp{gap:8px;padding-bottom:0}
   .mb.czp>.muted.small{margin-top:-4px}
@@ -859,6 +861,8 @@ body:has(.addpop){overflow:hidden}
   .mb.czp .opt{padding:4px 10px}.mb.czp .vt button{padding:4px 8px}
   .mb.czp>.row:last-child{padding:6px 0 8px}.mb.czp>.row:last-child .btn.lg{padding-top:8px;padding-bottom:8px}
 }
+/* Till add-item window: square option boxes (size, base, toppings, cooking instructions) */
+.mb.czp .opt,.mb.czp .vt button,.mb.czp .days label{border-radius:0}
 .hm{padding-top:16px}
 .hm-card{background:var(--surface);border:1px solid var(--line);border-radius:24px;padding:22px clamp(14px,3vw,30px);display:flex;flex-direction:column;gap:16px;
   background-image:radial-gradient(circle at 50% 38%,color-mix(in srgb,var(--teal) 9%,transparent) 0 26%,transparent 26.5%)}
@@ -5519,8 +5523,16 @@ function showModal(html,handlers={}){
   const md=mroot.querySelector('.modal');md.scrollTop=sc;md.tabIndex=-1;
   const mt=md.querySelector('.mh h3');if(mt){mt.id='mtitle';md.setAttribute('aria-labelledby','mtitle')}
   if(fresh&&!prev)md.focus({preventScroll:true});
+  if(md.querySelector('.czp'))czSize(md);
   afterRender();
   if(prev){const el=document.getElementById(prev);if(el&&mroot.contains(el)){el.focus();if(el.setSelectionRange&&el.type!=='number'&&el.tagName!=='SELECT')try{el.setSelectionRange(el.value.length,el.value.length)}catch(e){}}}
+}
+// Till add-item window size the staff dragged to (width x height in px), kept in this browser
+function czSize(md){
+  if(!matchMedia('(min-width:761px)').matches)return;
+  try{const z=JSON.parse(localStorage.getItem('cp_czsz')||'null');if(z&&z.w&&z.h){md.style.width=Math.min(z.w,innerWidth*.98)+'px';md.style.height=Math.min(z.h,innerHeight-32)+'px'}}catch(_){}
+  md.addEventListener('pointerdown',()=>{const w=md.offsetWidth,h=md.offsetHeight;
+    document.addEventListener('pointerup',()=>{if(md.isConnected&&md.offsetWidth&&(md.offsetWidth!==w||md.offsetHeight!==h))try{localStorage.setItem('cp_czsz',JSON.stringify({w:md.offsetWidth,h:md.offsetHeight}))}catch(_){}},{once:true})});
 }
 function closeModal(){mroot.innerHTML='';mh={};U.trackId=null}
 // A yes/no check before signing out
