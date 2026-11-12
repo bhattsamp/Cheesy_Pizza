@@ -875,7 +875,8 @@ body:has(.addpop){overflow:hidden}
 .mb.czp .opts{grid-template-columns:repeat(auto-fill,108px);gap:8px}
 .czrow,.czrow>div{display:contents}
 .mb.czp .czrow{display:flex;flex-wrap:wrap;gap:10px 28px}.mb.czp .czrow>div{display:flex;flex-direction:column;gap:6px}
-.mb.czp .czrow .opts{display:flex;flex-wrap:wrap}
+.mb.czp .czrow>div{flex:1 1 220px;min-width:0}
+.mb.czp .czrow .opts{display:flex;gap:8px}.mb.czp .czrow .opt{flex:1 1 0;min-width:0;aspect-ratio:auto;height:88px}
 .mb.czp .opt{aspect-ratio:1;flex-direction:column;justify-content:space-between;align-items:center;text-align:center;gap:2px;padding:10px 6px;font-weight:700;font-size:17px;line-height:1.15;border-width:2px;position:relative}
 .mb.czp .opt input{position:absolute;opacity:0;pointer-events:none}
 .mb.czp .opt .muted{display:block;font-weight:500;font-size:13px}
