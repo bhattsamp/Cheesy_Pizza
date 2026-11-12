@@ -869,10 +869,14 @@ body:has(.addpop){overflow:hidden}
   .mb.czp .opt{padding:4px 10px}.mb.czp .vt button{padding:4px 8px}
   .mb.czp>.row:last-child{padding:6px 0 8px}.mb.czp>.row:last-child .btn.lg{padding-top:8px;padding-bottom:8px}
 }
-/* Till add-item window: square option boxes (size, base, toppings, cooking instructions) */
-.mb.czp .opt,.mb.czp .vt button,.mb.czp .days label{border-radius:0}
+/* Till add-item window: option boxes (size, base, toppings, cooking instructions) with curved corners */
+.mb.czp .opt,.mb.czp .vt button,.mb.czp .days label{border-radius:12px}
 /* Size and base are square tiles: size (or base) on top, price at the bottom; the picked one is filled teal */
 .mb.czp .opts{grid-template-columns:repeat(auto-fill,108px);gap:8px}
+.czrow,.czrow>div{display:contents}
+.mb.czp .czrow{display:flex;flex-wrap:wrap;gap:10px 28px}.mb.czp .czrow>div{display:flex;flex-direction:column;gap:6px}
+.mb.czp .czrow>div{flex:1 1 220px;min-width:0}
+.mb.czp .czrow .opts{display:flex;gap:8px}.mb.czp .czrow .opt{flex:1 1 0;min-width:0;aspect-ratio:auto;height:88px}
 .mb.czp .opt{aspect-ratio:1;flex-direction:column;justify-content:space-between;align-items:center;text-align:center;gap:2px;padding:10px 6px;font-weight:700;font-size:17px;line-height:1.15;border-width:2px;position:relative}
 .mb.czp .opt input{position:absolute;opacity:0;pointer-events:none}
 .mb.czp .opt .muted{display:block;font-weight:500;font-size:13px}
@@ -3757,13 +3761,13 @@ function openCustomizer(id,target,edit){
       ${target==='pos'?'':`<div class="vizwrap">${vizHtml}</div>`}<div class="vizcap num"${target==='pos'?' hidden':''}>${esc(sizeLabel(st.size))} · ${(S.sizes.find(x=>x.id===st.size)||{}).pcs||''} slices${st.addons.map(a=>' · '+S.addons[a].name).join('')}${nEx?' · '+nEx+' extra'+(nEx>1?'s':''):''}</div>
       <div class="muted small">${esc(m.desc)}</div>
       ${tags.length?`<div class="row">${tags.map(t=>`<span class="chip r">${esc(t)}</span>`).join('')}<span class="small muted">applied in cart</span></div>`:''}
-      <div class="grp-h">${step++} · Size</div>
-      <div class="opts">${sizes.map(s=>`<label class="opt"><input type="radio" name="sz" value="${s.id}" ${st.size===s.id?'checked':''}><span>${esc(s.label)} ${s.pcs?`<span class="muted small">${s.pcs} pcs</span>`:''}</span><span class="p num">${rs(m.prices[s.id])}</span></label>`).join('')}</div>
-      ${ap('burst')?`<div class="grp-h">${step++} · Choose your base</div>
+      <div class="czrow"><div><div class="grp-h">${step++} · Size</div>
+      <div class="opts">${sizes.map(s=>`<label class="opt"><input type="radio" name="sz" value="${s.id}" ${st.size===s.id?'checked':''}><span>${esc(s.label)} ${s.pcs?`<span class="muted small">${s.pcs} pcs</span>`:''}</span><span class="p num">${rs(m.prices[s.id])}</span></label>`).join('')}</div></div>
+      ${ap('burst')?`<div><div class="grp-h">${step++} · Choose your base</div>
       <div class="opts">
         <label class="opt"><input type="radio" name="base" value="" ${!st.addons.includes('burst')?'checked':''}><span>Regular base</span><span class="p">—</span></label>
         <label class="opt"><input type="radio" name="base" value="burst" ${st.addons.includes('burst')?'checked':''}><span>${esc(S.addons.burst.name)}</span><span class="p num">+${rs(ap('burst'))}</span></label>
-      </div>`:''}
+      </div></div>`:''}</div>
       ${menus.map(({g,items},gi)=>`<div class="grp-h">${step++} · ${esc(g.name)} <span style="text-transform:none;font-weight:500">· tap once for single, twice for double</span></div>
       <div class="vt">${items.map(it=>{const c=cnt(g.id,it.name);const pr=exPrice({g:g.id,n:it.name,c:it.custom},st.size);return `<button data-act="cz-ex" data-g="${g.id}" data-v="${esc(it.name)}" ${it.custom?'data-c="1"':''} class="${c===1?'on1':c>1?'on2':''}" aria-label="${esc(it.name)}${c?', '+(c>1?'double':'single'):''}"><span>${esc(it.name)}<br><small class="num">+${rs(pr)}</small></span><b>${c===1?'Single':c>1?'Double':''}</b></button>`}).join('')}</div>
       ${gi===0?`<div class="row"><input class="inp grow" id="cz-newtop" placeholder="+ Topping not in the list" maxlength="30" aria-label="Other topping" style="width:auto"><button class="btn" data-act="cz-addtop" data-g="${g.id}">+ Topping</button></div>`:''}`).join('')}
