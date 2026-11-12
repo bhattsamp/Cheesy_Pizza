@@ -2866,6 +2866,7 @@ const app=document.getElementById('app');
 function render(){
   if(CS_MODE){renderCS();return}
   if(OB_MODE){renderOB();return}
+  if(U.kDrag&&U.kDrag.c.isConnected&&Date.now()-U.kDrag.at<15000)return; // a kitchen card is being resized: redraw when it is let go
   // Remember the open screen in this browser tab, so a refresh comes back to it
   if(U.booted)try{sessionStorage.setItem('cp-ptr',JSON.stringify({tab:U.pos.tab,pv:U.pubView,acc:U.accTab,cat:U.pos.cat}))}catch(_){}
   mergeCats();syncHours();
@@ -4017,9 +4018,12 @@ function kszSet(z){U.ksz=z&&z.w&&z.h?z:null;const r=document.documentElement;
 try{kszSet(JSON.parse(localStorage.getItem('cp_ksz')||'null'))}catch(e){}
 document.addEventListener('pointerdown',e=>{const c=e.target.closest&&e.target.closest('.kds .kt:not(.kc)');if(!c||!matchMedia('(min-width:761px)').matches)return;
   const r=c.getBoundingClientRect();if(e.clientX<r.right-22||e.clientY<r.bottom-22)return; // only the resize corner
-  const w=c.offsetWidth,h=c.offsetHeight;
-  document.addEventListener('pointerup',()=>{if(!c.isConnected||!c.offsetWidth||(c.offsetWidth===w&&c.offsetHeight===h))return;
-    const z={w:c.offsetWidth,h:c.offsetHeight};c.style.width='';c.style.height='';kszSet(z);U.kszAt=Date.now();render()},{once:true})});
+  // the size is saved while dragging, so it is kept even if the mouse is let go outside the window
+  U.kDrag={c,at:Date.now()};let moved=0;
+  const ro=new ResizeObserver(()=>{if(!c.isConnected||!c.offsetWidth||!(c.style.width||c.style.height))return;moved=1;kszSet({w:c.offsetWidth,h:c.offsetHeight})});ro.observe(c);
+  const end=()=>{document.removeEventListener('pointerup',end);window.removeEventListener('blur',end);ro.disconnect();U.kDrag=null;
+    if(moved){c.style.width='';c.style.height='';U.kszAt=Date.now()}render()};
+  document.addEventListener('pointerup',end);window.addEventListener('blur',end)});
 // a drag on the corner is not a tap on the card
 document.addEventListener('click',e=>{if(U.kszAt&&Date.now()-U.kszAt<500&&e.target.closest&&e.target.closest('.kds .kt')){e.stopPropagation();e.preventDefault()}},true);
 document.addEventListener('pointerdown',e=>{const g=e.target.closest&&e.target.closest('.tkgrip');if(!g)return;e.preventDefault();
@@ -5563,8 +5567,10 @@ function showModal(html,handlers={}){
 function czSize(md){
   if(!matchMedia('(min-width:761px)').matches)return;
   try{const z=JSON.parse(localStorage.getItem('cp_czsz')||'null');if(z&&z.w&&z.h){md.style.width=Math.min(z.w,innerWidth*.98)+'px';md.style.height=Math.min(z.h,innerHeight-32)+'px'}}catch(_){}
-  md.addEventListener('pointerdown',()=>{const w=md.offsetWidth,h=md.offsetHeight;
-    document.addEventListener('pointerup',()=>{if(md.isConnected&&md.offsetWidth&&(md.offsetWidth!==w||md.offsetHeight!==h))try{localStorage.setItem('cp_czsz',JSON.stringify({w:md.offsetWidth,h:md.offsetHeight}))}catch(_){}},{once:true})});
+  // saved as soon as the corner is dragged (the browser writes the new size on the window itself); kept until someone drags it again
+  const aw=md.style.width,ah=md.style.height;
+  new ResizeObserver(()=>{if(!md.isConnected||!md.offsetWidth||(md.style.width===aw&&md.style.height===ah))return;
+    try{localStorage.setItem('cp_czsz',JSON.stringify({w:md.offsetWidth,h:md.offsetHeight}))}catch(_){}}).observe(md);
 }
 function closeModal(){mroot.innerHTML='';mh={};U.trackId=null}
 // A yes/no check before signing out
