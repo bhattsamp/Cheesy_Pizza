@@ -229,6 +229,14 @@ textarea.inp{resize:vertical}
 
 .ksort{display:flex;flex-wrap:wrap;align-items:center;gap:6px}.ksort button{border:1.5px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 12px;font:inherit;font-size:14px;font-weight:600;color:var(--ink);cursor:pointer}.ksort button[aria-pressed=true]{background:var(--teal);border-color:var(--teal);color:#fff}
 .kt.kc{cursor:default}.kt.kc li{cursor:default}
+/* Kitchen order cards: drag a card's bottom-right corner to set the width and height of every card; remembered on this computer */
+@media (min-width:761px){
+  .kds .kt:not(.kc){resize:both;overflow:auto;min-width:200px;min-height:120px}
+  .kds .kt:not(.kc):active{transform:none}
+  .kds .kt:not(.kc)>*{flex-shrink:0}
+  html.ksz .kds:has(>.kt:not(.kc)){grid-template-columns:repeat(auto-fill,minmax(min(var(--kw),100%),var(--kw)));align-items:start}
+  html.ksz .kds .kt:not(.kc){height:var(--kh)}
+}
 .kds{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
 .kt{border-radius:14px;border:2px solid var(--warn);background:var(--surface);padding:12px;display:flex;flex-direction:column;gap:8px;user-select:none;-webkit-user-select:none;touch-action:manipulation;cursor:pointer;transition:transform .12s}
 .kt:active{transform:scale(.98)}
@@ -3987,6 +3995,18 @@ function renderPOS(){
 }
 // Order panel width on the New order screen: drag the grip on its left edge; kept on this device
 try{U.tkw=+localStorage.getItem('cp_tkw')||0}catch(e){}
+// Kitchen card size (width x height in px) the kitchen dragged a card to; every kitchen card on this computer uses it
+function kszSet(z){U.ksz=z&&z.w&&z.h?z:null;const r=document.documentElement;
+  r.classList.toggle('ksz',!!U.ksz);if(U.ksz){r.style.setProperty('--kw',U.ksz.w+'px');r.style.setProperty('--kh',U.ksz.h+'px')}
+  try{U.ksz?localStorage.setItem('cp_ksz',JSON.stringify(U.ksz)):localStorage.removeItem('cp_ksz')}catch(_){}}
+try{kszSet(JSON.parse(localStorage.getItem('cp_ksz')||'null'))}catch(e){}
+document.addEventListener('pointerdown',e=>{const c=e.target.closest&&e.target.closest('.kds .kt:not(.kc)');if(!c||!matchMedia('(min-width:761px)').matches)return;
+  const r=c.getBoundingClientRect();if(e.clientX<r.right-22||e.clientY<r.bottom-22)return; // only the resize corner
+  const w=c.offsetWidth,h=c.offsetHeight;
+  document.addEventListener('pointerup',()=>{if(!c.isConnected||!c.offsetWidth||(c.offsetWidth===w&&c.offsetHeight===h))return;
+    const z={w:c.offsetWidth,h:c.offsetHeight};c.style.width='';c.style.height='';kszSet(z);U.kszAt=Date.now();render()},{once:true})});
+// a drag on the corner is not a tap on the card
+document.addEventListener('click',e=>{if(U.kszAt&&Date.now()-U.kszAt<500&&e.target.closest&&e.target.closest('.kds .kt')){e.stopPropagation();e.preventDefault()}},true);
 document.addEventListener('pointerdown',e=>{const g=e.target.closest&&e.target.closest('.tkgrip');if(!g)return;e.preventDefault();
   const no=g.closest('.neworder');if(!no)return;g.classList.add('on');try{g.setPointerCapture(e.pointerId)}catch(_){}
   const mv=ev=>{const r=no.getBoundingClientRect();const w=Math.round(Math.max(340,Math.min(r.width*0.7,r.right-ev.clientX)));U.tkw=w;no.style.setProperty('--tkw',w+'px')};
@@ -4544,7 +4564,7 @@ function vKitchen(){
   const pl=list.filter(o=>o.status==='placed'),pr=kSorted(list.filter(o=>o.status==='preparing'));
   return `<div class="ph1"><h2>Kitchen display</h2><span class="muted small">${esc(cur().name)} · tap an item when it is done · green turns red as the waiting time runs out</span></div>
   ${pl.length?`<div class="kcol-h"><span class="chip placed num">${pl.length}</span><h3>New online orders</h3>${ringTimer||ringAudio?'<button class="btn sm" data-act="mute-ring">Stop ringing</button>':''}</div><div class="kds" style="margin-bottom:22px">${pl.map(o=>kCard(o,'kitchen')).join('')}</div>`:''}
-  <div class="kcol-h"><span class="chip preparing num">${pr.length}</span><h3>Preparing</h3><span class="grow"></span>${kSortBar()}</div>
+  <div class="kcol-h"><span class="chip preparing num">${pr.length}</span><h3>Preparing</h3><span class="grow"></span>${U.ksz?'<button class="btn sm" data-act="ksz-reset" title="Back to the normal card size">Reset card size</button>':''}${kSortBar()}</div>
   <div class="kds">${pr.map(o=>kCard(o,'kitchen')).join('')||'<div class="empty small">No orders being prepared.</div>'}</div>`;
 }
 
@@ -5681,6 +5701,7 @@ document.addEventListener('click',e=>{
     case 'bill':openReceipt(find(el.dataset.id),'bill');break;
     case 'kot':openReceipt(find(el.dataset.id),'kot');break;
     case 'copy':{const t=el.dataset.t;try{navigator.clipboard.writeText(t).then(()=>toast('Copied'),selectReceipt)}catch(_){selectReceipt()}break}
+    case 'ksz-reset':kszSet(null);render();break;
     case 'ktap':{const id=el.dataset.id,now=Date.now();
       if(U.lastTap[id]&&now-U.lastTap[id]<400){const o=find(id);if(o.status==='preparing'){setStatus(o,'ready');toast(o.no+' ready → counter');render()}U.lastTap[id]=0}else U.lastTap[id]=now;break}
     case 'accept':{const o=find(el.dataset.id);setStatus(o,'preparing');ringDone(o.id);toast(o.no+' accepted');render();if(btp()&&btGet()&&btGet().autoKot!==false)btPrint(kotText(o));break}
