@@ -871,6 +871,14 @@ body:has(.addpop){overflow:hidden}
 }
 /* Till add-item window: square option boxes (size, base, toppings, cooking instructions) */
 .mb.czp .opt,.mb.czp .vt button,.mb.czp .days label{border-radius:0}
+/* Size and base are square tiles: size (or base) on top, price at the bottom; the picked one is filled teal */
+.mb.czp .opts{grid-template-columns:repeat(auto-fill,108px);gap:8px}
+.mb.czp .opt{aspect-ratio:1;flex-direction:column;justify-content:space-between;align-items:center;text-align:center;gap:2px;padding:10px 6px;font-weight:700;font-size:17px;line-height:1.15;border-width:2px;position:relative}
+.mb.czp .opt input{position:absolute;opacity:0;pointer-events:none}
+.mb.czp .opt .muted{display:block;font-weight:500;font-size:13px}
+.mb.czp .opt .p{margin:0;font-size:16px}
+.mb.czp .opt:has(input:checked){background:var(--teal);border-color:var(--teal);color:var(--teal-ink)}.mb.czp .opt:has(input:checked) .muted{color:inherit;opacity:.85}
+.mb.czp .opt:has(input:focus-visible){outline:3px solid var(--teal);outline-offset:2px}
 .hm{padding-top:16px}
 .hm-card{background:var(--surface);border:1px solid var(--line);border-radius:24px;padding:22px clamp(14px,3vw,30px);display:flex;flex-direction:column;gap:16px;
   background-image:radial-gradient(circle at 50% 38%,color-mix(in srgb,var(--teal) 9%,transparent) 0 26%,transparent 26.5%)}
@@ -3750,11 +3758,11 @@ function openCustomizer(id,target,edit){
       <div class="muted small">${esc(m.desc)}</div>
       ${tags.length?`<div class="row">${tags.map(t=>`<span class="chip r">${esc(t)}</span>`).join('')}<span class="small muted">applied in cart</span></div>`:''}
       <div class="grp-h">${step++} · Size</div>
-      <div class="opts">${sizes.map(s=>`<label class="opt"><input type="radio" name="sz" value="${s.id}" ${st.size===s.id?'checked':''}> ${esc(s.label)} ${s.pcs?`<span class="muted small">${s.pcs} pcs</span>`:''}<span class="p num">${rs(m.prices[s.id])}</span></label>`).join('')}</div>
+      <div class="opts">${sizes.map(s=>`<label class="opt"><input type="radio" name="sz" value="${s.id}" ${st.size===s.id?'checked':''}><span>${esc(s.label)} ${s.pcs?`<span class="muted small">${s.pcs} pcs</span>`:''}</span><span class="p num">${rs(m.prices[s.id])}</span></label>`).join('')}</div>
       ${ap('burst')?`<div class="grp-h">${step++} · Choose your base</div>
       <div class="opts">
-        <label class="opt"><input type="radio" name="base" value="" ${!st.addons.includes('burst')?'checked':''}> Regular base<span class="p">—</span></label>
-        <label class="opt"><input type="radio" name="base" value="burst" ${st.addons.includes('burst')?'checked':''}> ${esc(S.addons.burst.name)}<span class="p num">+${rs(ap('burst'))}</span></label>
+        <label class="opt"><input type="radio" name="base" value="" ${!st.addons.includes('burst')?'checked':''}><span>Regular base</span><span class="p">—</span></label>
+        <label class="opt"><input type="radio" name="base" value="burst" ${st.addons.includes('burst')?'checked':''}><span>${esc(S.addons.burst.name)}</span><span class="p num">+${rs(ap('burst'))}</span></label>
       </div>`:''}
       ${menus.map(({g,items},gi)=>`<div class="grp-h">${step++} · ${esc(g.name)} <span style="text-transform:none;font-weight:500">· tap once for single, twice for double</span></div>
       <div class="vt">${items.map(it=>{const c=cnt(g.id,it.name);const pr=exPrice({g:g.id,n:it.name,c:it.custom},st.size);return `<button data-act="cz-ex" data-g="${g.id}" data-v="${esc(it.name)}" ${it.custom?'data-c="1"':''} class="${c===1?'on1':c>1?'on2':''}" aria-label="${esc(it.name)}${c?', '+(c>1?'double':'single'):''}"><span>${esc(it.name)}<br><small class="num">+${rs(pr)}</small></span><b>${c===1?'Single':c>1?'Double':''}</b></button>`}).join('')}</div>
