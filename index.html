@@ -811,6 +811,7 @@ body:has(.addpop){overflow:hidden}
 .st-roles{display:flex;flex-wrap:wrap;gap:6px}.st-roles button{padding:8px 12px;border-radius:10px;border:1.5px solid var(--line);background:var(--surface2);font:inherit;color:inherit;cursor:pointer}.st-roles button[aria-pressed="true"]{background:var(--teal,#1a93a8);border-color:var(--teal,#1a93a8);color:#fff}
 @media (max-width:600px){.st-outs{margin-left:6px;padding-left:8px}.st-kids,.st-kids2{margin-left:4px;padding-left:8px}}
 .kt .kwait{gap:8px}
+.kt .kcol{flex-wrap:nowrap}.kt .kcol .btn{flex:none;padding:5px 10px;min-height:0}
 .kt .kr1{align-items:center;gap:6px;flex-wrap:nowrap}.kt .kr1 .left{font-size:18px;white-space:nowrap}.kt .kr1 .no .np{display:inline;font-size:12px;margin:0 2px 0 0}.kt .kr1 .no{font-size:26px}
 .kt .kr2{align-items:center;gap:6px;flex-wrap:nowrap}.kt .kr2 .grow{min-width:0;line-height:1.25}.kt .kr2 .btn{flex:none;padding:5px 9px;min-height:0}.kt .ktools{gap:6px}.kt .kwait .btn{flex:1}
 .kt .left{font-family:var(--display);font-weight:800;font-size:20px;color:hsl(var(--h) 70% 34%)}
@@ -4562,11 +4563,9 @@ function kCard(o,where,foot){const kit=where==='kitchen';const mins=Math.floor((
   // green when the order comes in, turning yellow then red as the waiting time runs out
   const h=o.status==='placed'?265:o.status==='out'?200:Math.round(130*Math.max(0,Math.min(1,1-mins/w)));
   return `<div class="kt ${o.status==='placed'?'placed':''} ${live&&left<0?'late':''} ${kit?'':'kc'}" style="--h:${h}" ${kit&&o.status==='preparing'?`data-act="ktap" data-id="${o.id}"`:''}>
-    <div class="kfoot ktop"><span class="kwho">${esc(kName(o))}${ltChip(o)}</span><span class="num">${esc(o.customer.phone?fmtPhone(o.customer.phone):'—')}</span><span>${TYPES[o.type]}${o.table?' · T'+esc(o.table):''}</span><span class="${o.paid?'pd':'bk'}">${o.paid?'Payment done':'Baki'}</span></div>
-    ${kit?`<div class="row kr1"><span class="no num">${zNo(o)}</span><span class="grow"></span>${live?`<span class="left num">${leftText(left)}</span>`:`<span class="chip ${o.type==='zomato'?'r':'t'}">${TYPES[o.type]}${o.table?' · T'+esc(o.table):''}</span>`}</div>
-    <div class="row kr2"><span class="small muted num grow">${fmtTime(o.ts)} · ${mins<1?'now':mins+' min'}${o.source==='online'?' · online':''}</span>${o.status==='preparing'||o.status==='placed'?`<button class="btn sm" data-act="set-wait" data-id="${o.id}" title="Change waiting time">⏱ ${w}</button><button class="btn sm ok" data-act="wait-5" data-id="${o.id}" title="Add 5 minutes to the waiting time (tap again for more)">+5</button>${obHideBtn(o,true)}`:''}</div>`
-    :`<div class="row"><span class="no num">${zNo(o)}</span><span class="grow"></span><span class="chip ${o.status}">${statusName(o.status,o.type)}</span></div>
-    <div class="row"><span class="small muted num grow">${fmtTime(o.ts)} · ${mins<1?'just now':mins+' min'}${o.source==='online'?' · online':''}</span>${live?`<span class="left num">${leftText(left)}</span>`:''}${o.status!=='out'?`<button class="btn sm" data-act="set-wait" data-id="${o.id}" title="Change waiting time">⏱ ${w} min</button>`:''}</div>`}
+    <div class="kfoot ktop"><span class="kwho">${esc(kName(o))}${kit?ltChip(o):''}</span><span class="num">${esc(o.customer.phone?fmtPhone(o.customer.phone):'—')}</span><span>${TYPES[o.type]}${o.table?' · T'+esc(o.table):''}</span><span class="${o.paid?'pd':'bk'}">${o.paid?'Payment done':'Baki'}</span></div>
+    <div class="row kr1"><span class="no num">${zNo(o)}</span><span class="grow"></span>${live?`<span class="left num">${leftText(left)}</span>`:kit?`<span class="chip ${o.type==='zomato'?'r':'t'}">${TYPES[o.type]}${o.table?' · T'+esc(o.table):''}</span>`:`<span class="chip ${o.status}">${statusName(o.status,o.type)}</span>`}</div>
+    <div class="row kr2"><span class="small muted num grow">${fmtTime(o.ts)} · ${mins<1?'now':mins+' min'}${o.source==='online'?' · online':''}</span>${o.status==='preparing'||o.status==='placed'||(!kit&&o.status==='ready')?`<button class="btn sm" data-act="set-wait" data-id="${o.id}" title="Change waiting time">⏱ ${w}</button><button class="btn sm ok" data-act="wait-5" data-id="${o.id}" title="Add 5 minutes to the waiting time (tap again for more)">+5</button>`:''}${!kit&&o.status==='ready'?`<button class="btn sm kback" data-act="back-kitchen" data-id="${o.id}" title="Marked ready by mistake? Send it back to the kitchen" aria-label="Back to kitchen">↩</button>`:''}${(o.status==='preparing'||o.status==='placed'||!kit)&&o.type!=='delivery'?obHideBtn(o,true):''}</div>
     ${o.scheduled?`<span class="chip c" style="align-self:flex-start">Scheduled for ${esc(o.scheduled)}</span>`:''}
     ${live?`<div class="pbar" title="Waiting time ${w} min"><i style="width:${Math.min(100,mins/w*100)}%;background:hsl(${h} 65% 42%)"></i></div>`:''}
     ${o.address&&!kit?`<div class="small muted">${esc(o.address)}</div>`:''}
@@ -4582,7 +4581,7 @@ function vKitchen(){
   <div class="kds">${pr.map(o=>kCard(o,'kitchen')).join('')||'<div class="empty small">No orders being prepared.</div>'}</div>`;
 }
 
-function collectRow(o){return o.paid||upiPending(o)?'':`<div class="small" style="font-weight:700;color:var(--bad)">Collect ${rs(balanceOf(o))}${o.pay.mode==='due'?' (on baki account)':partPaid(o)?' (rest of the bill)':''}:</div><div class="row" style="gap:4px">${COUNTER_MODES.map(k=>`<button class="btn sm" data-act="collect" data-id="${o.id}" data-v="${k}">${PAY[k]}</button>`).join('')}</div>`}
+function collectRow(o){return o.paid||upiPending(o)?'':`<div class="row kcol" style="gap:4px;align-items:center"><span class="small grow" style="font-weight:700;color:var(--bad)">Collect ${rs(balanceOf(o))}${o.pay.mode==='due'?' (baki)':partPaid(o)?' (rest)':''}</span>${COUNTER_MODES.map(k=>`<button class="btn sm" data-act="collect" data-id="${o.id}" data-v="${k}">${PAY[k]}</button>`).join('')}</div>`}
 // Change the waiting time told to the customer after the order is made
 function openWait(o){
   const draw=()=>showModal(`<div class="mh"><h3>Waiting time · #${o.no}</h3><button class="x" data-act="close" aria-label="Close">×</button></div>
@@ -4622,8 +4621,7 @@ function vCounter(){
   const riders=cur().riders||[];const busy=new Set(mine.filter(o=>o.status==='out').map(o=>o.rider?.name));
   // Everything the counter acts on, in one list: ready pickups and dine-in, deliveries waiting or ready to send, riders on the road
   const list=kSorted(mine.filter(o=>(o.status==='ready'&&o.type!=='delivery')||(o.type==='delivery'&&['preparing','ready','out'].includes(o.status))));
-  const foot=o=>{const tools=(o.status==='ready'?`<button class="btn sm kback" data-act="back-kitchen" data-id="${o.id}" title="Marked ready by mistake? Send it back to the kitchen">↩ Back to kitchen</button>`:'')+(o.type!=='delivery'?obHideBtn(o):'');
-    const pay=collectRow(o)+(tools?`<div class="row ktools">${tools}</div>`:'');
+  const foot=o=>{const pay=collectRow(o);
     if(o.status==='ready'&&o.type!=='delivery')return pay+`<button class="btn ok" data-act="handover" data-id="${o.id}">${o.type==='dine'?'Served to table':o.type==='zomato'?'Given to Zomato rider':'Handed to customer'}</button>`;
     if(o.status==='ready')return pay+`<div class="row"><select class="inp grow" id="rs-${o.id}" aria-label="Rider">${riders.map(r=>`<option value="${esc(r.name)}">${esc(r.name)}${busy.has(r.name)?' (on a trip)':''}</option>`).join('')}</select><button class="btn pri" data-act="dispatch" data-id="${o.id}" ${riders.length?'':'disabled'}>Send out</button></div>${riders.length?'':'<div class="small muted">Add riders on the Outlets screen.</div>'}`;
     if(o.status==='out'){const m=Math.floor((Date.now()-(o.times.out||Date.now()))/60000);return pay+`<div class="small">Rider <b>${esc(o.rider?.name||'—')}</b> · left ${m} min ago · ETA ${Math.max(1,RIDE_MIN-m)} min</div><div class="row"><button class="btn ok grow" data-act="delivered" data-id="${o.id}">Mark delivered</button><button class="btn" data-act="track" data-id="${o.id}">Live view</button></div>`}
