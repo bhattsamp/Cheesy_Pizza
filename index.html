@@ -1128,7 +1128,7 @@ body:has(.addpop){overflow:hidden}
 .tktot small{font-size:14px}
 .tklink{border:0;background:none;color:var(--muted);font-size:14px;font-weight:600;padding:4px 6px;border-radius:6px;text-decoration:underline;text-underline-offset:2px}
 .tklink:disabled{opacity:.4;text-decoration:none}.tktot b{margin-left:6px}.tktot b{font-family:var(--display);font-size:28px;font-weight:800;color:var(--ink);line-height:1}
-.tkpaybtn{width:100%;justify-content:center;font-size:17px;font-weight:700;border:1.5px solid var(--teal);color:var(--teal-deep);background:var(--teal-soft);padding:10px}
+.tkacts .tkpaybtn{border:1.5px solid var(--teal);color:var(--teal-deep);background:var(--teal-soft);display:flex;flex-direction:column;align-items:center;gap:1px}.tkpaybtn small{font-size:12px;font-weight:600;opacity:.8}
 .tkpm{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
 .tkpm button{border:1.5px solid var(--line);background:var(--surface);color:var(--ink);border-radius:10px;padding:8px 2px;font-weight:600;font-size:15px}
 .tkpm button[aria-pressed="true"]{border-color:var(--teal);background:var(--teal-soft);color:var(--teal-deep);font-weight:700}
@@ -1140,7 +1140,7 @@ body:has(.addpop){overflow:hidden}
 .tkacts.tk5{grid-template-columns:1fr 1fr 1fr 1.35fr 1.35fr;gap:5px}
 .tkacts.tk5 .btn,.tkacts.tk5 .tkbig{grid-column:auto;padding:11px 2px;font-size:14.5px;line-height:1.15;white-space:nowrap}
 .tkacts.tk5 .tkbig{font-weight:800}
-.tkacts.tk3{grid-template-columns:1fr 1.5fr 1.2fr;gap:6px}.tkacts.tk3 .btn,.tkacts.tk3 .tkbig{grid-column:auto;padding:12px 4px;font-size:16px;font-weight:800;white-space:nowrap}
+.tkacts.tk3{grid-template-columns:1fr 1fr 1.3fr;gap:6px}.tkacts.tk3 .btn,.tkacts.tk3 .tkbig{grid-column:auto;padding:12px 4px;font-size:16px;font-weight:800;white-space:nowrap}
 .srn{display:inline-grid;place-items:center;min-width:22px;height:22px;padding:0 5px;margin-right:6px;border-radius:6px;background:var(--surface2);color:var(--muted);font-size:12.5px;font-weight:800;vertical-align:1px}
 .tkgrip{display:none}
 @media (min-width:761px){
@@ -4236,11 +4236,11 @@ function vNew(){
         ${b.hint?`<div class="hint">${esc(b.hint)}</div>`:''}
         <div class="tksum">${b.subtotal!==t||(b.discounts||[]).length?`<div class="bl"><span>Item total</span><span class="num">${rs(b.subtotal)}</span></div>`:''}${(b.discounts||[]).map(d=>`<div class="bl disc"><span>${esc(d.name)}</span><span class="num">−${rs(d.amt)}</span></div>`).join('')}${b.gst&&b.gst.mode==='excl'?`<div class="bl"><span>GST ${b.gst.rate}%</span><span class="num">+${rs2(b.gst.tax)}</span></div>`:''}${P.already?`<div class="bl disc"><span>Paid earlier</span><span class="num">−${rs(P.already)}</span></div>`:''}</div>
         <div class="tktot"><span>Total${n?` <small class="num">· ${n} item${n>1?'s':''}</small>`:''}</span><span class="grow"></span>${btp()&&btGet()?'<button class="tklink" data-act="drawer-open">Drawer</button>':''}<button class="tklink" data-act="pos-clear" ${P.cart.length||run?'':'disabled'}>Clear</button><b class="num">${rs(t)}</b></div>
-        <button class="btn tkpaybtn" data-act="pos-pay" ${can?'':'disabled'}>Pay <span class="num">${rs(t)}</span><small> · ${esc(modeName(P.pay))}</small></button>
         <div class="tkacts tk3">
+          <button class="btn tkpaybtn" data-act="pos-pay" ${can?'':'disabled'} title="Choose how the customer pays">Pay<small>${esc(modeName(P.pay))}</small></button>
           <button class="btn" data-act="pos-hold" ${P.cart.length?'':'disabled'} title="Add these items to a table, paid or pending">Hold</button>
-          <button class="btn pri tkbig" data-act="pos-bill" data-v="bill" ${can?'':'disabled'} title="Save, take payment and send the e-bill">Save &amp; E-Bill</button>
-          <button class="btn chz tkbig" data-act="pos-go" data-v="kot" ${P.cart.length?'':'disabled'} title="Save and print the kitchen slip">KOT</button>
+          <button class="btn pri tkbig" data-act="pos-bill" data-v="bill" ${can?'':'disabled'} title="Save, take payment and send the e-bill">Save</button>
+          ${''/* KOT button hidden for now: <button class="btn chz tkbig" data-act="pos-go" data-v="kot">KOT</button> */}
         </div>
       </div>
     </aside>
