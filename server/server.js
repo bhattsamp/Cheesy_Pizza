@@ -21,6 +21,10 @@ async function openStore(uri = process.env.MONGODB_URI || DEFAULT_URI) {
   store.uri = uri.replace(/\/\/[^@/]*@/, '//***@'); // hide credentials in logs
   if (!(await store.isSeeded())) await store.seed(seedData());
   else await store.addExtraMenus(seedData().state.extras);
+  try {
+    const moved = await store.migrateRunningNos();
+    if (moved) console.log('Order numbers switched to running numbers:', JSON.stringify(moved));
+  } catch (e) { console.error('Order number switch failed:', e.message); }
   return store;
 }
 

@@ -2782,16 +2782,16 @@ function comboWorth(c){
 }
 
 /* ===== ORDERS ===== */
-// Order number: outlet code - date (ddmmyy) - a 3-digit count for that outlet and day, e.g. A-081126-001
-const orderNo=(out,date,n)=>{const [y,m,d]=String(date).split('-');return out.code+'-'+d+m+y.slice(2)+'-'+String(n).padStart(3,'0')};
+// Order number: outlet code - a running count for that outlet that never resets, e.g. A-122
+const orderNo=(out,n)=>out.code+'-'+n;
 // On kitchen and counter cards the date and outlet part is small, so the count stands out
 // Zomato orders go by Zomato's own order ID on the kitchen, counter and customer screens
 const zNo=o=>o.type==='zomato'&&o.zomatoId?`<small class="np">Zomato</small>${esc(o.zomatoId)}`:noHtml(o.no);
-const noHtml=no=>{const m=/^([A-Z]+-\d{6}-)(\d{3,})$/.exec(no||'');return m?`<small class="np">${m[1]}</small>${m[2]}`:esc(no||'')};
+const noHtml=no=>{const m=/^([A-Z]+-(?:\d{6}-)?)(\d+)$/.exec(no||'');return m?`<small class="np">${m[1]}</small>${m[2]}`:esc(no||'')};
 function commitOrder(o){
   const out=S.outlets.find(x=>x.id===o.outletId);
-  const k=o.outletId+'|'+o.date;S.seq[k]=(S.seq[k]||0)+1;
-  o.no=orderNo(out,o.date,S.seq[k]);
+  const k=o.outletId;S.seq[k]=(S.seq[k]||0)+1;
+  o.no=orderNo(out,S.seq[k]);
   const b=computeBill(o.items,o.date,{...(o.extra||{}),phone:o.customer.phone,outletId:o.outletId});o.subtotal=b.subtotal;o.discounts=b.discounts;o.total=b.total;if(b.gst)o.gst=b.gst;else delete o.gst;o.coinsUsed=b.coinsUsed;o.coinsEarned=(o.customer.phone||'').length===10?b.earn:0;
   o.times=o.times||{};o.times.placed=o.times.placed||o.ts;if(o.status==='preparing')o.times.preparing=o.times.preparing||o.ts;
   S.orders.push(o);if((o.customer.phone||'').length===10)releaseSpinHold(o.customer.phone,o.no);
@@ -4004,7 +4004,7 @@ function renderPOS(){
     `<div class="ndl">${allowed.map(([t,n])=>{const cnt=t==='kitchen'?k:t==='counter'?c:0;return `<button data-act="tab" data-v="${t}" ${U.pos.tab===t?'aria-current="page"':''}>${I[t]}<span>${n}</span>${cnt?`<span class="cnt num">${cnt}</span>`:''}</button>`}).join('')}</div>`}
     <div class="ndf small muted"><span>Signed in as <b>${esc(su.name)}</b> · ${ROLES[su.role]}</span><div class="row" style="gap:6px">${su.role==='owner'&&!U.navEdit?'<button class="btn sm" data-act="nav-edit">Edit menu</button>':''}${CAP?'<button class="btn sm" data-act="perms">Alerts & location</button>':''}<button class="btn sm" data-act="lock">Lock screen</button></div></div></aside>`;
   return `<div class="pos"><nav class="side" aria-label="POS sections" data-ks="side">${topNav()}
-    <div class="side-foot small muted">${U.pos.tab==='new'?`<span class="nxtno">Next no. <b class="num">${orderNo(cur(),today(),(S.seq[S.cur+'|'+today()]||0)+1)}</b></span>`:''}${U.pos.tab==='new'&&!CAP&&CS_CH?'<button class="csico" data-act="cs-open" title="Customer screen: open the screen the customer sees on your second monitor" aria-label="Customer screen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg></button>':''}${!many?`<span>Signed in as <b>${esc(su.name)}</b> · ${ROLES[su.role]}</span>${CAP?'<button class="btn sm" data-act="perms">Alerts & location</button>':''}<button class="btn sm" data-act="lock">Lock screen</button>`:''}</div></nav>
+    <div class="side-foot small muted">${U.pos.tab==='new'?`<span class="nxtno">Next no. <b class="num">${orderNo(cur(),(S.seq[S.cur]||0)+1)}</b></span>`:''}${U.pos.tab==='new'&&!CAP&&CS_CH?'<button class="csico" data-act="cs-open" title="Customer screen: open the screen the customer sees on your second monitor" aria-label="Customer screen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg></button>':''}${!many?`<span>Signed in as <b>${esc(su.name)}</b> · ${ROLES[su.role]}</span>${CAP?'<button class="btn sm" data-act="perms">Alerts & location</button>':''}<button class="btn sm" data-act="lock">Lock screen</button>`:''}</div></nav>
   <section class="main">${U.pos.tab!=='kitchen'&&U.pos.tab!=='trips'&&su.role!=='kitchen'&&su.role!=='rider'?onlineBanner():''}${!(ROLE_TABS[su.role]||[]).includes('stock')&&U.pos.tab!=='stock'&&su.role!=='kitchen'&&su.role!=='rider'?lowStockBanner():''}${views[U.pos.tab]()}</section>${U.addPop&&U.pos.tab==='orders'?addPopHtml():''}${navDrawer()}</div>
   <nav class="mobnav" aria-label="POS sections">${mobNav()}</nav>`;
 }
@@ -6197,7 +6197,7 @@ function vBackup(){
    <span class="small muted">${S.orders.length} orders · ${Object.keys(S.customers).length} customers · ${S.menu.length} menu items. Save the backup file to Google Drive or email it to yourself.</span></div>
   <div class="card" style="padding:14px;display:flex;flex-direction:column;gap:10px"><b>Daily backups on the server</b>
    <span class="small">The server saves a full copy every day and keeps the last 30 days, so a wrong delete can be undone.</span>
-   ${days?(days.length?`<div class="row" style="gap:6px;flex-wrap:wrap">${days.map(d=>`<button class="btn sm" data-act="bk-day" data-v="${esc(d.date)}">${fmtDate(d.date)} <small class="muted">${Math.round(d.size/1024)} KB</small></button>`).join('')}</div>`:'<span class="small muted">No daily copy yet. The first one is made within a day.</span>'):'<button class="btn" data-act="bk-list">Show daily backups (asks for your PIN)</button>'}</div>`;
+   ${days?(days.length?`<div class="row" style="gap:6px;flex-wrap:wrap">${days.map(d=>`<button class="btn sm" data-act="bk-day" data-v="${esc(d.date)}">${/^\d{4}-\d\d-\d\d$/.test(d.date)?fmtDate(d.date):'Before new order numbers · '+fmtDate(d.date.slice(-10))} <small class="muted">${Math.round(d.size/1024)} KB</small></button>`).join('')}</div>`:'<span class="small muted">No daily copy yet. The first one is made within a day.</span>'):'<button class="btn" data-act="bk-list">Show daily backups (asks for your PIN)</button>'}</div>`;
 }
 async function bkPin(){const pin=U.bkPin||prompt('Enter your owner PIN');if(!pin)return null;U.bkPin=pin;return pin}
 function bkAll(){const o={exportedAt:new Date().toISOString(),version:VER};SYNCED.forEach(n=>o[n]=S[n]);o.config=S.config;return o}
