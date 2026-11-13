@@ -811,7 +811,6 @@ body:has(.addpop){overflow:hidden}
 .st-roles{display:flex;flex-wrap:wrap;gap:6px}.st-roles button{padding:8px 12px;border-radius:10px;border:1.5px solid var(--line);background:var(--surface2);font:inherit;color:inherit;cursor:pointer}.st-roles button[aria-pressed="true"]{background:var(--teal,#1a93a8);border-color:var(--teal,#1a93a8);color:#fff}
 @media (max-width:600px){.st-outs{margin-left:6px;padding-left:8px}.st-kids,.st-kids2{margin-left:4px;padding-left:8px}}
 .kt .kwait{gap:8px}
-.kt .kcol{flex-wrap:nowrap}.kt .kcol .btn{flex:none;padding:5px 10px;min-height:0}
 .kt .kr1{align-items:center;gap:6px;flex-wrap:nowrap}.kt .kr1 .left{font-size:18px;white-space:nowrap}.kt .kr1 .no .np{display:inline;font-size:12px;margin:0 2px 0 0}.kt .kr1 .no{font-size:26px}
 .kt .kr2{align-items:center;gap:6px;flex-wrap:nowrap}.kt .kr2 .grow{min-width:0;line-height:1.25}.kt .kr2 .btn{flex:none;padding:5px 9px;min-height:0}.kt .ktools{gap:6px}.kt .kwait .btn{flex:1}
 .kt .left{font-family:var(--display);font-weight:800;font-size:20px;color:hsl(var(--h) 70% 34%)}
@@ -4585,7 +4584,6 @@ function vKitchen(){
   <div class="kds">${pr.map(o=>kCard(o,'kitchen')).join('')||'<div class="empty small">No orders being prepared.</div>'}</div>`;
 }
 
-function collectRow(o){return o.paid||upiPending(o)?'':`<div class="row kcol" style="gap:4px;align-items:center"><span class="small grow" style="font-weight:700;color:var(--bad)">Collect ${rs(balanceOf(o))}${o.pay.mode==='due'?' (baki)':partPaid(o)?' (rest)':''}</span>${COUNTER_MODES.map(k=>`<button class="btn sm" data-act="collect" data-id="${o.id}" data-v="${k}">${PAY[k]}</button>`).join('')}</div>`}
 // Change the waiting time told to the customer after the order is made
 function openWait(o){
   const draw=()=>showModal(`<div class="mh"><h3>Waiting time · #${o.no}</h3><button class="x" data-act="close" aria-label="Close">×</button></div>
@@ -4625,7 +4623,8 @@ function vCounter(){
   const riders=cur().riders||[];const busy=new Set(mine.filter(o=>o.status==='out').map(o=>o.rider?.name));
   // Everything the counter acts on, in one list: ready pickups and dine-in, deliveries waiting or ready to send, riders on the road
   const list=kSorted(mine.filter(o=>(o.status==='ready'&&o.type!=='delivery')||(o.type==='delivery'&&['preparing','ready','out'].includes(o.status))));
-  const foot=o=>{const pay=collectRow(o);
+  // Payment is taken on the till and Orders screens; the counter card only shows Payment done or Baki at the top
+  const foot=o=>{const pay='';
     if(o.status==='ready'&&o.type!=='delivery')return pay+`<button class="btn ok" data-act="handover" data-id="${o.id}">${o.type==='dine'?'Served to table':o.type==='zomato'?'Given to Zomato rider':'Handed to customer'}</button>`;
     if(o.status==='ready')return pay+`<div class="row"><select class="inp grow" id="rs-${o.id}" aria-label="Rider">${riders.map(r=>`<option value="${esc(r.name)}">${esc(r.name)}${busy.has(r.name)?' (on a trip)':''}</option>`).join('')}</select><button class="btn pri" data-act="dispatch" data-id="${o.id}" ${riders.length?'':'disabled'}>Send out</button></div>${riders.length?'':'<div class="small muted">Add riders on the Outlets screen.</div>'}`;
     if(o.status==='out'){const m=Math.floor((Date.now()-(o.times.out||Date.now()))/60000);return pay+`<div class="small">Rider <b>${esc(o.rider?.name||'—')}</b> · left ${m} min ago · ETA ${Math.max(1,RIDE_MIN-m)} min</div><div class="row"><button class="btn ok grow" data-act="delivered" data-id="${o.id}">Mark delivered</button><button class="btn" data-act="track" data-id="${o.id}">Live view</button></div>`}
