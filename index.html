@@ -1154,7 +1154,7 @@ body:has(.addpop){overflow:hidden}
 .tkpm button{padding:6px 2px!important}
 .tktot b{font-size:26px!important}
 .tkopts{display:flex;flex-direction:column;gap:6px}
-.tkopts .codes button{padding:3px 8px;font-size:13px}.tkopts .waits button{padding:3px 8px;font-size:13px}
+.tkopts .codes button{padding:3px 8px;font-size:13px}.tkopts .waits button,.tkcust .waits button{padding:3px 8px;font-size:13px}
 .holdsheet{display:flex;flex-direction:column;gap:12px}
 .uasheet{display:flex;flex-direction:column;gap:12px}.uaamt{font-size:38px;font-weight:800;color:var(--ok);line-height:1}
 .uawho{background:var(--bg);border-radius:12px;padding:10px 12px;line-height:1.55}
@@ -4104,10 +4104,10 @@ function custInfo(ph){
   return {c,count:list.length,spent:list.reduce((s,o)=>s+o.total,0)};
 }
 function custBox(ci){
-  if(!ci)return '';
+  if(!ci)return '';const zom=U.pos.type==='zomato'; // Zomato orders: no Cheese Coins shown
   if(!ci.count&&!(ci.c&&ci.c.due))return '<div class="custbox"><span class="chip c">New customer</span> First order from this number</div>';
   const due=ci.c&&ci.c.due||0;
-  return `<div class="custbox ${due?'due':''}"><b>${ci.count} past order${ci.count===1?'':'s'}</b><span class="num">· spent ${rs(ci.spent)} · ${Math.floor(ci.c?.coins||0)} coins</span>${due?`<b style="color:var(--bad)" class="num">· Baki ${rs(due)}</b>`:''}<button class="btn sm" style="margin-left:auto" data-act="cust-open" data-ph="${U.pos.phone}">History</button></div>`;
+  return `<div class="custbox ${due?'due':''}"><b>${ci.count} past order${ci.count===1?'':'s'}</b><span class="num">· spent ${rs(ci.spent)}${zom?'':` · ${Math.floor(ci.c?.coins||0)} coins`}</span>${due?`<b style="color:var(--bad)" class="num">· Baki ${rs(due)}</b>`:''}<button class="btn sm" style="margin-left:auto" data-act="cust-open" data-ph="${U.pos.phone}">History</button></div>`;
 }
 const priceLabel=m=>m.cat==='pizza'?S.sizes.filter(s=>+m.prices[s.id]).map(s=>rs(m.prices[s.id])).join(' / '):rs(m.price);
 
@@ -4153,7 +4153,7 @@ function posCalc(){
   const P=U.pos;
   const run=P.addTo&&S.orders.find(o=>o.id===P.addTo);if(P.addTo&&!run)P.addTo=null;
   if(P.type==='delivery'&&!delOn()||!posTypes().some(([k])=>k===P.type))P.type='takeaway';
-  const coins=P.phone.length===10?coinsOf(P.phone):0;
+  const coins=P.phone.length===10&&P.type!=='zomato'?coinsOf(P.phone):0; // Zomato orders do not use Cheese Coins
   const b=run?computeBill([...run.items,...P.cart],run.date,{...(run.extra||{}),...(P.code?{code:P.code}:{}),phone:run.customer.phone}):computeBill(P.cart,null,{code:P.code,coins:P.useCoins?coins:0,phone:P.phone});
   const already=run?r2(paidSoFar(run)+(run.walletUsed||0)):0;const t=Math.max(0,r2(b.total-already));P.total=t;P.already=already;P.full=b.total;
   const zom=P.type==='zomato';
@@ -4187,6 +4187,7 @@ function vNew(){
   const ci=custInfo(P.phone);const todays=activeOffers(dow);
   const n=P.cart.reduce((a,l)=>a+l.qty,0);
   const optsOn=true; // kitchen note, waiting time and coupon stay open on the till
+  const waitsRow=run?'':`<div class="waits"><span class="lbl" style="margin-right:4px">Waiting time</span>${WAITS.map(w=>`<button data-act="pos-wait" data-v="${w}" aria-pressed="${(P.wait||PREP_MIN)===w}">${w} min</button>`).join('')}<input class="inp num" id="pos-wait" type="number" min="1" placeholder="min" value="${P.wait&&!WAITS.includes(P.wait)?P.wait:''}" aria-label="Other waiting time in minutes"></div>`;
   return `
   <div class="neworder"${U.tkw?` style="--tkw:${U.tkw}px"`:''}>
     <div class="menucol">
@@ -4206,6 +4207,7 @@ function vNew(){
         ${zom?`<div class="field"><label for="pos-zid">Zomato order ID</label><input class="inp num" id="pos-zid" value="${esc(P.zid)}" placeholder="e.g. 5123456789"></div>`:''}
         <div class="row"><div class="field grow"><label for="pos-ph">Mobile${needPhone()?' *':' (optional)'}</label><input class="inp num" id="pos-ph" inputmode="numeric" maxlength="10" value="${esc(P.phone)}" placeholder="Mobile · 10 digits"></div>
         <div class="field grow"><label for="pos-nm">Name${needName()?' *':zom?' (optional)':''}</label><input class="inp" id="pos-nm" value="${esc(P.name)}" placeholder="Customer name"></div></div>
+        ${zom?waitsRow:''}
         ${(()=>{const lv=posLt(),o0={outletId:S.cur};return `<button class="btn sm ltbtn${lv===2?' l2':''}" data-act="pos-lt" aria-pressed="${lv>0}" title="Tap to change: Off › ${esc(ltName(o0,1))} › ${esc(ltName(o0,2))} › Off">${lv?'★ '+esc(ltName(o0,lv)):esc(ltName(o0,1))+': Off'}</button>`})()}
         <div id="custbox">${custBox(ci)}</div>
         ${P.type==='dine'?tablePicker(P):''}
@@ -4223,11 +4225,11 @@ function vNew(){
       <div class="sec tkopts">
         ${optsOn?`<input class="inp" id="pos-note" placeholder="Kitchen note (optional)" value="${esc(P.note||'')}" aria-label="Kitchen note">
         <div class="codes">${['Extra crispy','Less spicy','Jain','Pack separately','Rush order'].map(c=>`<button data-act="pos-chip" data-v="${c}" style="font-family:inherit">+ ${c}</button>`).join('')}</div>
-        ${run?'':`<div class="waits"><span class="lbl" style="margin-right:4px">Waiting time</span>${WAITS.map(w=>`<button data-act="pos-wait" data-v="${w}" aria-pressed="${(P.wait||PREP_MIN)===w}">${w} min</button>`).join('')}<input class="inp num" id="pos-wait" type="number" min="1" placeholder="min" value="${P.wait&&!WAITS.includes(P.wait)?P.wait:''}" aria-label="Other waiting time in minutes"></div>`}
+        ${zom?'':waitsRow}
         ${cur().posCoupon?`<div class="row"><input class="inp grow" id="pc-code" placeholder="Coupon code" value="${esc(P.code)}" style="text-transform:uppercase;width:auto" aria-label="Coupon code"><button class="btn sm" data-act="pc-apply">Apply</button></div>`:''}`
         :`<button class="optbtn" data-act="pos-opts">+ Kitchen note · waiting time ${PREP_MIN} min · coupon</button>`}
         ${b.codeMsg?`<div class="${b.codeOk?'msg-ok':'msg-bad'}">${esc(b.codeMsg)}</div>`:''}
-        ${coins&&!run?`<label class="opt"><input type="checkbox" id="pc-coins" ${P.useCoins?'checked':''}><span class="coin sm">C</span> Use Cheese Coins <span class="small muted num">(${coins})</span></label>`:''}
+        ${coins&&!run&&!zom?`<label class="opt"><input type="checkbox" id="pc-coins" ${P.useCoins?'checked':''}><span class="coin sm">C</span> Use Cheese Coins <span class="small muted num">(${coins})</span></label>`:''}
       </div>
       <div class="tkpay">
         ${b.hint?`<div class="hint">${esc(b.hint)}</div>`:''}
