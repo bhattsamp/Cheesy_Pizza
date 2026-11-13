@@ -1128,6 +1128,7 @@ body:has(.addpop){overflow:hidden}
 .tktot small{font-size:14px}
 .tklink{border:0;background:none;color:var(--muted);font-size:14px;font-weight:600;padding:4px 6px;border-radius:6px;text-decoration:underline;text-underline-offset:2px}
 .tklink:disabled{opacity:.4;text-decoration:none}.tktot b{margin-left:6px}.tktot b{font-family:var(--display);font-size:28px;font-weight:800;color:var(--ink);line-height:1}
+.tkpaybtn{width:100%;justify-content:center;font-size:17px;font-weight:700;border:1.5px solid var(--teal);color:var(--teal-deep);background:var(--teal-soft);padding:10px}
 .tkpm{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
 .tkpm button{border:1.5px solid var(--line);background:var(--surface);color:var(--ink);border-radius:10px;padding:8px 2px;font-weight:600;font-size:15px}
 .tkpm button[aria-pressed="true"]{border-color:var(--teal);background:var(--teal-soft);color:var(--teal-deep);font-weight:700}
@@ -4157,7 +4158,7 @@ function posCalc(){
   const b=run?computeBill([...run.items,...P.cart],run.date,{...(run.extra||{}),...(P.code?{code:P.code}:{}),phone:run.customer.phone}):computeBill(P.cart,null,{code:P.code,coins:P.useCoins?coins:0,phone:P.phone});
   const already=run?r2(paidSoFar(run)+(run.walletUsed||0)):0;const t=Math.max(0,r2(b.total-already));P.total=t;P.already=already;P.full=b.total;
   const zom=P.type==='zomato';
-  const modes=zom?['zomato']:[...COUNTER_MODES,...(t>0?['split']:[]),...(t>0&&!(run&&paidSoFar(run))&&walletOf(P.phone)>=t?['wallet']:[]),'due'];
+  const modes=zom?['zomato']:[...COUNTER_MODES,...(t>0?['split']:[]),...(t>0&&!(run&&paidSoFar(run))&&walletOf(P.phone)>=t?['wallet']:[])]; // Baki is not a pay choice here; a baki part can still go in Split
   if(!modes.includes(P.pay))P.pay=modes[0];
   return {P,run,coins,b,t,zom,modes,can:!!(P.cart.length||run)};
 }
@@ -4234,8 +4235,8 @@ function vNew(){
       <div class="tkpay">
         ${b.hint?`<div class="hint">${esc(b.hint)}</div>`:''}
         <div class="tksum">${b.subtotal!==t||(b.discounts||[]).length?`<div class="bl"><span>Item total</span><span class="num">${rs(b.subtotal)}</span></div>`:''}${(b.discounts||[]).map(d=>`<div class="bl disc"><span>${esc(d.name)}</span><span class="num">−${rs(d.amt)}</span></div>`).join('')}${b.gst&&b.gst.mode==='excl'?`<div class="bl"><span>GST ${b.gst.rate}%</span><span class="num">+${rs2(b.gst.tax)}</span></div>`:''}${P.already?`<div class="bl disc"><span>Paid earlier</span><span class="num">−${rs(P.already)}</span></div>`:''}</div>
-        <div class="tktot"><span>Total${n?` <small class="num">· ${n} item${n>1?'s':''}</small>`:''}</span><span class="grow"></span>${btp()&&btGet()?'<button class="tklink" data-act="drawer-open">Drawer</button>':''}<button class="tklink" data-act="pos-pay" ${can?'':'disabled'}>More ways</button><button class="tklink" data-act="pos-clear" ${P.cart.length||run?'':'disabled'}>Clear</button><b class="num">${rs(t)}</b></div>
-        <div class="tkpm" role="group" aria-label="Pay by">${TK_PAY.map(([k,nm])=>`<button data-act="pos-pm" data-v="${k}" aria-pressed="${P.pay===k}">${nm}</button>`).join('')}</div>
+        <div class="tktot"><span>Total${n?` <small class="num">· ${n} item${n>1?'s':''}</small>`:''}</span><span class="grow"></span>${btp()&&btGet()?'<button class="tklink" data-act="drawer-open">Drawer</button>':''}<button class="tklink" data-act="pos-clear" ${P.cart.length||run?'':'disabled'}>Clear</button><b class="num">${rs(t)}</b></div>
+        <button class="btn tkpaybtn" data-act="pos-pay" ${can?'':'disabled'}>Pay <span class="num">${rs(t)}</span><small> · ${esc(modeName(P.pay))}</small></button>
         <div class="tkacts tk3">
           <button class="btn" data-act="pos-hold" ${P.cart.length?'':'disabled'} title="Add these items to a table, paid or pending">Hold</button>
           <button class="btn pri tkbig" data-act="pos-bill" data-v="bill" ${can?'':'disabled'} title="Save, take payment and send the e-bill">Save &amp; E-Bill</button>
@@ -4400,7 +4401,7 @@ function posGo(kind){
     if(P.type==='dine'&&!P.table){toast('Pick a table');return}
   }
   const bill=kind!=='kot'&&kind!=='save';const kotToo=kind==='kotbill'||!!P.kotToo;let mode=P.type==='zomato'?'zomato':P.pay,splits=null;
-  const pre=()=>run?Math.max(0,r2(computeBill([...run.items,...P.cart],run.date,{...(run.extra||{}),...(P.code?{code:P.code}:{}),phone:run.customer.phone}).total-paidSoFar(run)-(run.walletUsed||0))):computeBill(P.cart,null,{code:P.code,coins:P.useCoins?coinsOf(P.phone):0,phone:P.phone}).total;
+  const pre=()=>run?Math.max(0,r2(computeBill([...run.items,...P.cart],run.date,{...(run.extra||{}),...(P.code?{code:P.code}:{}),phone:run.customer.phone}).total-paidSoFar(run)-(run.walletUsed||0))):computeBill(P.cart,null,{code:P.code,coins:P.useCoins&&P.type!=='zomato'?coinsOf(P.phone):0,phone:P.phone}).total;
   if(bill&&mode==='split'){
     const hasPh=P.phone.length===10||!!(run&&run.customer.phone);
     splits=splitList(P.splits||{},[...COUNTER_MODES,...(hasPh?['due']:[])]);
@@ -4425,7 +4426,7 @@ function posGo(kind){
     recalcOrder(o);
     if(P.code&&!(o.discounts||[]).some(d=>d.name==='Code '+P.code.toUpperCase()))o.extra.code='';
   }else{
-    const b=computeBill(P.cart,null,{code:P.code,coins:P.useCoins?coinsOf(P.phone):0,phone:P.phone});
+    const b=computeBill(P.cart,null,{code:P.code,coins:P.useCoins&&P.type!=='zomato'?coinsOf(P.phone):0,phone:P.phone});
     o=commitOrder(newOrder({outletId:S.cur,type:P.type,table:P.type==='dine'?P.table:'',address:P.type==='delivery'?P.address:'',customer:{name:P.name.trim(),phone:P.phone},items:P.cart.map(l=>({...l})),note:(P.note||'').trim(),
       zomatoId:P.type==='zomato'?P.zid.trim():'',lt:posLt(),wait:P.wait||PREP_MIN,by:su?.name||'',byRole:su?.role||'',
       extra:{code:b.codeOk?P.code:'',coins:b.coinsUsed},pay:{mode:'pending',given:0,change:0},paid:false}));
