@@ -19,7 +19,7 @@
   const keepLocal=()=>{if(M.shared)return;try{localStorage.setItem(LOCAL,JSON.stringify({c:M.c,v:M.v,demo:M.demo,cfg:M.cfg}))}catch(e){}};
 
   function seqMap(){const seq={};const out=M.c.outlets;
-    Object.values(M.c.orders).forEach(o=>{const ou=out[String(o.outletId)];if(!ou||!o.date||!o.no)return;const m=new RegExp('^'+ou.code+'-(\\d+)$').exec(o.no);if(!m)return;const key=o.outletId+'|'+o.date;seq[key]=Math.max(seq[key]||0,+m[1])});return seq}
+    Object.values(M.c.orders).forEach(o=>{const ou=out[String(o.outletId)];if(!ou||!o.date||!o.no)return;const m=new RegExp('^'+ou.code+'-(\\d+)$').exec(o.no);if(!m)return;const key=String(o.outletId);seq[key]=Math.max(seq[key]||0,+m[1])});return seq}
   // Applies a change set to the mirror and returns the documents to write
   function apply(ch,writes){const up=ch.upsert||{},del=ch.delete||{},ren={};const seq=seqMap();
     for(const n of COLS){const spec=SPECS[n];
@@ -29,7 +29,7 @@
       for(const [k0,obj] of ents){const k=String(k0);const old=M.c[n][k];const {pin,_newPin,...rest}=obj;const d={...clone(rest),_pos:old?old._pos:newPos()};
         if(n==='extras'&&d.items)d.items=d.items.map(({from,...it})=>it);
         if(spec.pin){if(_newPin)d._pin=String(_newPin);else if(pin&&old&&old._pin)d._pin=old._pin}
-        if(n==='orders'&&!old){const out=M.c.outlets[String(obj.outletId)];if(out&&obj.date){const key=obj.outletId+'|'+obj.date;seq[key]=(seq[key]||0)+1;const dp=String(obj.date).split('-');const no=out.code+'-'+dp[2]+dp[1]+dp[0].slice(2)+'-'+String(seq[key]).padStart(3,'0');if(no!==obj.no){d.no=no;ren[k]=no}}}
+        if(n==='orders'&&!old){const out=M.c.outlets[String(obj.outletId)];if(out&&obj.date){const key=String(obj.outletId);seq[key]=(seq[key]||0)+1;const no=out.code+'-'+seq[key];if(no!==obj.no){d.no=no;ren[k]=no}}}
         M.c[n][k]=d;writes.push(['rec_'+n+'/'+enc(k),d])}}
     M.v++;return {prev:M.v-1,version:M.v,renumbered:ren,seq}}
   function read(n){const spec=SPECS[n];const docs=Object.entries(M.c[n]).sort((a,b)=>a[1]._pos-b[1]._pos);

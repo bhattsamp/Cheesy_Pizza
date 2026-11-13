@@ -50,24 +50,53 @@ test('PINs are checked on the server', () => withServer(async ({ post }) => {
   assert.equal((await post('/api/auth/staff', { id: 'u2', pin: '4321' })).ok, true, 'pin kept when not changed');
 }));
 
-test('orders round-trip and get numbered per outlet per day', () => withServer(async ({ get, post }) => {
+test('orders round-trip and get running numbers per outlet', () => withServer(async ({ get, post }) => {
   const order = {
-    id: 'ord1', no: 'A-081026-001', outletId: 'o1', date: '2026-10-08', ts: 1, status: 'preparing', source: 'pos', type: 'dine',
+    id: 'ord1', no: 'A-1', outletId: 'o1', date: '2026-10-08', ts: 1, status: 'preparing', source: 'pos', type: 'dine',
     table: '3', address: '', customer: { name: 'Asha', phone: '9000000000' }, pay: { mode: 'cash', given: 500, change: 20 },
     paid: true, times: { placed: 1 }, subtotal: 480, total: 480, discounts: [{ name: 'X', amt: 0 }],
     items: [{ itemId: 'p1', cat: 'pizza', name: 'Margherita', size: '7', addons: ['burst'], qty: 2, unit: 220, custom: false, notes: ['Soft bake'] },
       { itemId: 'b1', cat: 'bread', name: 'Cheesy Garlic Bread', size: null, addons: [], qty: 1, unit: 160, custom: false }],
   };
   const r1 = await post('/api/sync', { upsert: { orders: [order, { ...order, id: 'ord2' }] } });
-  assert.deepEqual(r1.renumbered, { ord2: 'A-081026-002' });
-  assert.equal(r1.seq['o1|2026-10-08'], 2);
+  assert.deepEqual(r1.renumbered, { ord2: 'A-2' });
+  assert.equal(r1.seq.o1, 2);
+  // The count carries on the next day instead of starting again at 1
+  const r2 = await post('/api/sync', { upsert: { orders: [{ ...order, id: 'ord3', no: 'A-1', date: '2026-10-09' }] } });
+  assert.deepEqual(r2.renumbered, { ord3: 'A-3' });
+  await post('/api/sync', { delete: { orders: ['ord3'] } });
   const [saved] = await get('/api/orders?date=2026-10-08&outlet=o1&status=preparing');
   assert.deepEqual(saved, order);
   await post('/api/sync', { upsert: { orders: [{ ...order, status: 'done' }] }, delete: { orders: ['ord2'] } });
   const all = await get('/api/orders');
   assert.equal(all.length, 1);
   assert.equal(all[0].status, 'done');
-  assert.equal(all[0].no, 'A-081026-001');
+  assert.equal(all[0].no, 'A-1');
+}));
+
+test('old A-ddmmyy-001 numbers move to running numbers once, by time placed', () => withServer(async ({ get, store }) => {
+  const M = require('../server/models');
+  const base = { status: 'done', source: 'pos', type: 'takeaway', customer: { name: '', phone: '' }, items: [], total: 0 };
+  const old = [
+    { id: 'x1', no: 'A-081126-002', outletId: 'o1', date: '2026-11-08', ts: 200 },
+    { id: 'x2', no: 'A-081126-001', outletId: 'o1', date: '2026-11-08', ts: 100 },
+    { id: 'x3', no: 'A-091126-001', outletId: 'o1', date: '2026-11-09', ts: 300 },
+    { id: 'x4', no: 'B-091126-001', outletId: 'o2', date: '2026-11-09', ts: 250 },
+  ];
+  await M.Order.insertMany(old.map((o, i) => ({ ...base, ...o, _id: o.id, _pos: i, _rev: 1 })));
+  await M.UpiAlert.create({ _id: 'u1', id: 'u1', orderId: 'x3', orderNo: 'A-091126-001' });
+  await M.Counter.create({ _id: 'no:o1|2026-11-09', n: 1 });
+  await store.setSetting('runningNos', false);
+  const r = await store.migrateRunningNos();
+  assert.deepEqual(r.last, { o1: 3, o2: 1 });
+  const nos = Object.fromEntries((await get('/api/orders')).map(o => [o.id, [o.no, o.oldNo]]));
+  assert.deepEqual(nos, { x1: ['A-2', 'A-081126-002'], x2: ['A-1', 'A-081126-001'], x3: ['A-3', 'A-091126-001'], x4: ['B-1', 'B-091126-001'] });
+  assert.equal((await M.UpiAlert.findById('u1').lean()).orderNo, 'A-3');
+  assert.ok(await M.Backup.exists({ _id: /^before-order-numbers-/ }), 'backup saved first');
+  const { state } = await get('/api/state');
+  assert.deepEqual(state.seq, { o1: 3, o2: 1 });
+  assert.equal(await store.migrateRunningNos(), null, 'runs only once');
+  assert.equal((await store.nextOrderNo('o1')), 'A-4');
 }));
 
 test('edited values keep their type', () => withServer(async ({ get, post }) => {
