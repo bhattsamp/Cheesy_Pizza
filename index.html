@@ -3741,10 +3741,10 @@ function zoomMove(el,e){
 document.addEventListener('pointerdown',e=>{const z=e.target.closest('[data-zoom]');if(!z||z.dataset.zoom==='m'&&e.pointerType!=='mouse')return;z.setPointerCapture?.(e.pointerId);z.dataset.on='1';zoomMove(z,e)});
 document.addEventListener('pointermove',e=>{const z=e.target.closest('[data-zoom]');if(z&&(z.dataset.on&&z.dataset.zoom!=='m'||e.pointerType==='mouse'))zoomMove(z,e)});
 ['pointerup','pointercancel','pointerleave'].forEach(t=>document.addEventListener(t,e=>{const z=e.target.closest?.('[data-zoom]');if(!z)return;if(t==='pointerup'&&e.pointerType==='mouse')return;delete z.dataset.on;const l=z.querySelector('.lens');if(l)l.style.display='none'},true));
-function openCustomizer(id,target,edit){
+function openCustomizer(id,target,edit,size){
   const m=menuItem(id);if(!m){toast('This item is no longer on the menu');return}
   const cart=target==='pub'?U.cart:U.pos.cart;const old=edit!=null?cart[edit]:null;
-  const st={size:null,addons:[],tops:[],ex:[],qty:1,notes:[],note:''};
+  const st={size:size||null,addons:[],tops:[],ex:[],qty:1,notes:[],note:''};
   if(old)Object.assign(st,{size:old.size,addons:old.addons.slice(),tops:(old.tops||[]).slice(),ex:(old.ex||[]).map(e=>({...e})),qty:old.qty,notes:(old.notes||[]).slice(),note:old.note||''});
   const save=l=>{if(st.notes.length)l.notes=st.notes.slice();if(st.note.trim())l.note=st.note.trim();closeModal();
     if(old){cart[edit]=l;toast(l.name+' updated');render();if(target==='pub')openPubCart()}else addLine(target,l)};
@@ -4025,7 +4025,7 @@ function renderPOS(){
     <div class="ndf small muted"><span>Signed in as <b>${esc(su.name)}</b> · ${ROLES[su.role]}</span><div class="row" style="gap:6px">${su.role==='owner'&&!U.navEdit?'<button class="btn sm" data-act="nav-edit">Edit menu</button>':''}${CAP?'<button class="btn sm" data-act="perms">Alerts & location</button>':''}<button class="btn sm" data-act="lock">Lock screen</button></div></div></aside>`;
   return `<div class="pos"><nav class="side" aria-label="POS sections" data-ks="side">${topNav()}
     <div class="side-foot small muted">${U.pos.tab==='new'?`<span class="nxtno">Next no. <b class="num">${orderNo(cur(),(S.seq[S.cur]||0)+1)}</b></span>`:''}${U.pos.tab==='new'&&!CAP&&CS_CH?'<button class="csico" data-act="cs-open" title="Customer screen: open the screen the customer sees on your second monitor" aria-label="Customer screen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg></button>':''}${!many?`<span>Signed in as <b>${esc(su.name)}</b> · ${ROLES[su.role]}</span>${CAP?'<button class="btn sm" data-act="perms">Alerts & location</button>':''}<button class="btn sm" data-act="lock">Lock screen</button>`:''}</div></nav>
-  <section class="main">${U.pos.tab!=='kitchen'&&U.pos.tab!=='trips'&&su.role!=='kitchen'&&su.role!=='rider'?onlineBanner():''}${!(ROLE_TABS[su.role]||[]).includes('stock')&&U.pos.tab!=='stock'&&su.role!=='kitchen'&&su.role!=='rider'?lowStockBanner():''}${views[U.pos.tab]()}</section>${U.addPop&&U.pos.tab==='orders'?addPopHtml():''}${navDrawer()}</div>
+  <section class="main">${U.pos.tab!=='kitchen'&&U.pos.tab!=='trips'&&su.role!=='kitchen'&&su.role!=='rider'?onlineBanner():''}${!(ROLE_TABS[su.role]||[]).includes('stock')&&U.pos.tab!=='stock'&&su.role!=='kitchen'&&su.role!=='rider'?lowStockBanner():''}${views[U.pos.tab]()}</section>${U.addPop&&['orders','tables'].includes(U.pos.tab)?addPopHtml():''}${navDrawer()}</div>
   <nav class="mobnav" aria-label="POS sections">${mobNav()}</nav>`;
 }
 // Order panel width on the New order screen: drag the grip on its left edge; kept on this device
@@ -4233,7 +4233,7 @@ function vNew(){
         ${zom?waitsRow:''}
         ${(()=>{const lv=posLt(),o0={outletId:S.cur},bk=bookOk(P,run),on=bk&&P.book;return `<div class="tkflags${on?' on':''}"><button class="btn sm ltbtn${lv===2?' l2':''}" data-act="pos-lt" aria-pressed="${lv>0}" title="Tap to change: Off › ${esc(ltName(o0,1))} › ${esc(ltName(o0,2))} › Off">${lv?'★ '+esc(ltName(o0,lv)):esc(ltName(o0,1))+(on?'':': Off')}</button>${bk?`<button class="btn sm bkbtn" data-act="pos-book" aria-pressed="${on}" title="${on?'Advance booking is on · tap to turn it off':'Advance booking: save this order for a later time today or another day'}" aria-label="Advance booking">${I.book}${on?'':'<span>Advance booking</span>'}</button>`:''}${on?`<input class="inp num" id="pos-bdate" type="date" min="${today()}" value="${esc(P.bdate)}" aria-label="Booking date"><input class="inp num" id="pos-btime" type="time" value="${esc(P.btime)}" aria-label="Booking time">`:''}</div>${on?`<div class="small bkhint" id="pos-bhint">${bookHint(bookTs(P.bdate,P.btime))}</div>`:''}`})()}
         <div id="custbox">${custBox(ci)}</div>
-        ${P.type==='dine'?tablePicker(P):''}
+        ${P.type==='dine'&&!run?`<div class="small tkdine">${P.table?`Table <b>T${esc(P.table)}</b>`:'Tap <b>Hold</b> to pick the table'}</div>`:''}
         ${run?`<div class="addto">Adding to ${run.no} · ${run.table?'Table '+esc(run.table):TYPES[run.type]} · ${rs(run.total)} so far${run.paid?' · paid':paidSoFar(run)?' · '+rs(paidSoFar(run))+' paid, '+rs(balanceOf(run))+' left':' · not paid'}<span class="grow"></span>${U.addPop?'':'<button class="btn sm" data-act="addto-x">New order instead</button>'}</div>
           <div class="small muted">${run.items.map(l=>l.qty+'× '+esc(l.name)+(l.size?' '+sizeLabel(l.size):'')).join(', ')}</div>`:''}
         ${P.type==='delivery'?`<input class="inp" id="pos-ad" placeholder="Delivery address" value="${esc(P.address)}" aria-label="Delivery address">`:''}
@@ -4386,7 +4386,7 @@ function posBill(kind){
 // Hold: put the items on the ticket onto a dine-in table, running or free, as paid now or pending
 function openHold(){
   const P=U.pos;if(!P.cart.length)return;
-  const n=+cur().tables||8;let sel=null,paid=false;
+  const n=+cur().tables||8;let sel=P.table||null,paid=false;
   const cnt=P.cart.reduce((a,l)=>a+l.qty,0),amt=computeBill(P.cart,null,{}).total;
   const pm=(TK_PAY.find(x=>x[0]===P.pay)||[0,PAY[P.pay]||'Cash'])[1];
   const draw=()=>{
@@ -4420,7 +4420,7 @@ function posGo(kind){
     if(needPhone()&&P.phone.length!==10){toast('Enter the customer mobile number');document.getElementById('pos-ph')?.focus();return}
     if(P.type==='zomato'&&!P.zid.trim()){toast('Enter the Zomato order ID');document.getElementById('pos-zid')?.focus();return}
     if(P.type==='delivery'&&!P.address.trim()){toast('Add the delivery address');return}
-    if(P.type==='dine'&&!P.table){toast('Pick a table');return}
+    if(P.type==='dine'&&!P.table){openHold();return} // the table is picked in the Hold popup
     if(P.book&&bookOk(P,run)){const bad=bookTimeBad(bookTs(P.bdate,P.btime));if(bad){toast(bad);document.getElementById('pos-btime')?.focus();return}}
   }
   const bookAt=!run&&P.book&&bookOk(P,run)?bookTs(P.bdate,P.btime):0;
@@ -4797,7 +4797,7 @@ function vTables(){
     <span class="small muted num">${dayAll.length} dine-in order${dayAll.length===1?'':'s'} · ${rs(sum(dayAll))}</span></div>
   ${isToday?`<div class="tlegend"><span><i style="background:var(--bad)"></i>Not paid</span><span><i style="background:var(--warn)"></i>Part paid</span><span><i style="background:var(--ok)"></i>Paid</span><span><i style="background:var(--plum,#6a4fc9)"></i>Booked</span></div>`:''}
   <div class="tables tgrid">${[...Array(n)].map((_,i)=>card(String(i+1))).join('')}</div>
-  ${sel?hist(sel):'<div class="small muted" style="margin-top:10px">Tap a table to see what it was served that day.</div>'}`;
+  ${sel?hist(sel):`<div class="small muted" style="margin-top:10px">${isToday?'Tap a table to add items to it (or start its order).':'Tap a table to see what it was served that day.'}</div>`}`;
 }
 /* Move a running table's order to a free table, or merge it into another running table so the
    guests get one bill. Merging moves every item (with its round and who took it) onto the other
@@ -4973,7 +4973,10 @@ function openAddPop(o){if(!o||o.status==='cancelled')return;
   Object.assign(U.pos,JSON.parse(JSON.stringify(POS_BLANK)),{addTo:o.id,type:o.type,table:o.table||'',name:o.customer.name||'',phone:o.customer.phone||''});
   U.addPop=o.id;render();window.scrollTo(0,0)}
 function closeAddPop(){U.addPop=null;Object.assign(U.pos,JSON.parse(JSON.stringify(POS_BLANK)));render()}
-function addPopHtml(){const o=S.orders.find(x=>x.id===U.addPop);if(!o||U.pos.addTo!==o.id){U.addPop=null;return ''}
+function addPopHtml(){
+  if(String(U.addPop).startsWith('tbl:')){const t=U.addPop.slice(4);if(U.pos.type!=='dine'||U.pos.table!==t||U.pos.addTo){U.addPop=null;return ''}
+    return `<div class="addpop" role="dialog" aria-modal="true" aria-label="New order for table ${esc(t)}"><div class="addpop-h"><h3>New order · <span class="num">T${esc(t)}</span></h3><span class="small muted">Dine-in · table is free</span><span class="grow"></span><button class="x" data-act="addpop-close" aria-label="Close">×</button></div><div class="addpop-b">${vNew()}</div></div>`}
+  const o=S.orders.find(x=>x.id===U.addPop);if(!o||U.pos.addTo!==o.id){U.addPop=null;return ''}
   return `<div class="addpop" role="dialog" aria-modal="true" aria-label="Add items to ${esc(o.no)}"><div class="addpop-h"><h3>Add items to <span class="num">${esc(o.no)}</span></h3><span class="small muted">${esc(o.customer.name||'Walk-in')} · ${TYPES[o.type]}${o.table?' · T'+esc(o.table):''} · now ${rs(o.total)}</span><span class="grow"></span><button class="x" data-act="addpop-close" aria-label="Close">×</button></div><div class="addpop-b">${vNew()}</div></div>`}
 // Order history sorting: tap a column heading; tap again to flip the direction
 const ORD_SORT={no:o=>o.no,cust:o=>(o.customer.name||'').toLowerCase(),type:o=>TYPES[o.type]||'',time:o=>o.ts,total:o=>o.total,pay:o=>(o.paid?'1':'0')+payName(o),status:o=>statusName(o.status,o.type),by:o=>o.source==='online'?'Customer site':(o.by||'')};
@@ -5766,7 +5769,11 @@ document.addEventListener('click',e=>{
     case 'hold-table':{const o=cur();o.holds=o.holds||{};if(el.dataset.v==='on'){o.holds[P.table]={name:P.name.trim(),ts:Date.now()};toast('T'+P.table+' on hold')}else{delete o.holds[P.table];toast('T'+P.table+' is free')}save();render();break}
     case 'book-open':openBook(P.table);break;
     case 'tbl-go':U.tblSel=el.dataset.v;U.tblDate=null;P.tab='tables';render();window.scrollTo(0,0);break;
-    case 'tbl-pick':U.tblSel=U.tblSel===el.dataset.v?null:el.dataset.v;render();break;
+    case 'tbl-pick':{const t=el.dataset.v,isToday=!U.tblDate||U.tblDate===today();U.tblSel=t;
+      if(!isToday){render();break}
+      // today: the table's running order opens in the add-items popup; a free table opens a new dine-in order for it
+      const run=tableState(t).run;if(run){openAddPop(run);break}
+      const h=(cur().holds||{})[t];Object.assign(U.pos,JSON.parse(JSON.stringify(POS_BLANK)),{type:'dine',table:t,name:h&&h.name||'',phone:h&&h.phone||'',note:h&&h.note||''});U.addPop='tbl:'+t;render();window.scrollTo(0,0);break}
     case 'tbl-day':{const d=new Date((U.tblDate||today())+'T12:00:00');d.setDate(d.getDate()+(+el.dataset.v));const v=today(d);U.tblDate=v>=today()?null:v;render();break}
     case 'book-seat':{const h=(cur().holds||{})[P.table];if(h){if(!P.name)P.name=h.name||'';if(!P.phone&&h.phone)P.phone=h.phone;if(h.note&&!P.note)P.note=h.note}render();toast('Add their order · the booking clears when you send the KOT or bill');break}
     case 'pos-pm':P.pay=el.dataset.v;render();break;
@@ -5828,7 +5835,7 @@ document.addEventListener('click',e=>{
     case 'to-ticket':document.getElementById('ticket')?.scrollIntoView({behavior:'smooth',block:'start'});break;
     case 'poscat':P.cat=el.dataset.v;P.q='';render();break;
     case 'pos-add':openCustomizer(el.dataset.id,'pos');break;
-    case 'pos-q':{const m=S.menu.find(x=>x.id===el.dataset.id);if(!m||m.off)break;addLine('pos',mkLine(m,el.dataset.v||null,[],1));break}
+    case 'pos-q':{const m=S.menu.find(x=>x.id===el.dataset.id);if(!m||m.off)break;if(m.cat==='pizza'){openCustomizer(m.id,'pos',null,el.dataset.v||null);break}addLine('pos',mkLine(m,el.dataset.v||null,[],1));break}
     case 'pos-type':P.type=el.dataset.v;if(P.type!=='dine'){P.addTo=null;P.table=''}if(P.type==='zomato')P.pay='zomato';else if(P.pay==='zomato')P.pay='cash';render();break;
     case 'lq':{const l=P.cart[+el.dataset.i];l.qty+= +el.dataset.v;if(l.qty<1)P.cart.splice(+el.dataset.i,1);render();break}
     case 'lp-edit':U.editLine=+el.dataset.i;render();{const i=document.getElementById('lp-'+el.dataset.i);if(i){i.focus();i.select()}}break;
