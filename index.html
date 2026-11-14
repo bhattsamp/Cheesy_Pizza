@@ -4229,7 +4229,7 @@ function vNew(){
         ${zom?waitsRow:''}
         ${(()=>{const lv=posLt(),o0={outletId:S.cur},bk=bookOk(P,run),on=bk&&P.book;return `<div class="tkflags${on?' on':''}"><button class="btn sm ltbtn${lv===2?' l2':''}" data-act="pos-lt" aria-pressed="${lv>0}" title="Tap to change: Off › ${esc(ltName(o0,1))} › ${esc(ltName(o0,2))} › Off">${lv?'★ '+esc(ltName(o0,lv)):esc(ltName(o0,1))+(on?'':': Off')}</button>${bk?`<button class="btn sm bkbtn" data-act="pos-book" aria-pressed="${on}" title="${on?'Advance booking is on · tap to turn it off':'Advance booking: save this order for a later time today or another day'}" aria-label="Advance booking">${I.book}${on?'':'<span>Advance booking</span>'}</button>`:''}${on?`<input class="inp num" id="pos-bdate" type="date" min="${today()}" value="${esc(P.bdate)}" aria-label="Booking date"><input class="inp num" id="pos-btime" type="time" value="${esc(P.btime)}" aria-label="Booking time">`:''}</div>${on?`<div class="small bkhint" id="pos-bhint">${bookHint(bookTs(P.bdate,P.btime))}</div>`:''}`})()}
         <div id="custbox">${custBox(ci)}</div>
-        ${P.type==='dine'?tablePicker(P):''}
+        ${P.type==='dine'&&!run?`<div class="small tkdine">${P.table?`Table <b>T${esc(P.table)}</b>`:'Tap <b>Hold</b> to pick the table'}</div>`:''}
         ${run?`<div class="addto">Adding to ${run.no} · ${run.table?'Table '+esc(run.table):TYPES[run.type]} · ${rs(run.total)} so far${run.paid?' · paid':paidSoFar(run)?' · '+rs(paidSoFar(run))+' paid, '+rs(balanceOf(run))+' left':' · not paid'}<span class="grow"></span>${U.addPop?'':'<button class="btn sm" data-act="addto-x">New order instead</button>'}</div>
           <div class="small muted">${run.items.map(l=>l.qty+'× '+esc(l.name)+(l.size?' '+sizeLabel(l.size):'')).join(', ')}</div>`:''}
         ${P.type==='delivery'?`<input class="inp" id="pos-ad" placeholder="Delivery address" value="${esc(P.address)}" aria-label="Delivery address">`:''}
@@ -4382,7 +4382,7 @@ function posBill(kind){
 // Hold: put the items on the ticket onto a dine-in table, running or free, as paid now or pending
 function openHold(){
   const P=U.pos;if(!P.cart.length)return;
-  const n=+cur().tables||8;let sel=null,paid=false;
+  const n=+cur().tables||8;let sel=P.table||null,paid=false;
   const cnt=P.cart.reduce((a,l)=>a+l.qty,0),amt=computeBill(P.cart,null,{}).total;
   const pm=(TK_PAY.find(x=>x[0]===P.pay)||[0,PAY[P.pay]||'Cash'])[1];
   const draw=()=>{
@@ -4416,7 +4416,7 @@ function posGo(kind){
     if(needPhone()&&P.phone.length!==10){toast('Enter the customer mobile number');document.getElementById('pos-ph')?.focus();return}
     if(P.type==='zomato'&&!P.zid.trim()){toast('Enter the Zomato order ID');document.getElementById('pos-zid')?.focus();return}
     if(P.type==='delivery'&&!P.address.trim()){toast('Add the delivery address');return}
-    if(P.type==='dine'&&!P.table){toast('Pick a table');return}
+    if(P.type==='dine'&&!P.table){openHold();return} // the table is picked in the Hold popup
     if(P.book&&bookOk(P,run)){const bad=bookTimeBad(bookTs(P.bdate,P.btime));if(bad){toast(bad);document.getElementById('pos-btime')?.focus();return}}
   }
   const bookAt=!run&&P.book&&bookOk(P,run)?bookTs(P.bdate,P.btime):0;
