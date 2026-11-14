@@ -942,6 +942,10 @@ body:has(.addpop){overflow:hidden}
 .item.prev{pointer-events:none}.item.prev .ph{aspect-ratio:4/3}.item.prev .psl{pointer-events:auto}
 .mthumb{width:44px;height:44px;border-radius:8px;border:1px dashed var(--line);background:var(--surface2);padding:0;overflow:hidden;flex:none;font-size:10px;font-weight:700;color:var(--muted)}
 .mthumb img{width:100%;height:100%;object-fit:cover;display:block}
+.dsp-sw{width:44px;height:44px;border-radius:10px;border:1px solid var(--line);flex:none}
+.dsp-pick summary{cursor:pointer;padding:4px 0}
+.dsp-items{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:6px 12px;margin-top:8px;max-height:260px;overflow:auto}
+.dsp-items label{display:flex;gap:6px;align-items:center;cursor:pointer}
 .mthumb{position:relative}.mthumb .n{position:absolute;right:2px;bottom:2px;background:rgba(0,0,0,.65);color:#fff;border-radius:6px;padding:0 4px;font-size:10px;line-height:15px}
 .pics{display:flex;flex-wrap:wrap;gap:8px}
 .pic{position:relative;width:76px;height:76px;border-radius:10px;overflow:hidden;background:var(--surface2);border:2px solid transparent}
@@ -5504,14 +5508,27 @@ function vHomeAdm(){
     </tbody></table></div>`;
 }
 /* Admin → Shop display (owner only): what the TV in the shop plays at /display. Kept on each outlet as
-   o.display = {show, change, ticker, tickerMsg, nomayo, hide:{key:true}, order:[keys], text:{key:{kick,title}},
-   spots:[item ids], custom:[{id,kick,title,text,img,bg}]}. display.html reads the same keys. */
+   o.display = {show, change, fx, rain, ticker, tickerMsg, nomayo, nmStyle, nmPos, hide:{key:true}, order:[keys], text:{key:{kick,title}},
+   spots:[item ids], items:{ring|best|ticker:[item ids]}, fxs:{key:fx}, bgs:{key|'*':bg}, bgImg:{key|'*':url}, side:{key:'left'},
+   custom:[{id,kick,title,text,img,item,bg}]}. display.html reads the same keys. */
 const DSP_SLIDES=[['hero','Welcome','Fresh from our oven','Cheesy'],['spot0','Spotlight 1'],['pull','Cheese pull','The cheese pull','Pull a|slice!'],
   ['ring','Ekdum cheesy carousel','Our signature six','Ekdum cheesy'],['spot1','Spotlight 2'],['pizza','Pizza being made','Watch us make it','Made fresh'],
   ['garlic','Garlic bread being made','Watch us make it','Garlic bread'],['poster','Menu card poster','Our menu card','Pick your|pizza'],['spot2','Spotlight 3'],['best','Best sellers',"Everyone's favourites",'Our best sellers'],
   ['offers',"Today's offers (shows only when there are offers today)",'(day) deals',"Today's offers"],['combos','Combo meals','Bring friends','Combo meals'],['spot3','Spotlight 4'],
   ['hours','Opening hours','Come say kem cho','Open|every day'],['order','Order online with QR code','Skip the queue','Order|online'],['play','Play zone','Play zone','Come play with your food'],['address','Address and map (last slide)','Come visit us','Find us|here']];
 const DSP_BG=['Red','Sea blue','Cheese yellow','Teal'];
+// How a slide comes in (display.html has the moves under the same names)
+const DSP_FX=[['mix','Mix of moves (standard)'],['fade','Soft fade'],['slide','Slide across'],['cube','Cube turn'],['roll','Cube roll up'],['zoom','Zoom through'],
+  ['door','Door swing'],['flip','Card flip'],['pop','Pop in'],['curtain','Cheese drip curtain'],['none','No animation, just switch']];
+// Backgrounds (display.html draws the same colours)
+const DSP_BGS=[['red','Red','radial-gradient(circle at 72% 48%,#e85a4f,#a5241b 70%)'],['sea','Sea blue','radial-gradient(circle at 72% 48%,#2bb3c8,#0d5f6d 70%)'],
+  ['cheese','Cheese yellow','radial-gradient(circle at 72% 48%,#ffcf5a,#d48f12 72%)'],['teal','Teal','radial-gradient(circle at 72% 48%,#1f8a8a,#0b3a43 70%)'],
+  ['night','Night black','radial-gradient(circle at 70% 40%,#22343d,#070f12 75%)'],['wine','Wine red','radial-gradient(circle at 70% 45%,#8a2443,#2e0716 75%)'],
+  ['green','Basil green','radial-gradient(circle at 70% 45%,#2f9460,#0c3b22 75%)'],['orange','Tomato orange','radial-gradient(circle at 70% 45%,#ff8f45,#b8420c 75%)'],
+  ['purple','Purple','radial-gradient(circle at 70% 45%,#7552d6,#24135e 75%)'],['sunset','Sunset','linear-gradient(135deg,#f2b632 0%,#e0603a 45%,#7a1e3a 100%)'],
+  ['cream','Cream','radial-gradient(circle at 70% 45%,#fffaf0,#f1dfb8 75%)']];
+const DSP_SIDE={hero:1,pull:1,pizza:1,garlic:1,hours:1,order:1,spot0:1,spot1:1,spot2:1,spot3:1,address:1};
+const DSP_PICK={ring:['Items in the carousel',8,'Automatic (your Ekdum cheesy picks)'],best:['Items shown',4,'Automatic (items marked Best seller)'],ticker:['Items in the strip',500,'Automatic (every item on the menu)']};
 function dspSlides(o){const d=o.display||{},ord=d.order||[];
   const std=DSP_SLIDES.map(([key,name,kick,title])=>({key,name,kick,title})),all=[...std.filter(x=>x.key!=='address'),...(d.custom||[]).map(c=>({key:'c_'+c.id,name:'Your slide: '+(c.title||'no heading yet'),c})),...std.filter(x=>x.key==='address')];
   const pos=k=>{const i=ord.indexOf(k);if(i>=0)return i;const j=all.findIndex(s=>s.key===k);for(let q=j-1;q>=0;q--){const p=ord.indexOf(all[q].key);if(p>=0)return p+(j-q)/100}return 1000+j};return all.sort((a,b)=>pos(a.key)-pos(b.key))}
@@ -5525,12 +5542,23 @@ function vDisplayAdm(){
     <div class="row"><a class="btn pri" href="${esc(link)}" target="_blank" rel="noopener">Open the display ↗</a><span class="small num" style="word-break:break-all">${esc(link)}</span></div>
     <span class="small muted">Open this link on the shop TV and tap once for full screen.${liveOutlets().length>1?' Switch outlet at the top to set up the other branch.':''}</span>
     <div class="grp-h">Timing</div>
-    <div class="row" style="gap:12px"><div class="field"><label>Each slide stays</label>${opt('show',[8,10,12,15,20,25,30,45,60],+d.show||15)}</div><div class="field"><label>Change to the next slide takes</label>${opt('change',[1,2,3,4,5,6,8],+d.change||4)}</div></div>
+    <div class="row" style="gap:12px"><div class="field"><label>Each slide stays</label>${opt('show',[8,10,12,15,20,25,30,45,60],+d.show||15)}</div><div class="field"><label>Change to the next slide takes</label>${opt('change',[1,2,3,4,5,6,8,10,12],+d.change||5)}</div></div>
+    <div class="grp-h">Slide change</div>
+    <div class="row" style="gap:12px;align-items:flex-end"><div class="field"><label>How slides come in</label>${dspSel('data-dsps="fx"',DSP_FX,d.fx||'mix')}</div>
+      <label class="row small" style="cursor:pointer"><span class="switch"><input type="checkbox" data-dspc="rain" ${d.rain!==false?'checked':''}><span></span></span>Shower of toppings every few slides</label></div>
+    <span class="small muted">Each slide below can also come in its own way. A longer change time makes every move slower and calmer.</span>
+    <div class="grp-h">Background</div>
+    <div class="row" style="gap:12px;align-items:flex-end">${dspBgPick(d,'*')}</div>
+    <span class="small muted">Used on every slide unless a slide below has its own background. A photo is darkened a little so the words stay easy to read.</span>
     <div class="grp-h">Price strip</div>
     <label class="row small" style="cursor:pointer"><span class="switch"><input type="checkbox" data-dspc="ticker" ${d.ticker!==false?'checked':''}><span></span></span>Show the moving price strip at the bottom</label>
     <div class="field"><label for="dsp-msg">Your message in the strip</label><input class="inp" id="dsp-msg" data-dspt="tickerMsg" value="${esc(d.tickerMsg||'')}" placeholder="For example: Free cheesy dip on orders above ₹499" maxlength="90"></div>
-    <div class="grp-h">Badge</div>
-    <label class="row small" style="cursor:pointer"><span class="switch"><input type="checkbox" data-dspc="nomayo" ${d.nomayo!==false?'checked':''}><span></span></span>Show the spinning "No Mayonnaise" badge on every slide</label>
+    ${dspItems(d,'ticker')}
+    <div class="grp-h">No Mayonnaise badge</div>
+    <label class="row small" style="cursor:pointer"><span class="switch"><input type="checkbox" data-dspc="nomayo" ${d.nomayo!==false?'checked':''}><span></span></span>Show the "No Mayonnaise" badge on every slide</label>
+    ${d.nomayo!==false?`<div class="row" style="gap:12px"><div class="field"><label>Look</label>${dspSel('data-dsps="nmStyle"',[['tag','Slim tag (compact)'],['small','Small round stamp'],['big','Big spinning stamp']],d.nmStyle||'tag')}</div>
+      <div class="field"><label>Where it sits</label>${dspSel('data-dsps="nmPos"',[['tr','Top right, under the clock'],['tl','Top left, under the logo'],['bl','Bottom left'],['br','Bottom right']],d.nmPos||'tr')}</div></div>
+      <span class="small muted">Top right fits every slide best. A bottom corner can sit over a price star or a button on some slides.</span>`:''}
   </div>
   <div class="card" style="padding:14px;margin-bottom:12px;display:flex;flex-direction:column;gap:10px">
     <div class="grp-h">Slides, in the order they play</div>
@@ -5539,19 +5567,38 @@ function vDisplayAdm(){
     <div class="row"><button class="btn pri" data-act="dsp-add">+ Add your own slide</button><button class="btn" data-act="dsp-reset">Back to the standard show</button></div>
   </div>`;
 }
+const dspSel=(attr,list,v)=>`<select class="inp" ${attr}>${list.map(([k,l])=>`<option value="${k}" ${k===v?'selected':''}>${esc(l)}</option>`).join('')}</select>`;
+// Background for all slides ('*') or one slide: a colour, the slide's own colours, or the owner's photo
+function dspBgPick(d,key){const v=(d.bgs||{})[key]||'',img=(d.bgImg||{})[key],all=key==='*',c=DSP_BGS.find(b=>b[0]===v);
+  const list=[...(all?[['','Each slide keeps its own colours']]:[['','Same as all slides'],['own',"This slide's own colours"]]),...DSP_BGS.map(([k,l])=>[k,l]),['photo','Your photo']];
+  return `<div class="field"><label>${all?'Background for all slides':'Background'}</label>${dspSel(`data-dspbg="${key}"`,list,v)}</div>
+    ${c?`<span class="dsp-sw" style="background:${c[2]}" aria-hidden="true"></span>`:''}
+    ${v==='photo'?`<div class="row" style="gap:8px;align-items:center">${img?`<span class="mthumb"><img src="${esc(IMG(img))}" alt=""></span>`:'<span class="small" style="color:var(--bad)">No photo yet</span>'}<label class="btn sm">${img?'Change photo':'Add a photo'}<input type="file" accept="image/*" data-dspbgimg="${key}" hidden></label></div>`:''}`}
+// Items the owner picks for a slide, kept in the order they are ticked; nothing ticked means automatic
+function dspItems(d,k){const [lab,max,auto]=DSP_PICK[k],ids=((d.items||{})[k]||[]).filter(Boolean),L=S.menu.filter(m=>!m.off);
+  return `<details class="dsp-pick"><summary><span class="small"><b>${lab}:</b> <span data-dspsum="${k}">${ids.length?ids.length+' picked':esc(auto)}</span></span></summary>
+    <span class="small muted">Tick the items to show${max<50?', up to '+max:''}. They play in the order you tick them. Untick all to go back to automatic.</span>
+    <div class="dsp-items">${L.map(m=>`<label class="small"><input type="checkbox" data-dsitem="${k}" value="${m.id}" ${ids.includes(m.id)?'checked':''}> ${esc(m.name)}</label>`).join('')}</div></details>`}
 function dspRow(o,x,i,n){
   const d=o.display||{},t=(d.text||{})[x.key]||{},on=!(d.hide||{})[x.key],c=x.c,spot=/^spot\d$/.test(x.key);
   const inp=(k,f,v,ph,max)=>`<div class="field grow" style="min-width:180px"><label>${f==='kick'?'Small heading':f==='title'?'Big heading':'Text'}</label><input class="inp" ${k} data-f="${f}" value="${esc(v||'')}" placeholder="${esc(ph||'')}" maxlength="${max||40}"></div>`;
   let body;
   if(c)body=`${inp(`data-dcu="${c.id}"`,'kick',c.kick,'For example: New',40)}${inp(`data-dcu="${c.id}"`,'title',c.title,'For example: Mango cheese pizza',40)}${inp(`data-dcu="${c.id}"`,'text',c.text,'One or two lines about it',140)}
-    <div class="field"><label>Colour</label><select class="inp" data-dcu="${c.id}" data-f="bg">${DSP_BG.map((b,j)=>`<option value="${j}" ${(+c.bg||0)===j?'selected':''}>${b}</option>`).join('')}</select></div>
+    <div class="field"><label>Own colour</label><select class="inp" data-dcu="${c.id}" data-f="bg">${DSP_BG.map((b,j)=>`<option value="${j}" ${(+c.bg||0)===j?'selected':''}>${b}</option>`).join('')}</select></div>
+    <div class="field grow" style="min-width:200px"><label>Show a menu item</label><select class="inp" data-dcu="${c.id}" data-f="item"><option value="">None (your words and photo only)</option>${S.menu.filter(m=>!m.off).map(m=>`<option value="${m.id}" ${m.id===c.item?'selected':''}>${esc(m.name)}</option>`).join('')}</select></div>
     <div class="row" style="gap:8px;align-items:center">${c.img?`<span class="mthumb"><img src="${esc(IMG(c.img))}" alt=""></span>`:''}<label class="btn sm">${c.img?'Change photo':'Add a photo'}<input type="file" accept="image/*" data-dcimg="${c.id}" hidden></label>${c.img?`<button class="btn sm" data-act="dsp-noimg" data-id="${c.id}">Remove photo</button>`:''}<button class="btn sm bad" data-act="dsp-del" data-id="${c.id}">Delete slide</button></div>`;
   else if(spot){const v=(d.spots||[])[+x.key.slice(4)]||'';body=`<div class="field grow" style="min-width:220px"><label>Item to show</label><select class="inp" data-dspot="${x.key.slice(4)}"><option value="">Automatic (your Ekdum cheesy picks)</option>${S.menu.filter(m=>!m.off).map(m=>`<option value="${m.id}" ${m.id===v?'selected':''}>${esc(m.name)}</option>`).join('')}</select></div>${inp(`data-dtx="${x.key}"`,'kick',t.kick,'Must try')}`}
   else body=`${inp(`data-dtx="${x.key}"`,'kick',t.kick,x.kick)}${inp(`data-dtx="${x.key}"`,'title',t.title,x.title)}`;
   return `<div class="card" style="padding:10px 12px;display:flex;flex-direction:column;gap:8px;${on?'':'opacity:.55'}">
     <div class="row" style="gap:10px;flex-wrap:nowrap"><span class="chip num">${i+1}</span><label class="switch"><input type="checkbox" data-dsph="${x.key}" ${on?'checked':''} aria-label="Show ${esc(x.name)}"><span></span></label><b class="grow">${esc(x.name)}</b>
     <button class="btn sm" data-act="dsp-mv" data-k="${x.key}" data-v="-1" ${i?'':'disabled'} aria-label="Move up">↑</button><button class="btn sm" data-act="dsp-mv" data-k="${x.key}" data-v="1" ${i<n-1?'':'disabled'} aria-label="Move down">↓</button></div>
-    <div class="row" style="gap:10px;align-items:flex-end">${body}</div></div>`;
+    <div class="row" style="gap:10px;align-items:flex-end">${body}</div>
+    <div class="row" style="gap:10px;align-items:flex-end">
+      <div class="field"><label>Comes in with</label>${dspSel(`data-dspfx="${x.key}"`,[['','Same as all slides'],...DSP_FX.filter(f=>f[0]!=='mix')],(d.fxs||{})[x.key]||'')}</div>
+      ${dspBgPick(d,x.key)}
+      ${DSP_SIDE[x.key]||c?`<div class="field"><label>Picture on</label>${dspSel(`data-dspside="${x.key}"`,[['','The right (standard)'],['left','The left']],(d.side||{})[x.key]==='left'?'left':'')}</div>`:''}
+    </div>
+    ${DSP_PICK[x.key]?dspItems(d,x.key):''}</div>`;
 }
 // Settings change only for the owner; boxes save as you type, switches and lists save at once
 const dspOwner=()=>{if(staff()?.role==='owner')return true;toast('Only the owner can change the shop display');return false};
@@ -5563,16 +5610,28 @@ document.addEventListener('input',e=>{const t=e.target,d=t.dataset||{};if(t.tagN
   if(d.dcu){const c=(D.custom||[]).find(x=>x.id===d.dcu);if(c)c[d.f]=t.value}
   save()});
 document.addEventListener('change',e=>{const t=e.target,d=t.dataset||{};
-  if(!(d.dsp||d.dspc||d.dsph||d.dspot!=null||d.dcimg||(d.dcu&&t.tagName==='SELECT')))return;
+  if(!(d.dsp||d.dspc||d.dsph||d.dspot!=null||d.dcimg||d.dsps||d.dspfx||d.dspbg||d.dspbgimg||d.dspside||d.dsitem||(d.dcu&&t.tagName==='SELECT')))return;
   if(!dspOwner()){render();return}
   const D=dspCfg();
+  // ticking items saves at once without redrawing, so the list stays open for the next tick
+  if(d.dsitem){const k=d.dsitem,max=DSP_PICK[k][1];D.items=D.items||{};let a=(D.items[k]||[]).filter(id=>id!==t.value);
+    if(t.checked){if(a.length>=max){t.checked=false;toast('Up to '+max+' items here');return}a.push(t.value)}
+    if(a.length)D.items[k]=a;else delete D.items[k];
+    const sm=document.querySelector(`[data-dspsum="${k}"]`);if(sm)sm.textContent=a.length?a.length+' picked':DSP_PICK[k][2];save();toast('Shop display updated');return}
+  if(d.dspbgimg){const f=t.files&&t.files[0],k=d.dspbgimg;if(!f)return;toast('Uploading photo…');
+    shrinkImage(f).then(data=>api('/api/images',{data})).then(r=>{const X=dspCfg();X.bgImg=X.bgImg||{};X.bgImg[k]=r.url;X.bgs=X.bgs||{};X.bgs[k]='photo';save();render();toast('Background photo added')},er=>toast('Photo not saved: '+er.message));return}
+  if(d.dsps)D[d.dsps]=t.value;
+  const putKey=(f,k,v)=>{D[f]=D[f]||{};if(v)D[f][k]=v;else delete D[f][k]};
+  if(d.dspfx)putKey('fxs',d.dspfx,t.value);
+  if(d.dspbg)putKey('bgs',d.dspbg,t.value);
+  if(d.dspside)putKey('side',d.dspside,t.value==='left'?'left':'');
   if(d.dcimg){const f=t.files&&t.files[0],c=(D.custom||[]).find(x=>x.id===d.dcimg);if(!f||!c)return;toast('Uploading photo…');
     shrinkImage(f).then(data=>api('/api/images',{data})).then(r=>{c.img=r.url;save();render();toast('Photo added to your slide')},er=>toast('Photo not saved: '+er.message));return}
   if(d.dsp)D[d.dsp]=+t.value;
   if(d.dspc)D[d.dspc]=t.checked;
   if(d.dsph){D.hide=D.hide||{};if(t.checked)delete D.hide[d.dsph];else D.hide[d.dsph]=true}
   if(d.dspot!=null){D.spots=D.spots||[];D.spots[+d.dspot]=t.value||null}
-  if(d.dcu){const c=(D.custom||[]).find(x=>x.id===d.dcu);if(c)c.bg=+t.value}
+  if(d.dcu){const c=(D.custom||[]).find(x=>x.id===d.dcu);if(c){if(d.f==='item'){if(t.value)c.item=t.value;else delete c.item}else c.bg=+t.value}}
   save();render();toast('Shop display updated')});
 
 function vOutlets(){const own=staff()?.role==='owner';
