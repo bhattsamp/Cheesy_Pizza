@@ -1059,6 +1059,19 @@ body:has(.addpop){overflow:hidden}
 .ktop{font-size:15px}.ktop .kwho{font-weight:800;font-size:16px}
 .klanes{align-items:start}.klanes .lane{background:transparent;border:0;padding:0}
 .ltchip{display:inline-block;border-radius:6px;padding:1px 8px;font-size:.82em;font-weight:800;background:var(--cheese);color:#3d2900;vertical-align:middle;white-space:nowrap}.ltchip.l2{background:var(--plum);color:#fff}button.ltchip{border:0;cursor:pointer;font-family:inherit;line-height:1.5}.ltchip.ltadd{background:transparent;border:1px dashed var(--line);color:var(--muted);font-weight:600}
+.tkflags{display:flex;gap:6px;align-items:stretch;margin-top:6px}.tkflags>*{min-width:0}
+.tkflags .ltbtn{margin:0;flex:1 1 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tkflags .bkbtn{flex:1 1 0;display:inline-flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap}.bkbtn svg{width:16px;height:16px;flex:none}
+.tkflags.on .ltbtn,.tkflags.on .bkbtn{flex:0 0 auto;padding-left:10px;padding-right:10px}
+.tkflags .inp{flex:1 1 0;padding:4px 8px;height:auto;font-size:14px}.tkflags #pos-btime{flex:.8 1 0}
+.bkbtn[aria-pressed="true"]{background:var(--plum)!important;border-color:var(--plum)!important;color:#fff!important}
+.bkhint{margin-top:4px;color:var(--plum)}.bkhint:empty{display:none}
+.bkwhen{margin-top:8px;display:grid;gap:4px}.bkwhen .row{gap:8px}.bkwhen .inp{min-width:0}
+.chip.bkchip{background:var(--plum-soft);color:var(--plum)}
+.ktabs{margin:0 4px}
+.kt.bkc{border-color:var(--plum)!important;background:var(--surface)!important;cursor:default}
+.bkc .bkt b{font-size:24px;color:var(--plum)}.bkc .bkin{color:var(--plum);font-weight:600}
+.bkc .bkacts{gap:6px;flex-wrap:wrap}.bkc .bkpay{align-items:center}
 .ltbtn{margin-top:6px}.ltbtn[aria-pressed="true"]{background:var(--cheese);border-color:var(--cheese);color:#3d2900}.ltbtn.l2{background:var(--plum)!important;border-color:var(--plum)!important;color:#fff!important}
 /* ===== POS order screen: photo tiles, clean ticket, big Pay button ===== */
 .mbar{display:flex;align-items:center;gap:8px;padding:4px 6px 4px 10px;margin-bottom:10px;position:sticky;top:calc(env(safe-area-inset-top,0px) + var(--toph,61px));z-index:6;box-shadow:0 4px 14px -10px rgba(0,0,0,.3)}
@@ -2809,7 +2822,7 @@ function addonText(l){
 const extrasText=l=>l.combo?(l.picks||[]).join(' · '):[...l.addons.map(x=>S.addons[x]?.name||x),...(l.tops&&l.tops.length?['+ '+topsText(l.tops).join(', ')]:[]),...(l.ex&&l.ex.length?['+ '+exText(l.ex).join(', ')]:[])].join(' · ');
 // Minutes the customer was told to wait, and how many are left
 const waitOf=o=>+o.wait||PREP_MIN;
-function minsLeft(o){const start=o.times?.preparing||o.times?.placed||o.ts;return Math.ceil(waitOf(o)-(Date.now()-start)/60000)}
+function minsLeft(o){const start=o.bookAt?bookShowAt(o):o.times?.preparing||o.times?.placed||o.ts;return Math.ceil(waitOf(o)-(Date.now()-start)/60000)}
 const leftText=m=>m>=0?m+' min left':(-m)+' min late';
 const isActive=o=>['placed','preparing'].includes(o.status);
 const isNewCust=o=>{const ph=o.customer?.phone;if(!ph)return false;const first=S.orders.filter(x=>x.customer.phone===ph&&x.status!=='cancelled').sort((a,b)=>a.ts-b.ts)[0];return first&&first.id===o.id};
@@ -2842,6 +2855,7 @@ const U={pubCat:'all',pubQ:'',pubF:{},pubView:'home',accTab:'orders',spin:{deg:0
   ordersDate:null,ordersQ:'',ordersScope:'outlet',ordersNew:false,salesDate:null,salesScope:'outlet',custQ:'',lastTap:{},trackId:null,editLine:null,confirmCancel:null,board:false};
 
 const I={
+ book:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4M12 14v3l2 1"/></svg>',
  tables:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="4" rx="1"/><path d="M6 11v8M18 11v8M9 3h6"/></svg>',
  home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>',
  new:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
@@ -2860,7 +2874,7 @@ staff:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="
  display:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg>',
  outlet:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l2-5h14l2 5M4 9v11h16V9M3 9h18M9 20v-6h6v6"/></svg>',
 };
-const TABS=[['new','New order'],['kitchen','Kitchen'],['counter','Counter'],['orders','Orders'],['tables','Tables'],['sales','Day sale'],['reports','Reports'],['stock','Stock'],['offers','Offers'],['cust','Customers'],['menu','Menu & sizes'],['home','Home page'],['display','Shop display'],['outlet','Outlets'],['staff','Staff'],['review','Reviews'],['trips','Deliveries']];
+const TABS=[['new','New order'],['kitchen','Kitchen'],['counter','Counter'],['orders','Orders'],['tables','Tables'],['book','Advance booking'],['sales','Day sale'],['reports','Reports'],['stock','Stock'],['offers','Offers'],['cust','Customers'],['menu','Menu & sizes'],['home','Home page'],['display','Shop display'],['outlet','Outlets'],['staff','Staff'],['review','Reviews'],['trips','Deliveries']];
 
 const app=document.getElementById('app');
 function render(){
@@ -3985,14 +3999,15 @@ function renderPOS(){
   const mine=liveOrders();
   const k=mine.filter(o=>o.status==='placed'||o.status==='preparing').length;
   const c=mine.filter(o=>o.status==='ready'||o.status==='out').length;
-  const nav=()=>allowed.map(([t,n])=>{const cnt=t==='kitchen'?k:t==='counter'?c:0;return `<button data-act="tab" data-v="${t}" ${t==='new'?'class="tnew"':''} ${U.pos.tab===t?'aria-current="page"':''}>${I[t]}<span>${n}</span>${cnt?`<span class="cnt num">${cnt}</span>`:''}</button>`}).join('');
+  const bq=bookedOrders().length;
+  const nav=()=>allowed.map(([t,n])=>{const cnt=t==='kitchen'?k:t==='counter'?c:t==='book'?bq:0;return `<button data-act="tab" data-v="${t}" ${t==='new'?'class="tnew"':''} ${U.pos.tab===t?'aria-current="page"':''}>${I[t]}<span>${n}</span>${cnt?`<span class="cnt num">${cnt}</span>`:''}</button>`}).join('');
   // Phones show four tabs and a More button; the rest open in a sheet
   const mobNav=()=>{if(allowed.length<=5)return nav();const four=allowed.slice(0,4),more=allowed.slice(4);
-    return four.map(([t,n])=>{const cnt=t==='kitchen'?k:t==='counter'?c:0;return `<button data-act="tab" data-v="${t}" ${t==='new'?'class="tnew"':''} ${U.pos.tab===t?'aria-current="page"':''}>${I[t]}<span>${n}</span>${cnt?`<span class="cnt num">${cnt}</span>`:''}</button>`}).join('')+
+    return four.map(([t,n])=>{const cnt=t==='kitchen'?k:t==='counter'?c:t==='book'?bq:0;return `<button data-act="tab" data-v="${t}" ${t==='new'?'class="tnew"':''} ${U.pos.tab===t?'aria-current="page"':''}>${I[t]}<span>${n}</span>${cnt?`<span class="cnt num">${cnt}</span>`:''}</button>`}).join('')+
       `<button data-act="pos-more" ${more.some(([t])=>t===U.pos.tab)?'aria-current="page"':''}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="5" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="19" cy="12" r="1.4"/></svg><span>${esc((more.find(([t])=>t===U.pos.tab)||[0,'More'])[1])}</span></button>`};
   U.posMore=()=>showModal(`<div class="mh"><h3>All sections</h3><button class="x" data-act="close" aria-label="Close">×</button></div><div class="mb"><div class="moregrid">${allowed.map(([t,n])=>`<button data-act="tab" data-v="${t}" ${U.pos.tab===t?'aria-current="page"':''}>${I[t]}<span>${n}</span></button>`).join('')}</div>
     <div class="row small muted"><span class="grow">Signed in as <b>${esc(su.name)}</b> · ${ROLES[su.role]}</span>${CAP?'<button class="btn sm" data-act="perms">Alerts & location</button>':''}<button class="btn sm" data-act="lock">Lock screen</button></div></div>`);
-  const views={new:vNew,kitchen:vKitchen,counter:vCounter,orders:vOrders,tables:vTables,sales:vSales,reports:vReports,stock:vStock,offers:vOffers,cust:vCust,menu:vMenu,home:vHomeAdm,display:vDisplayAdm,outlet:vOutlets,staff:vStaff,review:vReview,trips:vTrips};
+  const views={new:vNew,book:vBook,kitchen:vKitchen,counter:vCounter,orders:vOrders,tables:vTables,sales:vSales,reports:vReports,stock:vStock,offers:vOffers,cust:vCust,menu:vMenu,home:vHomeAdm,display:vDisplayAdm,outlet:vOutlets,staff:vStaff,review:vReview,trips:vTrips};
   // Big screens with many sections: one Menu button opens a vertical menu that slides over the page
   // (the page keeps its full width); phones keep the bottom bar
   const many=roleTabs.length>8,curT=allowed.find(([t])=>t===U.pos.tab)||allowed[0];
@@ -4002,7 +4017,7 @@ function renderPOS(){
   const navDrawer=()=>!many||!U.navOpen?'':`<div class="navdim" data-act="nav-close"></div><aside class="navdrawer" role="dialog" aria-label="All sections">
     <div class="ndh"><b>Cheesy Pizza</b><button class="x" data-act="nav-close" aria-label="Close">×</button></div>
     ${U.navEdit&&su.role==='owner'?`<div class="ndl ndedit"><div class="small muted" style="padding:2px 6px 8px">Rename a section or switch it off. Switched-off sections are hidden for everyone.</div>${roleTabs.map(([t,n])=>{const off=!NAV_LOCK.includes(t)&&(nv.off||[]).includes(t);return `<div class="ndrow${off?' off':''}">${I[t]}<input class="inp" data-navname="${t}" value="${esc(n)}" aria-label="Name for ${esc(TABS.find(x=>x[0]===t)[1])}">${NAV_LOCK.includes(t)?'<span class="ndlock" aria-hidden="true"></span>':`<label class="switch"><input type="checkbox" data-navoff="${t}" ${off?'':'checked'} aria-label="Show ${esc(n)}"><span></span></label>`}</div>`}).join('')}<div class="row" style="gap:6px;padding:8px 6px"><button class="btn sm" data-act="nav-reset">Reset names</button><span class="grow"></span><button class="btn sm pri" data-act="nav-edit">Done</button></div></div>`:
-    `<div class="ndl">${allowed.map(([t,n])=>{const cnt=t==='kitchen'?k:t==='counter'?c:0;return `<button data-act="tab" data-v="${t}" ${U.pos.tab===t?'aria-current="page"':''}>${I[t]}<span>${n}</span>${cnt?`<span class="cnt num">${cnt}</span>`:''}</button>`}).join('')}</div>`}
+    `<div class="ndl">${allowed.map(([t,n])=>{const cnt=t==='kitchen'?k:t==='counter'?c:t==='book'?bq:0;return `<button data-act="tab" data-v="${t}" ${U.pos.tab===t?'aria-current="page"':''}>${I[t]}<span>${n}</span>${cnt?`<span class="cnt num">${cnt}</span>`:''}</button>`}).join('')}</div>`}
     <div class="ndf small muted"><span>Signed in as <b>${esc(su.name)}</b> · ${ROLES[su.role]}</span><div class="row" style="gap:6px">${su.role==='owner'&&!U.navEdit?'<button class="btn sm" data-act="nav-edit">Edit menu</button>':''}${CAP?'<button class="btn sm" data-act="perms">Alerts & location</button>':''}<button class="btn sm" data-act="lock">Lock screen</button></div></div></aside>`;
   return `<div class="pos"><nav class="side" aria-label="POS sections" data-ks="side">${topNav()}
     <div class="side-foot small muted">${U.pos.tab==='new'?`<span class="nxtno">Next no. <b class="num">${orderNo(cur(),(S.seq[S.cur]||0)+1)}</b></span>`:''}${U.pos.tab==='new'&&!CAP&&CS_CH?'<button class="csico" data-act="cs-open" title="Customer screen: open the screen the customer sees on your second monitor" aria-label="Customer screen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg></button>':''}${!many?`<span>Signed in as <b>${esc(su.name)}</b> · ${ROLES[su.role]}</span>${CAP?'<button class="btn sm" data-act="perms">Alerts & location</button>':''}<button class="btn sm" data-act="lock">Lock screen</button>`:''}</div></nav>
@@ -4112,7 +4127,7 @@ function custBox(ci){
 }
 const priceLabel=m=>m.cat==='pizza'?S.sizes.filter(s=>+m.prices[s.id]).map(s=>rs(m.prices[s.id])).join(' / '):rs(m.price);
 
-const POS_BLANK={lt:null,opts:0,payFixed:false,upiAlert:null,cart:[],phone:'',name:'',table:'',address:'',note:'',type:'takeaway',zid:'',pay:'cash',given:'',splits:{},utr:'',code:'',useCoins:false,wait:null,addTo:null};
+const POS_BLANK={book:false,bdate:'',btime:'',lt:null,opts:0,payFixed:false,upiAlert:null,cart:[],phone:'',name:'',table:'',address:'',note:'',type:'takeaway',zid:'',pay:'cash',given:'',splits:{},utr:'',code:'',useCoins:false,wait:null,addTo:null};
 // A dine-in table is busy while its order is cooking, or served but not paid yet
 function tableState(t){
   const run=S.orders.find(o=>o.outletId===S.cur&&o.type==='dine'&&String(o.table)===t&&o.ts>Date.now()-16*3600e3&&o.status!=='cancelled'&&(o.status!=='done'||!o.paid));
@@ -4177,6 +4192,9 @@ const posTile=(m,i)=>{
   return `<div class="tile tile2${m.off?' off':''}">${tags}<button class="tnm" data-act="${m.combo?'combo-add':'pos-add'}" data-id="${m.id}" data-t="pos" ${dis}>${i!=null?`<span class="srn num">${i+1}</span>`:''}${esc(m.name)}</button>
   ${m.off?'<span class="small muted">Not available</span>':`<div class="tsz" style="grid-template-columns:repeat(${n},minmax(0,1fr))">${btns}</div>`}</div>`;
 };
+// Advance booking on the till: takeaway and delivery orders (not dine-in, Zomato, or items added to a running order)
+const bookOk=(P,run)=>!run&&['takeaway','delivery'].includes(P.type);
+const bookHint=ts=>{const bad=bookTimeBad(ts);return bad?`<span style="color:var(--bad)">${esc(bad)}</span>`:`${esc(advWhen(ts))} · kitchen at <b class="num">${fmtTime(ts-BOOK_LEAD*6e4)}</b>`};
 function vNew(){
   U.pos.q=''; // the till has no menu search box now; categories pick the items
   const {P,run,coins,b,t,zom,can}=posCalc();const dow=new Date().getDay();
@@ -4209,7 +4227,7 @@ function vNew(){
         <div class="row"><div class="field grow"><label for="pos-ph">Mobile${needPhone()?' *':' (optional)'}</label><input class="inp num" id="pos-ph" inputmode="numeric" maxlength="10" value="${esc(P.phone)}" placeholder="Mobile · 10 digits"></div>
         <div class="field grow"><label for="pos-nm">Name${needName()?' *':zom?' (optional)':''}</label><input class="inp" id="pos-nm" value="${esc(P.name)}" placeholder="Customer name"></div></div>
         ${zom?waitsRow:''}
-        ${(()=>{const lv=posLt(),o0={outletId:S.cur};return `<button class="btn sm ltbtn${lv===2?' l2':''}" data-act="pos-lt" aria-pressed="${lv>0}" title="Tap to change: Off › ${esc(ltName(o0,1))} › ${esc(ltName(o0,2))} › Off">${lv?'★ '+esc(ltName(o0,lv)):esc(ltName(o0,1))+': Off'}</button>`})()}
+        ${(()=>{const lv=posLt(),o0={outletId:S.cur},bk=bookOk(P,run),on=bk&&P.book;return `<div class="tkflags${on?' on':''}"><button class="btn sm ltbtn${lv===2?' l2':''}" data-act="pos-lt" aria-pressed="${lv>0}" title="Tap to change: Off › ${esc(ltName(o0,1))} › ${esc(ltName(o0,2))} › Off">${lv?'★ '+esc(ltName(o0,lv)):esc(ltName(o0,1))+(on?'':': Off')}</button>${bk?`<button class="btn sm bkbtn" data-act="pos-book" aria-pressed="${on}" title="${on?'Advance booking is on · tap to turn it off':'Advance booking: save this order for a later time today or another day'}" aria-label="Advance booking">${I.book}${on?'':'<span>Advance booking</span>'}</button>`:''}${on?`<input class="inp num" id="pos-bdate" type="date" min="${today()}" value="${esc(P.bdate)}" aria-label="Booking date"><input class="inp num" id="pos-btime" type="time" value="${esc(P.btime)}" aria-label="Booking time">`:''}</div>${on?`<div class="small bkhint" id="pos-bhint">${bookHint(bookTs(P.bdate,P.btime))}</div>`:''}`})()}
         <div id="custbox">${custBox(ci)}</div>
         ${P.type==='dine'?tablePicker(P):''}
         ${run?`<div class="addto">Adding to ${run.no} · ${run.table?'Table '+esc(run.table):TYPES[run.type]} · ${rs(run.total)} so far${run.paid?' · paid':paidSoFar(run)?' · '+rs(paidSoFar(run))+' paid, '+rs(balanceOf(run))+' left':' · not paid'}<span class="grow"></span>${U.addPop?'':'<button class="btn sm" data-act="addto-x">New order instead</button>'}</div>
@@ -4226,7 +4244,7 @@ function vNew(){
       <div class="sec tkopts">
         ${optsOn?`<input class="inp" id="pos-note" placeholder="Kitchen note (optional)" value="${esc(P.note||'')}" aria-label="Kitchen note">
         <div class="codes">${['Extra crispy','Less spicy','Jain','Pack separately','Rush order'].map(c=>`<button data-act="pos-chip" data-v="${c}" style="font-family:inherit">+ ${c}</button>`).join('')}</div>
-        ${zom?'':waitsRow}
+        ${zom||(P.book&&bookOk(P,run))?'':waitsRow}
         ${cur().posCoupon?`<div class="row"><input class="inp grow" id="pc-code" placeholder="Coupon code" value="${esc(P.code)}" style="text-transform:uppercase;width:auto" aria-label="Coupon code"><button class="btn sm" data-act="pc-apply">Apply</button></div>`:''}`
         :`<button class="optbtn" data-act="pos-opts">+ Kitchen note · waiting time ${PREP_MIN} min · coupon</button>`}
         ${b.codeMsg?`<div class="${b.codeOk?'msg-ok':'msg-bad'}">${esc(b.codeMsg)}</div>`:''}
@@ -4238,8 +4256,8 @@ function vNew(){
         <div class="tktot"><span>Total${n?` <small class="num">· ${n} item${n>1?'s':''}</small>`:''}</span><span class="grow"></span>${btp()&&btGet()?'<button class="tklink" data-act="drawer-open">Drawer</button>':''}<button class="tklink" data-act="pos-clear" ${P.cart.length||run?'':'disabled'}>Clear</button><b class="num">${rs(t)}</b></div>
         <div class="tkacts tk3">
           <button class="btn tkpaybtn" data-act="pos-pay" ${can?'':'disabled'} title="Choose how the customer pays">Pay<small>${esc(modeName(P.pay))}</small></button>
-          <button class="btn" data-act="pos-hold" ${P.cart.length?'':'disabled'} title="Add these items to a table, paid or pending">Hold</button>
-          <button class="btn pri tkbig" data-act="pos-bill" data-v="bill" ${can?'':'disabled'} title="Save, take payment and send the e-bill">Save</button>
+          <button class="btn" data-act="pos-hold" ${P.cart.length&&!(P.book&&bookOk(P,run))?'':'disabled'} title="Add these items to a table, paid or pending">Hold</button>
+          ${P.book&&bookOk(P,run)?`<button class="btn pri tkbig" data-act="pos-go" data-v="save" ${P.cart.length?'':'disabled'} title="Save the booking now, take the payment later (or tap Pay for an advance)">Save booking</button>`:`<button class="btn pri tkbig" data-act="pos-bill" data-v="bill" ${can?'':'disabled'} title="Save, take payment and send the e-bill">Save</button>`}
           ${''/* KOT button hidden for now: <button class="btn chz tkbig" data-act="pos-go" data-v="kot">KOT</button> */}
         </div>
       </div>
@@ -4399,7 +4417,9 @@ function posGo(kind){
     if(P.type==='zomato'&&!P.zid.trim()){toast('Enter the Zomato order ID');document.getElementById('pos-zid')?.focus();return}
     if(P.type==='delivery'&&!P.address.trim()){toast('Add the delivery address');return}
     if(P.type==='dine'&&!P.table){toast('Pick a table');return}
+    if(P.book&&bookOk(P,run)){const bad=bookTimeBad(bookTs(P.bdate,P.btime));if(bad){toast(bad);document.getElementById('pos-btime')?.focus();return}}
   }
+  const bookAt=!run&&P.book&&bookOk(P,run)?bookTs(P.bdate,P.btime):0;
   const bill=kind!=='kot'&&kind!=='save';const kotToo=kind==='kotbill'||!!P.kotToo;let mode=P.type==='zomato'?'zomato':P.pay,splits=null;
   const pre=()=>run?Math.max(0,r2(computeBill([...run.items,...P.cart],run.date,{...(run.extra||{}),...(P.code?{code:P.code}:{}),phone:run.customer.phone}).total-paidSoFar(run)-(run.walletUsed||0))):computeBill(P.cart,null,{code:P.code,coins:P.useCoins&&P.type!=='zomato'?coinsOf(P.phone):0,phone:P.phone}).total;
   if(bill&&mode==='split'){
@@ -4428,7 +4448,7 @@ function posGo(kind){
   }else{
     const b=computeBill(P.cart,null,{code:P.code,coins:P.useCoins&&P.type!=='zomato'?coinsOf(P.phone):0,phone:P.phone});
     o=commitOrder(newOrder({outletId:S.cur,type:P.type,table:P.type==='dine'?P.table:'',address:P.type==='delivery'?P.address:'',customer:{name:P.name.trim(),phone:P.phone},items:P.cart.map(l=>({...l})),note:(P.note||'').trim(),
-      zomatoId:P.type==='zomato'?P.zid.trim():'',lt:posLt(),wait:P.wait||PREP_MIN,by:su?.name||'',byRole:su?.role||'',
+      zomatoId:P.type==='zomato'?P.zid.trim():'',lt:posLt(),wait:bookAt?BOOK_LEAD:P.wait||PREP_MIN,...(bookAt?{bookAt}:{}),by:su?.name||'',byRole:su?.role||'',
       extra:{code:b.codeOk?P.code:'',coins:b.coinsUsed},pay:{mode:'pending',given:0,change:0},paid:false}));
     if(P.type==='dine'&&cur().holds?.[P.table]){delete cur().holds[P.table]}
   }
@@ -4437,7 +4457,7 @@ function posGo(kind){
   }
   if(bill&&P.upiAlert){const a=S.upialerts.find(x=>x.id===P.upiAlert);if(a){a.status='matched';a.orderId=o.id;a.orderNo=o.no;o.upiAlert=a.id}}
   save();Object.assign(U.pos,JSON.parse(JSON.stringify(POS_BLANK)));U.addPop=null;render();
-  if(kind==='save')toast((run?'Added to '+o.no:o.no+' saved')+(o.table?' · Table '+o.table:'')+(o.paid?'':' · not paid'));
+  if(kind==='save')toast(o.bookAt&&!run?o.no+' booked for '+advWhen(o.bookAt)+(o.paid?'':' · not paid'):(run?'Added to '+o.no:o.no+' saved')+(o.table?' · Table '+o.table:'')+(o.paid?'':' · not paid'));
   else if(kind==='kot'){const txt=kotText(o,run?round:null);printText(txt);toast((run?'New items for '+o.no:o.no)+' sent to kitchen')}
   else{openDone(o);if(o.paid)csFlashSet({phase:'thanks',amt:o.total,no:o.no},8000);const cash=mode==='cash'||!!(splits&&splits.some(x=>x.mode==='cash'));const kt=kotToo?kotText(o,run?round:null)+'\n\n\n':'';
     if(kind==='billprint'||kind==='kotbill')printText(kt+billText(o),{drawer:cash});else{if(kt)printText(kt);if(cash)openDrawer()}
@@ -4491,7 +4511,7 @@ function billText(o){
   L.push(center(out.legal||'CHEESY PIZZA'),center('Really Cheesy...!'),center(out.name),center('Ph: '+fmtPhone(out.phone)),...(out.gstin?[center('GSTIN: '+out.gstin)]:[]),...(out.fssai?[center('FSSAI: '+out.fssai)]:[]),center('PURE VEG'),hr);
   L.push(pad('Bill: '+o.no,TYPES[o.type]),pad(fmtDate(o.date),fmtTime(o.ts)));
   if(o.customer.name||o.customer.phone)L.push('Cust: '+(o.customer.name||'')+' '+(o.customer.phone||''));
-  if(o.table)L.push('Table: '+o.table);if(o.address)L.push('Addr: '+o.address.slice(0,26));if(o.zomatoId)L.push('Zomato ID: '+o.zomatoId);
+  if(o.table)L.push('Table: '+o.table);if(o.bookAt)L.push('Booked for: '+advWhen(o.bookAt));if(o.address)L.push('Addr: '+o.address.slice(0,26));if(o.zomatoId)L.push('Zomato ID: '+o.zomatoId);
   L.push(hr,pad('Item','Amt'),hr);
   o.items.forEach(l=>{L.push(pad(l.qty+' x '+l.name.slice(0,20),String(l.unit*l.qty)));const a=addonText(l);if(a)L.push('   '+a.slice(0,29))});
   L.push(hr,pad('Item total','Rs '+o.subtotal));(o.discounts||[]).forEach(d=>L.push(pad(d.name.slice(0,22),'-'+d.amt)));
@@ -4510,7 +4530,7 @@ function wrapTxt(t,w){const out=[];let line='';String(t).split(' ').forEach(x=>{
 function kotText(o,round){
   const L=[];const hr='='.repeat(32);
   L.push(center(round>1?'KOT · ADDED ITEMS ('+round+')':'KOT'),hr,pad('Order '+o.no,TYPES[o.type]),pad(fmtTime(round>1?Date.now():o.ts),o.table?'Table '+o.table:''));
-  if(o.zomatoId)L.push('Zomato ID: '+o.zomatoId);if(o.customer.name)L.push('Cust: '+o.customer.name.slice(0,26));if(!round||round===1)L.push('Wait: '+waitOf(o)+' min');L.push(hr);
+  if(o.zomatoId)L.push('Zomato ID: '+o.zomatoId);if(o.customer.name)L.push('Cust: '+o.customer.name.slice(0,26));if(o.bookAt)L.push('BOOKED FOR: '+advWhen(o.bookAt));else if(!round||round===1)L.push('Wait: '+waitOf(o)+' min');L.push(hr);
   o.items.filter(l=>!round||(l.round||1)===round).forEach(l=>{L.push(l.qty+' x '+l.name);if(l.combo)(l.picks||[]).forEach(p=>L.push('    - '+p));if(l.size)L.push('    Size: '+sizeLabel(l.size));l.addons.forEach(a=>L.push('    + '+(S.addons[a]?.name||a)));topsText(l.tops).forEach(t=>L.push('    + '+t));exText(l.ex).forEach(t=>L.push('    + '+t));if(noteText(l))wrapTxt(noteText(l),26).forEach((t,i)=>L.push((i?'       ':'    >> ')+t))});if(o.note){L.push('-'.repeat(32));wrapTxt('NOTE: '+o.note,32).forEach(t=>L.push(t))}
   L.push(hr);return L.join('\n');
 }
@@ -4538,7 +4558,19 @@ function openReceipt(o,kind){
 }
 
 // Orders of this outlet from the last 16 hours, so a shift running past midnight keeps its orders
-const liveOrders=()=>S.orders.filter(o=>o.outletId===S.cur&&o.ts>Date.now()-16*3600e3);
+/* Advance booking: an order saved for a later time today or another day (o.bookAt, ms). It waits in the
+   Advance booking tabs (till and kitchen) and comes into the kitchen, counter and customer display
+   BOOK_LEAD minutes before that time, counting down to the booked time. */
+const BOOK_LEAD=30;
+const bookShowAt=o=>o.bookAt-BOOK_LEAD*6e4;
+const bookLater=o=>!!o.bookAt&&isActive(o)&&Date.now()<bookShowAt(o);
+const liveStart=o=>o.bookAt?bookShowAt(o):o.ts;
+const bookedOrders=()=>S.orders.filter(o=>o.outletId===S.cur&&bookLater(o)).sort((a,b)=>a.bookAt-b.bookAt);
+function bookDay(ts){const d=new Date(ts),dd=today(d);if(dd===today())return 'Today';const tm=new Date();tm.setDate(tm.getDate()+1);if(dd===today(tm))return 'Tomorrow';return d.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'})}
+const advWhen=ts=>bookDay(ts)+', '+fmtTime(ts);
+const inText=ms=>{const m=Math.max(0,Math.round(ms/6e4));return m<60?m+' min':Math.floor(m/60)+' h'+(m%60?' '+m%60+' min':'')};
+// Orders of this outlet from the last 16 hours, without bookings that are not due in the kitchen yet
+const liveOrders=()=>S.orders.filter(o=>o.outletId===S.cur&&liveStart(o)>Date.now()-16*3600e3&&!bookLater(o));
 const upiPending=o=>!o.paid&&o.pay&&o.pay.mode==='upi'&&o.pay.check==='pending';
 const fmtUtr=u=>String(u||'').replace(/(\d{4})(?=\d)/g,'$1 ');
 function payTag(o){
@@ -4564,7 +4596,7 @@ const kSortBar=()=>`<div class="ksort" role="group" aria-label="Sort orders"><sp
 function kItems(o,tap){const last=Math.max(1,...o.items.map(l=>l.round||1));
   return `<ul>${o.items.map((l,i)=>`<li class="${l.kdone?'kd':''}" ${tap?`data-act="kitem" data-id="${o.id}" data-i="${i}" title="Tap when this item is done"`:''}><span class="q num">${l.qty}</span><div>${l.size?`<span class="szc" style="background:${sizeColor(l.size)}">${esc(sizeLabel(l.size))}</span>`:''}${esc(l.name)}${last>1&&(l.round||1)===last?' <span class="new">NEW</span>':''}${extrasText(l)?`<small>${esc(extrasText(l))}</small>`:''}${noteText(l)?`<small class="cook">» ${esc(noteText(l))}</small>`:''}</div></li>`).join('')}</ul>${o.note?`<div class="knote">Order note: ${esc(o.note)}</div>`:''}`}
 // where: 'kitchen' (tap items, Ready → counter) or 'counter' (the next step in the flow as the button)
-function kCard(o,where,foot){const kit=where==='kitchen';const mins=Math.floor((Date.now()-(o.times.preparing||o.ts))/60000);const w=waitOf(o);const left=minsLeft(o);
+function kCard(o,where,foot){const kit=where==='kitchen';const mins=Math.floor((Date.now()-(o.bookAt?bookShowAt(o):o.times.preparing||o.ts))/60000);const w=waitOf(o);const left=minsLeft(o);
   const live=o.status==='preparing'||o.status==='ready';
   // green when the order comes in, turning yellow then red as the waiting time runs out
   const h=o.status==='placed'?265:o.status==='out'?200:Math.round(130*Math.max(0,Math.min(1,1-mins/w)));
@@ -4573,6 +4605,7 @@ function kCard(o,where,foot){const kit=where==='kitchen';const mins=Math.floor((
     <div class="row kr1"><span class="no num">${zNo(o)}</span><span class="grow"></span>${live?`<span class="left num">${leftText(left)}</span>`:kit?`<span class="chip ${o.type==='zomato'?'r':'t'}">${TYPES[o.type]}${o.table?' · T'+esc(o.table):''}</span>`:`<span class="chip ${o.status}">${statusName(o.status,o.type)}</span>`}</div>
     <div class="row kr2"><span class="small muted num grow">${fmtTime(o.ts)} · ${mins<1?'now':mins+' min'}${o.source==='online'?' · online':''}</span>${o.status==='preparing'||o.status==='placed'||(!kit&&o.status==='ready')?`<button class="btn sm" data-act="set-wait" data-id="${o.id}" title="Change waiting time">⏱ ${w}</button><button class="btn sm ok" data-act="wait-5" data-id="${o.id}" title="Add 5 minutes to the waiting time (tap again for more)">+5</button>`:''}${!kit&&o.status==='ready'?`<button class="btn sm kback" data-act="back-kitchen" data-id="${o.id}" title="Marked ready by mistake? Send it back to the kitchen" aria-label="Back to kitchen">↩</button>`:''}${(o.status==='preparing'||o.status==='placed'||!kit)&&o.type!=='delivery'?obHideBtn(o,true):''}</div>
     ${o.scheduled?`<span class="chip c" style="align-self:flex-start">Scheduled for ${esc(o.scheduled)}</span>`:''}
+    ${o.bookAt?`<span class="chip bkchip" style="align-self:flex-start">Advance booking · ${esc(advWhen(o.bookAt))}</span>`:''}
     ${live?`<div class="pbar" title="Waiting time ${w} min"><i style="width:${Math.min(100,mins/w*100)}%;background:hsl(${h} 65% 42%)"></i></div>`:''}
     ${o.address&&!kit?`<div class="small muted">${esc(o.address)}</div>`:''}
     ${kItems(o,kit)}
@@ -4581,11 +4614,53 @@ function kCard(o,where,foot){const kit=where==='kitchen';const mins=Math.floor((
 function vKitchen(){
   const list=liveOrders().filter(o=>o.status==='placed'||o.status==='preparing').sort((a,b)=>a.ts-b.ts);
   const pl=list.filter(o=>o.status==='placed'),pr=kSorted(list.filter(o=>o.status==='preparing'));
-  return `<div class="ph1"><h2>Kitchen display</h2><span class="muted small">${esc(cur().name)} · tap an item when it is done · green turns red as the waiting time runs out</span></div>
+  const bk=bookedOrders(),onBk=U.kTab==='book';
+  const tabs=`<div class="seg ktabs"><button data-act="k-tab" data-v="now" aria-pressed="${!onBk}">Kitchen · <span class="num">${list.length}</span></button><button data-act="k-tab" data-v="book" aria-pressed="${onBk}">Advance booking · <span class="num">${bk.length}</span></button></div>`;
+  if(onBk)return `<div class="ph1"><h2>Kitchen display</h2>${tabs}<span class="muted small">Booked orders move to the kitchen ${BOOK_LEAD} min before their time</span></div>${bookList(bk,'kitchen')}`;
+  return `<div class="ph1"><h2>Kitchen display</h2>${tabs}<span class="muted small">${esc(cur().name)} · tap an item when it is done · green turns red as the waiting time runs out</span></div>
   ${pl.length?`<div class="kcol-h"><span class="chip placed num">${pl.length}</span><h3>New online orders</h3>${ringTimer||ringAudio?'<button class="btn sm" data-act="mute-ring">Stop ringing</button>':''}</div><div class="kds" style="margin-bottom:22px">${pl.map(o=>kCard(o,'kitchen')).join('')}</div>`:''}
   <div class="kcol-h"><span class="chip preparing num">${pr.length}</span><h3>Preparing</h3><span class="grow"></span>${U.ksz?'<button class="btn sm" data-act="ksz-reset" title="Back to the normal card size">Reset card size</button>':''}${kSortBar()}</div>
   <div class="kds">${pr.map(o=>kCard(o,'kitchen')).join('')||'<div class="empty small">No orders being prepared.</div>'}</div>`;
 }
+
+// Advance bookings, grouped by day. where: 'kitchen' (read only) or 'till' (payment, time, cancel)
+function bookCard(o,where){const till=where==='till',due=bookShowAt(o)-Date.now();
+  return `<div class="kt kc bkc">
+    <div class="row bkt"><b class="num">${fmtTime(o.bookAt)}</b><span class="small muted grow">${esc(bookDay(o.bookAt))}</span><span class="no num">${zNo(o)}</span></div>
+    <div class="kfoot ktop"><span class="kwho">${esc(kName(o))}${ltChip(o)}</span><span class="num">${esc(o.customer.phone?fmtPhone(o.customer.phone):'—')}</span><span>${TYPES[o.type]}</span><span class="${o.paid?'pd':'bk'}">${o.paid?'Payment done':partPaid(o)?rs(paidSoFar(o))+' paid':'Baki'}</span></div>
+    <div class="small bkin">To the kitchen at <b class="num">${fmtTime(bookShowAt(o))}</b> · in ${inText(due)}</div>
+    ${o.address?`<div class="small muted">${esc(o.address)}</div>`:''}
+    ${kItems(o,false)}
+    ${till?`<div class="row bkpay"><b class="num grow">${rs(o.total)}</b>${o.paid?'<span class="chip ready">Paid</span>':`<button class="btn sm ok" data-act="collect-open" data-id="${o.id}">Collect ${rs(balanceOf(o))}</button>`}</div>
+    <div class="row bkacts"><button class="btn sm" data-act="adv-edit" data-id="${o.id}">Change time</button><button class="btn sm" data-act="adv-now" data-id="${o.id}" title="Send it to the kitchen now">Kitchen now</button><button class="btn sm" data-act="bill" data-id="${o.id}">Bill</button><button class="btn sm bad" data-act="cancel" data-id="${o.id}">Cancel</button></div>`:''}
+  </div>`}
+function bookList(list,where){
+  if(!list.length)return `<div class="empty small">No advance bookings.${where==='till'?' Tap <b>+ New booking</b>, or Advance booking on the New order screen, to save one.':''}</div>`;
+  const days=[];list.forEach(o=>{const d=today(new Date(o.bookAt));let g=days.find(x=>x.d===d);if(!g)days.push(g={d,ts:o.bookAt,list:[]});g.list.push(o)});
+  return days.map(g=>`<div class="kcol-h"><span class="chip bkchip num">${g.list.length}</span><h3>${esc(bookDay(g.ts))}</h3><span class="small muted">${new Date(g.ts).toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'})}</span></div>
+    <div class="kds" style="margin-bottom:18px">${g.list.map(o=>bookCard(o,where)).join('')}</div>`).join('');
+}
+function vBook(){const bk=bookedOrders();
+  return `<div class="ph1"><h2>Advance booking</h2><span class="muted small">${esc(cur().name)} · ${bk.length} booked · each order moves to the kitchen ${BOOK_LEAD} min before its time</span><span class="grow"></span><button class="btn pri" data-act="adv-new">+ New booking</button></div>${bookList(bk,'till')}`}
+// Date and time inputs for a booking: the date as yyyy-mm-dd, the time as hh:mm (local)
+const hhmm=d=>String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+function bookDefault(){const d=new Date(Date.now()+60*6e4);d.setMinutes(Math.ceil(d.getMinutes()/15)*15,0,0);return {bdate:today(d),btime:hhmm(d)}}
+const bookTs=(d,t)=>{if(!/^\d{4}-\d{2}-\d{2}$/.test(d||'')||!/^\d{2}:\d{2}$/.test(t||''))return 0;const v=new Date(d+'T'+t).getTime();return isFinite(v)?v:0};
+const bookTimeBad=ts=>!ts?'Pick the booking date and time':ts<Date.now()+6e4?'Pick a time later than now':ts>Date.now()+90*864e5?'Bookings can be up to 90 days ahead':'';
+function openBookEdit(o){
+  const d=new Date(o.bookAt);
+  showModal(`<div class="mh"><h3>Booking time · ${esc(o.no)}</h3><button class="x" data-act="close" aria-label="Close">×</button></div>
+  <div class="mb"><div class="small muted">Now ${esc(advWhen(o.bookAt))} · ${esc(kName(o))}</div>
+    <div class="row bkwhen"><div class="field grow"><label for="be-d">Date</label><input class="inp num" id="be-d" type="date" min="${today()}" value="${today(d)}"></div><div class="field grow"><label for="be-t">Time</label><input class="inp num" id="be-t" type="time" value="${hhmm(d)}"></div></div>
+    <button class="btn pri lg block" data-act="be-save">Save time</button></div>`,{onAct:(a)=>{
+      if(a!=='be-save')return false;
+      const ts=bookTs(document.getElementById('be-d').value,document.getElementById('be-t').value),bad=bookTimeBad(ts);if(bad){toast(bad);return true}
+      o.bookAt=ts;o.wait=BOOK_LEAD;save();closeModal();toast(o.no+' booked for '+advWhen(ts));render();return true}});
+}
+// When a booking reaches its kitchen time, tell the screen that is open
+function checkDueBookings(){if(S.mode!=='pos'||!staff())return;U.bkSeen=U.bkSeen||{};const now=Date.now();
+  S.orders.forEach(o=>{if(!o.bookAt||o.outletId!==S.cur||!isActive(o)||U.bkSeen[o.id])return;const at=bookShowAt(o);
+    if(now<at)return;U.bkSeen[o.id]=1;if(now-at<6e4)toast('Advance booking '+o.no+' for '+fmtTime(o.bookAt)+' is now in the kitchen')})}
 
 // Change the waiting time told to the customer after the order is made
 function openWait(o){
@@ -4656,12 +4731,12 @@ function obName(o){
 const obMin=ms=>Math.max(0,Math.floor(ms/60000));
 const obDur=m=>m<1?'Just now':m<60?m+' min':Math.floor(m/60)+' h '+(m%60)+' min';
 function obLists(outletId){
-  const now=Date.now(),mine=S.orders.filter(o=>o.outletId===outletId&&o.ts>now-16*3600e3&&o.type!=='delivery'&&!o.obHide);
+  const now=Date.now(),mine=S.orders.filter(o=>o.outletId===outletId&&liveStart(o)>now-16*3600e3&&!bookLater(o)&&o.type!=='delivery'&&!o.obHide);
   const prep=mine.filter(o=>o.status==='preparing'||o.status==='placed').sort((x,y)=>x.ts-y.ts);
   const ready=mine.filter(o=>o.status==='ready').sort((x,y)=>((y.times&&y.times.ready)||y.ts)-((x.times&&x.times.ready)||x.ts));
   return{prep,ready}}
 function obCard(o,rd){
-  const now=Date.now(),waited=obMin(now-o.ts),rdAt=(o.times&&o.times.ready)||now,since=obMin(now-rdAt);
+  const now=Date.now(),waited=obMin(now-liveStart(o)),rdAt=(o.times&&o.times.ready)||now,since=obMin(now-rdAt);
   const left=minsLeft(o),fresh=rd&&now-rdAt<45e3;
   const sub=rd?(since<1?'Ready now':'Ready '+since+' min ago'):o.status==='placed'?'Order received':left>0?'Ready in about '+left+' min':'Almost ready';
   return `<div class="ob-o${rd?' rd':''}${fresh?' new':''}"><span class="ob-no num">${esc(o.type==='zomato'&&o.zomatoId?o.zomatoId:obShortNo(o.no))}</span>
@@ -4913,9 +4988,9 @@ function vOrders(){
   <div class="card tw"><table class="stk ordtbl ohist"><thead><tr><th data-l="No."><button class="sortb" data-act="od-sort" data-v="no">No.${sortMark('no')}</button></th><th data-l="Customer"><button class="sortb" data-act="od-sort" data-v="cust">Customer${sortMark('cust')}</button></th><th data-l="Type"><button class="sortb" data-act="od-sort" data-v="type">Type${sortMark('type')}</button></th><th>Items</th><th data-l="Time"><button class="sortb" data-act="od-sort" data-v="time">Time${sortMark('time')}</button></th><th class="r" data-l="Total"><button class="sortb" data-act="od-sort" data-v="total">Total${sortMark('total')}</button></th><th data-l="Payment"><button class="sortb" data-act="od-sort" data-v="pay">Payment${sortMark('pay')}</button></th><th data-l="Status"><button class="sortb" data-act="od-sort" data-v="status">Status${sortMark('status')}</button></th><th data-l="Made by"><button class="sortb" data-act="od-sort" data-v="by">Made by${sortMark('by')}</button></th><th></th></tr></thead><tbody>
   ${list.map(o=>`<tr class="${o.status==='cancelled'?'cx':''}${isActive(o)?' heat':''}"${isActive(o)?` style="--h:${heatOf(o)}"`:''}><td><b class="num">${o.no}</b>${all?`<div class="small muted">${esc(outletOf(o).name)}</div>`:''}</td>
     <td>${esc(o.customer.name||'—')} ${o.status!=='cancelled'&&o.outletId===S.cur?`<button class="ltchip ${+o.lt?(+o.lt===2?'l2':''):'ltadd'}" data-act="ord-lt" data-id="${o.id}" title="Tap to change: Off › ${esc(ltName(o,1))} › ${esc(ltName(o,2))} › Off">${+o.lt?esc(ltName(o)):'+ '+esc(ltName(o,1))}</button>`:ltChip(o)} ${isNewCust(o)?'<span class="chip c">New</span>':''}<div class="small muted num">${esc(o.customer.phone)}</div></td>
-    <td>${TYPES[o.type]}${o.table?' · T'+esc(o.table):''}${o.source==='online'?' <span class="chip t">online</span>':''}${o.zomatoId?`<div class="small muted num">ID ${esc(o.zomatoId)}</div>`:''}</td>
+    <td>${TYPES[o.type]}${o.table?' · T'+esc(o.table):''}${o.source==='online'?' <span class="chip t">online</span>':''}${o.bookAt?`<div><span class="chip bkchip">Booked · ${esc(advWhen(o.bookAt))}</span></div>`:''}${o.zomatoId?`<div class="small muted num">ID ${esc(o.zomatoId)}</div>`:''}</td>
     <td class="small">${o.items.map(l=>l.qty+'× '+esc(l.name)+(l.size?' '+sizeLabel(l.size):'')).join(' <span class="isep">|</span> ')}${o.status!=='cancelled'&&o.outletId===S.cur?`<div><button class="btn sm addit" data-act="order-add" data-id="${o.id}">+ Add items</button></div>`:''}</td>
-    <td class="tm num">${fmtTime(o.ts)}${isActive(o)?`<div class="small" style="font-weight:700;color:${minsLeft(o)<0?'var(--bad)':'var(--warn)'}">${leftText(minsLeft(o))}</div><button class="btn sm wbtn" data-act="set-wait" data-id="${o.id}" title="Change waiting time">⏱ ${waitOf(o)} min</button>`:''}</td><td class="r num"><b>${rs(o.total)}</b>${o.subtotal>o.total?`<div class="small" style="color:var(--ok)">−${rs(o.subtotal-o.total)}</div>`:''}</td>
+    <td class="tm num">${fmtTime(o.ts)}${isActive(o)&&!bookLater(o)?`<div class="small" style="font-weight:700;color:${minsLeft(o)<0?'var(--bad)':'var(--warn)'}">${leftText(minsLeft(o))}</div><button class="btn sm wbtn" data-act="set-wait" data-id="${o.id}" title="Change waiting time">⏱ ${waitOf(o)} min</button>`:''}</td><td class="r num"><b>${rs(o.total)}</b>${o.subtotal>o.total?`<div class="small" style="color:var(--ok)">−${rs(o.subtotal-o.total)}</div>`:''}</td>
     <td class="pay">${o.status==='cancelled'?esc(payName(o)):o.paid?`<div class="small">${esc(payName(o))}</div><span class="chip ready">Done</span>${o.pay.utr?`<div class="small muted num">UTR ${esc(fmtUtr(o.pay.utr))}</div>`:''}`:`${o.pay.mode==='due'?'<div class="small">On account</div>':partPaid(o)?`<div class="small">${esc(payName(o))} paid</div>`:''}<span class="chip r">${partPaid(o)?rs(balanceOf(o))+' left':'Baki'}</span> <button class="btn sm" data-act="collect-open" data-id="${o.id}">Collect</button>`}</td>
     <td class="st"><span class="chip ${o.status}">${statusName(o.status,o.type)}</span>${o.status==='cancelled'&&cancelNote(o)?`<div class="small muted">${esc(cancelNote(o))}</div>`:''}</td>
     <td class="small">${o.source==='online'?'Customer site':esc(o.by||'—')}</td>
@@ -5704,6 +5779,11 @@ document.addEventListener('click',e=>{
     case 'pos-hold':openHold();break;
     case 'copy-staff-link':{const v=el.dataset.v;(navigator.clipboard?navigator.clipboard.writeText(v):Promise.reject()).then(()=>toast('Link copied'),()=>{prompt('Copy this link',v)});break}
     case 'pos-lt':U.pos.lt=(posLt()+1)%3;render();break;
+    case 'pos-book':P.book=!P.book;if(P.book&&!bookTs(P.bdate,P.btime))Object.assign(P,bookDefault());render();break;
+    case 'adv-new':P.tab='new';if(!bookOk(P,null))P.type='takeaway';P.addTo=null;P.book=true;if(!bookTs(P.bdate,P.btime))Object.assign(P,bookDefault());render();window.scrollTo(0,0);break;
+    case 'adv-edit':{const o=find(el.dataset.id);if(o&&o.bookAt)openBookEdit(o);break}
+    case 'adv-now':{const o=find(el.dataset.id);if(!o||!o.bookAt)break;askConfirm('Send '+o.no+' to the kitchen now?','It leaves Advance booking and shows in the kitchen with '+BOOK_LEAD+' min to go.','Kitchen now',()=>{o.bookAt=Date.now()+BOOK_LEAD*6e4;o.wait=BOOK_LEAD;save();toast(o.no+' is in the kitchen now');render()});break}
+    case 'k-tab':U.kTab=el.dataset.v;render();break;
     case 'ord-lt':{const o=S.orders.find(x=>x.id===el.dataset.id);if(o){o.lt=((+o.lt||0)+1)%3;save();render();toast(o.no+': '+(ltName(o)||'tag removed'))}break}
     case 'onl-min':U.onlMin=el.dataset.v;render();break;
     case 'onl-max':U.onlMin=null;render();break;
@@ -5811,6 +5891,7 @@ document.addEventListener('input',e=>{
   if(t.id==='pos-ad')P.address=t.value;
   if(t.id==='pos-note')P.note=t.value;
   if(t.id==='pos-zid')P.zid=t.value;
+  if(t.id==='pos-bdate'||t.id==='pos-btime'){P[t.id==='pos-bdate'?'bdate':'btime']=t.value;const h=document.getElementById('pos-bhint');if(h)h.innerHTML=bookHint(bookTs(P.bdate,P.btime))}
   if(t.id==='pos-wait'){const v=Math.round(+t.value);P.wait=v>0?v:null;document.querySelectorAll('[data-act="pos-wait"]').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.v===(P.wait||PREP_MIN)))}
   if(t.id==='pos-given'){P.given=t.value;const tot=+(t.placeholder||0),g=+t.value||0,ch=g-tot;const el=document.getElementById('chg');if(el){el.textContent=g?(ch<0?'Short '+rs(-ch):rs(ch)):'—';el.style.color=ch<0&&g?'var(--bad)':'var(--ok)'}}
   if(t.id==='pos-q'){P.q=t.value;render();refocus('pos-q')}
@@ -6086,7 +6167,8 @@ function startPolling(){setInterval(async()=>{
   checkNewOnline();if(UPI_ALERTS)try{checkUpiAlerts()}catch(e){console.error(e)}
   if(U.trackId&&mroot.innerHTML){openTrack();return}
   if(U.board){renderBoard();return}
-  if(S.mode==='pos'&&['kitchen','counter','orders'].includes(U.pos.tab)&&!mroot.innerHTML&&!isBusy()){render();return}
+  try{checkDueBookings()}catch(e){console.error(e)}
+  if(S.mode==='pos'&&['kitchen','counter','orders','book'].includes(U.pos.tab)&&!mroot.innerHTML&&!isBusy()){render();return}
   if(changed&&!mroot.innerHTML&&!isBusy())render();
 },5000)}
 
@@ -6279,7 +6361,7 @@ document.addEventListener('change',e=>{const t=e.target;if(!t.dataset||!t.datase
 // Staff tree: Admin (every outlet) > Owner (only their own outlets) > Manager, Cashier, Kitchen, Rider at each outlet
 const ROLES={owner:'Admin',oowner:'Owner',manager:'Manager',cashier:'Cashier',kitchen:'Kitchen',rider:'Rider'};
 const ROLE_ORDER=['owner','oowner','manager','cashier','kitchen','rider'];
-const ROLE_TABS={owner:TABS.map(t=>t[0]),oowner:TABS.map(t=>t[0]).filter(k=>k!=='review'&&k!=='display'),manager:TABS.map(t=>t[0]).filter(k=>k!=='staff'&&k!=='review'&&k!=='display'),cashier:['new','counter','orders','tables','cust','stock'],kitchen:['kitchen','counter'],rider:['trips']};
+const ROLE_TABS={owner:TABS.map(t=>t[0]),oowner:TABS.map(t=>t[0]).filter(k=>k!=='review'&&k!=='display'),manager:TABS.map(t=>t[0]).filter(k=>k!=='staff'&&k!=='review'&&k!=='display'),cashier:['new','counter','orders','tables','book','cust','stock'],kitchen:['kitchen','counter'],rider:['trips']};
 function ensureCust(ph,name){const c=S.customers[ph]||(S.customers[ph]={phone:ph,name:name||'',due:0,coins:0});
   c.wallet=c.wallet||0;c.tx=c.tx||[];c.myCodes=c.myCodes||[];c.ref=c.ref||('CP'+ph.slice(-5));if(name&&!c.name)c.name=name;return c}
 function migrate(){
