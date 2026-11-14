@@ -1059,7 +1059,13 @@ body:has(.addpop){overflow:hidden}
 .ktop{font-size:15px}.ktop .kwho{font-weight:800;font-size:16px}
 .klanes{align-items:start}.klanes .lane{background:transparent;border:0;padding:0}
 .ltchip{display:inline-block;border-radius:6px;padding:1px 8px;font-size:.82em;font-weight:800;background:var(--cheese);color:#3d2900;vertical-align:middle;white-space:nowrap}.ltchip.l2{background:var(--plum);color:#fff}button.ltchip{border:0;cursor:pointer;font-family:inherit;line-height:1.5}.ltchip.ltadd{background:transparent;border:1px dashed var(--line);color:var(--muted);font-weight:600}
-.bkbtn{display:inline-flex;align-items:center;gap:6px;margin-left:6px}.bkbtn svg{width:16px;height:16px}.bkbtn[aria-pressed="true"]{background:var(--plum)!important;border-color:var(--plum)!important;color:#fff!important}
+.tkflags{display:flex;gap:6px;align-items:stretch;margin-top:6px}.tkflags>*{min-width:0}
+.tkflags .ltbtn{margin:0;flex:1 1 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tkflags .bkbtn{flex:1 1 0;display:inline-flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap}.bkbtn svg{width:16px;height:16px;flex:none}
+.tkflags.on .ltbtn,.tkflags.on .bkbtn{flex:0 0 auto;padding-left:10px;padding-right:10px}
+.tkflags .inp{flex:1 1 0;padding:4px 8px;height:auto;font-size:14px}.tkflags #pos-btime{flex:.8 1 0}
+.bkbtn[aria-pressed="true"]{background:var(--plum)!important;border-color:var(--plum)!important;color:#fff!important}
+.bkhint{margin-top:4px;color:var(--plum)}.bkhint:empty{display:none}
 .bkwhen{margin-top:8px;display:grid;gap:4px}.bkwhen .row{gap:8px}.bkwhen .inp{min-width:0}
 .chip.bkchip{background:var(--plum-soft);color:var(--plum)}
 .ktabs{margin:0 4px}
@@ -4188,7 +4194,7 @@ const posTile=(m,i)=>{
 };
 // Advance booking on the till: takeaway and delivery orders (not dine-in, Zomato, or items added to a running order)
 const bookOk=(P,run)=>!run&&['takeaway','delivery'].includes(P.type);
-const bookHint=ts=>{const bad=bookTimeBad(ts);return bad?`<span style="color:var(--bad)">${esc(bad)}</span>`:`Booked for <b>${esc(advWhen(ts))}</b> · shows in the kitchen at <b class="num">${fmtTime(ts-BOOK_LEAD*6e4)}</b>`};
+const bookHint=ts=>{const bad=bookTimeBad(ts);return bad?`<span style="color:var(--bad)">${esc(bad)}</span>`:`${esc(advWhen(ts))} · kitchen at <b class="num">${fmtTime(ts-BOOK_LEAD*6e4)}</b>`};
 function vNew(){
   U.pos.q=''; // the till has no menu search box now; categories pick the items
   const {P,run,coins,b,t,zom,can}=posCalc();const dow=new Date().getDay();
@@ -4221,8 +4227,7 @@ function vNew(){
         <div class="row"><div class="field grow"><label for="pos-ph">Mobile${needPhone()?' *':' (optional)'}</label><input class="inp num" id="pos-ph" inputmode="numeric" maxlength="10" value="${esc(P.phone)}" placeholder="Mobile · 10 digits"></div>
         <div class="field grow"><label for="pos-nm">Name${needName()?' *':zom?' (optional)':''}</label><input class="inp" id="pos-nm" value="${esc(P.name)}" placeholder="Customer name"></div></div>
         ${zom?waitsRow:''}
-        ${(()=>{const lv=posLt(),o0={outletId:S.cur};return `<button class="btn sm ltbtn${lv===2?' l2':''}" data-act="pos-lt" aria-pressed="${lv>0}" title="Tap to change: Off › ${esc(ltName(o0,1))} › ${esc(ltName(o0,2))} › Off">${lv?'★ '+esc(ltName(o0,lv)):esc(ltName(o0,1))+': Off'}</button>`})()}${bookOk(P,run)?`<button class="btn sm ltbtn bkbtn" data-act="pos-book" aria-pressed="${!!P.book}" title="Save this order for a later time today or another day">${I.book}Advance booking${P.book?' · on':''}</button>`:''}
-        ${bookOk(P,run)&&P.book?(()=>{const ts=bookTs(P.bdate,P.btime);return `<div class="bkwhen"><div class="row"><div class="field grow"><label for="pos-bdate">Booking date</label><input class="inp num" id="pos-bdate" type="date" min="${today()}" value="${esc(P.bdate)}"></div><div class="field grow"><label for="pos-btime">Time</label><input class="inp num" id="pos-btime" type="time" value="${esc(P.btime)}"></div></div><div class="small muted" id="pos-bhint">${bookHint(ts)}</div></div>`})():''}
+        ${(()=>{const lv=posLt(),o0={outletId:S.cur},bk=bookOk(P,run),on=bk&&P.book;return `<div class="tkflags${on?' on':''}"><button class="btn sm ltbtn${lv===2?' l2':''}" data-act="pos-lt" aria-pressed="${lv>0}" title="Tap to change: Off › ${esc(ltName(o0,1))} › ${esc(ltName(o0,2))} › Off">${lv?'★ '+esc(ltName(o0,lv)):esc(ltName(o0,1))+(on?'':': Off')}</button>${bk?`<button class="btn sm bkbtn" data-act="pos-book" aria-pressed="${on}" title="${on?'Advance booking is on · tap to turn it off':'Advance booking: save this order for a later time today or another day'}" aria-label="Advance booking">${I.book}${on?'':'<span>Advance booking</span>'}</button>`:''}${on?`<input class="inp num" id="pos-bdate" type="date" min="${today()}" value="${esc(P.bdate)}" aria-label="Booking date"><input class="inp num" id="pos-btime" type="time" value="${esc(P.btime)}" aria-label="Booking time">`:''}</div>${on?`<div class="small bkhint" id="pos-bhint">${bookHint(bookTs(P.bdate,P.btime))}</div>`:''}`})()}
         <div id="custbox">${custBox(ci)}</div>
         ${P.type==='dine'?tablePicker(P):''}
         ${run?`<div class="addto">Adding to ${run.no} · ${run.table?'Table '+esc(run.table):TYPES[run.type]} · ${rs(run.total)} so far${run.paid?' · paid':paidSoFar(run)?' · '+rs(paidSoFar(run))+' paid, '+rs(balanceOf(run))+' left':' · not paid'}<span class="grow"></span>${U.addPop?'':'<button class="btn sm" data-act="addto-x">New order instead</button>'}</div>
