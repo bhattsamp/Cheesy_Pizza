@@ -99,6 +99,22 @@ Firebase Cloud Messaging to every Cheesy Pizza Admin phone signed in at the outl
 `MONGODB_URI` pointing at a free MongoDB Atlas M0 cluster. Then set the `CHEESY_SERVER_URL`
 repository variable to the Render address and rebuild the apps.
 
+## Logo
+
+The logo is drawn as vector SVG in `img/`: `logo.svg` (full logo), `logo-pin.svg` (the pin alone),
+`logo-wordmark.svg` (CHEESY PIZZA™ and "Really Cheesy...!"), plus `-white` versions of each for dark
+backgrounds. PNG copies for sharing and printing: `logo.png` and `logo-white.png` (2048 px wide, transparent),
+`logo-on-white.png` (2048 px square on white), `logo-pin.png`, `logo-pin-white.png` and `logo-icon-512.png`.
+
+To change the logo, edit `mobile/scripts/app-look/brand.py` and run, in order:
+
+```sh
+pip install fonttools brotli && python3 mobile/scripts/app-look/brand.py img   # the SVGs
+node mobile/scripts/app-look/brand-png.js                                      # the PNG copies
+cd mobile && node scripts/app-look/gen.js android/app/src                      # app icons, splash, loading screen
+cp android/app/src/main/res/drawable-nodpi/loading_logo.png ../img/cheesy-pin.png  # site loading screen
+```
+
 ## What is stored where
 
 | Collection | Holds |

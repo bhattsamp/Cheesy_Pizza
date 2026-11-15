@@ -8,14 +8,11 @@ const DENS = { ldpi: .75, mdpi: 1, hdpi: 1.5, xhdpi: 2, xxhdpi: 3, xxxhdpi: 4 };
 const FONT = `font-family:'Fredoka',sans-serif;font-weight:700`;
 const FACES = require('./logo.js').fontFaces();
 const svg = (inner, style = '') => `<svg viewBox="0 0 1024 1024" preserveAspectRatio="xMidYMid slice" style="position:absolute;inset:0;width:100%;height:100%;${style}">${inner}</svg>`;
-// The name as on the logo, for the white circle: CHEESY in teal, PIZZA in orange, then "Really Cheesy...!"
-// with an orange swoosh (Admin: an ADMIN pill instead)
-const word = admin => `<div style="${FONT};font-size:116px;letter-spacing:1px;line-height:1">` +
-  `<span style="color:#1497A9;text-shadow:0 5px 0 #0B6E7C">CHEESY</span> ` +
-  `<span style="color:#F7A81B;text-shadow:0 5px 0 #C97F06">PIZZA</span></div>` +
-  (admin ? `<div style="margin-top:24px;display:inline-block;${FONT};font-size:40px;letter-spacing:8px;color:#fff;background:#1497A9;border-radius:40px;padding:6px 30px 6px 38px">ADMIN</div>`
-    : `<div style="position:relative;display:inline-block;font-family:'Courgette',cursive;color:#0F8698;font-size:54px;margin-top:10px;padding-bottom:12px">Really Cheesy...!` +
-      `<svg viewBox="0 0 300 20" style="position:absolute;left:4%;bottom:0;width:80%;height:16px"><path d="M4 14 Q150 2 296 8" stroke="#F7A81B" stroke-width="5" fill="none" stroke-linecap="round"/></svg></div>`);
+// The name as on the logo (CHEESY PIZZA(TM) and "Really Cheesy...!", from img/logo-wordmark.svg);
+// the Admin app adds an ADMIN pill under it
+const WORDMARK = require('./logo.js').wordmark;
+const word = admin => WORDMARK(admin ? 540 : 700) +
+  (admin ? `<div style="margin-top:6px;display:inline-block;${FONT};font-size:32px;letter-spacing:8px;color:#fff;background:#10A1BC;border-radius:40px;padding:4px 28px 4px 36px">ADMIN</div>` : '');
 async function shot(page, html, w, h, file, transparent) {
   await page.setViewportSize({ width: w, height: h });
   await page.setContent(`<html><head><style>${FACES}</style></head><body style="margin:0;width:${w}px;height:${h}px;overflow:hidden;${transparent ? 'background:transparent' : ''}">${html}</body></html>`);
