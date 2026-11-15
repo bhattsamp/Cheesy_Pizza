@@ -7,6 +7,9 @@ const { seedData } = require('./seed-data');
 const push = require('./push');
 const { invoicePage } = require('./invoice');
 const otp = require('./otp');
+const upiAlerts = require('./upi-alerts');
+const backups = require('./backups');
+const Models = require('./models');
 const { RiderLoc, Staff } = require('./models');
 
 const ROOT = path.join(__dirname, '..');
@@ -18,6 +21,10 @@ async function openStore(uri = process.env.MONGODB_URI || DEFAULT_URI) {
   store.uri = uri.replace(/\/\/[^@/]*@/, '//***@'); // hide credentials in logs
   if (!(await store.isSeeded())) await store.seed(seedData());
   else await store.addExtraMenus(seedData().state.extras);
+  try {
+    const moved = await store.migrateRunningNos();
+    if (moved) console.log('Order numbers switched to running numbers:', JSON.stringify(moved));
+  } catch (e) { console.error('Order number switch failed:', e.message); }
   return store;
 }
 
@@ -69,6 +76,9 @@ function createApp(store) {
     }
   });
 
+  upiAlerts.routes(app, store, Models);
+  backups.routes(app, store, Models);
+
   /* ----- push alerts for the Admin app ----- */
   app.get('/api/push/status', (req, res) => res.json({ enabled: push.pushEnabled() }));
   // A phone signs up when staff log in, so the PIN is checked here
@@ -99,7 +109,7 @@ function createApp(store) {
     const { staffId, pin, title, body, image } = req.body || {};
     if (!(await store.checkStaffPin(staffId, pin))) return res.status(403).json({ error: 'Wrong PIN' });
     const who = await Staff.findById(String(staffId), { role: 1 }).lean();
-    if (!who || !['owner', 'manager'].includes(who.role)) return res.status(403).json({ error: 'Only the owner or a manager can send notifications' });
+    if (!who || !['owner', 'oowner', 'manager'].includes(who.role)) return res.status(403).json({ error: 'Only the owner or a manager can send notifications' });
     const t = String(title || '').trim().slice(0, 65), b = String(body || '').trim().slice(0, 240);
     if (!t || !b) return res.status(400).json({ error: 'Write a title and a message' });
     if (!push.pushEnabled()) return res.status(503).json({ error: 'Notifications are not set up on the server' });
@@ -166,10 +176,7 @@ function createApp(store) {
 
   /* ----- demo data ----- */
   app.post('/api/demo/claim', async (req, res) => res.json({ ok: await store.claimDemo() }));
-  app.post('/api/reset', async (req, res) => {
-    await store.seed(seedData());
-    res.json(await store.readState());
-  });
+  // (the old /api/reset, which wiped the live shop back to the demo data, is removed)
 
   /* ----- read-only lookups ----- */
   app.get('/api/config', async (req, res) => res.json(await store.readConfig()));
@@ -200,12 +207,43 @@ function createApp(store) {
   /* ----- site ----- */
   app.use('/img', express.static(path.join(ROOT, 'img')));
   app.get('/', (req, res) => res.sendFile(path.join(ROOT, 'index.html')));
-  // Full-screen menu slideshow for a TV in the shop (same app, opens straight into the slideshow)
-  app.get('/tv', (req, res) => res.sendFile(path.join(ROOT, 'index.html')));
-  app.get('/tv/', (req, res) => res.redirect(301, '/tv'));
+  // The previous home page, kept for reference; nothing on the site links to it
+  // Home 2 is the earlier home page design inside the current app (index.html picks it from the path); kept out of search
+  app.get('/home2', (req, res) => { res.set('X-Robots-Tag', 'noindex'); res.sendFile(path.join(ROOT, 'index.html')); });
+  // Full-screen slideshow for the TV in the shop; nothing on the site links to it
+  app.get('/display', (req, res) => res.sendFile(path.join(ROOT, 'display.html')));
+  // Staff login for one outlet: /staff/<outlet> opens the till's login screen for that outlet only
+  // Direct APK downloads from our own domain (phones that can't fetch from GitHub).
+  // Streams the newest build from the android-latest release.
+  const APKS = { '/admin.apk': 'cheesy-pizza-admin.apk', '/app.apk': 'cheesy-pizza.apk' };
+  app.get(Object.keys(APKS), async (req, res) => {
+    const name = APKS[req.path];
+    try {
+      const r = await fetch('https://github.com/bhattsamp/Cheesy_Pizza/releases/download/android-latest/' + name, { redirect: 'follow' });
+      if (!r.ok || !r.body) return res.status(502).send('Could not get the app right now. Please try again.');
+      res.set({ 'Content-Type': 'application/vnd.android.package-archive', 'Content-Disposition': 'attachment; filename="' + name + '"', 'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex' });
+      if (r.headers.get('content-length')) res.set('Content-Length', r.headers.get('content-length'));
+      require('stream').Readable.fromWeb(r.body).pipe(res);
+    } catch (e) { console.error('APK download', e.message); res.status(502).send('Could not get the app right now. Please try again.'); }
+  });
+  app.get(['/admin', '/staff', '/staff/:outlet'], (req, res) => { res.set('X-Robots-Tag', 'noindex'); res.sendFile(path.join(ROOT, 'index.html')); });
 
   app.use((err, req, res, next) => { console.error(err); res.status(500).json({ error: 'Server error' }); });
   return app;
+}
+
+// Render's free plan sleeps the server after 15 minutes with no outside visits, and a sleeping
+// server sometimes fails to wake. Visiting our own public address every 10 minutes counts as
+// outside traffic, so the server never goes to sleep. Only runs on Render (RENDER_EXTERNAL_URL).
+function keepAwake() {
+  const base = process.env.KEEP_AWAKE_URL || process.env.RENDER_EXTERNAL_URL;
+  if (!base || process.env.KEEP_AWAKE === 'off') return;
+  const url = base.replace(/\/$/, '') + '/api/version';
+  const ping = () => fetch(url, { signal: AbortSignal.timeout(30000) })
+    .then(r => { if (!r.ok) console.warn('Keep-awake visit got', r.status); })
+    .catch(e => console.warn('Keep-awake visit failed:', e.message));
+  setInterval(ping, 10 * 60 * 1000).unref();
+  console.log('Keep-awake is on:', url, 'every 10 minutes');
 }
 
 if (require.main === module) {
@@ -215,6 +253,8 @@ if (require.main === module) {
   openStore().then(store => {
     const port = +process.env.PORT || 3000;
     createApp(store).listen(port, () => console.log(`Cheesy Pizza running at http://localhost:${port}  (database: ${store.uri})`));
+    keepAwake();
+    backups.schedule(store, Models);
   }).catch(e => { console.error('Could not connect to MongoDB:', e.message); process.exit(1); });
 }
 

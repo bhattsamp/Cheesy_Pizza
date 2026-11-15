@@ -13,14 +13,19 @@ const SPECS = {
   offers: { model: M.Offer, key: 'id' },
   combos: { model: M.Combo, key: 'id' },
   extras: { model: M.ExtraMenu, key: 'id' },
+  cats: { model: M.CustomCategory, key: 'id' }, // categories the owner adds, shown after the built-in ones
   users: { model: M.Staff, key: 'id', pin: true },
   customers: { model: M.Customer, map: true, pin: true },
   orders: { model: M.Order, key: 'id' },
+  upialerts: { model: M.UpiAlert, key: 'id' }, // UPI payments read from the shop phone's UPI app alerts
 };
 // Order matters: outlets before orders so new orders can be numbered.
 const COLLECTIONS = Object.keys(SPECS);
 
 /* ---------- PINs ---------- */
+// Outlet code - a running count for that outlet that never resets, e.g. A-122
+const orderNo = (code, n) => code + '-' + n;
+
 function hashPin(pin) {
   const salt = crypto.randomBytes(16).toString('hex');
   return 'scrypt:' + salt + ':' + crypto.scryptSync(String(pin), salt, 32).toString('hex');
@@ -80,7 +85,7 @@ class Store {
 
   async readSeq() {
     const seq = {};
-    (await M.Counter.find({ _id: /^seq:/ }).lean()).forEach(c => { seq[c._id.slice(4)] = c.n; });
+    (await M.Counter.find({ _id: /^no:/ }).lean()).forEach(c => { seq[c._id.slice(3)] = c.n; });
     return seq;
   }
 
@@ -93,11 +98,56 @@ class Store {
   }
 
   /* ----- write ----- */
-  async nextOrderNo(outletId, date) {
+  async nextOrderNo(outletId) {
     const out = await M.Outlet.findById(String(outletId)).lean();
-    if (!out || !date) return null;
-    const n = await this.bump('seq:' + outletId + '|' + date);
-    return out.code + '-' + String(n).padStart(3, '0');
+    if (!out) return null;
+    // One 'no:<outlet>' counter per outlet, counting up for good
+    const n = await this.bump('no:' + outletId);
+    return orderNo(out.code, n);
+  }
+
+  // One-time switch from A-ddmmyy-001 numbers to running numbers. A full backup is saved first
+  // (Reports › Backup & export, named before-order-numbers-...), then every outlet's orders get
+  // A-1, A-2, ... by the time they were placed, the old number is kept as oldNo, and the counter
+  // carries on from the last one. UPI alerts linked to an order get its new number too.
+  migrateRunningNos() {
+    const run = (this.queue || Promise.resolve()).then(() => this._migrateRunningNos());
+    this.queue = run.catch(() => {});
+    return run;
+  }
+  async _migrateRunningNos() {
+    if (await this.getSetting('runningNos', false)) return null;
+    const zlib = require('zlib');
+    const { state, version } = await this.readState();
+    if (state.orders.length) {
+      const data = zlib.gzipSync(JSON.stringify({ exportedAt: new Date().toISOString(), version, ...state }));
+      if (data.length > 15 * 1024 * 1024) throw new Error('backup too big to save, order numbers left as they are');
+      const id = 'before-order-numbers-' + new Date().toISOString().slice(0, 10);
+      await M.Backup.updateOne({ _id: id }, { $setOnInsert: { data, size: data.length, ts: Date.now() } }, { upsert: true });
+    }
+    const outlets = new Map(state.outlets.map(o => [String(o.id), o]));
+    const docs = await M.Order.find({}, { outletId: 1, ts: 1, no: 1, _pos: 1 }).lean();
+    docs.sort((a, b) => (a.ts || 0) - (b.ts || 0) || (a._pos || 0) - (b._pos || 0));
+    const count = {}, newNo = {}, ops = [];
+    for (const d of docs) {
+      const out = outlets.get(String(d.outletId));
+      if (!out) continue;
+      const k = String(d.outletId);
+      count[k] = (count[k] || 0) + 1;
+      const no = orderNo(out.code, count[k]);
+      newNo[d._id] = no;
+      if (no !== d.no) ops.push({ updateOne: { filter: { _id: d._id }, update: { $set: { no, oldNo: d.no }, $inc: { _rev: 1 } } } });
+    }
+    if (ops.length) await M.Order.bulkWrite(ops, { ordered: false });
+    const ua = (await M.UpiAlert.find({ orderId: { $in: Object.keys(newNo) } }, { orderId: 1, orderNo: 1 }).lean())
+      .filter(a => a.orderNo !== newNo[a.orderId])
+      .map(a => ({ updateOne: { filter: { _id: a._id }, update: { $set: { orderNo: newNo[a.orderId] }, $inc: { _rev: 1 } } } }));
+    if (ua.length) await M.UpiAlert.bulkWrite(ua, { ordered: false });
+    await M.Counter.deleteMany({ _id: /^no:.*\|/ }); // the old per-day counters
+    for (const [k, n] of Object.entries(count)) await M.Counter.updateOne({ _id: 'no:' + k }, { $set: { n } }, { upsert: true });
+    await this.setSetting('runningNos', true);
+    await this.bump('version');
+    return { orders: ops.length, upiAlerts: ua.length, last: count };
   }
 
   // Saves run one at a time in this server, so two tills saving together
@@ -111,6 +161,11 @@ class Store {
   // changes: { upsert: { coll: [obj] | {key: obj} }, delete: { coll: [key] } }
   async _apply(changes) {
     const renumbered = {};
+    // Each record carries _rev, bumped on every save. A device sends the _rev it last saw; if another
+    // device saved that record since, this save is refused for that record (it would wipe the other
+    // device's change) and the device is told, so it reloads the record. Saves without _rev (older apps)
+    // are accepted as before.
+    const revs = {}, conflicts = [];
     const up = changes.upsert || {};
     const del = changes.delete || {};
     // Validate everything before writing anything
@@ -131,21 +186,24 @@ class Store {
       if ((del[name] || []).length) await spec.model.deleteMany({ _id: { $in: del[name].map(String) } });
       const entries = batches[name];
       if (!entries) continue;
-      const existing = new Map((await spec.model.find({ _id: { $in: entries.map(e => e[0]) } }, { _pos: 1, pinHash: 1 }).lean())
+      const existing = new Map((await spec.model.find({ _id: { $in: entries.map(e => e[0]) } }, { _pos: 1, pinHash: 1, _rev: 1 }).lean())
         .map(d => [d._id, d]));
       const isNew = entries.filter(([k]) => !existing.has(k)).length;
       let pos = isNew ? await this.bump('pos', isNew) - isNew : 0;
       const ops = [];
       for (const [key, obj] of entries) {
         const old = existing.get(key);
+        const oldRev = (old && old._rev) || 0;
+        if (old && typeof obj._rev === 'number' && obj._rev < oldRev) { conflicts.push({ coll: name, id: key, no: obj.no || obj.name || key }); continue; }
         const { pin, _newPin, ...rest } = obj;
-        const d = { ...rest, _id: key, _pos: old ? old._pos : ++pos };
+        const d = { ...rest, _id: key, _pos: old ? old._pos : ++pos, _rev: oldRev + 1 };
+        (revs[name] = revs[name] || {})[key] = d._rev;
         if (spec.pin) {
           if (typeof _newPin === 'string' && _newPin) d.pinHash = hashPin(_newPin);
           else if (pin && old && old.pinHash) d.pinHash = old.pinHash;
         }
         if (name === 'orders' && !old) {
-          const no = await this.nextOrderNo(obj.outletId, obj.date);
+          const no = await this.nextOrderNo(obj.outletId);
           if (no && no !== obj.no) { d.no = no; renumbered[key] = no; }
         }
         ops.push({ replaceOne: { filter: { _id: key }, replacement: d, upsert: true } });
@@ -153,7 +211,7 @@ class Store {
       if (ops.length) await spec.model.bulkWrite(ops, { ordered: true });
     }
     const version = await this.bump('version');
-    return { prev: version - 1, version, renumbered, seq: await this.readSeq() };
+    return { prev: version - 1, version, renumbered, revs, conflicts, seq: await this.readSeq() };
   }
 
   /* ----- uploaded photos ----- */
@@ -177,6 +235,7 @@ class Store {
   /* ----- seeding ----- */
   async wipe() {
     for (const m of Object.values(M)) {
+      if (m === M.Backup) continue; // daily backups survive a reseed
       if (m === M.Counter) await m.deleteMany({ _id: { $ne: 'version' } });
       else await m.deleteMany({});
     }
@@ -193,6 +252,7 @@ class Store {
     const extras = (data.state.extras || []).map(g => ({ ...g, items: g.items.map(({ from, ...it }) => it) }));
     await this.applyChanges({ upsert: { ...data.state, extras } });
     await this.setSetting('seeded', true);
+    await this.setSetting('runningNos', true);
     await this.setSetting('extrasAdded', true);
   }
 
@@ -220,4 +280,4 @@ class Store {
   }
 }
 
-module.exports = { Store, SPECS, COLLECTIONS, hashPin, checkPin };
+module.exports = { Store, SPECS, COLLECTIONS, hashPin, checkPin, orderNo };

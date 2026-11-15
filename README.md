@@ -3,13 +3,6 @@
 Customer ordering site and outlet POS for Cheesy Pizza, backed by MongoDB.
 
 - **Customer site**: menu, combos, coupons, cart, order tracking, accounts, wallet and rewards
-- **Home page slideshow**: the customer home page is a slideshow with one slide per section (price board,
-  offers, combos, each menu section, how to book, visit us, ...), each with Add to cart, Pause and a Go to menu.
-- **TV slideshow**: open `/tv` (or `#tv`, or TV mode on the home page) on a shop TV for the same
-  slideshow full screen of the home page, offers, combos and every menu item. Remote or keyboard: ← → change
-  slide, Space pauses, OK adds the item to the cart (the usual size and topping picker opens), Esc closes.
-  The Show menu picks Every section (default: each home page section and each menu section on its own
-  slide, with all its items and an Add button on each), Every item (one big slide per item), or Home page only.
 - **Outlet POS**: new orders, kitchen display, counter lanes, order history, reports, outlet settings
 
 ## Run
@@ -102,10 +95,12 @@ repository variable to the Render address and rebuild the apps.
 ## Logo
 
 The logo is traced from the original artwork (`img/logo-source.png`) into vector SVG in `img/`, so it keeps
-the exact shapes and lettering and stays sharp at any size: `logo.svg` (full logo), `logo-pin.svg` (the pin alone),
-`logo-wordmark.svg` (CHEESY PIZZA™ and "Really Cheesy...!"), plus `-white` versions of each for dark
-backgrounds. PNG copies for sharing and printing: `logo.png` and `logo-white.png` (2048 px wide, transparent),
-`logo-on-white.png` (2048 px square on white), `logo-pin.png`, `logo-pin-white.png` and `logo-icon-512.png`.
+the exact shapes and lettering and stays sharp at any size: `logo.svg` (full logo), `logo-pin.svg` (the pin
+alone), `logo-wordmark.svg` (CHEESY PIZZA™ and "Really Cheesy...!"), plus `-white` versions for dark backgrounds.
+PNG copies: `logo.png` and `logo-white.png` (2048 px wide, transparent), `logo-on-white.png` (2048 px square on
+white), `logo-pin.png`, `logo-pin-white.png`, `logo-icon-512.png`, and the layouts the pages use:
+`logo-lockup.png` (pin beside the name, site header), `logo-stack-light.png` (white name, dark backgrounds) and
+`logo-badge.png` (logo on a white disc: home page, e-bill, Shop display).
 
 To change the logo, replace `img/logo-source.png` (teal and white on black, as now) and run, in order:
 

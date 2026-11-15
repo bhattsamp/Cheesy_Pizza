@@ -32,6 +32,7 @@ public class MainActivity extends BridgeActivity {
     public void onCreate(Bundle savedInstanceState) {
         registerPlugin(UpiPayPlugin.class); // pay with a UPI app from checkout
         registerPlugin(ThermalPrinterPlugin.class); // Admin app: bills and KOTs on a Bluetooth printer
+        registerPlugin(UpiAlertsPlugin.class); // Admin app: read the shop UPI app's payment alerts
         super.onCreate(savedInstanceState);
         // Android keeps the page clear of the status bar and navigation buttons; colour the
         // strips behind them like the app's header and menu bar (light or dark theme).
