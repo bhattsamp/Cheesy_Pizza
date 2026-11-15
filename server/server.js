@@ -9,6 +9,7 @@ const { invoicePage } = require('./invoice');
 const otp = require('./otp');
 const upiAlerts = require('./upi-alerts');
 const backups = require('./backups');
+const zomato = require('./zomato');
 const Models = require('./models');
 const { RiderLoc, Staff } = require('./models');
 
@@ -49,6 +50,8 @@ function createApp(store) {
     const up = body.upsert || {};
     const orders = [].concat(up.orders || []).filter(o => o && o.id);
     const offers = [].concat(up.offers || []).filter(o => o && o.id);
+    const menuUp = [].concat(up.menu || []).filter(m => m && m.id);
+    const zBefore = await zomato.beforeSave(store, orders, menuUp).catch(() => ({ orders: new Map(), menu: new Map() }));
     let before = null;
     if (push.pushEnabled() && (orders.length || offers.length)) {
       before = { orders: new Map(), offers: new Map() };
@@ -62,6 +65,8 @@ function createApp(store) {
       return res.status(400).json({ error: e.message });
     }
     res.json(r);
+    const saved = new Set(Object.keys((r.revs || {}).orders || {}));
+    zomato.afterSave(store, zBefore, orders.filter(o => saved.has(String(o.id))), menuUp).catch(e => console.error('Zomato update failed:', e.message));
     if (before) {
       const withNo = o => ({ ...o, no: r.renumbered[o.id] || o.no });
       const fresh = orders.filter(o => !before.orders.has(o.id) && o.source === 'online' && o.status === 'placed').map(withNo);
@@ -77,6 +82,7 @@ function createApp(store) {
   });
 
   upiAlerts.routes(app, store, Models);
+  zomato.routes(app, store, Models);
   backups.routes(app, store, Models);
 
   /* ----- push alerts for the Admin app ----- */

@@ -23,3 +23,13 @@ services:
       # The sender address you verified in Brevo, e.g. your Gmail address
       - key: MAIL_FROM
         sync: false
+      # Zomato partner API (POS integration), given by Zomato once they approve us. Leave empty until then:
+      # Zomato orders can't come in, and the till says to accept them in the Zomato app.
+      # The secret Zomato sends with each order to /api/zomato/webhook (we pick it and give it to Zomato)
+      - key: ZOMATO_WEBHOOK_SECRET
+        sync: false
+      # Zomato's API address and our API key, for Accept, Reject, Food ready, item on/off and menu
+      - key: ZOMATO_API_BASE
+        sync: false
+      - key: ZOMATO_API_KEY
+        sync: false
