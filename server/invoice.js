@@ -54,7 +54,7 @@ table{width:100%;border-collapse:collapse;font-size:14px}th{font-weight:500;text
 .n{font-weight:600}.x{font-weight:400;color:#6b7280;font-size:12px}.c{text-align:center}.r{text-align:right;white-space:nowrap}th.c{text-align:center}th.r{text-align:right}
 .sums{border-top:2px solid #e5e7eb;margin-top:2px;padding-top:6px}.s{display:flex;justify-content:space-between;padding:5px 0;font-weight:600}.tot{border-top:2px solid #e5e7eb;margin-top:6px;padding-top:8px}
 .pm{font-weight:600;padding:6px 0}.ids{text-align:center;color:#374151;margin-top:8px;font-size:14px;line-height:1.6}.ft{text-align:center;color:#6b7280;font-size:13px;margin-top:16px;border-top:1px solid #e5e7eb;padding-top:12px}</style></head>
-<body><div class="w"><header class="hd"><img class="lg" src="/img/logo-badge.png" alt="Cheesy Pizza" width="150" height="154">
+<body><div class="w"><header class="hd"><img class="lg" src="/img/logo-badge.png" alt="Cheesy Pizza" width="150" height="150">
 ${/^cheesy pizza$/i.test(shop.trim()) ? '' : `<h1>${esc(shop)}</h1>`}${outlet.name ? `<div class="on">${esc(outlet.name)}</div>` : ''}
 ${outlet.area ? `<div class="oa">📍 ${esc(outlet.area)}</div>` : ''}${outlet.phone ? `<div class="op">📞 <a href="tel:${esc(String(outlet.phone).replace(/\s/g, ''))}">${esc(outlet.phone)}</a></div>` : ''}</header>
 <div class="grid">${cell('Order Number', o.no || '')}${cell('Date', when(o.ts))}${cell('Order amount', rs(total))}${cell('Order type', TYPES[o.type] || '')}${cell('Biller Name', o.source === 'online' ? 'Online order' : (o.by || 'Counter'))}${cell('Token No.', token || '-')}</div>

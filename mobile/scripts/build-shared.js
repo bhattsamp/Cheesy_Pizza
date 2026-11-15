@@ -17,7 +17,7 @@ const css = `<style>
 #chooser{position:fixed;inset:0;z-index:300;display:grid;place-items:center;padding:16px;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(6px);animation:chIn .35s ease}
 @keyframes chIn{from{opacity:0}}
 .ch-card{width:min(420px,100%);background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:24px 20px;text-align:center;box-shadow:0 18px 50px rgba(0,0,0,.18)}
-.ch-logo{width:56px;height:56px;margin:0 auto 10px;border-radius:50%;display:grid;place-items:center;background:var(--teal);color:var(--teal-ink);font:800 28px var(--display)}
+.ch-logo{display:block;width:150px;height:auto;margin:0 auto 12px}
 .ch-card h2{font-size:24px}.ch-card>p{color:var(--muted);margin:6px 0 16px}
 .ch-opt{display:grid;grid-template-columns:44px 1fr;grid-template-rows:auto auto;column-gap:12px;align-items:center;text-align:left;width:100%;margin:0 0 10px;padding:14px;border-radius:16px;border:2px solid var(--line);background:var(--surface2);color:var(--ink);cursor:pointer;font:inherit;transition:transform .15s,border-color .15s}
 .ch-opt:hover,.ch-opt:focus-visible{border-color:var(--teal);transform:translateY(-2px)}

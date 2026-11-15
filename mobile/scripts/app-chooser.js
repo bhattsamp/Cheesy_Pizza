@@ -12,7 +12,7 @@
   if(role)setRole(role);
   function chooser(){
     const el=document.createElement('div');el.id='chooser';el.setAttribute('role','dialog');el.setAttribute('aria-label','Choose an app');
-    el.innerHTML=`<div class="ch-card"><div class="ch-logo">C</div><h2>Welcome to Cheesy Pizza</h2><p>Who is using this device?</p>
+    el.innerHTML=`<div class="ch-card"><img class="ch-logo" src="img/logo.svg" alt="Cheesy Pizza"><h2>Welcome to Cheesy Pizza</h2><p>Who is using this device?</p>
       <button class="ch-opt" data-r="customer"><span>🍕</span><b>Customer app</b><small>Browse the menu, order and track it live</small></button>
       ${ownerOk()?`<button class="ch-opt" data-r="owner"><span>🧑‍🍳</span><b>Owner app</b><small>POS, kitchen and new-order alerts</small></button>`:''}
       <p class="ch-note">Both apps share the same live orders. You can switch later from the menu footer.</p></div>`;
