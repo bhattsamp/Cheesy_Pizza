@@ -745,6 +745,9 @@ html:has(#modalRoot:not(:empty)),html:has(#boardRoot:not(:empty)),html:has(#choo
 .waits button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 .waits input{width:70px;padding:4px 8px}
 .ringpop{position:fixed;left:50%;top:calc(12px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:65;width:min(440px,calc(100% - 24px));max-height:calc(100vh - 24px);overflow:auto;background:var(--surface);border:2px solid var(--plum);border-radius:18px;box-shadow:var(--shadow-lg);padding:12px;display:flex;flex-direction:column;gap:10px;animation:ringIn .35s cubic-bezier(.2,.9,.3,1.3)}
+/* a Zomato accept or reject sheet sits above the order pop-ups, so hide them while it is open */
+body:has(.modal .zsheet) .online,body:has(.modal .zsheet) .ringpop{display:none}
+.zlog{display:flex;flex-direction:column;gap:2px}
 .ringpop .bell{font-size:24px;display:inline-block;animation:bellShake 1s ease-in-out infinite;transform-origin:50% 10%}
 .ringpop .rp1{background:var(--plum-soft);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:6px}
 @keyframes ringIn{from{opacity:0;transform:translate(-50%,-20px) scale(.95)}to{opacity:1;transform:translateX(-50%)}}
@@ -4057,9 +4060,9 @@ function onlineBanner(){
   // Floats over the screen as a popup. "Later" shrinks it to a small pill until another order comes in.
   const ids=pl.map(o=>o.id).join();if(U.onlMin&&U.onlMin!==ids&&pl.some(o=>!U.onlMin.split(',').includes(o.id)))U.onlMin=null;
   if(U.onlMin)return `<button class="onlpill" data-act="onl-max">${pl.length} online order${pl.length>1?'s':''} waiting · Open</button>`;
-  return `<div class="online" role="region" aria-label="New online orders"><div class="row"><b class="grow">${pl.length} new online order${pl.length>1?'s':''} from the customer site</b>${ringTimer||ringAudio?'<button class="btn sm" data-act="mute-ring">Stop ringing</button>':''}<button class="btn sm" data-act="onl-min" data-v="${ids}">Later</button></div>
-    ${pl.map(o=>`<div class="on1"><b class="num">${o.no}</b><span class="small">${fmtTime(o.ts)} · ${esc(o.customer.name)} · <span class="num">${fmtPhone(o.customer.phone)}</span> · ${TYPES[o.type]}${o.scheduled?' · for '+esc(o.scheduled):''}</span>
-      <span class="small muted">${o.items.map(l=>l.qty+'× '+esc(l.name)+(l.size?' '+sizeLabel(l.size):'')).join(', ')}</span>
+  return `<div class="online" role="region" aria-label="New online orders"><div class="row"><b class="grow">${pl.every(isZom)?`${pl.length} new Zomato order${pl.length>1?'s':''}`:`${pl.length} new online order${pl.length>1?'s':''}${pl.some(isZom)?' (site and Zomato)':' from the customer site'}`}</b>${ringTimer||ringAudio?'<button class="btn sm" data-act="mute-ring">Stop ringing</button>':''}<button class="btn sm" data-act="onl-min" data-v="${ids}">Later</button></div>
+    ${pl.map(o=>`<div class="on1"><b class="num">${onNo(o)}</b><span class="small">${fmtTime(o.ts)} · ${esc(o.customer.name)}${o.customer.phone?` · <span class="num">${fmtPhone(o.customer.phone)}</span>`:''} · ${TYPES[o.type]}${o.scheduled?' · for '+esc(o.scheduled):''}</span>
+      <span class="small muted">${o.items.map(l=>l.qty+'× '+esc(l.name)+(l.size?' '+sizeLabel(l.size):'')).join(', ')}</span>${o.note?`<span class="small cook">${esc(o.note)}</span>`:''}
       <div class="acts"><b class="num">${rs(o.total)}</b>${payTag(o)}<button class="btn sm ok" data-act="accept" data-id="${o.id}">Accept</button><button class="btn sm bad" data-act="reject" data-id="${o.id}">Reject</button></div></div>`).join('')}</div>`;
 }
 let seenPlaced=null;
@@ -4105,8 +4108,8 @@ function renderRing(){
   if(!list.length){root.innerHTML='';return}
   root.innerHTML=`<div class="ringpop" role="alertdialog" aria-label="New online order"><div class="row"><span class="bell" aria-hidden="true">🔔</span><b class="grow">${list.length>1?list.length+' new online orders':'New online order'}</b>
     ${ringTimer||ringAudio?'<button class="btn sm" data-act="mute-ring">Stop ringing</button>':''}<button class="x" data-act="hide-ring" aria-label="Close">×</button></div>
-    ${list.map(o=>`<div class="rp1"><div class="row"><b class="num">${o.no}</b><span class="small muted grow">${fmtTime(o.ts)} · ${TYPES[o.type]}</span><b class="num">${rs(o.total)}</b></div>
-      <div class="small">${esc(o.customer.name)} · <span class="num">${fmtPhone(o.customer.phone)}</span>${o.address?' · '+esc(o.address):''}</div>
+    ${list.map(o=>`<div class="rp1"><div class="row"><b class="num">${onNo(o)}</b><span class="small muted grow">${fmtTime(o.ts)} · ${TYPES[o.type]}</span><b class="num">${rs(o.total)}</b></div>
+      <div class="small">${esc(o.customer.name)}${o.customer.phone?` · <span class="num">${fmtPhone(o.customer.phone)}</span>`:''}${o.address?' · '+esc(o.address):''}</div>${o.note?`<div class="small cook">${esc(o.note)}</div>`:''}
       <div class="small muted">${o.items.map(l=>l.qty+'× '+esc(l.name)+(l.size?' '+sizeLabel(l.size):'')).join(', ')}</div>
       <div class="row"><button class="btn ok grow" data-act="accept" data-id="${o.id}">Accept</button><button class="btn bad grow" data-act="reject" data-id="${o.id}">Reject</button></div></div>`).join('')}</div>`;
 }
@@ -4605,7 +4608,7 @@ function kCard(o,where,foot){const kit=where==='kitchen';const mins=Math.floor((
   const h=o.status==='placed'?265:o.status==='out'?200:Math.round(130*Math.max(0,Math.min(1,1-mins/w)));
   return `<div class="kt ${o.status==='placed'?'placed':''} ${live&&left<0?'late':''} ${kit?'':'kc'}" style="--h:${h}" ${kit&&o.status==='preparing'?`data-act="ktap" data-id="${o.id}"`:''}>
     <div class="kfoot ktop"><span class="kwho">${esc(kName(o))}${kit?ltChip(o):''}</span><span class="num">${esc(o.customer.phone?fmtPhone(o.customer.phone):'—')}</span><span>${TYPES[o.type]}${o.table?' · T'+esc(o.table):''}</span><span class="${o.paid?'pd':'bk'}">${o.paid?'Payment done':'Baki'}</span></div>
-    <div class="row kr1"><span class="no num">${zNo(o)}</span><span class="grow"></span>${live?`<span class="left num">${leftText(left)}</span>`:kit?`<span class="chip ${o.type==='zomato'?'r':'t'}">${TYPES[o.type]}${o.table?' · T'+esc(o.table):''}</span>`:`<span class="chip ${o.status}">${statusName(o.status,o.type)}</span>`}</div>
+    <div class="row kr1"><span class="no num">${zNo(o)}</span>${o.zrider&&!['done','cancelled'].includes(o.status)?`<span class="chip t zrider" title="Zomato rider${o.zrider.phone?' · '+esc(o.zrider.phone):''}${o.zrider.status?' · '+esc(o.zrider.status):''}">🛵 ${esc(o.zrider.name||'Rider')}</span>`:''}<span class="grow"></span>${live?`<span class="left num">${leftText(left)}</span>`:kit?`<span class="chip ${o.type==='zomato'?'r':'t'}">${TYPES[o.type]}${o.table?' · T'+esc(o.table):''}</span>`:`<span class="chip ${o.status}">${statusName(o.status,o.type)}</span>`}</div>
     <div class="row kr2"><span class="small muted num grow">${fmtTime(o.ts)} · ${mins<1?'now':mins+' min'}${o.source==='online'?' · online':''}</span>${o.status==='preparing'||o.status==='placed'||(!kit&&o.status==='ready')?`<button class="btn sm" data-act="set-wait" data-id="${o.id}" title="Change waiting time">⏱ ${w}</button><button class="btn sm ok" data-act="wait-5" data-id="${o.id}" title="Add 5 minutes to the waiting time (tap again for more)">+5</button>`:''}${!kit&&o.status==='ready'?`<button class="btn sm kback" data-act="back-kitchen" data-id="${o.id}" title="Marked ready by mistake? Send it back to the kitchen" aria-label="Back to kitchen">↩</button>`:''}${(o.status==='preparing'||o.status==='placed'||!kit)&&o.type!=='delivery'?obHideBtn(o,true):''}</div>
     ${o.scheduled?`<span class="chip c" style="align-self:flex-start">Scheduled for ${esc(o.scheduled)}</span>`:''}
     ${o.bookAt?`<span class="chip bkchip" style="align-self:flex-start">Advance booking · ${esc(advWhen(o.bookAt))}</span>`:''}
@@ -5661,6 +5664,7 @@ function vOutlets(){const own=staff()?.role==='owner';
     <div class="row"><div class="field grow"><label for="olt1-${o.id}">First tap</label><input class="inp" id="olt1-${o.id}" data-ou="${o.id}" data-f="lt1" value="${esc(o.lt1||'')}" placeholder="L&amp;T" maxlength="20" ${own?'':'readonly'}></div>
     <div class="field grow"><label for="olt2-${o.id}">Second tap</label><input class="inp" id="olt2-${o.id}" data-ou="${o.id}" data-f="lt2" value="${esc(o.lt2||'')}" placeholder="Super L&amp;T" maxlength="20" ${own?'':'readonly'}></div></div>
     <span class="small muted">The tag button on the order screen. It shows beside the name on the till, kitchen and order screens only, never on a bill, KOT or WhatsApp. ${own?'':'Only the owner can change the wording.'}</span>
+    ${zomCard(o,own)}
     <div class="grp-h">Till options</div>
     <label class="opt"><input type="checkbox" data-poscoupon="${o.id}" ${o.posCoupon?'checked':''} ${own?'':'disabled'}> Show the coupon code box on the New order screen</label>
     <div class="grp-h">Bill & GST details</div>
@@ -5858,6 +5862,8 @@ document.addEventListener('click',e=>{
     case 'dsp-noimg':{if(!dspOwner())break;const c=(dspCfg().custom||[]).find(x=>x.id===el.dataset.id);if(c){delete c.img;save();render()}break}
     case 'dsp-del':{if(!dspOwner())break;const id=el.dataset.id;askConfirm('Delete this slide?','It will stop showing on the shop TV.','Delete',()=>{const D=dspCfg();D.custom=(D.custom||[]).filter(c=>c.id!==id);D.order=(D.order||[]).filter(k=>k!=='c_'+id);save();render();toast('Slide deleted')});break}
     case 'dsp-reset':{if(!dspOwner())break;askConfirm('Go back to the standard show?','Timing, order, on/off, words and spotlight picks go back to normal. Your own slides are kept.','Reset',()=>{const o=cur(),keep=(o.display||{}).custom;o.display=keep&&keep.length?{custom:keep}:{};save();render();toast('Shop display reset')});break}
+    case 'zom-menu':zomMenu(el.dataset.o);break;
+    case 'zom-log':U.zomLog=!U.zomLog;U.zst=null;render();break;
     case 'gst-rate':{const o=S.outlets.find(x=>x.id===el.dataset.o);if(!o)break;if(staff()?.role!=='owner'){toast('Only the owner can change GST settings');break}o.gstRate=+el.dataset.v;save();render();toast('Tax set to '+(o.gstRate?o.gstRate+'%':'none')+' for '+o.name);break}
     case 'pos-opts':P.opts=1;render();break;
     case 'lrm':P.cart.splice(+el.dataset.i,1);render();break;
@@ -5869,8 +5875,8 @@ document.addEventListener('click',e=>{
     case 'ksz-reset':kszSet(null);render();break;
     case 'ktap':{const id=el.dataset.id,now=Date.now();
       if(U.lastTap[id]&&now-U.lastTap[id]<400){const o=find(id);if(o.status==='preparing'){setStatus(o,'ready');toast(o.no+' ready → counter');render()}U.lastTap[id]=0}else U.lastTap[id]=now;break}
-    case 'accept':{const o=find(el.dataset.id);setStatus(o,'preparing');ringDone(o.id);toast(o.no+' accepted');render();if(btp()&&btGet()&&btGet().autoKot!==false)btPrint(kotText(o));break}
-    case 'reject':{const o=find(el.dataset.id);refundOrder(o);{const c=S.customers[o.customer.phone];if(c)c.coins=Math.max(0,(c.coins||0)+(o.coinsUsed||0)-(o.coinsEarned||0))}setStatus(o,'cancelled');ringDone(o.id);toast(o.no+' rejected');render();break}
+    case 'accept':{const o=find(el.dataset.id);if(isZom(o)){zomAccept(o);break}setStatus(o,'preparing');ringDone(o.id);toast(o.no+' accepted');render();if(btp()&&btGet()&&btGet().autoKot!==false)btPrint(kotText(o));break}
+    case 'reject':{const o=find(el.dataset.id);if(isZom(o)){zomReject(o);break}refundOrder(o);{const c=S.customers[o.customer.phone];if(c)c.coins=Math.max(0,(c.coins||0)+(o.coinsUsed||0)-(o.coinsEarned||0))}setStatus(o,'cancelled');ringDone(o.id);toast(o.no+' rejected');render();break}
     case 'handover':case 'delivered':{const o=find(el.dataset.id);setStatus(o,'done');toast(o.no+' · '+doneLabel(o.type));render();break}
     case 'dispatch':{const o=find(el.dataset.id);const nm=document.getElementById('rs-'+o.id).value;o.rider=(cur().riders||[]).find(r=>r.name===nm);setStatus(o,'out');toast(o.no+' out with '+nm);render();break}
     case 'board':openOrderScreen();break;
@@ -5968,7 +5974,8 @@ document.addEventListener('input',e=>{
     if(!UPI_RE.test(v)){if(hint)hint.innerHTML='<span style="color:var(--bad)">Enter a UPI ID like name@okaxis. Not saved yet.</span>';return}
     const had=!!o.upi;o.upi=v;save();if(hint)hint.textContent='Saved. Customers of this branch now pay to '+v+'.';
     if(!had)return render();const q=document.querySelector(`#oqr-${o.id}`);if(q){const d=q.querySelector('[data-qr]');d.dataset.qr=shopQr(o);drawQr(d);q.querySelector('.num').textContent=v}return}
-  if(t.dataset.ou&&['legal','gstin','fssai','area','review','ownerPhone','lt1','lt2'].includes(t.dataset.f)&&staff()?.role!=='owner')return;
+  if(t.dataset.ou&&['legal','gstin','fssai','area','review','ownerPhone','lt1','lt2','zomatoResId'].includes(t.dataset.f)&&staff()?.role!=='owner')return;
+  if(t.dataset.ou&&t.dataset.f==='zomatoResId'){t.value=t.value.replace(/[^\w-]/g,'').slice(0,24)}
   if(t.dataset.ou&&t.dataset.f==='gstin'){t.value=t.value.toUpperCase().replace(/[^0-9A-Z]/g,'')}
   if(t.dataset.ou&&t.dataset.f==='ownerPhone'){t.value=t.value.replace(/\D/g,'').slice(0,10)}
   if(t.dataset.ou){const o=S.outlets.find(x=>x.id===t.dataset.ou);o[t.dataset.f]=t.value;save();document.getElementById('outletSel').innerHTML=liveOutlets().map(o=>`<option value="${o.id}" ${o.id===cur().id?'selected':''}>${esc(o.name)}</option>`).join('')}
@@ -6236,6 +6243,66 @@ function startPolling(){setInterval(async()=>{
   if(S.mode==='pos'&&['kitchen','counter','orders','book'].includes(U.pos.tab)&&!mroot.innerHTML&&!isBusy()){render();return}
   if(changed&&!mroot.innerHTML&&!isBusy())render();
 },5000)}
+
+/* ================= Zomato =================
+   Zomato orders come in through Zomato's partner API (server/zomato.js): each one is saved as a
+   'placed' Zomato order, so it rings like an online order. Accept asks the prep time and Reject asks
+   why; the server passes both, and Ready from the kitchen, on to Zomato. Outlets › Zomato holds the
+   outlet's Zomato ID, the link status, Send menu to Zomato and the last messages to Zomato. */
+const isZom=o=>!!o&&o.type==='zomato'&&o.source==='zomato';
+const onNo=o=>o.type==='zomato'&&o.zomatoId?'Zomato '+esc(o.zomatoId):esc(o.no);
+const ZOM_PREP=[10,15,20,25,30,40];
+const ZOM_WHY=[['stock','Items out of stock'],['busy','Kitchen is too busy'],['closed','Outlet closed'],['other','Other reason']];
+const ZOM_WHAT={accept:'Accept',reject:'Reject',ready:'Food ready',stock:'Item on/off',menu:'Menu'};
+function zomHead(o,t){return `<div class="mh"><h3>${t} Zomato ${esc(o.zomatoId)}</h3><button class="x" data-act="close" aria-label="Close">×</button></div>
+  <div class="mb zsheet"><div class="small muted">${esc(o.customer.name||'Zomato customer')} · ${fmtTime(o.ts)} · <b class="num">${rs(o.total)}</b></div>
+  <div class="small">${o.items.map(l=>l.qty+'× '+esc(l.name)+(l.size?' '+sizeLabel(l.size):'')+(l.zomatoOnly?' <span class="chip amber">not on our menu</span>':'')).join(', ')}</div>${o.note?`<div class="small cook">${esc(o.note)}</div>`:''}`}
+function zomAccept(o){
+  let w=ZOM_PREP.includes(+o.wait)?+o.wait:15;
+  const draw=()=>showModal(zomHead(o,'Accept')+`<b>Food ready in</b><div class="waits">${ZOM_PREP.map(m=>`<button data-act="zp" data-v="${m}" aria-pressed="${m===w}">${m} min</button>`).join('')}</div>
+    <div class="row" style="gap:8px"><button class="btn ok solid lg" style="flex:1" data-act="zok">Accept · ${w} min</button><button class="btn lg" data-act="close">Back</button></div></div>`,
+    {onAct:(act,el)=>{
+      if(act==='zp'){w=+el.dataset.v;draw();return true}
+      if(act==='zok'){if(o.status!=='placed'){closeModal();toast('Zomato '+o.zomatoId+' is already '+statusName(o.status,o.type));return true}
+        o.wait=w;setStatus(o,'preparing');ringDone(o.id);closeModal();render();toast('Zomato '+o.zomatoId+' accepted · ready in '+w+' min');
+        if(btp()&&btGet()&&btGet().autoKot!==false)btPrint(kotText(o));zomCheck(o,'accept');return true}
+      return false}});
+  draw();
+}
+function zomReject(o){
+  showModal(zomHead(o,'Reject')+`<b>Why?</b><div class="uapick">${ZOM_WHY.map(([k,t])=>`<button data-act="zr" data-v="${k}"><span>${t}</span></button>`).join('')}</div>
+    <button class="btn lg" data-act="close">Back</button></div>`,
+    {onAct:(act,el)=>{
+      if(act!=='zr')return false;
+      if(o.status!=='placed'){closeModal();toast('Zomato '+o.zomatoId+' is already '+statusName(o.status,o.type));return true}
+      const k=el.dataset.v;o.cancel={by:staff()?.name||'',code:k,why:(ZOM_WHY.find(x=>x[0]===k)||[])[1],at:Date.now(),was:'placed'};
+      setStatus(o,'cancelled');ringDone(o.id);closeModal();render();toast('Zomato '+o.zomatoId+' rejected');zomCheck(o,'reject');return true}});
+}
+// A few seconds after a change, see whether Zomato took it; if not, say so, so staff use the Zomato app
+function zomCheck(o,what){setTimeout(async()=>{try{const r=await api('/api/zomato/status');U.zst=r;
+  const e=(r.log||[]).find(x=>x.what===what&&x.ref===o.zomatoId);if(!e)return;
+  if(e.offline)toast('Not linked to Zomato yet: also '+ZOM_WHAT[what].toLowerCase()+' Zomato '+o.zomatoId+' in the Zomato app',6000);
+  else if(!e.ok)toast('Zomato did not take the '+ZOM_WHAT[what].toLowerCase()+' for '+o.zomatoId+': do it in the Zomato app',7000)}catch(_){}},3500)}
+async function zomMenu(oid){
+  const su=staff(),o=S.outlets.find(x=>x.id===oid);if(!o)return;
+  if(!su||!['owner','oowner'].includes(su.role)){toast('Only the owner can send the menu');return}
+  if(!o.zomatoResId){toast('Type the Zomato outlet ID first');return}
+  const pin=prompt('Enter your PIN to send the menu to Zomato for '+o.name);if(!pin)return;
+  try{const r=await api('/api/zomato/menu',{staffId:su.id,pin,outletId:oid});U.zst=null;render();
+    toast(r.offline?'Not linked to Zomato yet, so the menu was not sent':r.ok?r.items+' items sent to Zomato':'Zomato did not take the menu: '+r.msg,6000)}catch(e){toast(e.message)}
+}
+function zomCard(o,own){
+  const st=U.zst;if(!st&&!U.zstAsk){U.zstAsk=true;api('/api/zomato/status').then(r=>{U.zst=r;U.zstAsk=false;if(S.mode==='pos'&&U.pos.tab==='outlet'&&!mroot.innerHTML&&!isBusy())render()}).catch(()=>{U.zstAsk=false})}
+  const on=st&&st.connected,log=(st&&st.log||[]).slice(0,U.zomLog?20:4);
+  return `<div class="grp-h">Zomato</div>
+    <div class="field"><label for="ozr-${o.id}">Zomato outlet ID (Res ID)</label><input class="inp num" id="ozr-${o.id}" data-ou="${o.id}" data-f="zomatoResId" value="${esc(o.zomatoResId||'')}" placeholder="e.g. 19012345" inputmode="numeric" autocomplete="off" ${own?'':'readonly'}>
+      <span class="small muted">The number in the Zomato Restaurant Partner app under Outlet info. Zomato orders for this ID come to this outlet.</span></div>
+    <div class="row" style="gap:8px;flex-wrap:wrap;align-items:center"><span class="chip ${on?'ready':'amber'}">${!st?'Checking…':on?'Linked to Zomato':'Not linked to Zomato yet'}</span>${st&&!st.webhook?'<span class="chip">Order link off</span>':''}
+      ${own&&o.zomatoResId?`<button class="btn sm" data-act="zom-menu" data-o="${o.id}">Send menu to Zomato</button>`:''}</div>
+    <span class="small muted">${on?'Accept, Reject, Food ready and items switched off in Menu are sent to Zomato.':'New Zomato orders show here once Zomato approves our POS link. Until then accept them in the Zomato app.'}</span>
+    ${log.length?`<div class="small zlog">${log.map(e=>`<div><span class="muted num">${fmtTime(e.at)}</span> ${ZOM_WHAT[e.what]||esc(e.what)}${e.ref?' · <span class="num">'+esc(e.ref)+'</span>':''} · <span style="color:${e.ok?'var(--ok)':e.offline?'var(--muted)':'var(--bad)'}">${esc(e.ok?'Done':e.offline?'not linked':e.msg)}</span></div>`).join('')}</div>
+      <button class="btn sm" data-act="zom-log">${U.zomLog?'Show less':'Show more'}</button>`:''}`;
+}
 
 /* ================= UPI payment alerts =================
    The Admin app on a shop phone reads the shop UPI app's "Received ₹450 from ..." alerts and sends

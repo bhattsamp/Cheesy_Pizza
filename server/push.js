@@ -46,7 +46,7 @@ async function notifyNewOrders(orders) {
     const paid = o.pay && o.pay.app && o.paid ? ` · ✅ ₹${(o.total || 0) - (o.walletUsed || 0)} paid` : '';
     const r = await messaging.sendEachForMulticast({
       tokens,
-      notification: { title: `🔔 New online order ${o.no || ''}`.trim() + paid, body: orderText(o) },
+      notification: { title: o.type === 'zomato' ? `🔔 New Zomato order ${o.zomatoId || o.no || ''}`.trim() : `🔔 New online order ${o.no || ''}`.trim() + paid, body: orderText(o) },
       data: { orderId: String(o.id) },
       android: {
         priority: 'high',
