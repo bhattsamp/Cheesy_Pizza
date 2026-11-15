@@ -11,7 +11,7 @@ const svg = (inner, style = '') => `<svg viewBox="0 0 1024 1024" preserveAspectR
 // The name as on the logo (CHEESY PIZZA(TM) and "Really Cheesy...!", from img/logo-wordmark.svg);
 // the Admin app adds an ADMIN pill under it
 const WORDMARK = require('./logo.js').wordmark;
-const word = admin => WORDMARK(admin ? 540 : 700) +
+const word = admin => WORDMARK(admin ? 540 : 680) +
   (admin ? `<div style="margin-top:6px;display:inline-block;${FONT};font-size:32px;letter-spacing:8px;color:#fff;background:#10A1BC;border-radius:40px;padding:4px 28px 4px 36px">ADMIN</div>` : '');
 async function shot(page, html, w, h, file, transparent) {
   await page.setViewportSize({ width: w, height: h });
