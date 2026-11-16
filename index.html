@@ -5631,7 +5631,7 @@ function vDisplayAdm(){
     <div class="grp-h">TV link</div>
     <div class="row"><a class="btn pri" href="${esc(link)}" target="_blank" rel="noopener">Open the display ↗</a><span class="small num" style="word-break:break-all">${esc(link)}</span></div>
     <span class="small muted">Open this link on the shop TV and tap once for full screen.${liveOutlets().length>1?' Switch outlet at the top to set up the other branch.':''}</span>
-    <div class="row"><a class="btn" href="${esc(location.origin+'/menu-board'+(liveOutlets().length>1?'?outlet='+o.id:''))}" target="_blank" rel="noopener">Open the menu board ↗</a><span class="small muted">The whole menu on one screen, for a second TV. It follows the menu and prices on its own.</span></div>
+    <div class="row"><a class="btn" href="${esc(location.origin+'/menu-board'+(liveOutlets().length>1?'?outlet='+o.id:''))}" target="_blank" rel="noopener">Open the menu board ↗</a><span class="small muted">The whole menu on one screen, for a second TV. It follows the menu and prices on its own. Add ?look=cards for two menu cards side by side, or ?look=dark for the dark board with photos.</span></div>
     <div class="grp-h">Timing</div>
     <div class="row" style="gap:12px"><div class="field"><label>Each slide stays</label>${opt('show',[8,10,12,15,20,25,30,45,60],+d.show||15)}</div><div class="field"><label>Change to the next slide takes</label>${opt('change',[1,2,3,4,5,6,8,10,12],+d.change||5)}</div></div>
     <div class="grp-h">Slide change</div>

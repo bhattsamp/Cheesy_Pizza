@@ -106,6 +106,64 @@ footer .addr svg{width:28px;height:28px;flex:none}
 footer .book{font-size:28px;font-weight:800;white-space:nowrap}
 footer .book em{font-style:normal;background:#fff;color:var(--red);border-radius:8px;padding:2px 12px 0}
 
+/* ---------- look 2: two menu cards side by side ---------- */
+.only-cards{display:none}
+.look-cards .only-cards{display:flex}
+.look-cards #stage{background:#d9f3ec}
+.look-cards #stage>header,.look-cards #stage>footer,.look-cards .wm{display:none}
+.look-cards main{padding:22px 26px;gap:22px}
+.look-cards #left{flex:1.3 1 0}.look-cards #right{flex:1 1 0}
+.look-cards .panel{background:#fff;border:4px solid var(--teal);border-radius:22px;box-shadow:0 14px 30px rgba(14,138,117,.18);padding:16px 26px 14px;display:flex;flex-direction:column}
+.look-cards #right{border-left:4px solid var(--teal);padding-left:26px}
+.look-cards #pzbody{flex:1;min-height:0;overflow:hidden}
+.look-cards .pz{grid-template-columns:1fr}
+.chead1{align-items:center;gap:14px;padding-bottom:10px;border-bottom:3px dashed var(--line);margin-bottom:8px;flex:none}
+.chead1 img{height:78px}
+.chead1 h2{font-family:'Blogger Sans',Oswald,sans-serif;font-weight:400;font-size:66px;line-height:.9;color:var(--teal);flex:1;white-space:nowrap}
+.chead1 h2 sup{font-size:20px;vertical-align:top}
+.chead1 .ph{color:var(--red);font-size:44px}
+.chead2{align-items:center;justify-content:space-between;gap:16px;padding-bottom:12px;border-bottom:3px dashed var(--line);margin-bottom:8px;flex:none}
+.chead2 .nomayo b{font-size:34px}.chead2 .nomayo small{font-size:17px}
+.hrs2{text-align:center;line-height:1.1}.hrs2 span{display:block;color:var(--muted);font-weight:600;font-size:18px}.hrs2 b{font-size:26px}
+.cfoot{flex:none;flex-direction:column;gap:6px;border-top:3px dashed var(--line);padding-top:8px;margin-top:6px}
+.addr2{display:flex;align-items:center;gap:8px;font-weight:700;font-size:22px}.addr2 svg{width:24px;height:24px;color:var(--orange)}
+.steps{display:flex;align-items:center;justify-content:space-between;background:var(--teal);color:#fff;border-radius:12px;padding:6px 16px;font-size:24px;font-weight:600}
+.steps i{font-style:normal;opacity:.8}
+.look-cards .hero img{max-height:100%}
+.look-cards .pr{padding:calc(var(--k)*4px) 0}
+.look-cards .pr .nm{font-size:calc(var(--k)*40px)}.look-cards .pr .n{font-size:calc(var(--k)*30px);line-height:calc(var(--k)*46px)}
+.look-cards .pr .d{font-size:calc(var(--k)*23px)}.look-cards .pr .p{font-size:calc(var(--k)*46px)}
+.look-cards .phead .sz{font-size:calc(var(--k)*44px)}
+.look-cards .it .nm{font-size:calc(var(--k)*40px)}.look-cards .it .p{font-size:calc(var(--k)*46px)}.look-cards .cat .ch{font-size:calc(var(--k)*52px)}
+.look-cards .cat .note{font-size:calc(var(--k)*22px)}
+.look-cards .add b{font-size:calc(var(--k)*30px)}.look-cards .add span{font-size:calc(var(--k)*32px)}
+
+/* ---------- look 3: dark board with photos ---------- */
+.look-dark{--teal:#3fd8bd;--teal-d:#3fd8bd;--mint:rgba(63,216,189,.12);--ink:#fff;--muted:#a6c8ce;--line:rgba(63,216,189,.35);--gold:#ffc83d}
+.look-dark body,.look-dark #fit,.look-dark #stage{background:#0b3a43}
+.look-dark #stage{background:radial-gradient(ellipse at 30% 40%,#0f4f5b 0%,#0b3a43 55%,#072a31 100%)}
+.look-dark .wm{opacity:.05;filter:brightness(3)}
+.look-dark .contact .ph{color:var(--gold)}
+.look-dark .contact .ph svg *{stroke:#fff}.look-dark .contact .ph svg path{fill:#fff}
+.look-dark .vegmark{color:#4fd06a}.look-dark .vegmark i{border-color:#4fd06a;background:#fff}.look-dark .vegmark i::after{background:var(--green)}
+.look-dark .usp{color:var(--gold)}
+.look-dark .pr .d{display:none}
+.look-dark .pr{align-items:center;border-bottom:1px solid rgba(255,255,255,.06)}
+.look-dark .pr.tier{border-top:2px dashed var(--line)}
+.look-dark .pr .p,.look-dark .it .p{color:var(--gold)}
+.look-dark .phead .sz{color:var(--gold)}
+.look-dark .add b{color:#fff}.look-dark .add span{color:var(--gold)}
+.look-dark footer{background:var(--gold);color:#3a2800}
+.look-dark footer .book em{background:#3a2800;color:var(--gold)}
+.look-dark footer .addr svg{fill:#3a2800}
+.look-dark .ch img.ico{border-color:var(--gold)}
+.look-dark #left{display:flex;flex-direction:column}.look-dark #pzbody{flex:none}
+.look-dark footer .mayo{color:#fff}
+.hero.pics{flex:1 1 0;min-height:250px;margin-top:12px;display:grid;grid-template-columns:repeat(4,1fr);gap:12px;align-items:stretch}
+.hero.pics figure{position:relative;border-radius:16px;overflow:hidden;min-height:0;border:3px solid rgba(255,200,61,.6)}
+.hero.pics img{width:100%;height:100%;object-fit:cover;filter:none;display:block}
+.hero.pics figcaption{position:absolute;left:0;right:0;bottom:0;padding:18px 12px 6px;background:linear-gradient(transparent,rgba(0,0,0,.75));font-size:20px;color:#fff}
+
 #tapme{position:fixed;left:50%;bottom:110px;translate:-50% 0;background:rgba(19,49,58,.85);color:#fff;padding:10px 22px 6px;border-radius:99px;font-weight:700;transition:opacity .6s;pointer-events:none;z-index:5}
 </style>
 </head>
@@ -128,8 +186,10 @@ footer .book em{font-style:normal;background:#fff;color:var(--red);border-radius
     </div>
   </header>
   <main>
-    <section class="panel" id="left"></section>
-    <section class="panel" id="right"><div class="sides" id="sides"></div></section>
+    <section class="panel" id="left"><div class="chead1 only-cards"><img src="img/logo-pin.svg" alt=""><h2>CHEESY PIZZA<sup>TM</sup></h2><div class="ph os"><span id="phone2"></span></div></div><div id="pzbody"></div></section>
+    <section class="panel" id="right"><div class="chead2 only-cards"><div class="nomayo os"><b>No Mayonnaise</b><small>in any product</small></div><div class="hrs2"><span>Open daily</span><b id="hrs2"></b></div><div class="vegmark"><i></i>PURE VEG</div></div><div class="sides" id="sides"></div>
+      <div class="cfoot only-cards"><div class="addr2"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg><span id="addr2"></span></div>
+        <div class="steps os"><span>Save our number</span><i>→</i><span>Call us</span><i>→</i><span>Book order</span><i>→</i><span>Pay first</span></div></div></section>
   </main>
   <footer>
     <span class="mayo">We don't use Mayonnaise in any product</span>
@@ -142,6 +202,13 @@ footer .book em{font-style:normal;background:#fff;color:var(--red);border-radius
 const $=s=>document.querySelector(s),Q=new URLSearchParams(location.search);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let D=null;
+/* three looks: ?look=classic (default, one wide menu), cards (two menu cards side by side, like the printed ones), dark (dark board with photos) */
+const LOOK=({'1':'classic','2':'cards','3':'dark'})[Q.get('look')]||(['cards','dark'].includes(Q.get('look'))?Q.get('look'):'classic');
+document.documentElement.className='look-'+LOOK;
+/* the bottom of the right column: a pizza photo, or on the dark board a few photos from the menu */
+function hero(menu){if(LOOK!=='dark')return '<div class="hero"><img src="img/hero-pizza.webp" alt=""></div>';
+  const seen=new Set(),pics=menu.filter(m=>m.img&&!seen.has(m.img)&&seen.add(m.img)).sort((a,b)=>(b.cat==='pizza')-(a.cat==='pizza')).slice(0,4);
+  return `<div class="hero pics">${pics.map(m=>`<figure><img src="img/${esc(m.img)}.jpg" alt="" onerror="this.parentNode.remove()"><figcaption class="os">${esc(m.name)}</figcaption></figure>`).join('')}</div>`}
 
 const outlet=()=>{const o=(D.outlets||[]).filter(x=>x.active!==false);return o.find(x=>x.id===Q.get('outlet'))||(D.outlets||[]).find(x=>x.id===Q.get('outlet'))||o[0]||{}};
 const hr12=h=>h%12||12,hrText=h=>h===12?'12 noon':hr12(h)+(h<12||h===24?' am':' pm');
@@ -181,25 +248,26 @@ function addons(szs){const out=[],seen=new Set();
 
 function render(){
   const o=outlet(),cfg=D.config||{},h1=+o.openHour||+cfg.openHour||12,h2=+o.closeHour||+cfg.closeHour||22;
-  $('#phone').textContent=phoneText(o.phone||'7778043066');
+  $('#phone').textContent=$('#phone2').textContent=phoneText(o.phone||'7778043066');
+  $('#hrs2').textContent=`${hrText(h1)} to ${hrText(h2)}`;
   $('#hrs').innerHTML=`<span>Open daily</span>${hrText(h1)} to ${hrText(h2)}`;
-  $('#addr').textContent=o.area&&o.area!=='Set your address'?o.area:'B/H Gopi Cinema, Maniyani Khad, Anand, Gujarat';
+  $('#addr').textContent=$('#addr2').textContent=o.area&&o.area!=='Set your address'?o.area:'B/H Gopi Cinema, Maniyani Khad, Anand, Gujarat';
   const szs=sizes(),menu=(D.menu||[]).filter(live),cl=cats();
   // categories priced by size (pizza) get the big table on the left; the rest go in the right column
   const left=[],right=[];
   cl.forEach(c=>{const its=menu.filter(m=>m.cat===c.id);if(!its.length)return;(its.filter(sized).length>its.length/2?left:right).push([c,its])});
   let n=0;
-  $('#left').innerHTML=left.map(([c,its])=>{const usz=szs.filter(s=>its.some(m=>+(m.prices||{})[s.id]>0)),half=Math.ceil(its.length/2),s0=n;n+=its.length;
-    return `<div class="ch os">${esc(c.label)}${c.gu?`<span class="gu">${esc(c.gu)}</span>`:''}</div><div class="pz">${pizzaCol(its.slice(0,half),usz,s0)}${pizzaCol(its.slice(half),usz,s0+half)}</div>`}).join('')+addons(szs);
+  $('#pzbody').innerHTML=left.map(([c,its])=>{const usz=szs.filter(s=>its.some(m=>+(m.prices||{})[s.id]>0)),half=LOOK==='cards'?its.length:Math.ceil(its.length/2),s0=n;n+=its.length;
+    return `<div class="ch os">${esc(c.label)}${c.gu?`<span class="gu">${esc(c.gu)}</span>`:''}</div><div class="pz">${pizzaCol(its.slice(0,half),usz,s0)}${half<its.length?pizzaCol(its.slice(half),usz,s0+half):''}</div>`}).join('')+addons(szs)+(LOOK==='dark'?hero(menu):'');
   $('#sides').innerHTML=right.map(([c,its])=>{const pic=its.find(m=>m.img);const pcs=c.id==='pockets'?'2 pcs each':'';
     return `<div class="cat"><div class="ch os">${pic?`<img class="ico" src="img/${esc(pic.img)}.jpg" alt="" onerror="this.remove()">`:''}${esc(c.label)}</div>${pcs?`<div class="note">${pcs}</div>`:''}
     ${its.map(m=>{const p=sized(m)?szs.filter(s=>+m.prices[s.id]>0).map(s=>`${m.prices[s.id]}<small> ${esc(s.label||s.id)}</small>`).join(' / '):(+m.price||'');
-      return `<div class="it"><div class="nm os">${esc(m.name)}${marks(m)}</div><span class="p num">${p}</span></div>`}).join('')}</div>`}).join('')+'<div class="hero"><img src="img/hero-pizza.webp" alt=""></div>';
+      return `<div class="it"><div class="nm os">${esc(m.name)}${marks(m)}</div><span class="p num">${p}</span></div>`}).join('')}</div>`}).join('')+(LOOK==='dark'?'':hero(menu));
   fitText()}
 
 /* grow or shrink every size together until both columns fill the screen without spilling over */
 function fitText(){const st=$('#stage'),over=()=>['#left','#sides'].some(s=>{const e=$(s);return e.scrollHeight>e.clientHeight+1});
-  let lo=.5,hi=1.45;for(let i=0;i<14;i++){const k=(lo+hi)/2;st.style.setProperty('--k',k);if(over())hi=k;else lo=k}
+  let lo=.5,hi=LOOK==='dark'?1.9:1.45;for(let i=0;i<14;i++){const k=(lo+hi)/2;st.style.setProperty('--k',k);if(over())hi=k;else lo=k}
   st.style.setProperty('--k',lo)}
 
 const ZOOM=typeof CSS!=='undefined'&&CSS.supports&&CSS.supports('zoom','0.5');
