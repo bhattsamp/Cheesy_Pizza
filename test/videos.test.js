@@ -53,3 +53,21 @@ test('only MP4, WebM or MOV videos are taken, and not empty or too big ones', ()
   assert.equal((await send('video/mp4', Buffer.alloc(15 * 1024 * 1024 + 1))).status, 413);
   assert.equal(store.files.size, 2);
 }));
+
+test('sample famous visitors are added once, only to outlets without visitors', async () => {
+  const { addSampleVisitors } = require('../server/sample-visitors');
+  const fs = require('fs'), path = require('path');
+  const set = {}, outlets = [{ id: 'o1' }, { id: 'o2', display: { vips: [{ id: 'mine', name: 'Mine' }] } }];
+  let saved = null;
+  const store = { async getSetting(k, d) { return k in set ? set[k] : d; }, async setSetting(k, v) { set[k] = v; },
+    async readCollection() { return outlets; }, async applyChanges(c) { saved = c; } };
+  assert.equal(await addSampleVisitors(store), 1);
+  const vips = saved.upsert.outlets[0].display.vips;
+  assert.equal(saved.upsert.outlets[0].id, 'o1');
+  assert.equal(vips.length, 5);
+  assert.ok(vips.every(v => v.media.some(m => m.type === 'video')));
+  for (const v of vips) for (const u of [v.photo, ...v.media.map(m => m.url)]) assert.ok(fs.existsSync(path.join(__dirname, '..', u)), u);
+  saved = null;
+  assert.equal(await addSampleVisitors(store), 0);
+  assert.equal(saved, null);
+});

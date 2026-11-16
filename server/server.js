@@ -9,6 +9,7 @@ const { invoicePage } = require('./invoice');
 const otp = require('./otp');
 const upiAlerts = require('./upi-alerts');
 const backups = require('./backups');
+const { addSampleVisitors } = require('./sample-visitors');
 const Models = require('./models');
 const { RiderLoc, Staff } = require('./models');
 
@@ -26,6 +27,10 @@ async function openStore(uri = process.env.MONGODB_URI || DEFAULT_URI) {
     const moved = await store.migrateRunningNos();
     if (moved) console.log('Order numbers switched to running numbers:', JSON.stringify(moved));
   } catch (e) { console.error('Order number switch failed:', e.message); }
+  try {
+    const n = await addSampleVisitors(store);
+    if (n) console.log('Sample famous visitors added to', n, 'outlet(s)');
+  } catch (e) { console.error('Sample famous visitors failed:', e.message); }
   return store;
 }
 
