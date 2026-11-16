@@ -197,6 +197,45 @@ body.idle{cursor:none}
 .s-build.gb .done{color:#fff}
 .s-build .done.go{opacity:1;scale:1}
 
+/* 4 pizza being made, shot from above like a kitchen reel: a quick cut and punch-in at each step */
+.s-mk{background:radial-gradient(circle at 70% 50%,#5a3418 0,#2c170a 46%,#140a04 100%)}
+.s-mk .copy{position:absolute;left:120px;top:200px;width:760px;z-index:3}
+.s-mk .h1{font-size:118px;color:#fff}
+.mk-prog{display:flex;gap:10px;margin-top:44px;width:640px}
+.mk-prog i{flex:1;height:10px;border-radius:9px;background:rgba(255,255,255,.2);overflow:hidden}
+.mk-prog i b{display:block;height:100%;width:100%;background:var(--gold);transform-origin:0 50%;transform:scaleX(0)}
+.mk-cap{margin-top:38px;min-height:250px}
+.mk-cap small{display:inline-block;font-size:30px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;background:var(--gold);color:#3a2800;padding:6px 20px 2px;border-radius:12px;transform:rotate(-3deg)}
+.mk-cap .anton{display:block;font-size:104px;color:#fff;margin-top:18px;text-shadow:0 8px 0 rgba(0,0,0,.25)}
+.mk-cap.cut small{animation:mkc .45s cubic-bezier(.3,1.6,.5,1) both}
+.mk-cap.cut .anton{animation:mkc .55s .06s cubic-bezier(.3,1.5,.5,1) both}
+@keyframes mkc{from{opacity:0;transform:translateY(40px) scale(1.4)}}
+.s-mk .tagl{margin-top:8px;font-size:40px;color:var(--gold2)}
+.mkb{position:absolute;right:120px;top:120px;width:860px;height:860px}
+.mkb.cut{animation:mkp .5s cubic-bezier(.2,.8,.3,1)}
+@keyframes mkp{from{transform:scale(1.09)}}
+.mk-peel{position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at 40% 35%,rgba(255,255,255,.14),transparent 55%),repeating-linear-gradient(97deg,#b7793e 0 18px,#a96c33 18px 30px,#c08546 30px 52px,#9f6430 52px 60px);box-shadow:0 0 0 14px #7a4a22,0 60px 90px rgba(0,0,0,.6)}
+.mk-peel::after{content:"";position:absolute;left:50%;top:97%;width:120px;height:240px;translate:-50% 0;border-radius:0 0 40px 40px;background:repeating-linear-gradient(90deg,#a96c33 0 14px,#b7793e 14px 30px);box-shadow:0 30px 40px rgba(0,0,0,.5);z-index:-1}
+.mk-flour{position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at 30% 70%,rgba(255,250,235,.55) 0 2px,transparent 3px) 0 0/46px 52px,radial-gradient(circle at 70% 20%,rgba(255,250,235,.4) 0 1.5px,transparent 2.5px) 0 0/34px 38px;opacity:.7}
+.mk-rot{position:absolute;inset:6%}
+.mk-rot>*{position:absolute;inset:0;width:100%;height:100%}
+.mk-rot img{opacity:0}
+.mk-dough{filter:drop-shadow(0 18px 18px rgba(0,0,0,.4))}
+.mk-sauce,.mk-cut{overflow:visible}
+.mk-shreds i{position:absolute;left:0;top:0;width:34px;height:9px;border-radius:5px;background:linear-gradient(#fff3b8,#f2c94c);box-shadow:0 2px 3px rgba(150,90,0,.35);opacity:0}
+.mk-tops img{position:absolute;left:0;top:0;width:84px;height:auto;filter:drop-shadow(0 6px 6px rgba(0,0,0,.35))}
+.mk-ladle{position:absolute;left:0;top:0;width:260px;opacity:0;z-index:4;filter:drop-shadow(0 30px 24px rgba(0,0,0,.5))}
+.mk-oven{position:absolute;inset:-60px;border-radius:50%;opacity:0;z-index:5;pointer-events:none;background:radial-gradient(circle,rgba(255,170,60,.25) 0 34%,rgba(255,110,20,.55) 52%,rgba(120,30,0,.92) 66%,#1a0702 74%)}
+.mk-oven i{position:absolute;bottom:9%;width:70px;height:170px;margin-left:-35px;border-radius:50% 50% 45% 45%/70% 70% 30% 30%;background:radial-gradient(ellipse at 50% 80%,#fff6b0,#ffbf30 30%,#ff6a10 60%,transparent 72%);filter:blur(9px);opacity:.85;mix-blend-mode:screen;animation:mkf .7s ease-in-out infinite alternate;transform-origin:50% 100%}
+@keyframes mkf{to{transform:scale(1.15,1.35) translateY(-14px);opacity:.75}}
+.mk-flash{position:absolute;inset:0;border-radius:50%;background:#fff;opacity:0;z-index:6;pointer-events:none}
+.mkb.cut .mk-flash{animation:mkfl .35s ease-out}
+@keyframes mkfl{from{opacity:.45}}
+.mkb .steam{z-index:5}
+.s-mk .done{position:absolute;z-index:7;left:124px;top:800px;font-size:72px;color:#fff;font-family:Courgette,cursive;color:var(--gold2);text-shadow:0 6px 16px rgba(0,0,0,.5);opacity:0;scale:.5;rotate:-4deg;transform-origin:0 50%;transition:.6s cubic-bezier(.3,1.8,.5,1)}
+.s-mk .done.go{opacity:1;scale:1}
+.sl.bg-light .mk-cap .anton{color:#3a2800;text-shadow:none}
+
 /* 6 best sellers */
 .s-best{background:linear-gradient(160deg,#1a93a8,#0b3a43)}
 .s-best .bigword{top:80px;left:0}
@@ -534,7 +573,7 @@ const SLIDES0=[
    const ring=el.querySelector('.ring'),i=s%n;ring.style.transform=`translateZ(${-this.r}px) rotateX(-6deg) rotateY(${-s*360/n}deg)`;
    el.querySelectorAll('.card').forEach((c,j)=>c.classList.toggle('front',j===i));const m=this.items[i];
    el.querySelector('.now').innerHTML=`<span class="nw">${esc(m.desc||m.name)}</span>`}},
- {k:'pizza',t:11,make(){return build('pizza')},tick(el,t){buildTick(el,t,[1.5,3.8,6.1,8.4,10.7])}},
+ {k:'pizza',t:15,make(){return makeMk()},enter(el){el._mk=null},tick(el,t){mkTick(el,t)}},
  {k:'garlic',t:11,make(){return build('garlic')},tick(el,t){buildTick(el,t,[1.5,3.8,6.1,8.4,10.7])}},
  {k:'poster',t:12,make(){return`<div class="pstw"><div class="pst"><img src="img/menu-poster.jpg" alt="Cheesy Pizza menu card"></div></div>`}},
  {k:'best',t:10,ok:()=>bestItems().length,make(){const b=bestItems();return`<div class="bigword anton">Best sellers</div>
@@ -694,6 +733,74 @@ function comboPics(c){const L=live(),sz=c.size||'7',tier=+c.tier||1e9;
 function openState(){const[o,c]=hours(),n=new Date(),h=n.getHours()+n.getMinutes()/60;
   return h>=o&&h<c?{open:1,text:`Open now · till ${hrText(c)}`}:{open:0,text:`Opens at ${hrText(o)}`}}
 
+/* the pizza being made, shot from above like a kitchen reel: dough spun out, a spiral of sauce, a shower of
+   cheese, veggies dropped on one by one, into the oven and out baked and cut. Each step is a quick cut with a
+   punch-in, a reel-style progress bar and a big caption. Paced to fit the slide time picked in Admin. */
+const MK_STEPS=['Fresh dough','Tangy sauce','Loads of mozzarella','Fresh veggies','Into the oven','Ready to eat!'];
+const MK_AT=[.4,2.9,5.4,7.9,10.3,12.4];
+const MK_SPIRAL=(()=>{let d='';for(let a=0;a<=Math.PI*2*4.6;a+=.12){const r=10+a*10.8;d+=(d?'L':'M')+(400+Math.cos(a)*r).toFixed(1)+' '+(400+Math.sin(a)*r).toFixed(1)}return d})();
+const mkRnd=s=>()=>(s=(s*1103515245+12345)>>>0)/4294967296;
+const MK_SHREDS=(()=>{const r=mkRnd(7);return[...Array(70)].map(()=>{const a=r()*6.283,d=Math.sqrt(r())*330;return[400+Math.cos(a)*d,400+Math.sin(a)*d,r()*180]})})();
+const MK_TOPS=(()=>{const r=mkRnd(3),k=['capsicum','onion','corn','olive','mushroom','tomato-slice'];return[...Array(18)].map((_,i)=>{const a=i*2.4+r()*.5,d=60+Math.sqrt((i+.5)/18)*250;return[k[i%k.length],400+Math.cos(a)*d,400+Math.sin(a)*d,r()*360]})})();
+function makeMk(){const cl=(x)=>x.toFixed(0);
+  return`<div class="copy"><div class="kick rise" style="--d:.1s">${KK('pizza','Watch us make it')}</div><div class="h1 anton">${TT('pizza',letters('Made fresh'))}</div>
+  <div class="mk-prog">${MK_STEPS.map(()=>'<i><b></b></i>').join('')}</div>
+  <div class="mk-cap"><small>Step 1</small><span class="anton">${MK_STEPS[0]}</span></div></div>
+  <div class="mkb"><div class="mk-peel"></div><div class="mk-flour"></div>
+   <div class="mk-rot">
+    <img class="mk-dough" src="img/build/dough.webp" alt="">
+    <svg class="mk-sauce" viewBox="0 0 800 800"><path d="${MK_SPIRAL}" fill="none" stroke="#c22a18" stroke-width="44" stroke-linecap="round" stroke-linejoin="round" opacity=".92"/><path d="${MK_SPIRAL}" fill="none" stroke="#e8553a" stroke-width="12" stroke-linecap="round" opacity=".5"/></svg>
+    <img class="mk-saucei" src="img/build/sauce.webp" alt="">
+    <div class="mk-shreds">${MK_SHREDS.map(()=>'<i></i>').join('')}</div>
+    <img class="mk-cheese" src="img/build/cheese.webp" alt="">
+    <div class="mk-tops">${MK_TOPS.map(([n])=>`<img src="img/ing/${n}.webp" alt="">`).join('')}</div>
+    <img class="mk-topsi" src="img/build/toppings.webp" alt="">
+    <img class="mk-baked" src="img/hero-pizza.webp" alt="">
+    <svg class="mk-cut" viewBox="0 0 800 800">${[0,1,2].map(i=>{const a=i*Math.PI/3+.3;return`<line x1="${cl(400+Math.cos(a)*395)}" y1="${cl(400+Math.sin(a)*395)}" x2="${cl(400-Math.cos(a)*395)}" y2="${cl(400-Math.sin(a)*395)}" stroke="#fff6dc" stroke-width="7" stroke-linecap="round" stroke-dasharray="790" stroke-dashoffset="790" opacity=".85"/>`}).join('')}</svg>
+   </div>
+   <svg class="mk-ladle" viewBox="0 0 260 260"><path d="M128 120L250 6" stroke="#8c99a0" stroke-width="16" stroke-linecap="round"/><path d="M128 120L250 6" stroke="#dfe6ea" stroke-width="5" stroke-linecap="round"/><circle cx="104" cy="144" r="58" fill="#b9c4ca"/><circle cx="104" cy="144" r="46" fill="#c22a18"/><ellipse cx="90" cy="128" rx="18" ry="10" fill="#ff8a70" opacity=".6"/></svg>
+   <div class="mk-oven">${[...Array(11)].map((_,i)=>{const a=Math.PI*(.12+i*.076);return`<i style="left:${(50-Math.cos(a)*43).toFixed(1)}%;bottom:${(50-Math.sin(a)*43-8).toFixed(1)}%;animation-delay:${(i*.11).toFixed(2)}s"></i>`}).join('')}</div>
+   <div class="steam">${[0,1,2,3,4].map(i=>`<i style="left:${24+i*12}%;animation-delay:${i*.45}s"></i>`).join('')}</div>
+   <div class="mk-flash"></div></div>
+  <div class="done">Hot and cheesy!</div>`}
+function mkTick(el,t){
+  const k=Math.min(1.5,Math.max(.55,(SHOW-1.6)/13.4)),A=MK_AT.map(x=>x*k),c=x=>Math.min(1,Math.max(0,x)),
+   seg=i=>c((t-A[i])/((i<5?A[i+1]:A[5]+1.8*k)-A[i])),ez=x=>1-Math.pow(1-x,3),Q=s=>el.querySelector(s);
+  const s=A.filter(x=>t>=x).length; // steps begun
+  if(!el._mk){el._mk={};el._mk.sp=Q('.mk-sauce path');el._mk.len=el._mk.sp.getTotalLength();el._mk.sh=[...el.querySelectorAll('.mk-shreds i')];el._mk.tps=[...el.querySelectorAll('.mk-tops img')]}
+  const M=el._mk;
+  if(el._s!==s){el._s=s;const b=Q('.mkb'),cap=Q('.mk-cap'),i=Math.max(0,s-1);
+    if(s>1){b.classList.remove('cut');cap.classList.remove('cut');void b.offsetWidth;b.classList.add('cut');cap.classList.add('cut')}
+    cap.querySelector('small').textContent=i===5?'Done':'Step '+(i+1);cap.querySelector('.anton').textContent=MK_STEPS[i];
+    Q('.steam').classList.toggle('go',s>=6);Q('.done').classList.toggle('go',s>=6)}
+  el.querySelectorAll('.mk-prog b').forEach((b,i)=>b.style.transform=`scaleX(${seg(i).toFixed(3)})`);
+  const W=Q('.mk-rot').offsetWidth/800,px=v=>(v*W).toFixed(1);
+  Q('.mk-rot').style.transform=`rotate(${(t*2.2).toFixed(2)}deg)`;
+  // 1 dough: the ball drops in, then spins out wide with a little toss
+  const d=seg(0),grow=ez(c((d-.4)/.6)),dropIn=c(d/.25);
+  const dough=Q('.mk-dough');dough.style.opacity=dropIn;
+  dough.style.transform=`rotate(${(grow*540).toFixed(1)}deg) scale(${((d<.4?1.8-1.38*ez(dropIn):.42+.58*grow)+Math.sin(Math.PI*grow)*.12).toFixed(3)})`;
+  // 2 sauce: a ladle swirls it on from the middle out
+  const sa=seg(1),drawn=ez(c(sa/.8));M.sp.parentNode.style.opacity=sa<=0?0:1-c((sa-.78)/.22);
+  M.sp.parentNode.querySelectorAll('path').forEach(p=>{p.style.strokeDasharray=M.len;p.style.strokeDashoffset=(M.len*(1-drawn)).toFixed(1)});
+  Q('.mk-saucei').style.opacity=c((sa-.68)/.3);
+  const ld=Q('.mk-ladle');ld.style.opacity=sa>0&&sa<.86?1:0;
+  if(sa>0&&sa<.86){const p=M.sp.getPointAtLength(M.len*drawn),a=t*2.2*Math.PI/180,x=(p.x-400)*W,y=(p.y-400)*W,
+    rx=x*Math.cos(a)-y*Math.sin(a)+430,ry=x*Math.sin(a)+y*Math.cos(a)+430;ld.style.transform=`translate(${(rx-104).toFixed(1)}px,${(ry-144).toFixed(1)}px)`}
+  // 3 cheese: shreds rain down from above and settle, then melt into the layer
+  const ch=seg(2);if(M.ch!==ch){M.ch=ch;M.sh.forEach((e,i)=>{const[x,y,r]=MK_SHREDS[i],u=ez(c((ch-i/70*.55)/.3));
+    e.style.opacity=u>0?1-c((ch-.82)/.18):0;e.style.transform=`translate(${px(x)}px,${px(y)}px) rotate(${r+u*40}deg) scale(${(3.2-2.2*u).toFixed(2)})`})}
+  Q('.mk-cheese').style.opacity=c((ch-.6)/.3);
+  // 4 veggies: dropped on one by one with a spin and a bounce
+  const tp=seg(3);if(M.tq!==tp){M.tq=tp;M.tps.forEach((e,i)=>{const[,x,y,r]=MK_TOPS[i],v=c((tp-i/18*.6)/.22),b=v<1?ez(v)*(1+Math.sin(v*Math.PI)*.15):1;
+    e.style.opacity=v>0?1-c((tp-.86)/.14):0;e.style.transform=`translate(${px(x-42)}px,${px(y-42)}px) rotate(${(r+(1-v)*200).toFixed(0)}deg) scale(${(2.6-1.6*b).toFixed(3)})`})}
+  Q('.mk-topsi').style.opacity=c((tp-.7)/.3);
+  // 5 oven: the fire glows up round it, it bakes, the glow fades
+  const ov=seg(4),glow=ov<=0?0:ov<.25?ov/.25:ov>.78?1-(ov-.78)/.22:1;Q('.mk-oven').style.opacity=glow.toFixed(3);
+  Q('.mk-baked').style.opacity=c((ov-.4)/.3);Q('.mk-rot').style.filter=glow>0?`brightness(${(1+glow*.25).toFixed(2)}) saturate(${(1+glow*.3).toFixed(2)})`:'';
+  // 6 cut into slices
+  const ct=seg(5);el.querySelectorAll('.mk-cut line').forEach((l,i)=>l.style.strokeDashoffset=(790*(1-ez(c((ct-i*.18)/.4)))).toFixed(0))}
+
 /* the pizza and garlic bread being made, layer by layer */
 const BUILD={
  pizza:{title:'Made fresh',steps:['Fresh dough','Tangy sauce','Loads of mozzarella','Fresh veggies','Baked hot!'],
@@ -809,7 +916,7 @@ function rebuild(){needsRebuild=false;
     const j=keys.indexOf(k);for(let q=j-1;q>=0;q--){const p=ord.indexOf(keys[q]);if(p>=0)return p+(j-q)/100}return 1000+j},pos=s=>pk(s.grp||s.key)+(s.gi||0)/1e4;
   order=all.filter(s=>(ONLY_VIPS?s.grp==='vips':!hide[s.grp||s.key])&&(!s.ok||s.ok())).sort((a,b)=>pos(a)-pos(b));
   if(!order.length)order=[SLIDES[0]];
-  order.forEach(s=>{const el=document.createElement('section');el.className='sl s-'+s.k+(s.k==='pizza'||s.k==='garlic'?' s-build':'')+(s.k==='garlic'?' gb':'')+(s.k==='custom'?' s-spot':'');
+  order.forEach(s=>{const el=document.createElement('section');el.className='sl s-'+s.k+(s.k==='garlic'?' s-build':s.k==='pizza'?' s-mk':'')+(s.k==='garlic'?' gb':'')+(s.k==='custom'?' s-spot':'');
     const flip=SIDE_OK[s.k]&&(c.side||{})[s.key]==='left';if(flip)el.classList.add('flip');
     el.innerHTML=flip?'<div class="sin">'+s.make()+'</div>':s.make();
     const bg=s.grp?((c.bgs||{})[s.grp]&&(c.bgs||{})[s.grp]!=='own'?slideBg(s.grp):null):slideBg(s.key);if(bg){el.style.background=bg.css;const nl=!!NATIVE_LIGHT[s.k];if(bg.light&&!nl)el.classList.add('bg-light');if(!bg.light&&nl)el.classList.add('bg-dark')}
