@@ -239,6 +239,8 @@ function createApp(store) {
   app.get('/display', (req, res) => res.sendFile(path.join(ROOT, 'display.html')));
   // The same slideshow with only the famous visitors (celebrity) slides
   app.get('/famous-visitors', (req, res) => res.sendFile(path.join(ROOT, 'display.html')));
+  // The whole menu on one screen, for a TV in the shop (1920x1080)
+  app.get(['/menu-board', '/menu-tv'], (req, res) => { res.set('X-Robots-Tag', 'noindex'); res.sendFile(path.join(ROOT, 'menu-board.html')); });
   // Staff login for one outlet: /staff/<outlet> opens the till's login screen for that outlet only
   // Direct APK downloads from our own domain (phones that can't fetch from GitHub).
   // Streams the newest build from the android-latest release.

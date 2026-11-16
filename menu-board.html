@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#ffffff">
+<title>Cheesy Pizza Menu Board</title>
+<link rel="icon" type="image/svg+xml" href="img/logo-pin.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Baloo+Bhai+2:wght@500;600;700;800&display=swap">
+<!--
+  The whole menu on one screen, for the TV in the shop (made for a 43 inch TV at 1920x1080, fits any screen).
+  Open /menu-board on the TV and tap once for full screen. Items, prices, add-ons, phone and hours come from
+  the admin and refresh on their own within a minute of a change; items switched off are left out.
+  ?outlet=o2 picks a branch.
+-->
+<style>
+@font-face{font-family:'Blogger Sans';src:url(img/fonts/BloggerSans.woff) format('woff');font-weight:400;font-display:swap}
+:root{--k:1;--teal:#1fb89d;--teal-d:#0e8a75;--mint:#e3f8f3;--ink:#13313a;--muted:#5d7379;--red:#e2261b;--orange:#f07a12;--line:#9fe0d2;--green:#1f9d3a}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#fff;overflow:hidden;color:var(--ink);font-family:'Baloo Bhai 2',system-ui,sans-serif}
+body.idle{cursor:none}
+#fit{position:fixed;inset:0;overflow:hidden;background:#fff}
+#stage{position:absolute;left:50%;top:50%;width:1920px;height:1080px;translate:-50% -50%;overflow:hidden;background:#fff;transform-origin:50% 50%;display:flex;flex-direction:column}
+.os{font-family:Oswald,'Arial Narrow',sans-serif;text-transform:uppercase;letter-spacing:.01em}
+.num{font-variant-numeric:tabular-nums}
+
+/* faint logo behind the menu, like the printed card */
+.wm{position:absolute;left:50%;top:54%;width:640px;translate:-50% -50%;opacity:.07;pointer-events:none}
+
+/* header */
+header{position:relative;display:flex;align-items:center;gap:22px;padding:18px 44px 10px;height:150px;flex:none}
+.logo{height:118px}
+.brandname{display:flex;flex-direction:column;gap:2px}
+.brandname h1{font-family:'Blogger Sans',Oswald,sans-serif;font-weight:400;font-size:92px;line-height:.9;color:var(--teal);letter-spacing:.01em;white-space:nowrap}
+.brandname h1 sup{font-size:26px;vertical-align:top;margin-left:4px}
+.usp{display:flex;gap:22px;font-size:25px;color:var(--orange);font-weight:600}
+.usp span+span::before{content:"•";margin-right:22px;color:var(--line)}
+.mid{flex:1;display:flex;justify-content:center}
+.nomayo{background:var(--red);color:#fff;border-radius:16px;padding:10px 26px 6px;text-align:center;box-shadow:0 6px 0 #a3140c;rotate:-2deg}
+.nomayo b{display:block;font-size:40px;line-height:1}
+.nomayo small{font-size:19px;font-weight:600;opacity:.95}
+.contact{display:flex;align-items:center;gap:22px}
+.contact .ph{display:flex;align-items:center;gap:12px;color:var(--red);font-size:52px;line-height:1}
+.contact .ph svg{width:52px;height:52px;flex:none}
+.contact .hrs{font-size:24px;font-weight:700;text-align:right;line-height:1.15;margin-top:4px}
+.contact .hrs span{color:var(--muted);font-weight:600;font-size:19px;display:block}
+.vegmark{display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--green);font-weight:800;font-size:16px;letter-spacing:.04em}
+.vegmark i{width:46px;height:46px;border:4px solid var(--green);display:grid;place-items:center}
+.vegmark i::after{content:"";width:22px;height:22px;border-radius:50%;background:var(--green)}
+
+/* body */
+main{position:relative;flex:1;min-height:0;display:flex;gap:26px;padding:6px 40px 14px}
+.panel{position:relative;min-height:0;overflow:hidden;display:flex;flex-direction:column}
+#left{flex:1.75;display:block}#right{flex:1}
+.ch{display:flex;align-items:center;gap:14px;color:var(--teal);font-size:calc(var(--k)*46px);line-height:1.05;padding-bottom:4px}
+.ch img.ico{width:calc(var(--k)*56px);height:calc(var(--k)*56px);border-radius:50%;object-fit:cover;border:3px solid var(--line)}
+.ch .gu{font-family:'Baloo Bhai 2',sans-serif;text-transform:none;font-size:.55em;color:var(--muted);font-weight:600}
+
+/* pizza table */
+.pz{display:grid;grid-template-columns:1fr 1fr;gap:0 34px}
+.pcol{display:flex;flex-direction:column}
+.phead{display:grid;grid-template-columns:1fr calc(var(--k)*92px) calc(var(--k)*92px);align-items:end;border-bottom:3px solid var(--teal);padding-bottom:4px;margin-bottom:2px}
+.phead .sz{text-align:center;font-size:calc(var(--k)*34px);line-height:1;color:var(--ink)}
+.phead .sz small{display:block;font-family:'Baloo Bhai 2',sans-serif;text-transform:none;font-size:.5em;color:var(--muted);font-weight:600;margin-top:2px}
+.phead .lab{font-size:calc(var(--k)*20px);color:var(--muted);font-weight:600}
+.pr{display:grid;grid-template-columns:calc(var(--k)*34px) 1fr calc(var(--k)*92px) calc(var(--k)*92px);align-items:start;padding:calc(var(--k)*7px) 0}
+.pr.tier{border-top:2px dashed var(--line)}
+.pr .n{font-family:Oswald,sans-serif;color:var(--teal-d);font-size:calc(var(--k)*22px);line-height:calc(var(--k)*34px)}
+.pr .nm{font-size:calc(var(--k)*29px);line-height:1.15;display:flex;align-items:center;flex-wrap:wrap;gap:6px 8px}
+.pr .d{font-size:calc(var(--k)*17px);line-height:1.2;color:var(--muted);font-weight:500;margin-top:1px;padding-right:8px}
+.pr .p{text-align:center;font-family:Oswald,sans-serif;font-weight:600;font-size:calc(var(--k)*34px);line-height:1}
+.pr .p.na{color:#c5d3d6}
+.tag{font-family:'Baloo Bhai 2',sans-serif;font-weight:800;font-size:calc(var(--k)*14px);letter-spacing:.05em;background:var(--red);color:#fff;padding:2px 8px 0;border-radius:4px;line-height:1.5}
+.jain{display:inline-grid;place-items:center;width:calc(var(--k)*24px);height:calc(var(--k)*24px);border-radius:50%;background:var(--green);color:#fff;font:700 calc(var(--k)*15px)/1 'Baloo Bhai 2',sans-serif;padding-top:2px}
+.chil{width:calc(var(--k)*24px);height:calc(var(--k)*24px)}
+
+/* add-ons under the pizzas */
+.adds{display:flex;flex-wrap:wrap;gap:8px 12px;margin-top:6px;padding-top:8px;border-top:3px solid var(--teal)}
+.add{display:flex;align-items:baseline;gap:10px;background:var(--mint);border-radius:12px;padding:6px 16px 4px}
+.add b{font-family:Oswald,sans-serif;text-transform:uppercase;font-weight:600;font-size:calc(var(--k)*22px)}
+.add span{font-family:Oswald,sans-serif;font-weight:600;font-size:calc(var(--k)*24px);color:var(--teal-d)}
+.add small{font-size:calc(var(--k)*15px);color:var(--muted);font-weight:600}
+
+/* sides */
+#right{border-left:3px dashed var(--line);padding-left:26px}
+.sides{flex:1;min-height:0;display:flex;flex-direction:column}
+.cat+.cat{border-top:2px dashed var(--line);margin-top:calc(var(--k)*6px);padding-top:calc(var(--k)*6px)}
+.cat .ch{font-size:calc(var(--k)*38px)}
+.cat .note{font-size:calc(var(--k)*16px);color:var(--muted);font-weight:600;margin:-4px 0 2px}
+.it{display:grid;grid-template-columns:1fr auto;align-items:center;gap:12px;padding:calc(var(--k)*3px) 0}
+.it .nm{font-size:calc(var(--k)*27px);line-height:1.15;display:flex;align-items:center;flex-wrap:wrap;gap:6px 8px}
+.it .p{font-family:Oswald,sans-serif;font-weight:600;font-size:calc(var(--k)*32px);line-height:1;text-align:right}
+.it .p small{font-size:.55em;color:var(--muted);font-weight:500}
+
+.hero{flex:1 1 0;min-height:0;display:flex;justify-content:center;align-items:flex-end;padding-top:8px}
+.hero img{max-width:100%;max-height:100%;object-fit:contain;filter:drop-shadow(0 12px 18px rgba(0,0,0,.18))}
+
+/* footer */
+footer{flex:none;height:78px;background:var(--teal);color:#fff;display:flex;align-items:center;gap:26px;padding:0 40px}
+footer .mayo{background:var(--red);border-radius:99px;padding:8px 26px 4px;font-size:28px;font-weight:800;white-space:nowrap}
+footer .addr{display:flex;align-items:center;gap:10px;font-size:26px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0}
+footer .addr svg{width:28px;height:28px;flex:none}
+footer .book{font-size:28px;font-weight:800;white-space:nowrap}
+footer .book em{font-style:normal;background:#fff;color:var(--red);border-radius:8px;padding:2px 12px 0}
+
+#tapme{position:fixed;left:50%;bottom:110px;translate:-50% 0;background:rgba(19,49,58,.85);color:#fff;padding:10px 22px 6px;border-radius:99px;font-weight:700;transition:opacity .6s;pointer-events:none;z-index:5}
+</style>
+</head>
+<body>
+<div id="fit"><div id="stage">
+  <img class="wm" src="img/logo-pin.svg" alt="">
+  <header>
+    <img class="logo" src="img/logo-pin.svg" alt="">
+    <div class="brandname">
+      <h1>CHEESY PIZZA<sup>TM</sup></h1>
+      <div class="usp os"><span>Fresh dough</span><span>Live pizza</span><span>Soft base</span><span>Hand stretched</span></div>
+    </div>
+    <div class="mid"><div class="nomayo os"><b>No Mayonnaise</b><small>in any product</small></div></div>
+    <div class="contact">
+      <div>
+        <div class="ph os"><svg viewBox="0 0 24 24" fill="none" stroke="#13313a" stroke-width="1.6"><circle cx="12" cy="12" r="11"/><path d="M8.6 6.5c.4-.4 1-.4 1.3 0l1.2 1.6c.3.4.3.9-.1 1.3l-.8.8c.6 1.4 1.7 2.5 3.1 3.1l.8-.8c.4-.4.9-.4 1.3-.1l1.6 1.2c.4.3.4.9 0 1.3l-.9.9c-.7.7-1.8.9-2.7.4-2.6-1.3-4.6-3.3-5.9-5.9-.5-.9-.3-2 .4-2.7z" fill="#13313a" stroke="none"/></svg><span id="phone"></span></div>
+        <div class="hrs" id="hrs"></div>
+      </div>
+      <div class="vegmark"><i></i>PURE VEG</div>
+    </div>
+  </header>
+  <main>
+    <section class="panel" id="left"></section>
+    <section class="panel" id="right"><div class="sides" id="sides"></div></section>
+  </main>
+  <footer>
+    <span class="mayo">We don't use Mayonnaise in any product</span>
+    <span class="addr"><svg viewBox="0 0 24 24" fill="#fff"><path d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg><span id="addr"></span></span>
+    <span class="book">Book on <em>phone call</em> · Pay first</span>
+  </footer>
+</div></div>
+<div id="tapme">Tap once for full screen</div>
+<script>
+const $=s=>document.querySelector(s),Q=new URLSearchParams(location.search);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let D=null;
+
+const outlet=()=>{const o=(D.outlets||[]).filter(x=>x.active!==false);return o.find(x=>x.id===Q.get('outlet'))||(D.outlets||[]).find(x=>x.id===Q.get('outlet'))||o[0]||{}};
+const hr12=h=>h%12||12,hrText=h=>h===12?'12 noon':hr12(h)+(h<12||h===24?' am':' pm');
+const phoneText=p=>{p=String(p||'').replace(/\D/g,'').slice(-10);return p.length===10?p.slice(0,5)+' '+p.slice(5):p};
+const CHILLI='<svg class="chil" viewBox="0 0 24 24" aria-label="spicy"><path d="M17.5 4.5c-1 .2-1.6 1-1.8 1.9-3 .2-5.7 2.4-7.4 5.6-1.4 2.6-3 4.6-5.3 5.7-.6.3-.5 1.2.2 1.3 6 1 12.6-1.7 14.6-7.4.6-1.6.5-3.1-.1-4.3.6-.4 1.1-1 1.2-1.8.1-.6-.7-1.1-1.4-1z" fill="#e2261b"/><path d="M16 6.3c.2-1.2 1-2.3 2.4-2.6" stroke="#1f9d3a" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg>';
+const marks=m=>(m.jain?'<span class="jain" aria-label="Jain">J</span>':'')+CHILLI.repeat(Math.min(3,+m.spicy||0))+(m.best?'<span class="tag">BEST SELLER</span>':'');
+
+/* categories in the owner's order, with their names, the same way the till builds them */
+function cats(){const base=(D.config&&D.config.categories)||[],own=D.cats||[],rec=k=>own.find(c=>c.id===k);
+  let list=[...base.map(x=>({id:x.id,label:(rec(x.id)||{}).label||x.label,gu:x.labelGu||''})),
+    ...own.filter(c=>c.label&&!c.id.startsWith('_')&&!base.some(b=>b.id===c.id)).sort((a,b)=>(a.pos||0)-(b.pos||0)).map(c=>({id:c.id,label:c.label,gu:c.labelGu||''}))];
+  const ord=(rec('_order')||{}).order;if(Array.isArray(ord)&&ord.length){const at=k=>{const i=ord.indexOf(k);return i<0?1e6:i};list=list.map((c,i)=>[c,i]).sort((a,b)=>at(a[0].id)-at(b[0].id)||a[1]-b[1]).map(x=>x[0])}
+  // items in a category the till does not know yet still show, at the end
+  (D.menu||[]).forEach(m=>{if(m.cat&&!list.some(c=>c.id===m.cat))list.push({id:m.cat,label:m.cat,gu:''})});
+  return list}
+const sizes=()=>(D.sizes&&D.sizes.length?D.sizes:[{id:'7',label:'7"'},{id:'10',label:'10"'}]);
+const live=m=>!m.off&&!m.hidden;
+const sized=m=>m.prices&&typeof m.prices==='object'&&sizes().some(s=>+m.prices[s.id]>0);
+const samePrices=(a,b)=>JSON.stringify(a.prices||a.price)===JSON.stringify(b.prices||b.price);
+
+function pizzaCol(items,szs,start){
+  const head=`<div class="phead"><span class="lab">${esc(szs.length?'(inch)':'')}</span>${szs.map(s=>`<span class="sz os">${esc(s.label||s.id+'"')}${s.pcs?`<small>${s.pcs} pcs</small>`:''}</span>`).join('')}</div>`;
+  return `<div class="pcol">${head}${items.map((m,i)=>`<div class="pr${i&&!samePrices(m,items[i-1])?' tier':''}" style="grid-template-columns:calc(var(--k)*34px) 1fr ${szs.map(()=>'calc(var(--k)*92px)').join(' ')}">
+    <span class="n">${start+i+1}</span><div><div class="nm os">${esc(m.name)}${marks(m)}</div>${m.desc?`<div class="d">${esc(m.desc)}</div>`:''}</div>
+    ${szs.map(s=>{const p=+(m.prices||{})[s.id];return p>0?`<span class="p num">${p}</span>`:'<span class="p na">–</span>'}).join('')}</div>`).join('')}</div>`}
+
+/* the add-ons a pizza can take: the cheese burst base and each extra menu, one price per size */
+function addons(szs){const out=[],seen=new Set();
+  const push=(name,prices,note)=>{if(!prices)return;const ps=szs.map(s=>+prices[s.id]).filter(p=>p>0);if(!ps.length)return;const k=name.toLowerCase();if(seen.has(k))return;seen.add(k);
+    out.push(`<div class="add"><b>${esc(name)}</b><span class="num">+${ps.join(' / ')}</span>${note?`<small>${esc(note)}</small>`:''}</div>`)};
+  const a=D.addons||{};if(a.burst)push(a.burst.name||'Cheese Burst base',a.burst.prices);
+  (D.extras||[]).filter(x=>x.active!==false).forEach(x=>{const its=(x.items||[]).filter(i=>i.prices&&i.off!==true);if(!its.length)return;
+    const same=its.every(i=>JSON.stringify(i.prices)===JSON.stringify(its[0].prices));
+    if(same&&its.length>2)push(x.name,its[0].prices);else its.forEach(i=>push(i.name,i.prices))});
+  if(!D.extras&&a.cheese)push(a.cheese.name,a.cheese.prices);if(!D.extras&&a.veg)push(a.veg.name,a.veg.prices);
+  return out.length?`<div class="adds">${out.join('')}</div>`:''}
+
+function render(){
+  const o=outlet(),cfg=D.config||{},h1=+o.openHour||+cfg.openHour||12,h2=+o.closeHour||+cfg.closeHour||22;
+  $('#phone').textContent=phoneText(o.phone||'7778043066');
+  $('#hrs').innerHTML=`<span>Open daily</span>${hrText(h1)} to ${hrText(h2)}`;
+  $('#addr').textContent=o.area&&o.area!=='Set your address'?o.area:'B/H Gopi Cinema, Maniyani Khad, Anand, Gujarat';
+  const szs=sizes(),menu=(D.menu||[]).filter(live),cl=cats();
+  // categories priced by size (pizza) get the big table on the left; the rest go in the right column
+  const left=[],right=[];
+  cl.forEach(c=>{const its=menu.filter(m=>m.cat===c.id);if(!its.length)return;(its.filter(sized).length>its.length/2?left:right).push([c,its])});
+  let n=0;
+  $('#left').innerHTML=left.map(([c,its])=>{const usz=szs.filter(s=>its.some(m=>+(m.prices||{})[s.id]>0)),half=Math.ceil(its.length/2),s0=n;n+=its.length;
+    return `<div class="ch os">${esc(c.label)}${c.gu?`<span class="gu">${esc(c.gu)}</span>`:''}</div><div class="pz">${pizzaCol(its.slice(0,half),usz,s0)}${pizzaCol(its.slice(half),usz,s0+half)}</div>`}).join('')+addons(szs);
+  $('#sides').innerHTML=right.map(([c,its])=>{const pic=its.find(m=>m.img);const pcs=c.id==='pockets'?'2 pcs each':'';
+    return `<div class="cat"><div class="ch os">${pic?`<img class="ico" src="img/${esc(pic.img)}.jpg" alt="" onerror="this.remove()">`:''}${esc(c.label)}</div>${pcs?`<div class="note">${pcs}</div>`:''}
+    ${its.map(m=>{const p=sized(m)?szs.filter(s=>+m.prices[s.id]>0).map(s=>`${m.prices[s.id]}<small> ${esc(s.label||s.id)}</small>`).join(' / '):(+m.price||'');
+      return `<div class="it"><div class="nm os">${esc(m.name)}${marks(m)}</div><span class="p num">${p}</span></div>`}).join('')}</div>`}).join('')+'<div class="hero"><img src="img/hero-pizza.webp" alt=""></div>';
+  fitText()}
+
+/* grow or shrink every size together until both columns fill the screen without spilling over */
+function fitText(){const st=$('#stage'),over=()=>['#left','#sides'].some(s=>{const e=$(s);return e.scrollHeight>e.clientHeight+1});
+  let lo=.5,hi=1.45;for(let i=0;i<14;i++){const k=(lo+hi)/2;st.style.setProperty('--k',k);if(over())hi=k;else lo=k}
+  st.style.setProperty('--k',lo)}
+
+const ZOOM=typeof CSS!=='undefined'&&CSS.supports&&CSS.supports('zoom','0.5');
+function fit(){const F=$('#fit'),W=F.clientWidth||innerWidth,H=F.clientHeight||innerHeight,s=Math.min(W/1920,H/1080),st=$('#stage');if(ZOOM){st.style.zoom=s;st.style.transform='';st.style.translate='none';st.style.left=(W/s-1920)/2+'px';st.style.top=(H/s-1080)/2+'px'}else st.style.transform=`scale(${s})`}
+
+async function load(){try{const r=await fetch('/api/state',{cache:'no-store'});if(!r.ok)throw 0;const j=await r.json(),st=j.state||j;
+  if(!st||!Array.isArray(st.menu))return;
+  const os=(st.outlets||[]).map(o=>[o.id,o.area,o.phone,o.openHour,o.closeHour,o.active]);
+  const sig=JSON.stringify([st.menu,st.sizes,st.cats,st.addons,st.extras,os,st.config&&[st.config.categories,st.config.openHour,st.config.closeHour]]);
+  if(sig!==load.sig){load.sig=sig;D=st;render()}}catch(e){}}
+async function poll(){try{const r=await fetch('/api/version',{cache:'no-store'});const v=(await r.json()).version;if(v!==poll.v){poll.v=v;await load()}}catch(e){}}
+
+addEventListener('resize',fit);fit();
+addEventListener('click',()=>{const d=document.documentElement;if(!document.fullscreenElement&&d.requestFullscreen)d.requestFullscreen().catch(()=>{});$('#tapme').style.opacity=0;wake()});
+setTimeout(()=>$('#tapme').style.opacity=0,6000);
+let idleT;addEventListener('mousemove',()=>{document.body.classList.remove('idle');clearTimeout(idleT);idleT=setTimeout(()=>document.body.classList.add('idle'),2500)});
+async function wake(){try{if(navigator.wakeLock&&!wake.l)wake.l=await navigator.wakeLock.request('screen'),wake.l.addEventListener('release',()=>wake.l=null)}catch(e){}}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)wake()});
+// fonts change the text size, so fit again once they arrive
+if(document.fonts)document.fonts.ready.then(()=>D&&fitText());
+(async()=>{await load();poll.v=undefined;wake();setInterval(poll,30000);
+  // a TV left on for days: reload the page once a night so a new version of this page reaches it
+  setInterval(()=>{if(new Date().getHours()===4)location.reload()},36e5)})();
+</script>
+</body>
+</html>
