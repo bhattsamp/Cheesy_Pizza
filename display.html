@@ -17,6 +17,7 @@
   It plays every section of the site in turn and reads the menu, prices,
   offers, hours and the home page picks from the admin, refreshing every
   10 minutes. Options: ?outlet=o2 picks a branch, ?sec=1.5 slows it down,
+  /famous-visitors (or ?only=vips) plays only the famous visitors slides,
   ?slide=v_abc starts on that slide (Admin's preview buttons use it), arrow keys step, space pauses.
 -->
 <style>
@@ -467,7 +468,7 @@ body.idle{cursor:none}
 </div></div>
 <script>
 'use strict';
-const Q=new URLSearchParams(location.search),SPEED=Math.max(.3,+Q.get('sec')||1);
+const Q=new URLSearchParams(location.search),ONLY_VIPS=/^\/famous-visitors/.test(location.pathname)||Q.get('only')==='vips',SPEED=Math.max(.3,+Q.get('sec')||1);
 const $=(s,r=document)=>r.querySelector(s),esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const IMG=n=>/[\/:]/.test(n)?n:'img/'+n+'.jpg';
 const ING=['basil','capsicum','corn','olive','onion','tomato-slice','slice-veggie','cheese','garlic-stick'].map(n=>'img/ing/'+n+'.webp');
@@ -806,7 +807,7 @@ function rebuild(){needsRebuild=false;
   const keys=[...new Set(all.map(s=>s.grp||s.key))],pk=k=>{const i=ord.indexOf(k);if(i>=0)return i;
     // a slide added after the owner saved an order goes right after the slide it follows by default
     const j=keys.indexOf(k);for(let q=j-1;q>=0;q--){const p=ord.indexOf(keys[q]);if(p>=0)return p+(j-q)/100}return 1000+j},pos=s=>pk(s.grp||s.key)+(s.gi||0)/1e4;
-  order=all.filter(s=>!hide[s.grp||s.key]&&(!s.ok||s.ok())).sort((a,b)=>pos(a)-pos(b));
+  order=all.filter(s=>(ONLY_VIPS?s.grp==='vips':!hide[s.grp||s.key])&&(!s.ok||s.ok())).sort((a,b)=>pos(a)-pos(b));
   if(!order.length)order=[SLIDES[0]];
   order.forEach(s=>{const el=document.createElement('section');el.className='sl s-'+s.k+(s.k==='pizza'||s.k==='garlic'?' s-build':'')+(s.k==='garlic'?' gb':'')+(s.k==='custom'?' s-spot':'');
     const flip=SIDE_OK[s.k]&&(c.side||{})[s.key]==='left';if(flip)el.classList.add('flip');

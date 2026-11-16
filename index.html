@@ -5731,12 +5731,15 @@ const vipFind=id=>(dspCfg().vips||[]).find(v=>v.id===id);
 const vipLink=id=>location.origin+'/display?'+(liveOutlets().length>1?'outlet='+cur().id+'&':'')+'slide=v_'+id;
 function vVips(){
   if(staff()?.role!=='owner')return '<div class="ph1"><h2>Famous visitors</h2><span class="muted small">Only the owner can change famous visitors.</span></div>';
-  const o=cur(),d=o.display||{},L=d.vips||[],on=!(d.hide||{}).vips,n=vipReady(d).length;
+  const o=cur(),d=o.display||{},L=d.vips||[],on=!(d.hide||{}).vips,n=vipReady(d).length,vipOnly=location.origin+'/famous-visitors'+(liveOutlets().length>1?'?outlet='+o.id:'');
   return `<div class="ph1"><h2>Famous visitors</h2><span class="muted small">Celebrities and important guests who visited ${esc(o.name)}. Each one plays as its own slide on the shop TV.</span></div>
   <div class="card" style="padding:14px;margin-bottom:12px;display:flex;flex-direction:column;gap:12px">
-    <label class="row small" style="cursor:pointer"><span class="switch"><input type="checkbox" data-vipshow ${on?'checked':''}><span></span></span><b>Show famous visitors on the shop TV</b></label>
+    <label class="row small" style="cursor:pointer"><span class="switch"><input type="checkbox" data-vipshow ${on?'checked':''}><span></span></span><b>Show famous visitors in the main shop display</b></label>
     <span class="small muted">${n?`${n} visitor slide${n===1?'':'s'} ready.`:'Add a visitor with a name and a photo to make the first slide.'} They play together, at the place set in Shop display, and each stays as long as the other slides. A visitor needs a name and at least one photo to show.</span>
-    <div class="row" style="gap:8px">${n?`<a class="btn" href="${esc(vipLink(vipReady(d)[0].id))}" target="_blank" rel="noopener">Watch them on the display ↗</a>`:''}<button class="btn" data-act="tab" data-v="display">Shop display settings</button></div>
+    <div class="grp-h">Famous visitors slider link</div>
+    <div class="row"><a class="btn pri" href="${esc(vipOnly)}" target="_blank" rel="noopener">Open the slider ↗</a><span class="small num" style="word-break:break-all">${esc(vipOnly)}</span><button class="btn sm" data-act="copy-staff-link" data-v="${esc(vipOnly)}">Copy</button></div>
+    <span class="small muted">This link plays only your famous visitors, one after another. Open it on any TV or screen and tap once for full screen. They also play inside the main shop display.</span>
+    <div class="row" style="gap:8px"><button class="btn" data-act="tab" data-v="display">Shop display settings</button></div>
   </div>
   ${L.map((v,i)=>vipCard(v,i,L.length)).join('')}
   <button class="btn pri" data-act="vip-add" style="margin-top:4px">+ Add a visitor</button>`;
