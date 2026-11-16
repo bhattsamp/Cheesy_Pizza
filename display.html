@@ -405,7 +405,7 @@ body.idle{cursor:none}
 .vpic .vnone{width:100%;height:100%;display:grid;place-items:center;font-family:Anton,sans-serif;font-size:220px;color:#f2b632}
 .vlogo{position:absolute;right:-84px;bottom:-40px;width:230px;height:230px;border-radius:50%;background:#fff;z-index:4;display:grid;place-items:center;
   box-shadow:0 0 0 9px #f2b632,0 0 0 15px rgba(255,255,255,.5),0 24px 40px rgba(0,0,0,.45);opacity:0}
-.vlogo img{width:96%;height:96%;object-fit:contain}
+.vlogo img{width:100%;height:100%;object-fit:contain;border-radius:50%} /* logo-circle.png: the logo centred on its pin, sized to sit inside the circle */
 .on .vlogo{animation:pop .9s 1.1s cubic-bezier(.3,2,.5,1) both,vlw 3.2s 2.1s ease-in-out infinite}
 @keyframes vlw{50%{transform:rotate(-7deg) scale(1.05)}}
 .vname{position:absolute;left:40px;width:800px;top:722px;text-align:center;z-index:3}
@@ -632,7 +632,7 @@ const vipSlide=(v,gi)=>({k:'vip',key:'v_'+v.id,grp:'vips',gi,make(){const name=(
    ${sparkles(7,80,1840,140,960)}
    <div class="vhead"><div class="kick rise" style="--d:.1s"><i>★</i>${KK('vips','Famous faces at Cheesy Pizza')}<i>★</i></div></div>
    <div class="vpw">${ring}<div class="vpic">${v.photo?`<img src="${esc(IMG(v.photo))}" alt="">`:`<div class="vnone">${esc(name[0]||'★')}</div>`}</div>
-    <div class="vlogo"><img src="img/logo-badge.png" alt="Cheesy Pizza"></div></div>
+    <div class="vlogo"><img src="img/logo-circle.png" alt="Cheesy Pizza"></div></div>
    <div class="vname"><div class="h1 anton" style="--fs:${fs}px">${letters(name)}</div>
     ${v.role?`<div class="role rise" style="--d:1s">${esc(v.role)}</div>`:''}${v.note?`<div class="note rise" style="--d:1.3s">${esc(v.note)}</div>`:''}</div>
    <div class="vwall">${pages.length?pages.map((pg,p)=>`<div class="vpg" data-p="${p}">${pg.map((x,i)=>ph(x,i,VIP_LAY[pg.length])).join('')}</div>`).join('')
