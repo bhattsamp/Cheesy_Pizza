@@ -801,6 +801,9 @@ body:has(.addpop){overflow:hidden}
 .ohist td.tm{white-space:nowrap}.ohist .wbtn{margin-top:4px;padding:3px 8px;font-size:12px}
 .ohist td.pay .small{margin-bottom:3px}
 .ohist .isep{color:var(--muted);padding:0 2px}
+.ohist .oit .vegico{margin-right:4px}
+.vegico{display:inline-block;flex:none;width:12px;height:12px;border:1.5px solid #1a8f3c;border-radius:2px;position:relative;box-sizing:border-box;background:#fff;vertical-align:-2px}
+.vegico::after{content:'';position:absolute;inset:0;margin:auto;width:6px;height:6px;border-radius:50%;background:#1a8f3c}
 @media (min-width:1280px){.ohist td.pay{white-space:nowrap}.ohist td:nth-child(4){min-width:220px}}
 @media (min-width:1400px){.ohist th,.ohist td{width:1%;white-space:nowrap}.ohist th:nth-child(4),.ohist td:nth-child(4){width:auto;white-space:normal}}
 
@@ -5064,6 +5067,8 @@ function openOrderHist(o){
 const ORD_SORT={no:o=>o.no,cust:o=>(o.customer.name||'').toLowerCase(),type:o=>TYPES[o.type]||'',time:o=>o.ts,total:o=>o.total,pay:o=>(o.paid?'1':'0')+payName(o),status:o=>statusName(o.status,o.type),by:o=>o.source==='online'?'Customer site':(o.by||'')};
 function ordSorter(){const st=U.ordSort||{k:'time',d:-1},f=ORD_SORT[st.k]||ORD_SORT.time;return (a,b)=>{const x=f(a),y=f(b);return (x<y?-1:x>y?1:0)*st.d||b.ts-a.ts}}
 const sortMark=k=>{const st=U.ordSort||{k:'time',d:-1};return st.k===k?`<span class="sarr">${st.d>0?'▲':'▼'}</span>`:''};
+// Veg mark (green square with a dot, as on Zomato) shown before each item. The whole menu is veg.
+const VEG_ICO='<span class="vegico" title="Veg" aria-label="Veg"></span>';
 function vOrders(){
   const q=U.ordersQ.trim().toLowerCase();const day=U.ordersDate||today();const all=U.ordersScope==='all';
   const list=S.orders.filter(o=>(all||o.outletId===S.cur)&&o.date===day&&(!q||o.no.toLowerCase().includes(q)||o.customer.phone.includes(q)||(o.customer.name||'').toLowerCase().includes(q)||(o.zomatoId||'').includes(q))&&(!U.ordersNew||isNewCust(o))).sort(ordSorter());
@@ -5078,7 +5083,7 @@ function vOrders(){
   ${list.map(o=>`<tr class="${o.status==='cancelled'?'cx':''}${isActive(o)?' heat':''}"${isActive(o)?` style="--h:${heatOf(o)}"`:''}><td><b class="num">${o.no}</b>${itemHist(o).length?` <button class="hicon" data-act="ord-hist" data-id="${o.id}" title="Items were added or changed after the order was made · tap to see when" aria-label="History of ${esc(o.no)}">🕘</button>`:''}${all?`<div class="small muted">${esc(outletOf(o).name)}</div>`:''}</td>
     <td>${esc(o.customer.name||'—')} ${o.status!=='cancelled'&&o.outletId===S.cur?`<button class="ltchip ${+o.lt?(+o.lt===2?'l2':''):'ltadd'}" data-act="ord-lt" data-id="${o.id}" title="Tap to change: Off › ${esc(ltName(o,1))} › ${esc(ltName(o,2))} › Off">${+o.lt?esc(ltName(o)):'+ '+esc(ltName(o,1))}</button>`:ltChip(o)} ${isNewCust(o)?'<span class="chip c">New</span>':''}<div class="small muted num">${esc(o.customer.phone)}</div></td>
     <td>${TYPES[o.type]}${o.table?' · T'+esc(o.table):''}${o.source==='online'?' <span class="chip t">online</span>':''}${o.bookAt?`<div><span class="chip bkchip">Booked · ${esc(advWhen(o.bookAt))}</span></div>`:''}${o.zomatoId?`<div class="small muted num">ID ${esc(o.zomatoId)}</div>`:''}</td>
-    <td class="small">${o.items.map(l=>l.qty+'× '+esc(l.name)+(l.size?' '+sizeLabel(l.size):'')).join(' <span class="isep">|</span> ')}${o.status!=='cancelled'&&o.outletId===S.cur?`<div><button class="btn sm addit" data-act="order-add" data-id="${o.id}">+ Add items</button></div>`:''}</td>
+    <td class="small"><span class="oits">${o.items.map(l=>`<span class="oit">${VEG_ICO}${l.qty}× ${esc(l.name)}${l.size?' '+sizeLabel(l.size):''}</span>`).join(' <span class="isep">|</span> ')}</span>${o.status!=='cancelled'&&o.outletId===S.cur?`<div><button class="btn sm addit" data-act="order-add" data-id="${o.id}">+ Add items</button></div>`:''}</td>
     <td class="tm num">${fmtTime(o.ts)}${onHold(o)?`<div><span class="chip onhold">⏸ On hold</span></div><div class="small muted">${leftText(minsLeft(o))}</div>`:isActive(o)&&!bookLater(o)?`<div class="small" style="font-weight:700;color:${minsLeft(o)<0?'var(--bad)':'var(--warn)'}">${leftText(minsLeft(o))}</div><button class="btn sm wbtn" data-act="set-wait" data-id="${o.id}" title="Change waiting time">⏱ ${waitOf(o)} min</button>`:''}</td><td class="r num"><b>${rs(o.total)}</b>${o.subtotal>o.total?`<div class="small" style="color:var(--ok)">−${rs(o.subtotal-o.total)}</div>`:''}</td>
     <td class="pay">${o.status==='cancelled'?esc(payName(o)):o.paid?`<div class="small">${esc(payName(o))}</div><span class="chip ready">Done</span>${o.pay.utr?`<div class="small muted num">UTR ${esc(fmtUtr(o.pay.utr))}</div>`:''}`:`${o.pay.mode==='due'?'<div class="small">On account</div>':partPaid(o)?`<div class="small">${esc(payName(o))} paid</div>`:''}<span class="chip r">${partPaid(o)?rs(balanceOf(o))+' left':'Baki'}</span> <button class="btn sm" data-act="collect-open" data-id="${o.id}">Collect</button>`}</td>
     <td class="st"><span class="chip ${o.status}">${statusName(o.status,o.type)}</span>${o.status==='cancelled'&&cancelNote(o)?`<div class="small muted">${esc(cancelNote(o))}</div>`:''}</td>
