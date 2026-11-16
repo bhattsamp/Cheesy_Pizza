@@ -954,6 +954,21 @@ body:has(.addpop){overflow:hidden}
 .item.prev{pointer-events:none}.item.prev .ph{aspect-ratio:4/3}.item.prev .psl{pointer-events:auto}
 .mthumb{width:44px;height:44px;border-radius:8px;border:1px dashed var(--line);background:var(--surface2);padding:0;overflow:hidden;flex:none;font-size:10px;font-weight:700;color:var(--muted)}
 .mthumb img{width:100%;height:100%;object-fit:cover;display:block}
+.vipc{padding:12px 14px;margin-bottom:12px;display:flex;flex-direction:column;gap:12px}.vipc.off{opacity:.55}
+.vip-top{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap}
+.vip-f{flex:1 1 320px;min-width:0}
+.vip-face{display:flex;flex-direction:column;align-items:center;gap:8px;flex:none}
+.vip-ph{width:112px;height:112px;border-radius:50%;overflow:hidden;display:grid;place-items:center;background:var(--surface2);border:3px solid #f2b632;box-shadow:0 0 0 3px #fff inset;font-size:11px;font-weight:700;color:var(--muted);text-align:center}
+.vip-ph img{width:100%;height:100%;object-fit:cover}
+.vip-media{display:flex;flex-wrap:wrap;gap:10px}
+.vip-m{position:relative;width:132px;height:132px;border-radius:10px;overflow:hidden;background:#1b0a10;border:1px solid var(--line)}
+.vip-m img,.vip-m video{width:100%;height:100%;object-fit:cover;display:block}
+.vip-play{position:absolute;left:8px;top:8px;width:28px;height:28px;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;font-size:12px;display:grid;place-items:center}
+.vip-mb{position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:space-between;gap:4px;padding:4px;background:linear-gradient(transparent,rgba(0,0,0,.55))}
+.vip-mb .btn{min-width:0;padding:2px 8px}
+.vip-add{width:132px;height:132px;border-radius:10px;border:2px dashed var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;color:var(--muted);font-size:12px;font-weight:700;text-align:center;padding:8px}
+.vip-add b{font-size:30px;line-height:1;color:var(--teal-deep,#0f6f80)}
+.vip-add:hover{border-color:#f2b632}
 .dsp-sw{width:44px;height:44px;border-radius:10px;border:1px solid var(--line);flex:none}
 .dsp-pick summary{cursor:pointer;padding:4px 0}
 .dsp-items{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:6px 12px;margin-top:8px;max-height:260px;overflow:auto}
@@ -2895,9 +2910,10 @@ const I={
 staff:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>',
  review:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.3 6.4 20.2l1.1-6.2L3 9.6l6.2-.9z"/></svg>',
  display:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg>',
+ vips:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18h18M4 18 3 8l5 4 4-7 4 7 5-4-1 10"/></svg>',
  outlet:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l2-5h14l2 5M4 9v11h16V9M3 9h18M9 20v-6h6v6"/></svg>',
 };
-const TABS=[['new','New order'],['kitchen','Kitchen'],['counter','Counter'],['orders','Orders'],['tables','Tables'],['book','Advance booking'],['sales','Day sale'],['reports','Reports'],['stock','Stock'],['offers','Offers'],['cust','Customers'],['menu','Menu & sizes'],['home','Home page'],['display','Shop display'],['outlet','Outlets'],['staff','Staff'],['review','Reviews'],['trips','Deliveries']];
+const TABS=[['new','New order'],['kitchen','Kitchen'],['counter','Counter'],['orders','Orders'],['tables','Tables'],['book','Advance booking'],['sales','Day sale'],['reports','Reports'],['stock','Stock'],['offers','Offers'],['cust','Customers'],['menu','Menu & sizes'],['home','Home page'],['display','Shop display'],['vips','Famous visitors'],['outlet','Outlets'],['staff','Staff'],['review','Reviews'],['trips','Deliveries']];
 
 const app=document.getElementById('app');
 function render(){
@@ -4030,7 +4046,7 @@ function renderPOS(){
       `<button data-act="pos-more" ${more.some(([t])=>t===U.pos.tab)?'aria-current="page"':''}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="5" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="19" cy="12" r="1.4"/></svg><span>${esc((more.find(([t])=>t===U.pos.tab)||[0,'More'])[1])}</span></button>`};
   U.posMore=()=>showModal(`<div class="mh"><h3>All sections</h3><button class="x" data-act="close" aria-label="Close">×</button></div><div class="mb"><div class="moregrid">${allowed.map(([t,n])=>`<button data-act="tab" data-v="${t}" ${U.pos.tab===t?'aria-current="page"':''}>${I[t]}<span>${n}</span></button>`).join('')}</div>
     <div class="row small muted"><span class="grow">Signed in as <b>${esc(su.name)}</b> · ${ROLES[su.role]}</span>${CAP?'<button class="btn sm" data-act="perms">Alerts & location</button>':''}<button class="btn sm" data-act="lock">Lock screen</button></div></div>`);
-  const views={new:vNew,book:vBook,kitchen:vKitchen,counter:vCounter,orders:vOrders,tables:vTables,sales:vSales,reports:vReports,stock:vStock,offers:vOffers,cust:vCust,menu:vMenu,home:vHomeAdm,display:vDisplayAdm,outlet:vOutlets,staff:vStaff,review:vReview,trips:vTrips};
+  const views={new:vNew,book:vBook,kitchen:vKitchen,counter:vCounter,orders:vOrders,tables:vTables,sales:vSales,reports:vReports,stock:vStock,offers:vOffers,cust:vCust,menu:vMenu,home:vHomeAdm,display:vDisplayAdm,vips:vVips,outlet:vOutlets,staff:vStaff,review:vReview,trips:vTrips};
   // Big screens with many sections: one Menu button opens a vertical menu that slides over the page
   // (the page keeps its full width); phones keep the bottom bar
   const many=roleTabs.length>8,curT=allowed.find(([t])=>t===U.pos.tab)||allowed[0];
@@ -5599,7 +5615,7 @@ const DSP_BGS=[['red','Red','radial-gradient(circle at 72% 48%,#e85a4f,#a5241b 7
 const DSP_SIDE={hero:1,pull:1,pizza:1,garlic:1,hours:1,order:1,spot0:1,spot1:1,spot2:1,spot3:1,address:1};
 const DSP_PICK={ring:['Items in the carousel',8,'Automatic (your Ekdum cheesy picks)'],best:['Items shown',4,'Automatic (items marked Best seller)'],ticker:['Items in the strip',500,'Automatic (every item on the menu)']};
 function dspSlides(o){const d=o.display||{},ord=d.order||[];
-  const std=DSP_SLIDES.map(([key,name,kick,title])=>({key,name,kick,title})),all=[...std.filter(x=>x.key!=='address'),...(d.custom||[]).map(c=>({key:'c_'+c.id,name:'Your slide: '+(c.title||'no heading yet'),c})),...std.filter(x=>x.key==='address')];
+  const std=DSP_SLIDES.map(([key,name,kick,title])=>({key,name,kick,title})),all=[...std.filter(x=>x.key!=='address'),...(d.custom||[]).map(c=>({key:'c_'+c.id,name:'Your slide: '+(c.title||'no heading yet'),c})),{key:'vips',name:'Famous visitors',kick:'Famous faces at Cheesy Pizza'},...std.filter(x=>x.key==='address')];
   const pos=k=>{const i=ord.indexOf(k);if(i>=0)return i;const j=all.findIndex(s=>s.key===k);for(let q=j-1;q>=0;q--){const p=ord.indexOf(all[q].key);if(p>=0)return p+(j-q)/100}return 1000+j};return all.sort((a,b)=>pos(a.key)-pos(b.key))}
 function vDisplayAdm(){
   if(staff()?.role!=='owner')return '<div class="ph1"><h2>Shop display</h2><span class="muted small">Only the owner can change the shop display.</span></div>';
@@ -5639,7 +5655,7 @@ function vDisplayAdm(){
 const dspSel=(attr,list,v)=>`<select class="inp" ${attr}>${list.map(([k,l])=>`<option value="${k}" ${k===v?'selected':''}>${esc(l)}</option>`).join('')}</select>`;
 // Background for all slides ('*') or one slide: a colour, the slide's own colours, or the owner's photo
 function dspBgPick(d,key){const v=(d.bgs||{})[key]||'',img=(d.bgImg||{})[key],all=key==='*',c=DSP_BGS.find(b=>b[0]===v);
-  const list=[...(all?[['','Each slide keeps its own colours']]:[['','Same as all slides'],['own',"This slide's own colours"]]),...DSP_BGS.map(([k,l])=>[k,l]),['photo','Your photo']];
+  const list=[...(all?[['','Each slide keeps its own colours']]:key==='vips'?[['',"Each visitor's own look"]]:[['','Same as all slides'],['own',"This slide's own colours"]]),...DSP_BGS.map(([k,l])=>[k,l]),['photo','Your photo']];
   return `<div class="field"><label>${all?'Background for all slides':'Background'}</label>${dspSel(`data-dspbg="${key}"`,list,v)}</div>
     ${c?`<span class="dsp-sw" style="background:${c[2]}" aria-hidden="true"></span>`:''}
     ${v==='photo'?`<div class="row" style="gap:8px;align-items:center">${img?`<span class="mthumb"><img src="${esc(IMG(img))}" alt=""></span>`:'<span class="small" style="color:var(--bad)">No photo yet</span>'}<label class="btn sm">${img?'Change photo':'Add a photo'}<input type="file" accept="image/*" data-dspbgimg="${key}" hidden></label></div>`:''}`}
@@ -5657,6 +5673,7 @@ function dspRow(o,x,i,n){
     <div class="field grow" style="min-width:200px"><label>Show a menu item</label><select class="inp" data-dcu="${c.id}" data-f="item"><option value="">None (your words and photo only)</option>${S.menu.filter(m=>!m.off).map(m=>`<option value="${m.id}" ${m.id===c.item?'selected':''}>${esc(m.name)}</option>`).join('')}</select></div>
     <div class="row" style="gap:8px;align-items:center">${c.img?`<span class="mthumb"><img src="${esc(IMG(c.img))}" alt=""></span>`:''}<label class="btn sm">${c.img?'Change photo':'Add a photo'}<input type="file" accept="image/*" data-dcimg="${c.id}" hidden></label>${c.img?`<button class="btn sm" data-act="dsp-noimg" data-id="${c.id}">Remove photo</button>`:''}<button class="btn sm bad" data-act="dsp-del" data-id="${c.id}">Delete slide</button></div>`;
   else if(spot){const v=(d.spots||[])[+x.key.slice(4)]||'';body=`<div class="field grow" style="min-width:220px"><label>Item to show</label><select class="inp" data-dspot="${x.key.slice(4)}"><option value="">Automatic (your Ekdum cheesy picks)</option>${S.menu.filter(m=>!m.off).map(m=>`<option value="${m.id}" ${m.id===v?'selected':''}>${esc(m.name)}</option>`).join('')}</select></div>${inp(`data-dtx="${x.key}"`,'kick',t.kick,'Must try')}`}
+  else if(x.key==='vips'){const n=vipReady(d).length;body=`${inp(`data-dtx="vips"`,'kick',t.kick,x.kick)}<span class="small muted grow">${n?`${n} visitor slide${n===1?'':'s'} play here, one after another.`:'No visitors added yet, so nothing plays here.'}</span><button class="btn sm pri" data-act="tab" data-v="vips">Edit famous visitors</button>`}
   else body=`${inp(`data-dtx="${x.key}"`,'kick',t.kick,x.kick)}${inp(`data-dtx="${x.key}"`,'title',t.title,x.title)}`;
   return `<div class="card" style="padding:10px 12px;display:flex;flex-direction:column;gap:8px;${on?'':'opacity:.55'}">
     <div class="row" style="gap:10px;flex-wrap:nowrap"><span class="chip num">${i+1}</span><label class="switch"><input type="checkbox" data-dsph="${x.key}" ${on?'checked':''} aria-label="Show ${esc(x.name)}"><span></span></label><b class="grow">${esc(x.name)}</b>
@@ -5702,6 +5719,74 @@ document.addEventListener('change',e=>{const t=e.target,d=t.dataset||{};
   if(d.dspot!=null){D.spots=D.spots||[];D.spots[+d.dspot]=t.value||null}
   if(d.dcu){const c=(D.custom||[]).find(x=>x.id===d.dcu);if(c){if(d.f==='item'){if(t.value)c.item=t.value;else delete c.item}else c.bg=+t.value}}
   save();render();toast('Shop display updated')});
+
+/* Admin → Famous visitors (owner only): important guests and celebrities who came to the shop. Each one becomes an
+   eye-catching slide on the shop TV (display.html): their photo with their name under it, the photos and videos of their
+   visit beside it, and the shop's logo on its white circle. Kept on the outlet with the rest of the shop display:
+   o.display.vips = [{id, name, role, note, photo, media:[{url, type:'image'|'video'}], look, off}] */
+const VIP_MAX_VIDEO=15*1024*1024;
+const vipReady=d=>(d.vips||[]).filter(v=>!v.off&&(v.name||'').trim()&&(v.photo||(v.media||[]).length));
+const vipOwner=()=>{if(staff()?.role==='owner')return true;toast('Only the owner can change famous visitors');return false};
+const vipFind=id=>(dspCfg().vips||[]).find(v=>v.id===id);
+const vipLink=id=>location.origin+'/display?'+(liveOutlets().length>1?'outlet='+cur().id+'&':'')+'slide=v_'+id;
+function vVips(){
+  if(staff()?.role!=='owner')return '<div class="ph1"><h2>Famous visitors</h2><span class="muted small">Only the owner can change famous visitors.</span></div>';
+  const o=cur(),d=o.display||{},L=d.vips||[],on=!(d.hide||{}).vips,n=vipReady(d).length;
+  return `<div class="ph1"><h2>Famous visitors</h2><span class="muted small">Celebrities and important guests who visited ${esc(o.name)}. Each one plays as its own slide on the shop TV.</span></div>
+  <div class="card" style="padding:14px;margin-bottom:12px;display:flex;flex-direction:column;gap:12px">
+    <label class="row small" style="cursor:pointer"><span class="switch"><input type="checkbox" data-vipshow ${on?'checked':''}><span></span></span><b>Show famous visitors on the shop TV</b></label>
+    <span class="small muted">${n?`${n} visitor slide${n===1?'':'s'} ready.`:'Add a visitor with a name and a photo to make the first slide.'} They play together, at the place set in Shop display, and each stays as long as the other slides. A visitor needs a name and at least one photo to show.</span>
+    <div class="row" style="gap:8px">${n?`<a class="btn" href="${esc(vipLink(vipReady(d)[0].id))}" target="_blank" rel="noopener">Watch them on the display ↗</a>`:''}<button class="btn" data-act="tab" data-v="display">Shop display settings</button></div>
+  </div>
+  ${L.map((v,i)=>vipCard(v,i,L.length)).join('')}
+  <button class="btn pri" data-act="vip-add" style="margin-top:4px">+ Add a visitor</button>`;
+}
+function vipCard(v,i,n){const m=v.media||[],ready=(v.name||'').trim()&&(v.photo||m.length);
+  const fld=(f,lab,ph,max,wide)=>`<div class="field ${wide?'grow':''}" style="min-width:min(${wide?260:200}px,100%)"><label>${lab}</label><input class="inp" data-vu="${v.id}" data-f="${f}" value="${esc(v[f]||'')}" placeholder="${esc(ph)}" maxlength="${max}"></div>`;
+  return `<div class="card vipc${v.off?' off':''}">
+    <div class="row" style="gap:10px;flex-wrap:nowrap"><span class="chip num">${i+1}</span><label class="switch"><input type="checkbox" data-vipon="${v.id}" ${v.off?'':'checked'} aria-label="Show ${esc(v.name||'this visitor')}"><span></span></label>
+      <b class="grow">${esc(v.name||'New visitor')}</b>${ready&&!v.off?`<a class="btn sm" href="${esc(vipLink(v.id))}" target="_blank" rel="noopener">Preview ↗</a>`:''}
+      <button class="btn sm" data-act="vip-mv" data-id="${v.id}" data-v="-1" ${i?'':'disabled'} aria-label="Move up">↑</button><button class="btn sm" data-act="vip-mv" data-id="${v.id}" data-v="1" ${i<n-1?'':'disabled'} aria-label="Move down">↓</button></div>
+    <div class="vip-top">
+      <div class="vip-face"><span class="vip-ph">${v.photo?`<img src="${esc(IMG(v.photo))}" alt="">`:'<span>Their photo</span>'}</span>
+        <label class="btn sm">${v.photo?'Change photo':'Add their photo'}<input type="file" accept="image/*" data-vipphoto="${v.id}" hidden></label></div>
+      <div class="row vip-f" style="gap:10px;align-items:flex-end">
+        ${fld('name','Name (shown under the photo)','For example: Kartik Aaryan',28,1)}
+        ${fld('role','Who they are','For example: Bollywood actor',40,1)}
+        ${fld('note','A line about the visit','For example: Loved our 5 Cheese pizza!',60,1)}
+        <div class="field"><label>Look</label>${dspSel(`data-vu="${v.id}" data-f="look"`,[['','Red carpet'],['night','Night gold'],['teal','Cheesy teal']],v.look||'')}</div>
+      </div>
+    </div>
+    <div class="grp-h">Photos and videos from the visit · <span class="num">${m.length}</span></div>
+    <div class="vip-media">${m.map((x,j)=>`<div class="vip-m">${x.type==='video'?`<video src="${esc(IMG(x.url))}#t=0.5" muted playsinline preload="metadata"></video><span class="vip-play" aria-label="Video">▶</span>`:`<img src="${esc(IMG(x.url))}" alt="">`}
+        <div class="vip-mb"><button class="btn sm" data-act="vip-mmv" data-id="${v.id}" data-i="${j}" data-v="-1" ${j?'':'disabled'} aria-label="Move left">←</button><button class="btn sm bad" data-act="vip-mdel" data-id="${v.id}" data-i="${j}" aria-label="Remove">✕</button><button class="btn sm" data-act="vip-mmv" data-id="${v.id}" data-i="${j}" data-v="1" ${j<m.length-1?'':'disabled'} aria-label="Move right">→</button></div></div>`).join('')}
+      <label class="vip-add"><input type="file" accept="image/*,video/mp4,video/webm,video/quicktime" multiple data-vipmedia="${v.id}" hidden><b>+</b><span>Add photos or videos</span></label></div>
+    <span class="small muted">Up to four show at a time; with more, they change in groups while the slide is on. Videos play without sound. Keep each video short, under 15 MB (about 30 seconds).</span>
+    <div class="row"><button class="btn sm bad" data-act="vip-del" data-id="${v.id}">Delete visitor</button></div></div>`}
+// Uploads a photo (shrunk first) or a short video, and gives back { url, type }
+function vipUpload(f){
+  const vid=/^video\//.test(f.type)||/\.(mp4|m4v|mov|webm)$/i.test(f.name||'');
+  if(!vid)return shrinkImage(f).then(data=>api('/api/images',{data})).then(r=>({url:r.url,type:'image'}));
+  if(f.size>VIP_MAX_VIDEO)return Promise.reject(new Error('this video is over 15 MB. Trim it to a short clip and try again'));
+  const type=/^video\/(mp4|webm|quicktime)$/.test(f.type)?f.type:/\.webm$/i.test(f.name)?'video/webm':/\.mov$/i.test(f.name)?'video/quicktime':'video/mp4';
+  return fetch('/api/videos',{method:'POST',headers:{'Content-Type':type},body:f}).then(async r=>{const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||'HTTP '+r.status);return{url:j.url,type:'video'}})}
+document.addEventListener('input',e=>{const t=e.target,d=t.dataset||{};if(!d.vu||t.tagName==='SELECT'||staff()?.role!=='owner')return;
+  const v=vipFind(d.vu);if(!v)return;v[d.f]=t.value;save();
+  if(d.f==='name'){const b=t.closest('.vipc')?.querySelector('b.grow');if(b)b.textContent=t.value||'New visitor'}});
+document.addEventListener('change',async e=>{const t=e.target,d=t.dataset||{};
+  if(!(d.vipshow!=null||d.vipon||d.vipphoto||d.vipmedia||(d.vu&&t.tagName==='SELECT')))return;
+  if(!vipOwner()){render();return}
+  const D=dspCfg();
+  if(d.vipshow!=null){D.hide=D.hide||{};if(t.checked)delete D.hide.vips;else D.hide.vips=true;save();render();toast(t.checked?'Famous visitors will show on the TV':'Famous visitors hidden from the TV');return}
+  const v=vipFind(d.vipon||d.vipphoto||d.vipmedia||d.vu);if(!v)return;
+  if(d.vipon){if(t.checked)delete v.off;else v.off=true;save();render();toast(t.checked?'Visitor slide on':'Visitor slide off');return}
+  if(d.vu){if(t.value)v[d.f]=t.value;else delete v[d.f];save();toast('Visitor updated');return}
+  if(d.vipphoto){const f=t.files&&t.files[0];if(!f)return;toast('Uploading photo…');
+    shrinkImage(f).then(data=>api('/api/images',{data})).then(r=>{v.photo=r.url;save();render();toast('Photo added')},er=>toast('Photo not saved: '+er.message));return}
+  if(d.vipmedia){const fs=[...(t.files||[])];if(!fs.length)return;let ok=0;
+    for(let i=0;i<fs.length;i++){toast(fs.length>1?`Uploading ${i+1} of ${fs.length}…`:'Uploading…');
+      try{const x=await vipUpload(fs[i]);v.media=v.media||[];v.media.push(x);ok++;save()}catch(er){toast(`${fs[i].name||'File'} not saved: ${er.message}`);await new Promise(r=>setTimeout(r,2500))}}
+    render();if(ok)toast(ok===1?'Added to the visit':`${ok} added to the visit`)}});
 
 function vOutlets(){const own=staff()?.role==='owner';
   const off=S.outlets.filter(o=>!isLive(o)&&o.visible!==false);const tab=U.outTab==='inactive'?'inactive':'active';
@@ -5921,6 +6006,11 @@ document.addEventListener('click',e=>{
     case 'onl-max':U.onlMin=null;render();break;
     case 'dsp-mv':{if(!dspOwner())break;const o=cur(),keys=dspSlides(o).map(x=>x.key),i=keys.indexOf(el.dataset.k),j=i+ +el.dataset.v;if(i<0||j<0||j>=keys.length)break;
       [keys[i],keys[j]]=[keys[j],keys[i]];dspCfg().order=keys;save();render();break}
+    case 'vip-add':{if(!vipOwner())break;const D=dspCfg();D.vips=D.vips||[];D.vips.push({id:'v'+Date.now().toString(36),name:'',media:[]});save();render();toast('Visitor added. Type their name and add their photo.');break}
+    case 'vip-del':{if(!vipOwner())break;const id=el.dataset.id,v=vipFind(id);askConfirm('Delete this visitor?',`${v&&v.name?v.name+"'s":'This'} slide will stop showing on the shop TV.`,'Delete',()=>{const D=dspCfg();D.vips=(D.vips||[]).filter(x=>x.id!==id);save();render();toast('Visitor deleted')});break}
+    case 'vip-mv':{if(!vipOwner())break;const L=dspCfg().vips||[],i=L.findIndex(x=>x.id===el.dataset.id),j=i+ +el.dataset.v;if(i<0||j<0||j>=L.length)break;[L[i],L[j]]=[L[j],L[i]];save();render();break}
+    case 'vip-mmv':{if(!vipOwner())break;const m=(vipFind(el.dataset.id)||{}).media||[],i=+el.dataset.i,j=i+ +el.dataset.v;if(j<0||j>=m.length)break;[m[i],m[j]]=[m[j],m[i]];save();render();break}
+    case 'vip-mdel':{if(!vipOwner())break;const v=vipFind(el.dataset.id);if(!v)break;askConfirm('Remove this from the visit?','It will stop showing on the slide.','Remove',()=>{v.media.splice(+el.dataset.i,1);save();render();toast('Removed')});break}
     case 'dsp-add':{if(!dspOwner())break;const D=dspCfg();D.custom=D.custom||[];const nid='s'+Date.now().toString(36);D.custom.push({id:nid,kick:'',title:'',text:'',bg:D.custom.length%4});if(D.order){const at=D.order.indexOf('address');D.order.splice(at<0?D.order.length:at,0,'c_'+nid)}save();render();toast('Slide added before the address. Type its words and add a photo.');break}
     case 'dsp-noimg':{if(!dspOwner())break;const c=(dspCfg().custom||[]).find(x=>x.id===el.dataset.id);if(c){delete c.img;save();render()}break}
     case 'dsp-del':{if(!dspOwner())break;const id=el.dataset.id;askConfirm('Delete this slide?','It will stop showing on the shop TV.','Delete',()=>{const D=dspCfg();D.custom=(D.custom||[]).filter(c=>c.id!==id);D.order=(D.order||[]).filter(k=>k!=='c_'+id);save();render();toast('Slide deleted')});break}
@@ -6495,7 +6585,7 @@ document.addEventListener('change',e=>{const t=e.target;if(!t.dataset||!t.datase
 // Staff tree: Admin (every outlet) > Owner (only their own outlets) > Manager, Cashier, Kitchen, Rider at each outlet
 const ROLES={owner:'Admin',oowner:'Owner',manager:'Manager',cashier:'Cashier',kitchen:'Kitchen',rider:'Rider'};
 const ROLE_ORDER=['owner','oowner','manager','cashier','kitchen','rider'];
-const ROLE_TABS={owner:TABS.map(t=>t[0]),oowner:TABS.map(t=>t[0]).filter(k=>k!=='review'&&k!=='display'),manager:TABS.map(t=>t[0]).filter(k=>k!=='staff'&&k!=='review'&&k!=='display'),cashier:['new','counter','orders','tables','book','cust','stock'],kitchen:['kitchen','counter'],rider:['trips']};
+const ROLE_TABS={owner:TABS.map(t=>t[0]),oowner:TABS.map(t=>t[0]).filter(k=>k!=='review'&&k!=='display'&&k!=='vips'),manager:TABS.map(t=>t[0]).filter(k=>k!=='staff'&&k!=='review'&&k!=='display'&&k!=='vips'),cashier:['new','counter','orders','tables','book','cust','stock'],kitchen:['kitchen','counter'],rider:['trips']};
 function ensureCust(ph,name){const c=S.customers[ph]||(S.customers[ph]={phone:ph,name:name||'',due:0,coins:0});
   c.wallet=c.wallet||0;c.tx=c.tx||[];c.myCodes=c.myCodes||[];c.ref=c.ref||('CP'+ph.slice(-5));if(name&&!c.name)c.name=name;return c}
 function migrate(){

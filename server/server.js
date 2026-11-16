@@ -15,6 +15,7 @@ const { RiderLoc, Staff } = require('./models');
 const ROOT = path.join(__dirname, '..');
 const DEFAULT_URI = 'mongodb://localhost:27017/ChessyPizza';
 const MAX_IMAGE = 3 * 1024 * 1024; // photos are shrunk in the browser first
+const MAX_VIDEO = 15 * 1024 * 1024; // short clips for the famous visitors slides; one MongoDB document holds up to 16 MB
 
 async function openStore(uri = process.env.MONGODB_URI || DEFAULT_URI) {
   const store = await new Store().connect(uri);
@@ -168,10 +169,29 @@ function createApp(store) {
     if (buf.length > MAX_IMAGE) return res.status(413).json({ error: 'Image is too big' });
     res.json({ url: 'api/images/' + await store.saveImage(m[1], buf) });
   });
+  /* ----- short video clips for the famous visitors slides: the raw file as the body -> { url } ----- */
+  app.post('/api/videos', express.raw({ type: () => true, limit: MAX_VIDEO + 1024 }), async (req, res) => {
+    const type = String(req.get('Content-Type') || '').split(';')[0].trim().toLowerCase();
+    if (!/^video\/(?:mp4|webm|quicktime)$/.test(type)) return res.status(400).json({ error: 'Send an MP4, WebM or MOV video' });
+    const buf = Buffer.isBuffer(req.body) ? req.body : Buffer.alloc(0);
+    if (!buf.length) return res.status(400).json({ error: 'The video is empty' });
+    if (buf.length > MAX_VIDEO) return res.status(413).json({ error: 'Video is too big' });
+    res.json({ url: 'api/images/' + await store.saveImage(type, buf) });
+  });
   app.get('/api/images/:id', async (req, res) => {
     const img = await store.getImage(req.params.id);
     if (!img) return res.status(404).end();
-    res.set('Cache-Control', 'public, max-age=31536000, immutable').type(img.type).send(Buffer.isBuffer(img.data) ? img.data : Buffer.from(img.data.buffer)); // a BSON Binary from MongoDB
+    const data = Buffer.isBuffer(img.data) ? img.data : Buffer.from(img.data.buffer); // a BSON Binary from MongoDB
+    res.set('Cache-Control', 'public, max-age=31536000, immutable').set('Accept-Ranges', 'bytes').type(img.type);
+    // videos are fetched in parts (Safari and most TVs will not play a video without this)
+    const m = /^bytes=(\d*)-(\d*)$/.exec(String(req.get('Range') || ''));
+    if (m && (m[1] || m[2])) {
+      let a = m[1] ? +m[1] : data.length - +m[2], b = m[1] && m[2] ? Math.min(+m[2], data.length - 1) : data.length - 1;
+      if (a < 0) a = 0;
+      if (a > b || a >= data.length) return res.status(416).set('Content-Range', `bytes */${data.length}`).end();
+      return res.status(206).set('Content-Range', `bytes ${a}-${b}/${data.length}`).send(data.subarray(a, b + 1));
+    }
+    res.send(data);
   });
 
   /* ----- demo data ----- */
