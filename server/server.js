@@ -218,6 +218,10 @@ function createApp(store) {
      - pages of the till, admin and shop TV (by the page that asks: /staff, /admin, /display, /famous-visitors)
      - the Admin app, and a browser showing the Outlet POS (it sets the cp_pos cookie)
      A photo opened as a page of its own is always the marked copy. */
+  // Only the live public site does this (cheesypizza.online); a shop computer or test server serves plain photos.
+  // PUBLIC_IMAGE_HOSTS (comma separated) changes the list.
+  const WM_HOSTS = String(process.env.PUBLIC_IMAGE_HOSTS || 'cheesypizza.online,www.cheesypizza.online').toLowerCase().split(',').map(h => h.trim()).filter(Boolean);
+  const wmHost = req => WM_HOSTS.includes(String(req.hostname || '').toLowerCase());
   const PROTECT = /^(?!intro-|logo|cheesy-)[^/]+\.jpe?g$|^hero-pizza\.webp$|^gang\/photo\.webp$/i;
   const STAFF_PAGE = /^\/(?:staff|admin|display|famous-visitors)(?:\/|$)/;
   function cleanOK(req) {
@@ -230,7 +234,7 @@ function createApp(store) {
   const noReuse = res => res.set('Cache-Control', 'no-store').set('Vary', 'Referer, Cookie, X-Cheesy-Clean, Sec-Fetch-Dest');
   app.get('/img/*file', (req, res, next) => {
     const rel = [].concat(req.params.file).join('/');
-    if (!PROTECT.test(rel)) return next();
+    if (!wmHost(req) || !PROTECT.test(rel)) return next();
     noReuse(res);
     if (req.get('Sec-Fetch-Dest') === 'document') return res.redirect(302, '/p/img/' + rel);
     if (!cleanOK(req)) return sendPublicFile(rel, res, next);
@@ -241,7 +245,7 @@ function createApp(store) {
 
   app.get('/api/images/:id', async (req, res) => {
     const img = await store.getImage(req.params.id);
-    if (img && /^image\//.test(img.type)) {
+    if (img && wmHost(req) && /^image\//.test(img.type)) {
       noReuse(res);
       if (req.get('Sec-Fetch-Dest') === 'document') return res.redirect(302, '/p/api/images/' + encodeURIComponent(req.params.id));
       if (!cleanOK(req)) {

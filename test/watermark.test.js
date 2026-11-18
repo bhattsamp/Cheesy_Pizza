@@ -3,6 +3,7 @@ const assert = require('node:assert');
 const fs = require('fs');
 const path = require('path');
 const sharp = require('sharp');
+process.env.PUBLIC_IMAGE_HOSTS = '127.0.0.1';
 const { createApp } = require('../server/server');
 
 // Public (logo-marked) copies of photos for the customer site. Runs without MongoDB: a stand-in store.
@@ -57,3 +58,11 @@ test('the original address gives a clean photo only to our own screens', () => w
   assert.equal((await fetch(base + '/img/logo.png', { headers: { 'Sec-Fetch-Dest': 'document' }, redirect: 'manual' })).status, 200);
   assert.equal((await fetch(base + '/img/intro-bg.jpg')).headers.get('cache-control'), 'public, max-age=0');
 }));
+
+test('other addresses (shop computer, test server) serve plain photos', async () => {
+  const server = createApp({ async getImage() { return null; } }).listen(0);
+  try {
+    const r = await fetch(`http://localhost:${server.address().port}/img/margherita.jpg`);
+    assert.equal((await r.arrayBuffer()).byteLength, fs.statSync(path.join(__dirname, '..', 'img', 'margherita.jpg')).size);
+  } finally { server.close(); }
+});

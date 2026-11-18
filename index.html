@@ -2477,7 +2477,8 @@ html.lenis,html.lenis body{height:auto}
 // Built-in photos are named (img/margherita.jpg); uploaded ones are stored as a path (api/images/…)
 // On the customer site, photos load as public copies (p/img/…, p/api/images/…) with the logo printed across,
 // so a saved photo is not a clean copy (the page still shows the clean photo, see wmImg). The till, admin, customer screen and the offline app use the originals.
-const PUB_IMG=typeof seedData==='undefined'&&/^https?:$/.test(location.protocol);
+// Only on the live public site (cheesypizza.online); the server checks the same list.
+const PUB_IMG=typeof seedData==='undefined'&&/^https?:$/.test(location.protocol)&&/^(?:www\.)?cheesypizza\.online$/i.test(location.hostname);
 const PIMG=u=>PUB_IMG&&S.mode==='public'&&!CS_MODE&&!OB_MODE&&/^\/?(?:img|api\/images)\//.test(u)?'p/'+u.replace(/^\//,''):u;
 const IMG=n=>PIMG(/[\/:]/.test(n)?n:'img/'+n+'.jpg');
 // Public photos (p/…): the img's own picture is the logo-marked copy (that is what Save image, Open image in new tab,
