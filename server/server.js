@@ -10,6 +10,8 @@ const otp = require('./otp');
 const upiAlerts = require('./upi-alerts');
 const backups = require('./backups');
 const { addSampleVisitors } = require('./sample-visitors');
+const { publicCopy } = require('./watermark');
+const fs = require('fs');
 const Models = require('./models');
 const { RiderLoc, Staff } = require('./models');
 
@@ -183,8 +185,44 @@ function createApp(store) {
     if (buf.length > MAX_VIDEO) return res.status(413).json({ error: 'Video is too big' });
     res.json({ url: 'api/images/' + await store.saveImage(type, buf) });
   });
+  /* ----- public copies of photos for the customer site: logo printed across, at most 900px.
+     The customer site asks for p/img/… and p/api/images/…; the till, admin and shop TV keep the originals. ----- */
+  const PHOTO = /\.(?:jpe?g|png|webp)$/i, IMG_DIR = path.join(ROOT, 'img');
+  const sendPublic = (res, v) => res.set('Cache-Control', 'public, max-age=86400').set('Content-Disposition', 'inline').type(v.type).send(v.data);
+  app.get('/p/img/*file', async (req, res, next) => {
+    const rel = [].concat(req.params.file).join('/'), file = path.join(IMG_DIR, rel);
+    if (!PHOTO.test(rel) || !file.startsWith(IMG_DIR + path.sep)) return res.status(404).end();
+    let st; try { st = await fs.promises.stat(file); } catch { return res.status(404).end(); }
+    try {
+      sendPublic(res, await publicCopy('f:' + rel + ':' + st.mtimeMs, async () => ({ data: await fs.promises.readFile(file) })));
+    } catch (e) { next(e); }
+  });
+  app.get('/p/api/images/:id', async (req, res, next) => {
+    try {
+      let video = false;
+      const v = await publicCopy('i:' + req.params.id, async () => {
+        const img = await store.getImage(req.params.id);
+        if (!img) return null;
+        if (!/^image\//.test(img.type)) { video = true; return null; }
+        return { type: img.type, data: Buffer.isBuffer(img.data) ? img.data : Buffer.from(img.data.buffer) };
+      });
+      if (video) return res.redirect(302, '/api/images/' + encodeURIComponent(req.params.id));
+      if (!v) return res.status(404).end();
+      sendPublic(res, v);
+    } catch (e) { next(e); }
+  });
+  // Someone who opens an original photo's address straight in a browser tab gets the public copy;
+  // pictures on our own pages (the till, admin, shop TV) still load the original.
+  const openedInTab = req => req.get('Sec-Fetch-Dest') === 'document';
+  app.get('/img/*file', (req, res, next) => {
+    const rel = [].concat(req.params.file).join('/');
+    if (openedInTab(req) && PHOTO.test(rel) && !/^(?:logo|cheesy-|intro-|fonts\/)/.test(rel)) return res.redirect(302, '/p/img/' + rel);
+    next();
+  });
+
   app.get('/api/images/:id', async (req, res) => {
     const img = await store.getImage(req.params.id);
+    if (img && openedInTab(req) && /^image\//.test(img.type)) return res.redirect(302, '/p/api/images/' + encodeURIComponent(req.params.id));
     if (!img) return res.status(404).end();
     const data = Buffer.isBuffer(img.data) ? img.data : Buffer.from(img.data.buffer); // a BSON Binary from MongoDB
     res.set('Cache-Control', 'public, max-age=31536000, immutable').set('Accept-Ranges', 'bytes').type(img.type);
