@@ -602,6 +602,7 @@ html:has(#modalRoot:not(:empty)),html:has(#boardRoot:not(:empty)),html:has(#choo
 /* customer site photos: the clean photo is painted as the background and the logo-marked copy (the img's own picture)
    is moved out of view, so the page looks clean but Save image, drag or long-press gives the marked copy */
 img.wm{object-position:-99999px -99999px!important;background-repeat:no-repeat}
+img[data-wm]:not(.wm){opacity:0!important} /* until the clean photo is ready */
 .pubmode .btn.pri:hover,.pubmode .btn.chz:hover{filter:brightness(1.06);box-shadow:0 8px 20px rgba(26,147,168,.25)}
 .pub .item{border-radius:20px;box-shadow:var(--shadow)}
 @media (hover:hover){.pub .item:hover{transform:translateY(-5px);box-shadow:var(--shadow-lg)}.pub .combo-card,.pub .coupon{transition:transform .2s,box-shadow .2s}.pub .combo-card:hover,.pub .coupon:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg)}}
@@ -2479,11 +2480,20 @@ html.lenis,html.lenis body{height:auto}
 const PUB_IMG=typeof seedData==='undefined'&&/^https?:$/.test(location.protocol);
 const PIMG=u=>PUB_IMG&&S.mode==='public'&&!CS_MODE&&!OB_MODE&&/^\/?(?:img|api\/images)\//.test(u)?'p/'+u.replace(/^\//,''):u;
 const IMG=n=>PIMG(/[\/:]/.test(n)?n:'img/'+n+'.jpg');
-// Public photos (p/…): show the clean original on screen as the img's background, keep the marked copy as its picture
+// Public photos (p/…): the img's own picture is the logo-marked copy (that is what Save image, Open image in new tab,
+// drag and long-press give). The clean photo is fetched with the X-Cheesy-Clean header and painted as its background
+// from a short-lived blob: address, which is dropped as soon as it has been drawn, so no address on the page or in
+// Inspect element gives the clean photo (the server answers every other request for it with the marked copy).
+const CLEAN=new Map();
+const cleanBlob=u=>{if(!CLEAN.has(u))CLEAN.set(u,fetch(u,{headers:{'X-Cheesy-Clean':'1'},credentials:'same-origin'}).then(r=>r.ok?r.blob():Promise.reject(r.status)).catch(e=>{CLEAN.delete(u);throw e}));return CLEAN.get(u)};
 function wmImg(img){const src=img.getAttribute('src');if(!src||img.dataset.wm===src||!/^p\/(?:img|api\/images)\//.test(src))return;
-  const cs=getComputedStyle(img);
-  Object.assign(img.style,{backgroundImage:`url("${src.slice(2).replace(/"/g,'%22')}")`,backgroundSize:{cover:'cover',contain:'contain','scale-down':'contain',none:'auto'}[cs.objectFit]||'100% 100%',backgroundPosition:cs.objectPosition});
-  img.classList.add('wm');img.dataset.wm=src}
+  img.dataset.wm=src;
+  cleanBlob(src.slice(2)).then(bl=>{if(img.getAttribute('src')!==src)return;const url=URL.createObjectURL(bl),pre=new Image();
+    pre.onload=pre.onerror=()=>{if(img.getAttribute('src')===src){const cs=getComputedStyle(img);
+      Object.assign(img.style,{backgroundImage:`url("${url}")`,backgroundSize:{cover:'cover',contain:'contain','scale-down':'contain',none:'auto'}[cs.objectFit]||'100% 100%',backgroundPosition:cs.objectPosition});
+      img.classList.add('wm')}
+      requestAnimationFrame(()=>requestAnimationFrame(()=>URL.revokeObjectURL(url)))};
+    pre.src=url},()=>{delete img.dataset.wm}) }
 if(PUB_IMG)new MutationObserver(ms=>{for(const m of ms){if(m.type==='attributes'){if(m.target.tagName==='IMG')wmImg(m.target)}else m.addedNodes.forEach(n=>{if(n.nodeType!==1)return;if(n.tagName==='IMG')wmImg(n);else n.querySelectorAll('img').forEach(wmImg)})}})
   .observe(document.documentElement,{subtree:true,childList:true,attributes:true,attributeFilter:['src']});
 // All of an item's photos, main photo first (img is always the first one; imgs is set when there are more)
@@ -2946,6 +2956,8 @@ function render(){
   {const sel=document.getElementById('outletSel'),own=staff()?.role==='owner',lk=U.lockOutlet&&!own;const su=staff();
   sel.innerHTML=(lk?liveOutlets().filter(o=>o.id===U.lockOutlet):liveOutlets().filter(o=>!su||own||worksAt(su,o.id)||o.id===cur().id)).map(o=>`<option value="${o.id}" ${o.id===cur().id?'selected':''}>${esc(o.name)}</option>`).join('');sel.disabled=!!lk}
   document.body.classList.toggle('pubmode',S.mode==='public');
+  // The Outlet POS in this browser sees clean photos from the server (the customer site gets the logo-marked ones)
+  try{document.cookie=S.mode==='pos'&&!CS_MODE?'cp_pos=1; path=/; SameSite=Strict':'cp_pos=; path=/; max-age=0; SameSite=Strict'}catch(_){}
   const th=document.querySelector('.top')?.offsetHeight;if(th)document.documentElement.style.setProperty('--toph',th+'px');
   const vk=S.mode+'|'+(S.mode==='public'?U.pubView+'|'+(U.accTab||''):'');U.enter=vk!==U.lastView;U.lastView=vk;
   // Keep the scroll position of panes that scroll on their own (POS menu, order ticket) across re-renders
@@ -3785,7 +3797,7 @@ function openInfo(id){
 }
 function zoomMove(el,e){
   let lens=el.querySelector('.lens');const b=el.getBoundingClientRect(),Z=2.2,L=Math.min(150,b.width*.5);
-  if(!lens){lens=document.createElement('div');lens.className='lens';const c=el.firstElementChild.cloneNode(true);c.removeAttribute('loading');lens.appendChild(c);el.appendChild(lens)}
+  if(!lens){lens=document.createElement('div');lens.className='lens';const c=el.firstElementChild.cloneNode(true);c.removeAttribute('loading');delete c.dataset.wm;c.classList.remove('wm');c.style.backgroundImage='';lens.appendChild(c);el.appendChild(lens)}
   const x=Math.max(0,Math.min(b.width,e.clientX-b.left)),y=Math.max(0,Math.min(b.height,e.clientY-b.top)),up=e.pointerType==='touch'?L*.75:0;
   Object.assign(lens.style,{width:L+'px',height:L+'px',left:(x-L/2)+'px',top:(y-L/2-up)+'px',display:'block'});
   Object.assign(lens.firstElementChild.style,{width:b.width+'px',height:b.height+'px',transform:`translate(${L/2-x*Z}px,${L/2-y*Z}px) scale(${Z})`});

@@ -188,15 +188,16 @@ function createApp(store) {
   /* ----- public copies of photos for the customer site: logo printed across, at most 900px.
      The customer site asks for p/img/… and p/api/images/…; the till, admin and shop TV keep the originals. ----- */
   const PHOTO = /\.(?:jpe?g|png|webp)$/i, IMG_DIR = path.join(ROOT, 'img');
-  const sendPublic = (res, v) => res.set('Cache-Control', 'public, max-age=86400').set('Content-Disposition', 'inline').type(v.type).send(v.data);
-  app.get('/p/img/*file', async (req, res, next) => {
-    const rel = [].concat(req.params.file).join('/'), file = path.join(IMG_DIR, rel);
+  const sendPublic = (res, v) => { if (!res.get('Cache-Control')) res.set('Cache-Control', 'public, max-age=86400'); res.set('Content-Disposition', 'inline').type(v.type).send(v.data); };
+  async function sendPublicFile(rel, res, next) {
+    const file = path.join(IMG_DIR, rel);
     if (!PHOTO.test(rel) || !file.startsWith(IMG_DIR + path.sep)) return res.status(404).end();
     let st; try { st = await fs.promises.stat(file); } catch { return res.status(404).end(); }
     try {
       sendPublic(res, await publicCopy('f:' + rel + ':' + st.mtimeMs, async () => ({ data: await fs.promises.readFile(file) })));
     } catch (e) { next(e); }
-  });
+  }
+  app.get('/p/img/*file', (req, res, next) => sendPublicFile([].concat(req.params.file).join('/'), res, next));
   app.get('/p/api/images/:id', async (req, res, next) => {
     try {
       let video = false;
@@ -211,21 +212,47 @@ function createApp(store) {
       sendPublic(res, v);
     } catch (e) { next(e); }
   });
-  // Someone who opens an original photo's address straight in a browser tab gets the public copy;
-  // pictures on our own pages (the till, admin, shop TV) still load the original.
-  const openedInTab = req => req.get('Sec-Fetch-Dest') === 'document';
+  /* Who gets a clean original of a food photo. Everyone else (a customer's browser, a link opened in a new tab,
+     a copied address, a download tool) gets the logo-marked copy from the same address.
+     - the customer site fetches the clean picture for the screen with the X-Cheesy-Clean header
+     - pages of the till, admin and shop TV (by the page that asks: /staff, /admin, /display, /famous-visitors)
+     - the Admin app, and a browser showing the Outlet POS (it sets the cp_pos cookie)
+     A photo opened as a page of its own is always the marked copy. */
+  const PROTECT = /^(?!intro-|logo|cheesy-)[^/]+\.jpe?g$|^hero-pizza\.webp$|^gang\/photo\.webp$/i;
+  const STAFF_PAGE = /^\/(?:staff|admin|display|famous-visitors)(?:\/|$)/;
+  function cleanOK(req) {
+    if (req.get('Sec-Fetch-Dest') === 'document') return false;
+    if (req.get('X-Cheesy-Clean') === '1' || /CheesyApp\/admin/.test(req.get('User-Agent') || '')) return true;
+    if (/(?:^|;\s*)cp_pos=1(?:;|$)/.test(req.get('Cookie') || '')) return true;
+    try { return STAFF_PAGE.test(new URL(req.get('Referer') || '').pathname); } catch { return false; }
+  }
+  // the same address answers differently, so browsers must not reuse one answer for the other
+  const noReuse = res => res.set('Cache-Control', 'no-store').set('Vary', 'Referer, Cookie, X-Cheesy-Clean, Sec-Fetch-Dest');
   app.get('/img/*file', (req, res, next) => {
     const rel = [].concat(req.params.file).join('/');
-    if (openedInTab(req) && PHOTO.test(rel) && !/^(?:logo|cheesy-|intro-|fonts\/)/.test(rel)) return res.redirect(302, '/p/img/' + rel);
-    next();
+    if (!PROTECT.test(rel)) return next();
+    noReuse(res);
+    if (req.get('Sec-Fetch-Dest') === 'document') return res.redirect(302, '/p/img/' + rel);
+    if (!cleanOK(req)) return sendPublicFile(rel, res, next);
+    const file = path.join(IMG_DIR, rel);
+    if (!file.startsWith(IMG_DIR + path.sep)) return res.status(404).end();
+    res.sendFile(file, { cacheControl: false, etag: false, lastModified: false }, e => e && (e.status === 404 ? res.status(404).end() : next(e)));
   });
 
   app.get('/api/images/:id', async (req, res) => {
     const img = await store.getImage(req.params.id);
-    if (img && openedInTab(req) && /^image\//.test(img.type)) return res.redirect(302, '/p/api/images/' + encodeURIComponent(req.params.id));
+    if (img && /^image\//.test(img.type)) {
+      noReuse(res);
+      if (req.get('Sec-Fetch-Dest') === 'document') return res.redirect(302, '/p/api/images/' + encodeURIComponent(req.params.id));
+      if (!cleanOK(req)) {
+        const v = await publicCopy('i:' + req.params.id, async () => ({ type: img.type, data: Buffer.isBuffer(img.data) ? img.data : Buffer.from(img.data.buffer) }));
+        return sendPublic(res, v);
+      }
+    }
     if (!img) return res.status(404).end();
     const data = Buffer.isBuffer(img.data) ? img.data : Buffer.from(img.data.buffer); // a BSON Binary from MongoDB
-    res.set('Cache-Control', 'public, max-age=31536000, immutable').set('Accept-Ranges', 'bytes').type(img.type);
+    if (!res.get('Cache-Control')) res.set('Cache-Control', 'public, max-age=31536000, immutable');
+    res.set('Accept-Ranges', 'bytes').type(img.type);
     // videos are fetched in parts (Safari and most TVs will not play a video without this)
     const m = /^bytes=(\d*)-(\d*)$/.exec(String(req.get('Range') || ''));
     if (m && (m[1] || m[2])) {

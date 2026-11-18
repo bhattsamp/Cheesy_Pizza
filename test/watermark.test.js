@@ -35,12 +35,25 @@ test('uploaded photos have a public copy; videos are passed through', () => with
   assert.equal((await fetch(base + '/p/api/images/none')).status, 404);
 }));
 
-test('pictures on our pages get the original; opening one in a tab gets the public copy', () => withServer(async base => {
-  assert.equal((await fetch(base + '/img/margherita.jpg', { headers: { 'Sec-Fetch-Dest': 'image' } })).status, 200);
-  const tab = await fetch(base + '/img/margherita.jpg', { headers: { 'Sec-Fetch-Dest': 'document' }, redirect: 'manual' });
+test('the original address gives a clean photo only to our own screens', () => withServer(async base => {
+  const size = async (h) => (await (await fetch(base + '/img/margherita.jpg', { headers: h })).arrayBuffer()).byteLength;
+  const orig = fs.statSync(path.join(__dirname, '..', 'img', 'margherita.jpg')).size;
+  assert.notEqual(await size({}), orig);                                         // copied address, download tool
+  assert.notEqual(await size({ Referer: base + '/', 'Sec-Fetch-Dest': 'image' }), orig); // customer site <img>
+  assert.equal(await size({ 'X-Cheesy-Clean': '1' }), orig);                    // customer site's on-screen picture
+  assert.equal(await size({ Referer: base + '/staff/main' }), orig);            // till
+  assert.equal(await size({ Referer: base + '/display' }), orig);               // shop TV
+  assert.equal(await size({ Cookie: 'a=b; cp_pos=1' }), orig);                  // Outlet POS in a browser
+  const r = await fetch(base + '/img/margherita.jpg', { headers: { 'X-Cheesy-Clean': '1' } });
+  assert.equal(r.headers.get('cache-control'), 'no-store');
+  const tab = await fetch(base + '/img/margherita.jpg', { headers: { 'Sec-Fetch-Dest': 'document', 'X-Cheesy-Clean': '1' }, redirect: 'manual' });
   assert.equal(tab.status, 302);
   assert.match(tab.headers.get('location'), /\/p\/img\/margherita\.jpg$/);
   const up = await fetch(base + '/api/images/ph1', { headers: { 'Sec-Fetch-Dest': 'document' }, redirect: 'manual' });
   assert.equal(up.status, 302);
+  const upPlain = Buffer.from(await (await fetch(base + '/api/images/ph1')).arrayBuffer());
+  const upClean = Buffer.from(await (await fetch(base + '/api/images/ph1', { headers: { Referer: base + '/admin' } })).arrayBuffer());
+  assert.notDeepEqual(upPlain, upClean);
   assert.equal((await fetch(base + '/img/logo.png', { headers: { 'Sec-Fetch-Dest': 'document' }, redirect: 'manual' })).status, 200);
+  assert.equal((await fetch(base + '/img/intro-bg.jpg')).headers.get('cache-control'), 'public, max-age=0');
 }));
