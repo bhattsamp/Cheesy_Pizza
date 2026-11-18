@@ -599,6 +599,10 @@ html:has(#modalRoot:not(:empty)),html:has(#boardRoot:not(:empty)),html:has(#choo
 .item .ph{background:radial-gradient(circle at 50% 45%,var(--surface) 0 40%,var(--surface2) 75%)}
 .pubmode .btn{transition:transform .12s,box-shadow .2s,background .2s,filter .2s}
 .pubmode .btn:active{transform:scale(.95)}
+/* customer site photos: the clean photo is painted as the background and the logo-marked copy (the img's own picture)
+   is moved out of view, so the page looks clean but Save image, drag or long-press gives the marked copy */
+img.wm{object-position:-99999px -99999px!important;background-repeat:no-repeat}
+img[data-wm]:not(.wm){opacity:0!important} /* until the clean photo is ready */
 .pubmode .btn.pri:hover,.pubmode .btn.chz:hover{filter:brightness(1.06);box-shadow:0 8px 20px rgba(26,147,168,.25)}
 .pub .item{border-radius:20px;box-shadow:var(--shadow)}
 @media (hover:hover){.pub .item:hover{transform:translateY(-5px);box-shadow:var(--shadow-lg)}.pub .combo-card,.pub .coupon{transition:transform .2s,box-shadow .2s}.pub .combo-card:hover,.pub .coupon:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg)}}
@@ -2471,7 +2475,28 @@ html.lenis,html.lenis body{height:auto}
 
 <script>
 // Built-in photos are named (img/margherita.jpg); uploaded ones are stored as a path (api/images/…)
-const IMG=n=>/[\/:]/.test(n)?n:'img/'+n+'.jpg';
+// On the customer site, photos load as public copies (p/img/…, p/api/images/…) with the logo printed across,
+// so a saved photo is not a clean copy (the page still shows the clean photo, see wmImg). The till, admin, customer screen and the offline app use the originals.
+// Only on the live public site (cheesypizza.online); the server checks the same list.
+const PUB_IMG=typeof seedData==='undefined'&&/^https?:$/.test(location.protocol)&&/^(?:www\.)?cheesypizza\.online$/i.test(location.hostname);
+const PIMG=u=>PUB_IMG&&S.mode==='public'&&!CS_MODE&&!OB_MODE&&/^\/?(?:img|api\/images)\//.test(u)?'p/'+u.replace(/^\//,''):u;
+const IMG=n=>PIMG(/[\/:]/.test(n)?n:'img/'+n+'.jpg');
+// Public photos (p/…): the img's own picture is the logo-marked copy (that is what Save image, Open image in new tab,
+// drag and long-press give). The clean photo is fetched with the X-Cheesy-Clean header and painted as its background
+// from a short-lived blob: address, which is dropped as soon as it has been drawn, so no address on the page or in
+// Inspect element gives the clean photo (the server answers every other request for it with the marked copy).
+const CLEAN=new Map();
+const cleanBlob=u=>{if(!CLEAN.has(u))CLEAN.set(u,fetch(u,{headers:{'X-Cheesy-Clean':'1'},credentials:'same-origin'}).then(r=>r.ok?r.blob():Promise.reject(r.status)).catch(e=>{CLEAN.delete(u);throw e}));return CLEAN.get(u)};
+function wmImg(img){const src=img.getAttribute('src');if(!src||img.dataset.wm===src||!/^p\/(?:img|api\/images)\//.test(src))return;
+  img.dataset.wm=src;
+  cleanBlob(src.slice(2)).then(bl=>{if(img.getAttribute('src')!==src)return;const url=URL.createObjectURL(bl),pre=new Image();
+    pre.onload=pre.onerror=()=>{if(img.getAttribute('src')===src){const cs=getComputedStyle(img);
+      Object.assign(img.style,{backgroundImage:`url("${url}")`,backgroundSize:{cover:'cover',contain:'contain','scale-down':'contain',none:'auto'}[cs.objectFit]||'100% 100%',backgroundPosition:cs.objectPosition});
+      img.classList.add('wm')}
+      requestAnimationFrame(()=>requestAnimationFrame(()=>URL.revokeObjectURL(url)))};
+    pre.src=url},()=>{delete img.dataset.wm}) }
+if(PUB_IMG)new MutationObserver(ms=>{for(const m of ms){if(m.type==='attributes'){if(m.target.tagName==='IMG')wmImg(m.target)}else m.addedNodes.forEach(n=>{if(n.nodeType!==1)return;if(n.tagName==='IMG')wmImg(n);else n.querySelectorAll('img').forEach(wmImg)})}})
+  .observe(document.documentElement,{subtree:true,childList:true,attributes:true,attributeFilter:['src']});
 // All of an item's photos, main photo first (img is always the first one; imgs is set when there are more)
 const photosOf=m=>m.imgs?.length?m.imgs:m.img?[m.img]:[];
 // Swipeable slider for an item's photos (srcs: ready image URLs). round: the item details look, with the mouse magnifier.
@@ -2932,6 +2957,8 @@ function render(){
   {const sel=document.getElementById('outletSel'),own=staff()?.role==='owner',lk=U.lockOutlet&&!own;const su=staff();
   sel.innerHTML=(lk?liveOutlets().filter(o=>o.id===U.lockOutlet):liveOutlets().filter(o=>!su||own||worksAt(su,o.id)||o.id===cur().id)).map(o=>`<option value="${o.id}" ${o.id===cur().id?'selected':''}>${esc(o.name)}</option>`).join('');sel.disabled=!!lk}
   document.body.classList.toggle('pubmode',S.mode==='public');
+  // The Outlet POS in this browser sees clean photos from the server (the customer site gets the logo-marked ones)
+  try{document.cookie=S.mode==='pos'&&!CS_MODE?'cp_pos=1; path=/; SameSite=Strict':'cp_pos=; path=/; max-age=0; SameSite=Strict'}catch(_){}
   const th=document.querySelector('.top')?.offsetHeight;if(th)document.documentElement.style.setProperty('--toph',th+'px');
   const vk=S.mode+'|'+(S.mode==='public'?U.pubView+'|'+(U.accTab||''):'');U.enter=vk!==U.lastView;U.lastView=vk;
   // Keep the scroll position of panes that scroll on their own (POS menu, order ticket) across re-renders
@@ -3186,7 +3213,7 @@ function leadBadge(x,dow){
 }
 
 // The hero pizza is a real photo: our Veggie Paradise, seen from the top, on the plate that tilts and turns
-function heroPizza(){return '<img class="hx-real" src="img/hero-pizza.webp" alt="Veggie Paradise pizza from Cheesy Pizza" width="900" height="900" draggable="false">'}
+function heroPizza(){return `<img class="hx-real" src="${PIMG('img/hero-pizza.webp')}" alt="Veggie Paradise pizza from Cheesy Pizza" width="900" height="900" draggable="false">`}
 // The pizza's own ingredients float around it (img/ing). Each one can be grabbed and thrown; it springs back.
 const FLOATERS=[['tomato-slice',-8,58,15,140,26,6,-12,8],['olive',80,-4,9,180,34,7,-6,10,'m'],['capsicum',86,58,13,220,40,5.5,-8,6],['mushroom',58,-12,11,110,20,6.5,-10,10,'m'],
   ['basil',-24,6,13,160,30,7.5,-8,4,'m'],['cheese',20,86,11,240,44,5,6,-4,'m'],['onion',112,24,13,170,32,6.5,-10,12,'m'],['corn',46,94,9,200,36,7.5,8,-6,'m'],['olive',2,-8,7,130,24,6,0,20,'m'],['tomato-slice',104,86,12,190,38,7,-6,8,'m']];
@@ -3321,9 +3348,9 @@ function renderHome(){if(HOME2)return renderHome2();
       <button class="btn pri lg" data-act="pn" data-v="menu">Order a cheesy one <span class="arr" aria-hidden="true">→</span></button>
       <span class="pull-hint" aria-hidden="true">Keep scrolling ↓</span></div>
     <div class="pull-stage" aria-hidden="true"><div class="pull-plate"></div>
-      <img class="pull-pz" src="img/hero-pizza.webp" alt="" width="900" height="900" loading="lazy">
+      <img class="pull-pz" src="${PIMG('img/hero-pizza.webp')}" alt="" width="900" height="900" loading="lazy">
       <svg class="pull-svg" viewBox="0 0 100 100" preserveAspectRatio="none"><defs><linearGradient id="pullg" x1="0" x2="1"><stop offset="0" stop-color="#e2a93a"/><stop offset=".35" stop-color="#fff0b0"/><stop offset=".65" stop-color="#f7d670"/><stop offset="1" stop-color="#d49a2c"/></linearGradient></defs><g fill="url(#pullg)"></g><g class="pull-hi" fill="none" stroke="#fffbe6" stroke-linecap="round"></g></svg>
-      <div class="pull-sl"><img src="img/hero-pizza.webp" alt="" width="900" height="900" loading="lazy"></div>
+      <div class="pull-sl"><img src="${PIMG('img/hero-pizza.webp')}" alt="" width="900" height="900" loading="lazy"></div>
       <span class="pull-tag">¡Stretchy!</span></div>
   </div></div></section>
 
@@ -3360,7 +3387,7 @@ function renderHome(){if(HOME2)return renderHome2();
       <div class="bx-lists">${[['a','First, your pizza',0],['b','Then, the garlic bread',5]].map(([c,t,k])=>`<div class="bx-list ${c}"><span class="bx-sub">${t}</span><ol class="bx-steps">${steps.slice(k,k+5).map(([h,p],i)=>`<li data-i="${k+i}"><b>0${i+1}</b><div><h3>${h}</h3><p>${p}</p></div></li>`).join('')}</ol></div>`).join('')}</div>
       <div class="bx-bar"><i></i></div></div>
     <div class="bx-stage" aria-hidden="true"><div class="bx-plate"></div><div class="bx-heat"></div>
-      <div class="bx-pz">${['dough','sauce','cheese','toppings'].map(k=>`<img class="bx-l bx-${k}" src="img/build/${k}.webp" alt="" loading="lazy" width="900" height="900">`).join('')}<img class="bx-l bx-baked" src="img/hero-pizza.webp" alt="" loading="lazy" width="900" height="900"></div>
+      <div class="bx-pz">${['dough','sauce','cheese','toppings'].map(k=>`<img class="bx-l bx-${k}" src="img/build/${k}.webp" alt="" loading="lazy" width="900" height="900">`).join('')}<img class="bx-l bx-baked" src="${PIMG('img/hero-pizza.webp')}" alt="" loading="lazy" width="900" height="900"></div>
       <div class="bx-gb"><div class="bx-board"></div><div class="bx-heat2"></div>${['dough','butter','cheese','baked'].map(k=>`<img class="bx-g bx-g-${k}" src="img/build/gb-${k}.webp" alt="" loading="lazy" width="1000" height="508">`).join('')}
         <img class="bx-drop bx-drop-butter" src="img/build/drop-butter.webp" alt="" loading="lazy" width="480" height="336"><img class="bx-drop bx-drop-cheese" src="img/build/drop-cheese.webp" alt="" loading="lazy" width="420" height="420"></div>
       <div class="bx-steam"><i style="--l:0px;--dl:0s"></i><i style="--l:34px;--dl:1.2s"></i><i style="--l:-30px;--dl:2.3s"></i></div>
@@ -3371,7 +3398,7 @@ function renderHome(){if(HOME2)return renderHome2();
 
   <section class="sx gang" id="gang"><div class="sx-in">
     <div class="sx-h"><div><span class="kick">The whole gang</span><h2>A little of <em>everything.</em></h2></div><p>Pizzas, garlic bread, fries, paneer pockets and masala bread. Drawn by hand first, then baked for real. Scroll and watch.</p></div>
-    <figure class="gang-fig" data-sx><img class="g-sk" src="img/gang/sketch.webp" alt="" loading="lazy" width="1600" height="900"><img class="g-ph" src="img/gang/photo.webp" alt="Cheesy Pizza's pizzas, garlic bread, fries, paneer pockets and masala bread together" loading="lazy" width="1600" height="900"><span class="g-line" aria-hidden="true"></span>
+    <figure class="gang-fig" data-sx><img class="g-sk" src="img/gang/sketch.webp" alt="" loading="lazy" width="1600" height="900"><img class="g-ph" src="${PIMG('img/gang/photo.webp')}" alt="Cheesy Pizza's pizzas, garlic bread, fries, paneer pockets and masala bread together" loading="lazy" width="1600" height="900"><span class="g-line" aria-hidden="true"></span>
       <span class="g-tag g-t1" aria-hidden="true">sketch</span><span class="g-tag g-t2" aria-hidden="true">baked!</span></figure>
     <ol class="gang-steps">${[['Pick a pizza','Sixteen of them, 7" or 10", cheese burst if you like.'],['Add a side','Garlic bread, fries, pockets or masala bread.'],['Grab a cold drink','Thums Up, Coca Cola, Sprite or Fanta.']].map(([h,t],i)=>`<li><b>0${i+1}</b><div><h3>${h}</h3><p>${t}</p></div></li>`).join('')}</ol>
   </div></section>
@@ -3771,7 +3798,7 @@ function openInfo(id){
 }
 function zoomMove(el,e){
   let lens=el.querySelector('.lens');const b=el.getBoundingClientRect(),Z=2.2,L=Math.min(150,b.width*.5);
-  if(!lens){lens=document.createElement('div');lens.className='lens';const c=el.firstElementChild.cloneNode(true);c.removeAttribute('loading');lens.appendChild(c);el.appendChild(lens)}
+  if(!lens){lens=document.createElement('div');lens.className='lens';const c=el.firstElementChild.cloneNode(true);c.removeAttribute('loading');delete c.dataset.wm;c.classList.remove('wm');c.style.backgroundImage='';lens.appendChild(c);el.appendChild(lens)}
   const x=Math.max(0,Math.min(b.width,e.clientX-b.left)),y=Math.max(0,Math.min(b.height,e.clientY-b.top)),up=e.pointerType==='touch'?L*.75:0;
   Object.assign(lens.style,{width:L+'px',height:L+'px',left:(x-L/2)+'px',top:(y-L/2-up)+'px',display:'block'});
   Object.assign(lens.firstElementChild.style,{width:b.width+'px',height:b.height+'px',transform:`translate(${L/2-x*Z}px,${L/2-y*Z}px) scale(${Z})`});
