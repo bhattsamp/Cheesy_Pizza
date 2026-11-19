@@ -1587,17 +1587,17 @@ body.drawer-open{overflow:hidden}
 .hx-facts span{font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.55);font-weight:600}
 /* the 3D stage: a tilted plane holding the pizza, with ingredients floating at different depths */
 .hx-stage{position:relative;aspect-ratio:1;width:100%;max-width:720px;justify-self:center;perspective:1500px;perspective-origin:50% 30%;transform:translateY(calc(var(--sp)*90px)) scale(calc(1 - var(--sp)*.08))}
-.hx-tilt{position:absolute;inset:0;transform-style:preserve-3d;transform:rotateX(calc(54deg - var(--my)*6deg)) rotateZ(calc(var(--mx)*-6deg));transition:transform .2s linear}
+.hx-tilt{position:absolute;inset:0;transform-style:preserve-3d;transform:rotateX(calc(54deg - var(--my)*6deg)) rotateZ(calc(var(--mx)*-6deg));will-change:transform}
 .hx-glow{position:absolute;inset:4%;border-radius:50%;background:radial-gradient(circle,rgba(255,170,90,.38),transparent 62%);transform:translateZ(-70px);filter:blur(10px)}
 .hx-plate{position:absolute;inset:5%;border-radius:50%;transform:translateZ(-14px);background:radial-gradient(circle at 50% 42%,#0b3a43 0 56%,#0f4a55 70%,#120C0A 100%);box-shadow:0 0 0 2px rgba(255,255,255,.06),0 60px 80px rgba(0,0,0,.55)}
 .hx-pz{position:absolute;inset:8%;transform:translateZ(0)}
-.hx-spin{width:100%;height:100%;animation:hxSpin 140s linear infinite;will-change:transform}
-.hx-spin svg{width:100%;height:100%;display:block;overflow:visible;transform:rotate(calc(var(--sp)*70deg));transition:transform .2s linear}
+.hx-spin{width:100%;height:100%;animation:hxSpin 140s linear infinite;will-change:transform;backface-visibility:hidden}
+.hx-spin svg{width:100%;height:100%;display:block;overflow:visible;transform:rotate(calc(var(--sp)*70deg))}
 @keyframes hxSpin{to{transform:rotate(360deg)}}
 .hp-lift{animation:hpLift 4.5s ease-in-out infinite alternate}
 @keyframes hpLift{from{transform:translate(0,0)}to{transform:translate(4px,6px)}}
 .hx-f{position:absolute;left:var(--x);top:var(--y);width:var(--w);transform-style:preserve-3d;transform:translateZ(var(--z)) rotateX(-54deg)}
-.hx-f>div{transform:translate(calc(var(--mx)*var(--d)*1px),calc(var(--my)*var(--d)*1px));transition:transform .2s linear}
+.hx-f>div{transform:translate(calc(var(--mx)*var(--d)*1px),calc(var(--my)*var(--d)*1px))}
 .hx-f svg{display:block;width:100%;height:auto;animation:hxBob var(--t,6s) ease-in-out infinite alternate;animation-delay:var(--dl,0s);filter:drop-shadow(0 18px 18px rgba(0,0,0,.45))}
 @keyframes hxBob{from{transform:translateY(-6px) rotate(var(--r0,0deg))}to{transform:translateY(8px) rotate(var(--r1,8deg))}}
 .hx-steam{position:absolute;left:46%;top:18%;width:8%;height:30%;transform:translateZ(80px) rotateX(-54deg);pointer-events:none}
@@ -2137,13 +2137,13 @@ html.lenis,html.lenis body{height:auto}
    Sections: solid colour blocks in the shop's teal, deep teal and cheese yellow. */
 .hx2{position:relative;display:block;min-height:max(640px,calc(100svh - var(--toph,64px)));padding:0;background:#0f7f91;color:#fff}
 .hx2::before{background:radial-gradient(55% 60% at 50% 50%,rgba(60,186,208,.75),transparent 72%),radial-gradient(35% 35% at 50% 58%,rgba(242,182,50,.35),transparent 70%),linear-gradient(180deg,#0f7f91,#0c6e7e)}
-.hx2::after{display:block;opacity:.12;mix-blend-mode:soft-light}
+.hx2::after{display:block;opacity:.05;mix-blend-mode:normal}
 .hx-pill{position:absolute;left:50%;top:clamp(14px,2.4vw,28px);translate:-50% 0;z-index:4;white-space:nowrap}
 .hx2 .hx-pill .kick{background:#f2b632;color:#3a2800;padding:9px 18px;border-radius:999px;font-size:13px;letter-spacing:.14em;box-shadow:0 10px 24px rgba(0,0,0,.18)}
 .hx2 .hx-pill .kick i{background:#1f8a4c;box-shadow:0 0 0 4px rgba(31,138,76,.2)}
 .hx2 .hx-pill .kick.closed i{background:#d23f35;box-shadow:0 0 0 4px rgba(210,63,53,.2)}
 .hx-giant{position:absolute;left:0;right:0;top:39%;translate:0 -50%;z-index:1;display:flex;justify-content:center;pointer-events:none;font-family:"Anton",Impact,"Arial Narrow Bold",sans-serif;font-size:clamp(130px,30.5vw,600px);line-height:.82;color:#fff;text-transform:uppercase;letter-spacing:.005em;text-shadow:0 18px 40px rgba(6,40,48,.25)}
-.hx-giant span{display:inline-block;translate:calc(var(--mx) * var(--b) * 3px) calc(var(--sp) * var(--k) * 1px + var(--my) * var(--b) * 2px);rotate:calc(var(--sp) * var(--r) * 1deg)}
+.hx-giant span{display:inline-block;will-change:translate;translate:calc(var(--mx) * var(--b) * 3px) calc(var(--sp) * var(--k) * 1px + var(--my) * var(--b) * 2px);rotate:calc(var(--sp) * var(--r) * 1deg)}
 .hx-giant b{display:inline-block;font-weight:400;rotate:calc(var(--b) * .7deg)}
 .hx2.enter .hx-giant b{animation:giantIn 1.15s cubic-bezier(.3,1.55,.5,1) both;animation-delay:calc(var(--j) * 85ms + .1s)}
 @keyframes giantIn{from{opacity:0;transform:translateY(-80%) rotate(calc(var(--b) * 5deg)) scale(.55)}to{opacity:1;transform:none}}
@@ -2259,7 +2259,7 @@ html.lenis,html.lenis body{height:auto}
 @media (max-width:720px){.bp-logo{height:34px}}
 @media (max-width:400px){.bp-logo{height:29px}}
 .ft-logo{display:block;width:clamp(180px,17vw,240px);height:auto;margin:0 0 16px -6px}
-.hx-real{display:block;width:100%;height:100%;border-radius:50%;transform:rotate(calc(var(--sp) * 70deg));transition:transform .2s linear;box-shadow:0 0 0 3px rgba(255,255,255,.4),0 30px 40px rgba(60,25,5,.35);user-select:none;-webkit-user-drag:none}
+.hx-real{display:block;width:100%;height:100%;border-radius:50%;transform:rotate(calc(var(--sp) * 70deg));box-shadow:0 0 0 3px rgba(255,255,255,.4),0 30px 40px rgba(60,25,5,.35);user-select:none;-webkit-user-drag:none}
 .hx-f img{display:block;width:100%;height:auto;user-select:none;-webkit-user-drag:none;animation:hxBob var(--t,6s) ease-in-out infinite alternate;animation-delay:var(--dl,0s);filter:drop-shadow(0 22px 18px rgba(4,40,48,.42))}
 .hx-grab{pointer-events:auto;cursor:grab;touch-action:none;translate:var(--gx,0px) var(--gy,0px) var(--gz,0px);rotate:var(--gr,0deg)}
 .hx-grab.held{cursor:grabbing}
@@ -2944,6 +2944,24 @@ staff:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="
 const TABS=[['new','New order'],['kitchen','Kitchen'],['counter','Counter'],['orders','Orders'],['tables','Tables'],['book','Advance booking'],['sales','Day sale'],['reports','Reports'],['stock','Stock'],['offers','Offers'],['cust','Customers'],['menu','Menu & sizes'],['home','Home page'],['display','Shop display'],['vips','Famous visitors'],['outlet','Outlets'],['staff','Staff'],['review','Reviews'],['trips','Deliveries']];
 
 const app=document.getElementById('app');
+// A section marked data-keep="name" that comes out of a re-render the same as before stays on the page as it is:
+// everything around it is replaced, but it is never taken out (that would restart its animations), so the food keeps
+// floating where it is and its pictures are not loaded again. Its markup is compared as it was first built (the live
+// element's styles change as it moves); a start time written into it does not count as a change.
+const keepSig=el=>el.outerHTML.replace(/ enter(?=["\s])/g,'').replace(/animation-delay:-[\d.]+s/g,'');
+function setApp(html){
+  const t=document.createElement('template');t.innerHTML=html;
+  const nk=t.content.querySelector('[data-keep]'),ok=app.querySelector('[data-keep]'),sig=nk&&keepSig(nk);
+  const chain=(el,root)=>{const c=[];while(el&&el!==root){c.unshift(el);el=el.parentNode}return el===root?c:null};
+  const co=ok&&nk&&ok.dataset.keep===nk.dataset.keep&&ok._sig===sig?chain(ok,app):null,cn=co&&chain(nk,t.content);
+  if(!co||!cn||co.length!==cn.length||co.some((x,i)=>x.tagName!==cn[i].tagName)){app.replaceChildren(t.content);if(nk)nk._sig=sig;return}
+  let po=app,pn=t.content;
+  co.forEach((ao,i)=>{const an=cn[i];
+    [...po.childNodes].forEach(n=>{if(n!==ao)n.remove()});
+    let before=true;[...pn.childNodes].forEach(n=>{if(n===an){before=false;return}if(before)po.insertBefore(n,ao);else po.appendChild(n)});
+    if(i<co.length-1){[...ao.attributes].forEach(a=>{if(!an.hasAttribute(a.name))ao.removeAttribute(a.name)});[...an.attributes].forEach(a=>{if(ao.getAttribute(a.name)!==a.value)ao.setAttribute(a.name,a.value)})}
+    po=ao;pn=an});
+}
 function render(){
   if(CS_MODE){renderCS();return}
   if(OB_MODE){renderOB();return}
@@ -2963,7 +2981,7 @@ function render(){
   const vk=S.mode+'|'+(S.mode==='public'?U.pubView+'|'+(U.accTab||''):'');U.enter=vk!==U.lastView;U.lastView=vk;
   // Keep the scroll position of panes that scroll on their own (POS menu, order ticket) across re-renders
   const ks={};app.querySelectorAll('[data-ks]').forEach(el=>{ks[el.dataset.ks]=[el.scrollTop,el.scrollLeft]});
-  app.innerHTML=S.mode==='public'?pubNav()+(U.pubView==='account'&&me()?renderAccount():U.pubView==='auth'&&!me()?renderAuth():U.pubView==='home'?renderHome():renderPublic()):renderPOS();renderAcct();
+  setApp(S.mode==='public'?pubNav()+(U.pubView==='account'&&me()?renderAccount():U.pubView==='auth'&&!me()?renderAuth():U.pubView==='home'?renderHome():renderPublic()):renderPOS());renderAcct();
   app.querySelectorAll('[data-ks]').forEach(el=>{const v=ks[el.dataset.ks];if(v){el.scrollTop=v[0];el.scrollLeft=v[1]}});
   renderChrome();renderBoard();renderRing();afterRender();navTrack();sideBar();fitTicket();catBar();csSend();
 }
@@ -3318,7 +3336,7 @@ function renderHome(){if(HOME2)return renderHome2();
   const p2a=fillWords("We don't use mayonnaise in any product."),p2b=fillWords(`Not in the pockets, not in the dips, not anywhere.${jain?` ${jain} of our pizzas come in a Jain option, too.`:''}`);
   const craft=['Fresh dough','Hand stretched','Soft base','Live pizza','Pure veg','No mayonnaise'].map(t=>`<span><b>✦</b> ${t}</span>`).join('');
   return `<main class="home"><div class="home-bg" aria-hidden="true"><i class="b1"></i><i class="b2"></i><i class="b3"></i></div>
-  <section class="hx hx2${enter}" aria-labelledby="hx-title">
+  <section class="hx hx2${enter}" data-keep="hero" aria-labelledby="hx-title">
     <div class="hx-pill"><span class="kick${open?'':' closed'}"><i></i>${open?'Oven is on · ordering open':'Closed now · opens at '+hrText(OPEN_H)} · Pure veg</span></div>
     <img class="hx-logo" src="img/logo-badge.png" alt="Cheesy Pizza · Really Cheesy...!" width="820" height="820">
     <p class="hx-hint" aria-hidden="true"><span class="m">Grab the food and throw it ↗</span><span class="t">Drag the food around ↗</span></p>
