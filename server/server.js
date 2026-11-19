@@ -222,7 +222,7 @@ function createApp(store) {
   // PUBLIC_IMAGE_HOSTS (comma separated) changes the list.
   const WM_HOSTS = String(process.env.PUBLIC_IMAGE_HOSTS || 'cheesypizza.online,www.cheesypizza.online').toLowerCase().split(',').map(h => h.trim()).filter(Boolean);
   const wmHost = req => WM_HOSTS.includes(String(req.hostname || '').toLowerCase());
-  const PROTECT = /^(?!intro-|logo|cheesy-)[^/]+\.jpe?g$|^hero-pizza\.webp$|^gang\/photo\.webp$/i;
+  const PROTECT = /^(?!intro-|logo|cheesy-)[^/]+\.jpe?g$|^hero-pizza\.webp$|^gang\/photo\.webp$|^cut\/[^/]+\.webp$/i; // cut/: the food cut out for the shop TV
   const STAFF_PAGE = /^\/(?:staff|admin|display|famous-visitors)(?:\/|$)/;
   function cleanOK(req) {
     if (req.get('Sec-Fetch-Dest') === 'document') return false;

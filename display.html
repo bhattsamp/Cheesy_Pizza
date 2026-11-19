@@ -316,7 +316,40 @@ body.idle{cursor:none}
 .shine{position:relative;display:inline-block}
 /* (the light sweep over the hero word used a blend mode that made the whole slide redraw every frame: removed) */
 
-/* spotlight: one item fills the screen */
+/* spotlight: one item fills the screen. Its price sits under the name, beside Order now, never over the food */
+.s-spot .buy{display:flex;align-items:center;gap:30px;margin-top:38px;flex-wrap:wrap}
+.s-spot .buy .cta{margin-top:0}
+.ptag{display:inline-flex;flex-direction:column;align-items:flex-start;background:#fff;color:#c62f26;border-radius:26px;padding:12px 30px 10px;box-shadow:0 18px 34px rgba(0,0,0,.28);rotate:-3deg;opacity:0}
+.on .ptag{animation:tagIn .9s 1.2s cubic-bezier(.3,1.7,.5,1) both}
+@keyframes tagIn{from{opacity:0;transform:scale(.3) rotate(-25deg)}to{opacity:1;transform:none}}
+.pt-main{font-family:Anton,sans-serif;font-size:96px;line-height:1}
+.pt-main small{font:800 28px 'Baloo Bhai 2',sans-serif;letter-spacing:.06em;margin-right:8px;color:#7a4300;vertical-align:.9em}
+.pt-sz{font:700 26px 'Baloo Bhai 2',sans-serif;color:#3a2800;display:flex;gap:10px;align-items:center;margin-top:2px}
+.pt-sz b{color:#c62f26}.pt-sz i{width:6px;height:6px;border-radius:50%;background:#e2b13c}
+/* the cut-out food: no frame, a glow and turning light behind, a shadow on the ground, ingredients around */
+.fw .fd{position:absolute;inset:30px;display:grid;place-items:center;z-index:2}
+.fw .fd img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 46px 40px rgba(0,0,0,.42)) drop-shadow(0 6px 8px rgba(0,0,0,.25))}
+.on .fw .fd{animation:fdIn 1.4s .15s cubic-bezier(.25,1.3,.45,1) both}
+@keyframes fdIn{from{opacity:0;transform:translateY(-420px) rotate(-90deg) scale(.55)}to{opacity:1;transform:none}}
+.on .fw .fd.round img{animation:spin 70s 1.5s linear infinite}
+.on .fw .fd:not(.round) img{animation:floaty 3.6s 1.5s ease-in-out infinite alternate}
+@keyframes floaty{from{transform:translateY(0) rotate(-2deg)}to{transform:translateY(-26px) rotate(2deg)}}
+.fw .halo{position:absolute;inset:-40px;border-radius:50%;background:radial-gradient(closest-side,rgba(255,255,255,.6),rgba(255,236,170,.28) 52%,transparent 74%);z-index:1}
+.on .fw .halo{animation:halo 3.4s ease-in-out infinite alternate}
+@keyframes halo{from{transform:scale(.94);opacity:.8}to{transform:scale(1.06);opacity:1}}
+.fw .beam{position:absolute;inset:-260px;z-index:0;background:repeating-conic-gradient(from 0deg,rgba(255,255,255,.16) 0 7deg,transparent 7deg 20deg);
+  -webkit-mask-image:radial-gradient(closest-side,#000 25%,transparent 72%);mask-image:radial-gradient(closest-side,#000 25%,transparent 72%)}
+.on .fw .beam{animation:spin 50s linear infinite}
+.fw .gsh{position:absolute;left:12%;right:12%;bottom:-10px;height:90px;border-radius:50%;background:radial-gradient(closest-side,rgba(0,0,0,.38),transparent);z-index:1}
+.sp-ing{position:absolute;z-index:3;filter:drop-shadow(0 16px 14px rgba(0,0,0,.3));opacity:0;translate:-50% -50%}
+.on .sp-ing{animation:ingIn .9s var(--d) cubic-bezier(.3,1.5,.5,1) both,ingBob var(--b) calc(var(--d) + .9s) ease-in-out infinite alternate}
+@keyframes ingIn{from{opacity:0;transform:scale(0) rotate(calc(var(--r) - 180deg))}to{opacity:1;transform:rotate(var(--r))}}
+@keyframes ingBob{from{transform:rotate(var(--r)) translateY(0)}to{transform:rotate(calc(var(--r) + 14deg)) translateY(-22px)}}
+/* cards: the cut-out food on a warm glow instead of a cropped photo */
+.card .ph.cut,.bcard .ph.cut{background-color:#fbecc8;background-size:contain;background-repeat:no-repeat;background-position:center;background-origin:content-box;padding:16px 18px 10px;
+  box-shadow:inset 0 -40px 60px rgba(214,150,50,.28),inset 0 0 90px rgba(255,255,255,.7)}
+.cmb .stk img.cut{border:0;border-radius:0;object-fit:contain;box-shadow:none;filter:drop-shadow(0 12px 12px rgba(0,0,0,.35));margin-right:-24px}
+
 .s-spot{background:var(--bg)}
 .s-spot .copy{position:absolute;left:120px;top:210px;width:860px;z-index:3}
 .s-spot .h1{font-size:var(--fs,170px);color:#fff}
@@ -493,6 +526,24 @@ const priceOf=m=>{if(m.prices){const sz=(D.sizes||[]).map(s=>s.id).filter(id=>m.
   return m.price!=null?`<span>₹${m.price}</span>`:''};
 // Only the photo saved with the item in Admin; an item without one shows the shop badge, never another item's picture
 const photo=m=>m.img?IMG(m.img):'img/logo-badge.png';
+// The food cut out of its photo's background (img/cut, made by tools/food-cutouts.py), where there is one
+let CUT={};
+const cutOf=m=>{if(!m||!m.img)return null;const k=/^api\/images\//.test(m.img)?m.img.split('/').pop():/[\/:]/.test(m.img)?null:m.img;return k&&CUT[k]?'img/cut/'+k+'.webp':null};
+const pic=m=>cutOf(m)||photo(m);
+// the price, set beside the name (never over the food): the lowest price big, and each size under it
+const priceTag=m=>{const sz=m.prices?(D.sizes||[]).filter(s=>+m.prices[s.id]):[];const ps=sz.map(s=>+m.prices[s.id]);
+  const low=ps.length?Math.min(...ps):+m.price;if(!low)return'';
+  return`<div class="ptag"><span class="pt-main">${ps.length>1?'<small>from</small>':''}₹${low}</span>${sz.length>1?`<span class="pt-sz">${sz.map(s=>`${esc(s.label)} <b>₹${m.prices[s.id]}</b>`).join('<i></i>')}</span>`:''}</div>`};
+// The cut-out food floating on the slide: a glow and turning light behind it, a soft shadow under it and
+// ingredients drifting round it. Round food (a pizza) turns slowly; the rest floats.
+const FOOD_ING=['basil','tomato-slice','olive','capsicum','corn','onion','cheese'];
+const floatFood=(m,src)=>{const [w,h]=CUT[(cutOf(m)||'').split('/').pop().replace('.webp','')]||[1,1],round=m.cat==='pizza'&&w/h>.82&&w/h<1.22;
+  const spots=[[0,12,150,-20],[90,8,120,30],[97,62,140,-35],[2,74,130,40],[66,96,112,-10],[34,-6,100,25]];
+  return`<div class="spotw fw"><div class="beam"></div><div class="halo"></div><div class="gsh"></div>
+   <div class="fd${round?' round':''}"><img src="${esc(src)}" alt=""></div>
+   ${spots.map(([x,y,z,r],j)=>`<img class="sp-ing" src="img/ing/${FOOD_ING[j%FOOD_ING.length]}.webp" alt="" style="left:${x}%;top:${y}%;width:${z}px;--r:${r}deg;--d:${(.5+j*.12).toFixed(2)}s;--b:${(3+j*.4).toFixed(1)}s">`).join('')}
+   <div class="steam">${[0,1,2].map(j=>`<i style="left:${35+j*12}%;animation-delay:${j*.6}s"></i>`).join('')}</div></div>`};
+const roundPhoto=(src,png)=>`<div class="spotw"><div class="spot"><img class="${png?'png':''}" src="${esc(src)}" alt=""></div><div class="steam">${[0,1,2].map(j=>`<i style="left:${35+j*12}%;animation-delay:${j*.6}s"></i>`).join('')}</div></div>`;
 const sizeLbl=id=>((D.sizes||[]).find(s=>s.id===id)||{}).label||(id+'"');
 const isPng=m=>!m.img;
 const outlet=()=>{const o=D.outlets||[];return o.find(x=>x.id===Q.get('outlet'))||o[0]||{}};
@@ -527,7 +578,7 @@ const SLIDES0=[
    st.style.setProperty('--snap',Math.min(1,Math.max(0,(p-.8)*8)).toFixed(3));st.classList.toggle('up',p>.35&&p<.85);pullDraw(st,p)}},
  {k:'ring',t:13,make(){const it=homeItems();this.items=it;const n=it.length,r=Math.max(520,n*105);this.r=r;
    return`<div class="bigword anton">Ekdum cheesy</div><div class="head"><div class="kick rise" style="--d:.1s">${KK('ring','Our signature six')}</div><div class="h1 anton">${TT('ring',letters('Ekdum cheesy'))}</div></div>
-   <div class="ringw"><div class="ring">${it.map((m,i)=>`<div class="card" style="transform:rotateY(${i*360/n}deg) translateZ(${r}px)">${m.best?'<span class="badge">Best seller</span>':''}<div class="ph${isPng(m)?' png':''}" style="background-image:url('${photo(m)}')"></div><div class="tx"><h3>${esc(m.name)}</h3><div class="price">${priceOf(m)}</div></div></div>`).join('')}</div></div>
+   <div class="ringw"><div class="ring">${it.map((m,i)=>`<div class="card" style="transform:rotateY(${i*360/n}deg) translateZ(${r}px)">${m.best?'<span class="badge">Best seller</span>':''}<div class="ph${cutOf(m)?' cut':isPng(m)?' png':''}" style="background-image:url('${pic(m)}')"></div><div class="tx"><h3>${esc(m.name)}</h3><div class="price">${priceOf(m)}</div></div></div>`).join('')}</div></div>
    <div class="now"></div>`},
   enter(el){this.step=-1},
   tick(el,t){const n=this.items.length;if(!n)return;const s=Math.max(0,Math.floor((t-.8)/((SHOW-2)/n)));if(s===this.step)return;this.step=s;
@@ -539,7 +590,7 @@ const SLIDES0=[
  {k:'poster',t:12,make(){return`<div class="pstw"><div class="pst"><img src="img/menu-poster.jpg" alt="Cheesy Pizza menu card"></div></div>`}},
  {k:'best',t:10,ok:()=>bestItems().length,make(){const b=bestItems();return`<div class="bigword anton">Best sellers</div>
    <div class="head"><div class="kick rise" style="--d:.1s">${KK('best',"Everyone's favourites")}</div><div class="h1 anton">${TT('best',letters('Our best sellers'))}</div></div>
-   <div class="grid" style="--n:${b.length}">${b.map((m,i)=>`<div class="bcard" style="--i:${i}"><div class="ph${isPng(m)?' png':''}" style="background-image:url('${photo(m)}')"><span class="rib">Best seller</span></div><div class="tx"><h3>${esc(m.name)}</h3><p>${esc(m.desc||'')}</p><div class="price">${priceOf(m)}</div></div></div>`).join('')}</div>`}},
+   <div class="grid" style="--n:${b.length}">${b.map((m,i)=>`<div class="bcard" style="--i:${i}"><div class="ph${cutOf(m)?' cut':isPng(m)?' png':''}" style="background-image:url('${pic(m)}')"><span class="rib">Best seller</span></div><div class="tx"><h3>${esc(m.name)}</h3><p>${esc(m.desc||'')}</p><div class="price">${priceOf(m)}</div></div></div>`).join('')}</div>`}},
  {k:'offers',t:10,ok:()=>todayOffers().length,make(){const o=todayOffers(),codes=(D.offers||[]).filter(x=>x.active!==false&&x.type==='code'&&!x.firstOnly&&!x.once).slice(0,2);
    return`<div class="bigword anton">Today only</div><div class="head"><div class="kick rise" style="--d:.1s;color:#ffd76a">${KK('offers',esc(new Date().toLocaleDateString('en-IN',{weekday:'long'}))+' deals')}</div><div class="h1 anton">${TT('offers',letters("Today's offers"))}</div></div>
    <div class="offs">${o.map((x,i)=>`<div class="off" style="--i:${i}"><div class="coin">${x.big}</div>${x.img?`<img class="offimg" src="${x.img}" alt="">`:''}<h3>${esc(x.name)}</h3><p>${esc(x.line)}</p></div>`).join('')}</div>
@@ -547,7 +598,7 @@ const SLIDES0=[
  {k:'combos',t:10,ok:()=>combos().length,make(){const c=combos(),byId=id=>(D.menu||[]).find(m=>m.id===id)||{};
    return`<div class="bigword anton">Combos</div><div class="head"><div class="kick rise" style="--d:.1s">${KK('combos','Bring friends')}</div><div class="h1 anton">${TT('combos',letters('Combo meals'))}</div></div>
    <div class="combos" style="--n:${c.length}">${c.map((x,i)=>{const{pics,worth}=comboPics(x),save=worth-(+x.price||0);
-    return`<div class="cmb" style="--i:${i}">${save>0?`<span class="cmb-save">Save ₹${save}</span>`:''}<div class="stk">${(pics.length?pics:['img/logo-badge.png']).map(s=>`<img src="${s}" alt="">`).join('')}</div><h3>${esc(x.name)}</h3><p>${esc(x.desc||'')}</p><div class="price">₹${x.price}${save>0?` <s>₹${worth}</s>`:''}</div></div>`}).join('')}</div>`}},
+    return`<div class="cmb" style="--i:${i}">${save>0?`<span class="cmb-save">Save ₹${save}</span>`:''}<div class="stk">${(pics.length?pics:['img/logo-badge.png']).map(s=>`<img${/img\/cut\//.test(s)?' class="cut"':''} src="${s}" alt="">`).join('')}</div><h3>${esc(x.name)}</h3><p>${esc(x.desc||'')}</p><div class="price">₹${x.price}${save>0?` <s>₹${worth}</s>`:''}</div></div>`}).join('')}</div>`}},
  {k:'hours',t:9,make(){const[o,c]=hours();return`<div class="rays" style="--rx:1380px;--ry:520px;--ra:.22"></div><div class="bigword anton">Open daily</div>
    <div class="copy"><div class="kick rise" style="--d:.1s;color:#7a4300">${KK('hours','Come say kem cho')}</div><div class="h1 anton">${TT('hours',letters('Open')+'<br>'+letters('every day'))}</div>
    <div class="sub rise" style="--d:1s">${hrText(o)} to ${hrText(c)}</div><div class="rise" style="--d:1.3s"><span class="pill hp"></span></div></div>
@@ -603,22 +654,21 @@ function visitMap(){
 // one full-screen spotlight after every couple of sections, each on a different item
 const SPOT_BG=['radial-gradient(circle at 72% 48%,#e85a4f,#a5241b 70%)','radial-gradient(circle at 72% 48%,#2bb3c8,#0d5f6d 70%)','radial-gradient(circle at 72% 48%,#ffcf5a,#d48f12 72%)','radial-gradient(circle at 72% 48%,#1f8a8a,#0b3a43 70%)'];
 const spotItem=i=>{const id=(CFG().spots||[])[i];return(id&&live().find(m=>m.id===id))||homeItems()[i]};
-const spotSlide=i=>({k:'spot',key:'spot'+i,t:7,ok:()=>!!spotItem(i),make(){const m=spotItem(i),long=m.name.length>13;
-  return`<div class="rays" style="--rx:1550px;--ry:520px;--ra:.14"></div>${bokeh(9)}
+const spotSlide=i=>({k:'spot',key:'spot'+i,t:7,ok:()=>!!spotItem(i),make(){const m=spotItem(i),long=m.name.length>13,cut=cutOf(m);
+  return`<div class="rays" style="--rx:1450px;--ry:540px;--ra:.14"></div>${bokeh(9)}
    <div class="copy"><div class="kick rise" style="--d:.1s;color:#fff">${KK('spot'+i,m.best?'Best seller':['Must try','Ekdum cheesy','Fresh and hot','Our favourite'][i%4])}</div>
    <div class="h1 anton" style="--fs:${long?120:170}px">${m.name.split(' ').map(w=>`<span style="display:inline-block;white-space:nowrap">${letters(w)}</span>`).join(' ')}</div>
-   <div class="desc rise" style="--d:1s">${esc(m.desc||'')}</div><div class="cta">Order now at the counter</div></div>
-   <div class="spotw"><div class="spot"><img class="${m.img?'':'png'}" src="${photo(m)}" alt=""></div><div class="steam">${[0,1,2].map(j=>`<i style="left:${35+j*12}%;animation-delay:${j*.6}s"></i>`).join('')}</div></div>
-   ${sparkles(6,1050,1820,120,900)}
-   <div class="star"><svg viewBox="0 0 100 100"><polygon fill="${i%4===2?'#d23f35':'#F2B632'}" stroke="#fff" stroke-width="2.5" points="${starPts()}"/></svg><b style="${i%4===2?'color:#fff':''}">${m.prices?`<small>from</small>₹${Math.min(...Object.values(m.prices).map(Number))}`:`₹${m.price}`}</b></div>`},
+   <div class="desc rise" style="--d:1s">${esc(m.desc||'')}</div>
+   <div class="buy">${priceTag(m)}<div class="cta">Order now at the counter</div></div></div>
+   ${cut?floatFood(m,cut):roundPhoto(photo(m),!m.img)}
+   ${sparkles(6,1050,1820,120,900)}`},
   enter(el){el.style.setProperty('--bg',SPOT_BG[i%SPOT_BG.length])}});
 // the owner's own slide: their words, and their photo or a menu item (its photo, name, details and price)
-const customSlide=c=>({k:'custom',key:'c_'+c.id,make(){const m=c.item?live().find(x=>x.id===c.item):null,pic=c.img||(m?photo(m):''),t=c.title||(m?m.name:''),tx=c.text||(m&&m.desc)||'';
+const customSlide=c=>({k:'custom',key:'c_'+c.id,make(){const m=c.item?live().find(x=>x.id===c.item):null,cut=!c.img&&cutOf(m),pic=c.img||(m?photo(m):''),t=c.title||(m?m.name:''),tx=c.text||(m&&m.desc)||'';
   return`<div class="rays" style="--rx:${pic?1550:960}px;--ry:520px;--ra:.14"></div>${bokeh(9)}
    <div class="copy"${pic?'':' style="width:1680px;text-align:center;top:300px"'}><div class="kick rise" style="--d:.1s;color:#fff">${esc(c.kick||'')}</div>
-   <div class="h1 anton" style="--fs:${t.length>13&&pic?120:170}px">${WORDS(t)}</div><div class="desc rise" style="--d:1s;${pic?'':'max-width:none'}">${esc(tx)}</div>${m?'<div class="cta">Order now at the counter</div>':''}</div>
-   ${pic?`<div class="spotw"><div class="spot"><img class="${m&&!c.img&&!m.img?'png':''}" src="${esc(pic)}" alt=""></div></div>`:''}${sparkles(6,pic?1050:200,1820,120,900)}
-   ${m?`<div class="star"><svg viewBox="0 0 100 100"><polygon fill="#F2B632" stroke="#fff" stroke-width="2.5" points="${starPts()}"/></svg><b>${m.prices?`<small>from</small>₹${Math.min(...Object.values(m.prices).map(Number))}`:`₹${m.price}`}</b></div>`:''}`},
+   <div class="h1 anton" style="--fs:${t.length>13&&pic?120:170}px">${WORDS(t)}</div><div class="desc rise" style="--d:1s;${pic?'':'max-width:none'}">${esc(tx)}</div>${m?`<div class="buy">${priceTag(m)}<div class="cta">Order now at the counter</div></div>`:''}</div>
+   ${cut?floatFood(m,cut):pic?roundPhoto(pic,m&&!c.img&&!m.img):''}${sparkles(6,pic?1050:200,1820,120,900)}`},
   enter(el){el.style.setProperty('--bg',SPOT_BG[(+c.bg||0)%SPOT_BG.length])}});
 // Famous visitors from Admin → Famous visitors: one slide each, played together where the "vips" row sits in the show.
 // v = {id, name, role, note, photo, media:[{url,type:'image'|'video'}], look:''|'night'|'teal', off}
@@ -689,7 +739,7 @@ function combos(){return(D.combos||[]).filter(c=>c.active!==false).slice(0,4)}
 function comboPics(c){const L=live(),sz=c.size||'7',tier=+c.tier||1e9;
   const pz=L.filter(m=>m.cat==='pizza'&&m.img&&m.prices&&+m.prices[sz]&&+m.prices[sz]<=tier).sort((a,b)=>+b.prices[sz]-+a.prices[sz]);
   const ex=(c.extras||[]).map(id=>(D.menu||[]).find(m=>m.id===id)).filter(Boolean);
-  return{pics:[...[...Array(c.pizzas||1)].map((_,j)=>pz[j%Math.max(1,pz.length)]).filter(Boolean),...ex.filter(m=>m.img)].slice(0,4).map(m=>IMG(m.img)),
+  return{pics:[...[...Array(c.pizzas||1)].map((_,j)=>pz[j%Math.max(1,pz.length)]).filter(Boolean),...ex.filter(m=>m.img)].slice(0,4).map(m=>pic(m)),
     worth:(+((pz[0]||{}).prices||{})[sz]||0)*(c.pizzas||1)+ex.reduce((s,m)=>s+(+m.price||0),0),ex}}
 function openState(){const[o,c]=hours(),n=new Date(),h=n.getHours()+n.getMinutes()/60;
   return h>=o&&h<c?{open:1,text:`Open now · till ${hrText(c)}`}:{open:0,text:`Opens at ${hrText(o)}`}}
@@ -906,7 +956,8 @@ let idleT;addEventListener('mousemove',()=>{document.body.classList.remove('idle
 async function wake(){try{if(navigator.wakeLock&&!wake.l)wake.l=await navigator.wakeLock.request('screen'),wake.l.addEventListener('release',()=>wake.l=null)}catch(e){}}
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)wake()});
 
-(async()=>{rebuild();clock();setInterval(clock,15000);await Promise.race([load(),new Promise(r=>setTimeout(r,2500))]);
+async function loadCuts(){try{const r=await fetch('img/cut/index.json',{cache:'no-cache'});if(r.ok){const j=await r.json();CUT=Object.fromEntries(Object.entries(j).filter(([,v])=>v));needsRebuild=true}}catch(e){}}
+(async()=>{rebuild();clock();setInterval(clock,15000);await Promise.race([Promise.all([load(),loadCuts()]),new Promise(r=>setTimeout(r,2500))]);
   if(needsRebuild)rebuild();const first=Q.get('slide');go(first?Math.max(0,order.findIndex(s=>s.key===first||s.grp===first)):0);requestAnimationFrame(loop);wake();
   setInterval(poll,30000)})();
 </script>
