@@ -1,7 +1,7 @@
 // Records the films into MP4 videos, frame by frame (so every frame is perfect, however slow the computer):
 //   cheesy-pizza-promo-16x9.mp4  (1920x1080, for the shop TV, YouTube)        from promo.html
 //   cheesy-pizza-promo-9x16.mp4  (1080x1920, for Reels, WhatsApp Status, Shorts) from promo.html
-//   cheesy-pizza-menu-9x16.mp4   (1080x1920) the menu book with today's items and prices, from menu-book.html
+//   cheesy-pizza-menu-16x9.mp4   (1920x1080) the menu book with today's items and prices, from menu-book.html
 // The last argument picks one: promo, menu or all (default).
 // Needs Node, Playwright with Chromium, and ffmpeg. Start the site (npm start), then:
 //   node tools/promo-video.js http://localhost:3000 out/ [promo|menu|all]
@@ -50,6 +50,6 @@ async function record(page, tall, file) {
     await record('promo.html', false, 'cheesy-pizza-promo-16x9.mp4');
     await record('promo.html', true, 'cheesy-pizza-promo-9x16.mp4');
   }
-  // the menu book is tall only (1080 x 1920), for Reels, Status and a TV turned on its side
-  if (which === 'all' || which === 'menu') await record('menu-book.html', true, 'cheesy-pizza-menu-9x16.mp4');
+  // the menu book is landscape (1920 x 1080), for the shop TV
+  if (which === 'all' || which === 'menu') await record('menu-book.html', false, 'cheesy-pizza-menu-16x9.mp4');
 })();
