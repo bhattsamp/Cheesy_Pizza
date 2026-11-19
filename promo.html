@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cheesy Pizza Made Fresh</title>
+<link rel="icon" type="image/svg+xml" href="img/logo-pin.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Courgette&display=swap">
+<!--
+  Cheesy Pizza promo: a 15 second film made in the browser.
+  A ball of dough turns in a ring of ingredients, is pressed flat, sauce swirls on, cheese and the
+  ingredients rain down, a ring of golden light bakes it into the real pizza, steam rises, the logo
+  appears and a slice lifts with the cheese stretching.
+  /promo plays it on a loop (the shop TV shows it as a slide). ?v=1 is the tall 9:16 version for phones,
+  ?once=1 plays it one time. Every frame is worked out from the time alone (render(t)), so it is smooth on
+  any screen and tools/promo-video.js can record it frame by frame into an MP4.
+-->
+<style>
+html,body{margin:0;height:100%;background:#050505;overflow:hidden}
+#fit{position:fixed;inset:0}
+#st{position:absolute;left:0;top:0;width:1920px;height:1080px;overflow:hidden;transform-origin:0 0;
+  background:radial-gradient(50% 55% at 62% 50%,#2b2622 0,#141210 55%,#070706 100%);font-family:Anton,Impact,sans-serif;color:#fff}
+#st.tall{width:1080px;height:1920px;background:radial-gradient(70% 45% at 50% 56%,#2b2622 0,#141210 55%,#070706 100%)}
+#st>*{position:absolute}
+#dust{left:0;top:0;width:100%;height:100%}
+/* the black marble table the pizza ends on */
+#table{left:0;right:0;bottom:0;height:34%;opacity:0;background:
+  radial-gradient(60% 90% at 50% 0%,rgba(255,220,160,.10),transparent 70%),
+  repeating-linear-gradient(115deg,transparent 0 46px,rgba(255,255,255,.035) 46px 48px,transparent 48px 120px),
+  linear-gradient(#141414,#050505)}
+#scene{left:0;top:0;width:100%;height:100%;transform-origin:50% 60%}
+#scene>*{position:absolute}
+.persp{width:0;height:0;perspective:2200px}
+.pl{position:absolute;left:-450px;top:-450px;width:900px;height:900px;transform-style:preserve-3d;transform:rotateX(58deg)}
+.pl>*{position:absolute;left:0;top:0;width:100%;height:100%;opacity:0}
+.pl .board{left:-6%;top:-6%;width:112%;height:112%;border-radius:50%;background:radial-gradient(circle,#2a2a2a 0 60%,#1a1a1a 74%,#0e0e0e 100%);box-shadow:0 0 0 10px #262626,0 60px 70px rgba(0,0,0,.6)}
+.pl .glowpl{border-radius:50%;background:radial-gradient(closest-side,rgba(255,170,60,.65),rgba(255,120,30,.25) 60%,transparent);filter:blur(10px)}
+#shadow{width:760px;height:140px;margin:-70px 0 0 -380px;border-radius:50%;background:radial-gradient(closest-side,rgba(0,0,0,.65),transparent);opacity:0}
+#ball{width:330px;height:330px;margin:-165px 0 0 -165px;border-radius:50%;opacity:0;
+  background:radial-gradient(circle at 36% 30%,rgba(255,255,255,.85),rgba(255,255,255,0) 32%),
+    radial-gradient(circle at 50% 50%,rgba(0,0,0,0) 55%,rgba(70,50,25,.45) 100%),url(img/build/dough.webp) center/170%;
+  box-shadow:inset -30px -40px 60px rgba(80,55,25,.45),0 40px 60px rgba(0,0,0,.5)}
+.it{position:absolute;left:0;top:0;width:110px;height:110px;margin:-55px 0 0 -55px;object-fit:contain;filter:drop-shadow(0 14px 12px rgba(0,0,0,.55)) saturate(1.05) contrast(1.05)}
+#ribbon,#swoosh,#strands{left:0;top:0;width:100%;height:100%;overflow:visible}
+#flash{left:0;top:0;width:100%;height:100%;opacity:0;background:radial-gradient(40% 40% at var(--fx) var(--fy),rgba(255,236,190,.95),rgba(255,190,90,.35) 45%,transparent 75%)}
+.steam{width:180px;height:420px;margin-left:-90px;border-radius:50%;background:radial-gradient(closest-side,rgba(255,255,255,.22),transparent);filter:blur(14px);opacity:0}
+#logo{width:640px;opacity:0;transform-origin:50% 50%}
+#logo img{display:block;width:100%;filter:drop-shadow(0 18px 30px rgba(0,0,0,.6))}
+#sheen{left:0;top:0;width:100%;height:100%;-webkit-mask:url(img/logo.svg) center/contain no-repeat;mask:url(img/logo.svg) center/contain no-repeat;
+  background:linear-gradient(105deg,transparent 40%,rgba(255,255,255,.85) 50%,transparent 60%) no-repeat;background-size:300% 100%}
+#line{width:900px;margin-left:-450px;text-align:center;font-size:44px;letter-spacing:.32em;color:#f2c76a;opacity:0;text-transform:uppercase;text-shadow:0 4px 18px rgba(0,0,0,.6)}
+#line small{display:block;font-family:Courgette,cursive;letter-spacing:0;text-transform:none;font-size:52px;color:#fff;margin-top:10px}
+</style>
+</head>
+<body>
+<div id="fit"><div id="st">
+  <canvas id="dust" width="1920" height="1080"></canvas>
+  <div id="table"></div>
+  <div id="scene">
+    <div id="shadow"></div>
+    <div class="persp" id="persp"><div class="pl" id="pl">
+      <div class="board"></div><div class="glowpl"></div>
+      <img class="dough" src="img/build/dough.webp" alt="">
+      <img class="sauce" src="img/build/sauce.webp" alt="">
+      <svg class="spiral" viewBox="0 0 900 900"><defs><linearGradient id="sg" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#e2412b"/><stop offset=".5" stop-color="#b8180c"/><stop offset="1" stop-color="#d3361f"/></linearGradient></defs>
+        <path id="spiralp" fill="none" stroke="url(#sg)" stroke-width="54" stroke-linecap="round"/></svg>
+      <img class="cheese" src="img/build/cheese-raw.webp" alt="">
+      <img class="tops" src="img/build/toppings.webp" alt="">
+      <img class="baked" src="img/hero-pizza.webp" alt="">
+      <img class="wedgebase" src="img/hero-pizza.webp" alt="">
+    </div></div>
+    <div class="persp" id="persp2"><div class="pl"><img class="wedge" src="img/hero-pizza.webp" alt=""></div></div>
+    <div id="ball"></div>
+    <div id="items"></div>
+  </div>
+  <svg id="ribbon"><defs><linearGradient id="rg" x1="0" x2="1"><stop offset="0" stop-color="#ff5a3c"/><stop offset=".45" stop-color="#c3170a"/><stop offset="1" stop-color="#e8442a"/></linearGradient></defs>
+    <path id="ribbonp" fill="none" stroke="url(#rg)" stroke-width="34" stroke-linecap="round"/><path id="ribbonh" fill="none" stroke="rgba(255,200,180,.55)" stroke-width="6" stroke-linecap="round"/></svg>
+  <svg id="strands" style="z-index:1"><defs><linearGradient id="cg" x1="0" x2="1"><stop offset="0" stop-color="#e9c46a"/><stop offset=".5" stop-color="#fff3c4"/><stop offset="1" stop-color="#e2b350"/></linearGradient></defs><g id="strandg" fill="url(#cg)"></g></svg>
+  <svg id="swoosh"><defs><filter id="glow" x="-20%" y="-50%" width="140%" height="200%"><feGaussianBlur stdDeviation="9" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <linearGradient id="gold" x1="0" x2="1"><stop offset="0" stop-color="#fff6d8" stop-opacity="0"/><stop offset=".5" stop-color="#ffd27a"/><stop offset="1" stop-color="#fff6d8"/></linearGradient></defs>
+    <ellipse id="sw1" fill="none" stroke="url(#gold)" stroke-width="9" stroke-linecap="round" filter="url(#glow)"/>
+    <ellipse id="sw2" fill="none" stroke="#ffe3a0" stroke-width="3" stroke-linecap="round" filter="url(#glow)"/></svg>
+  <div id="steams"></div>
+  <div id="flash"></div>
+  <div id="logo"><img src="img/logo.svg" alt="Cheesy Pizza"><div id="sheen"></div></div>
+  <div id="line">Fresh dough · Real cheese · Baked hot<small>Order at the counter or on cheesypizza.online</small></div>
+</div></div>
+<script>
+const Q=new URLSearchParams(location.search),TALL=Q.get('v')==='1'||Q.get('tall')==='1',ONCE=Q.get('once')==='1',CAPTURE=Q.get('capture')==='1';
+const $=s=>document.querySelector(s),st=$('#st');if(TALL)st.classList.add('tall');
+const W=TALL?1080:1920,H=TALL?1920:1080,DUR=15;
+$('#dust').width=W;$('#dust').height=H;
+// where things sit: the pizza (centre of its plate), the ball above it, the logo and its line
+const L=TALL?{cx:540,cy:1240,by:1060,lx:540,ly:420,ls:.8,linY:770}:{cx:1250,cy:640,by:470,lx:470,ly:410,ls:.8,linY:770};
+const clamp=(x,a=0,b=1)=>Math.min(b,Math.max(a,x)),lerp=(a,b,k)=>a+(b-a)*k,seg=(t,a,b)=>clamp((t-a)/(b-a));
+const eio=k=>k<.5?4*k*k*k:1-Math.pow(-2*k+2,3)/2,eout=k=>1-Math.pow(1-k,3),ein=k=>k*k*k,back=k=>{const c=1.7;return 1+(c+1)*Math.pow(k-1,3)+c*Math.pow(k-1,2)};
+let seed=7;const rnd=()=>(seed=(seed*16807)%2147483647)/2147483647;
+const SQ=Math.cos(58*Math.PI/180); // how flat the tilted plate looks
+const R=405; // pizza radius on screen
+const LIFT=TALL?150:125; // how high the slice is lifted
+
+/* ingredients in the ring: real pieces of capsicum, tomato and corn cut from the toppings photo, basil and shreds of cheese */
+const KINDS=['promo/capsicum-0','promo/tomato-0','promo/capsicum-1','ing/basil','promo/tomato-1','promo/corn-0','promo/capsicum-2','promo/tomato-2','promo/capsicum-3',
+  'promo/tomato-3','promo/corn-1','ing/basil','promo/capsicum-4','promo/tomato-4','promo/corn-2','promo/capsicum-5','promo/tomato-5','promo/corn-3'];
+const N=28,items=[];
+for(let i=0;i<N;i++){const k=i%3===2?'cheese':KINDS[i%KINDS.length];const im=document.createElement('img');im.className='it';im.alt='';
+  im.src=k==='cheese'?'img/build/drop-cheese.webp':'img/'+k+'.webp';$('#items').appendChild(im);
+  const a=rnd()*Math.PI*2,r=Math.sqrt(rnd())*.78;
+  items.push({im,k,ph:i/N*Math.PI*2+rnd()*.15,s:(k==='cheese'?.75:/corn/.test(k)?.5:/basil/.test(k)?.6:.78)+rnd()*.18,rot:rnd()*360,vr:(rnd()-.5)*240,wob:rnd()*6,
+    tx:Math.cos(a)*r,ty:Math.sin(a)*r,fall:5.0+i*.065+rnd()*.15})}
+// cheese shreds raining from above
+const SH=[];for(let i=0;i<26;i++){const im=document.createElement('img');im.className='it';im.alt='';im.src='img/build/drop-cheese.webp';$('#items').appendChild(im);
+  const a=rnd()*Math.PI*2,r=Math.sqrt(rnd())*.8;SH.push({im,x0:(rnd()-.5)*W*.9,t0:5.05+rnd()*1.3,tx:Math.cos(a)*r,ty:Math.sin(a)*r,s:.5+rnd()*.35,rot:rnd()*360,vr:(rnd()-.5)*300})}
+// steam
+const STM=[...Array(5)].map((_,i)=>{const d=document.createElement('div');d.className='steam';$('#steams').appendChild(d);return{d,x:(i-2)*90+(rnd()-.5)*40,p:rnd(),sp:.17+rnd()*.08}});
+// dust: warm specks drifting in the dark
+const DUST=[...Array(TALL?170:220)].map(()=>({x:rnd()*W,y:rnd()*H,z:.3+rnd()*1.2,vx:(rnd()-.5)*14,vy:-6-rnd()*16,tw:rnd()*6}));
+const ctx=$('#dust').getContext('2d');
+
+// sauce spiral, in the plate's own 900 x 900 space
+(function(){let d='';for(let i=0;i<=360;i++){const a=i/360*Math.PI*2*5.2,r=8+i/360*322;d+=(i?'L':'M')+(450+Math.cos(a)*r).toFixed(1)+' '+(450+Math.sin(a)*r).toFixed(1)}
+  const p=$('#spiralp');p.setAttribute('d',d);p._len=p.getTotalLength();p.style.strokeDasharray=p._len})();
+// the ribbon of sauce pouring down onto the base, in screen space
+(function(){const x=L.cx,y=L.cy,top=TALL?620:150;
+  const d=`M${x-320} ${top} C${x+260} ${top+40} ${x+280} ${y-260} ${x+40} ${y-210} S${x-210} ${y-120} ${x-60} ${y-40} S${x+60} ${y} ${x} ${y}`;
+  ['#ribbonp','#ribbonh'].forEach(s=>{const p=$(s);p.setAttribute('d',d);p._len=p.getTotalLength();p.style.strokeDasharray=p._len})})();
+// golden rings
+['#sw1','#sw2'].forEach((s,i)=>{const e=$(s);e.setAttribute('cx',L.cx);e.setAttribute('cy',L.cy+10);e.setAttribute('rx',R*1.22+i*26);e.setAttribute('ry',(R*1.22+i*26)*SQ*1.05);
+  const len=2*Math.PI*Math.sqrt(((R*1.22)**2+((R*1.22)*SQ)**2)/2);e._len=len;e.style.strokeDasharray=`${len*.42} ${len}`});
+// the slice: a 50 degree wedge pointing at the viewer, and the pizza with that wedge cut out
+const WA=90,WH=25,poly=(a0,a1)=>{let p=['50% 50%'];for(let a=a0;a<=a1+.01;a+=5){const r=a*Math.PI/180;p.push(`${(50+Math.cos(r)*52).toFixed(2)}% ${(50+Math.sin(r)*52).toFixed(2)}%`)}return`polygon(${p.join(',')})`};
+$('#persp2 .wedge').style.clipPath=poly(WA-WH,WA+WH);$('.pl .wedgebase').style.clipPath=poly(WA+WH,WA-WH+360);
+
+const pl=$('#pl'),persp=$('#persp'),ly=n=>pl.querySelector('.'+n);
+persp.style.left=L.cx+'px';persp.style.top=L.cy+'px';const persp2=$('#persp2');persp2.style.left=L.cx+'px';persp2.style.top=L.cy+'px';
+const shadow=$('#shadow');shadow.style.left=L.cx+'px';shadow.style.top=(L.cy+R*SQ+40)+'px';
+const logo=$('#logo');logo.style.left=(L.lx-320)+'px';logo.style.top=(L.ly-362)+'px';
+const line=$('#line');line.style.left=L.lx+'px';line.style.top=L.linY+'px';if(!TALL)line.style.width='760px',line.style.marginLeft='-380px',line.style.fontSize='34px';
+const S=(el,o,tf)=>{el.style.opacity=o;if(tf!=null)el.style.transform=tf};
+// a point on the plate (u,v in -1..1 of its radius) seen on screen
+const onPlate=(u,v)=>[L.cx+u*R,L.cy+v*R*SQ];
+
+function render(t){
+  t=((t%DUR)+DUR)%DUR;
+  /* camera: a slow push in; after baking it settles back to make room for the logo */
+  const cam=seg(t,9.6,11.2),zoom=lerp(1.04,TALL?.9:.94,eio(cam))+Math.sin(t*.4)*.006;
+  $('#scene').style.transform=`translateY(${(TALL?120:0)*eio(cam)}px) scale(${zoom})`;
+  S($('#table'),eio(seg(t,8.4,10)));
+  /* 1. the dough ball turns in its ring of ingredients, then is pressed flat (0 - 3.6 s) */
+  const ball=$('#ball'),bIn=eout(seg(t,.1,1.1)),press=seg(t,2.3,3.4);
+  const by=lerp(L.by,L.cy-30,eio(press)),bs=lerp(.5,1,bIn)*lerp(1,1.9,eio(press)),bsy=lerp(1,.18,eio(press));
+  ball.style.left=L.cx+'px';ball.style.top=by+'px';
+  S(ball,bIn*(1-seg(t,3.05,3.45)),`scale(${bs},${bs*bsy}) rotate(${t*40}deg)`);
+  // the flat base takes over from the ball
+  const base=seg(t,2.9,3.6);S(ly('dough'),t<8.6?eout(base):1-seg(t,8.6,9),`scale(${lerp(.55,1,back(base))})`);
+  S(shadow,Math.max(bIn*.7,0)*(1-seg(t,11.6,12.4)*.2),`scale(${lerp(.45,1,eio(seg(t,2.4,3.6)))})`);
+  /* 2. sauce pours down as a ribbon and swirls out over the base (3.4 - 5.2 s) */
+  const rb=seg(t,3.35,4.25),ro=seg(t,4.0,4.9);
+  ['#ribbonp','#ribbonh'].forEach(s=>{const p=$(s);p.style.strokeDashoffset=p._len*(1-eout(rb))-p._len*ein(ro);p.style.opacity=rb>0&&ro<1?1:0});
+  const sp=seg(t,3.9,5.1),spp=$('#spiralp');spp.style.strokeDashoffset=spp._len*(1-eio(sp));
+  S(ly('spiral'),sp>0?1-seg(t,4.9,5.4):0,`rotate(${-90*(1-eio(sp))}deg)`);
+  S(ly('sauce'),t<8.6?eout(seg(t,4.3,5.3)):1-seg(t,8.6,9));ly('sauce').style.clipPath=`circle(${lerp(4,52,eout(seg(t,4.1,5.3)))}% at 50% 50%)`;
+  /* 3. the ring breaks: every ingredient falls onto the pizza, with cheese raining from above (5 - 7.6 s) */
+  const ringIn=eout(seg(t,.3,1.6)),ringW=lerp(1,1.35,eio(seg(t,2.3,3.5)));
+  items.forEach((it,i)=>{const a=it.ph+t*.62,ox=Math.cos(a)*300*ringW,oz=Math.sin(a),oy=oz*120*ringW*.9+Math.sin(t*1.6+it.wob)*16-40;
+    let x=L.cx+ox,y=(t<3.4?by:L.cy-60)+oy,sc=it.s*(.78+(oz+1)*.22)*ringIn,front=oz>0,op=ringIn;
+    const f=seg(t,it.fall,it.fall+.9);
+    if(f>0){const [tx,ty]=onPlate(it.tx,it.ty),k=ein(f),up=Math.sin(Math.min(1,f*1.3)*Math.PI)*-90*(1-f);
+      x=lerp(x,tx,eio(f));y=lerp(y,ty,k)+up;sc=lerp(sc,it.s*.5,f);front=true;op=1-seg(t,it.fall+.85,it.fall+1.05)}
+    it.im.style.zIndex=front?6:1;S(it.im,op,`translate(${x.toFixed(1)}px,${y.toFixed(1)}px) scale(${sc.toFixed(3)}) rotate(${(it.rot+t*it.vr).toFixed(1)}deg)`)});
+  SH.forEach(s=>{const f=seg(t,s.t0,s.t0+.75);if(f<=0||f>=1){s.im.style.opacity=0;return}const [tx,ty]=onPlate(s.tx,s.ty);
+    s.im.style.zIndex=6;S(s.im,1-seg(f,.85,1),`translate(${lerp(L.cx+s.x0*.3,tx,f).toFixed(1)}px,${lerp(-120,ty,ein(f)).toFixed(1)}px) scale(${s.s}) rotate(${(s.rot+f*s.vr).toFixed(1)}deg)`)});
+  S(ly('cheese'),t<8.6?eout(seg(t,5.3,6.9)):1-seg(t,8.6,9));
+  S(ly('tops'),t<8.6?eout(seg(t,6.0,7.8)):1-seg(t,8.6,9));
+  /* 4. a ring of golden light sweeps round and bakes it: a flash, and it is the real pizza (7.6 - 9 s) */
+  const sw=seg(t,7.5,8.9);['#sw1','#sw2'].forEach((s,i)=>{const e=$(s);e.style.strokeDashoffset=-e._len*(eio(sw)*1.6+i*.2);e.style.opacity=sw>0&&sw<1?Math.sin(sw*Math.PI)*(i?.8:1):0});
+  S(ly('glowpl'),Math.sin(clamp((t-7.8)/1.6)*Math.PI)*.95);
+  const fl=$('#flash');fl.style.setProperty('--fx',(L.cx/W*100)+'%');fl.style.setProperty('--fy',(L.cy/H*100)+'%');S(fl,Math.max(0,Math.sin(clamp((t-8.25)/.7)*Math.PI))*.85);
+  const baked=eout(seg(t,8.45,9.1)),slice=seg(t,11.4,12.0);
+  S(ly('baked'),baked*(1-slice));S(ly('board'),eout(seg(t,8.4,9.4)));S(ly('wedgebase'),slice);
+  /* 5. steam, the logo, and a slice lifted with the cheese stretching (9 - 15 s) */
+  STM.forEach((s,i)=>{const p=((t*s.sp+s.p)%1),on=seg(t,9,9.8);s.d.style.left=(L.cx+s.x+Math.sin(t*.8+i)*24)+'px';s.d.style.top=(L.cy-200-p*420)+'px';
+    S(s.d,on*Math.sin(p*Math.PI)*.9,`scale(${(.6+p*.8).toFixed(2)},${(.7+p*.6).toFixed(2)})`)});
+  const lg=seg(t,10.2,11.4);S(logo,eout(lg),`scale(${(L.ls*lerp(.82,1,back(lg))).toFixed(3)}) translateY(${(1-eout(lg))*30}px)`);
+  $('#sheen').style.backgroundPosition=`${lerp(140,-60,eio(seg(t,11.2,12.6)))}% 0`;
+  S(line,eout(seg(t,11.6,12.6)),`translateY(${(1-eout(seg(t,11.6,12.6)))*24}px)`);
+  const lift=eio(seg(t,12.0,14.2));
+  S($('#persp2 .wedge'),slice);persp2.style.transform=`translateY(${(-lift*LIFT).toFixed(1)}px) translateX(${(lift*18).toFixed(1)}px) rotate(${(-lift*3).toFixed(2)}deg) scale(${(1+lift*.07).toFixed(3)})`;
+  $('#persp2 .wedge').style.filter=`drop-shadow(0 ${(lift*46).toFixed(0)}px ${(lift*26).toFixed(0)}px rgba(0,0,0,.7)) brightness(${(1+lift*.06).toFixed(3)})`;
+  strands(lift,slice);
+  dust(t);
+}
+// cheese strands between the lifted slice and the pizza, along both cut edges
+function strands(lift,on){const g=$('#strandg');if(!on||lift<.02){g.innerHTML='';return}
+  const out=[];
+  [-1,1].forEach(side=>[.25,.5,.75].forEach((f,j)=>{
+    const a=(WA+side*WH)*Math.PI/180,[bx,byy]=onPlate(Math.cos(a)*f,Math.sin(a)*f);
+    const tx=bx+lift*18,ty=byy-lift*LIFT,w=Math.max(2.5,(13-j*2.5)*(1-lift*.5)),sag=Math.sin(lift*Math.PI)*10*side,mid=(byy+ty)/2;
+    out.push(`<path d="M${(bx-w).toFixed(1)} ${byy.toFixed(1)} Q${(bx-w*.25+sag).toFixed(1)} ${mid.toFixed(1)} ${(tx-w*.7).toFixed(1)} ${ty.toFixed(1)} L${(tx+w*.7).toFixed(1)} ${ty.toFixed(1)} Q${(bx+w*.25+sag).toFixed(1)} ${mid.toFixed(1)} ${(bx+w).toFixed(1)} ${byy.toFixed(1)}Z" opacity=".96"/>`)}));
+  g.innerHTML=out.join('')}
+function dust(t){ctx.clearRect(0,0,W,H);
+  DUST.forEach(d=>{const x=((d.x+d.vx*t)%W+W)%W,y=((d.y+d.vy*t*d.z)%H+H)%H,a=.25+.35*Math.sin(t*1.7+d.tw);
+    ctx.fillStyle=`rgba(255,${200+((d.tw*20)|0)},140,${(a*d.z*.6).toFixed(3)})`;ctx.beginPath();ctx.arc(x,y,d.z*1.6,0,7);ctx.fill()})}
+function fit(){const s=Math.min(innerWidth/W,innerHeight/H);st.style.transform=`translate(${(innerWidth-W*s)/2}px,${(innerHeight-H*s)/2}px) scale(${s})`}
+addEventListener('resize',fit);fit();
+window.render=render;window.DUR=DUR;
+if(!CAPTURE){const t0=performance.now();(function loop(now){const t=(now-t0)/1000;if(ONCE&&t>=DUR){render(DUR-.001);return}render(t);requestAnimationFrame(loop)})(t0)}
+else render(0);
+</script>
+</body>
+</html>
