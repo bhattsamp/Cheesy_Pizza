@@ -306,6 +306,8 @@ function createApp(store) {
   app.get('/home2', (req, res) => { res.set('X-Robots-Tag', 'noindex'); res.sendFile(path.join(ROOT, 'index.html')); });
   // Full-screen slideshow for the TV in the shop; nothing on the site links to it
   app.get('/display', (req, res) => res.sendFile(path.join(ROOT, 'display.html')));
+  // the 15 second promo film (?v=1 tall for phones); tools/promo-video.js records it into MP4s
+  app.get('/promo', (req, res) => res.sendFile(path.join(ROOT, 'promo.html')));
   // The same slideshow with only the famous visitors (celebrity) slides
   app.get('/famous-visitors', (req, res) => res.sendFile(path.join(ROOT, 'display.html')));
   // Staff login for one outlet: /staff/<outlet> opens the till's login screen for that outlet only
