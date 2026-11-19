@@ -1425,6 +1425,15 @@ html:has(body:not(.pubmode) .pos){scroll-padding-top:calc(env(safe-area-inset-to
 .chipedit{border-style:dashed!important;color:var(--teal-deep)!important;font-weight:700}
 .chipsed{display:flex;flex-direction:column;gap:12px}.chiplist{display:flex;flex-direction:column;gap:8px}
 .chiprow{display:flex;gap:8px;align-items:center}.chiprow .inp{flex:1;min-width:0}
+.custsug{display:flex;flex-direction:column;gap:4px;margin:6px 0 2px;padding:6px;border:1.5px solid var(--teal);border-radius:12px;background:var(--surface);box-shadow:var(--shadow)}
+.custsug button{display:grid;grid-template-columns:auto auto 1fr;grid-template-rows:auto auto;gap:0 10px;align-items:center;text-align:left;border:0;background:none;border-radius:9px;padding:7px 9px;font:inherit;color:var(--ink);cursor:pointer}
+.custsug button:hover,.custsug button:focus-visible{background:var(--teal-soft)}
+.custsug button b{font-size:15px}.custsug button .num{color:var(--muted);font-size:14px}.custsug button small{grid-column:1/-1;color:var(--muted);font-size:12.5px}
+.custsug .ltc{justify-self:start}
+.chip.ltc{background:var(--cheese-soft);color:var(--cheese-ink)}.chip.ltc.l2{background:#fde2b8;color:#7a3d00}
+.ltseg{display:inline-flex;border:1px solid var(--line);border-radius:999px;padding:2px;gap:2px;background:var(--surface2)}
+.ltseg button{border:0;background:none;border-radius:999px;padding:4px 10px;font:600 12.5px inherit;color:var(--muted);white-space:nowrap;cursor:pointer}
+.ltseg button[aria-pressed="true"]{background:var(--teal);color:#fff}.ltseg button.l2[aria-pressed="true"]{background:#c9771a}
 #printRoot{display:none}
 @media print{body>*:not(#printRoot){display:none!important}#printRoot{display:block!important}#printRoot pre{font:12px/1.3 "Courier New",monospace;margin:0;white-space:pre}@page{margin:4mm}}
 </style>
@@ -4248,6 +4257,21 @@ function checkNewOnline(){
   if(!fresh.length||S.mode!=='pos'||!staff())return;
   toast('New online order');startRing(fresh);if(!mroot.innerHTML&&!isBusy())render();
 }
+// Customers the till knows: saved customers plus everyone who ordered with a mobile number
+function custIndex(){const m={};
+  S.orders.forEach(o=>{const ph=o.customer&&o.customer.phone;if(!ph||ph.length!==10)return;const x=m[ph]||(m[ph]={phone:ph,name:'',n:0,last:0,addr:''});
+    x.n++;if(o.ts>x.last){x.last=o.ts;if(o.customer.name)x.name=o.customer.name;if(o.address)x.addr=o.address}else if(!x.name&&o.customer.name)x.name=o.customer.name});
+  Object.values(S.customers).forEach(c=>{if(!c.phone||c.phone.length!==10)return;const x=m[c.phone]||(m[c.phone]={phone:c.phone,name:'',n:0,last:0,addr:''});if(c.name)x.name=c.name;if(c.addr&&!x.addr)x.addr=c.addr;x.lt=+c.lt||0});
+  return Object.values(m)}
+const custLt=ph=>+(S.customers[ph]?.lt)||0;
+function custMatches(q){q=String(q||'').trim().toLowerCase();const d=q.replace(/\D/g,'');if(d.length<3&&q.replace(/[^a-z]/g,'').length<2)return[];
+  return custIndex().filter(x=>d.length>=3?x.phone.includes(d):(x.name||'').toLowerCase().split(/\s+/).some(w=>w.startsWith(q))||(x.name||'').toLowerCase().includes(q))
+    .sort((a,b)=>b.last-a.last).slice(0,6)}
+function custSug(q){const el=document.getElementById('custsug');if(!el)return;const P=U.pos,list=custMatches(q).filter(x=>!(x.phone===P.phone&&x.name===P.name));
+  el.innerHTML=list.length?`<div class="custsug" role="listbox">${list.map(x=>`<button data-act="cust-pick" data-ph="${x.phone}" role="option"><b>${esc(x.name||'No name')}</b><span class="num">${fmtPhone(x.phone)}</span>${x.lt?`<span class="chip ltc${x.lt===2?' l2':''}">★ ${esc(ltName({outletId:S.cur},x.lt))}</span>`:''}<small>${x.n?x.n+' order'+(x.n>1?'s':''):'Saved customer'}${x.addr?' · '+esc(x.addr.slice(0,40)):''}</small></button>`).join('')}</div>`:''}
+function custPick(ph){const P=U.pos,x=custIndex().find(c=>c.phone===ph);if(!x)return;
+  P.phone=ph;P.name=x.name||P.name;if(P.type==='delivery'&&x.addr&&!P.address)P.address=x.addr;
+  const lt=custLt(ph);if(lt)P.lt=lt;render();toast((x.name||fmtPhone(ph))+(lt?' · ★ '+ltName({outletId:S.cur},lt):''))}
 function custInfo(ph){
   if(!ph||ph.length<10)return null;
   const c=S.customers[ph];const list=S.orders.filter(o=>o.customer.phone===ph&&o.status!=='cancelled');
@@ -4427,7 +4451,7 @@ function vNew(){
       <div class="sec tkcust">
         ${zom?`<div class="field"><label for="pos-zid">Zomato order ID</label><input class="inp num" id="pos-zid" value="${esc(P.zid)}" placeholder="e.g. 5123456789"></div>`:''}
         <div class="row"><div class="field grow"><label for="pos-ph">Mobile${needPhone()?' *':' (optional)'}</label><input class="inp num" id="pos-ph" inputmode="numeric" maxlength="10" value="${esc(P.phone)}" placeholder="Mobile · 10 digits"></div>
-        <div class="field grow"><label for="pos-nm">Name${needName()?' *':zom?' (optional)':''}</label><input class="inp" id="pos-nm" value="${esc(P.name)}" placeholder="Customer name"></div></div>
+        <div class="field grow"><label for="pos-nm">Name${needName()?' *':zom?' (optional)':''}</label><input class="inp" id="pos-nm" value="${esc(P.name)}" placeholder="Customer name" autocomplete="off"></div></div><div id="custsug"></div>
         ${zom?waitsRow:''}
         ${(()=>{const lv=posLt(),o0={outletId:S.cur},bk=bookOk(P,run),on=bk&&P.book;return `<div class="tkflags${on?' on':''}"><button class="btn sm ltbtn${lv===2?' l2':''}" data-act="pos-lt" aria-pressed="${lv>0}" title="Tap to change: Off › ${esc(ltName(o0,1))} › ${esc(ltName(o0,2))} › Off">${lv?'★ '+esc(ltName(o0,lv)):esc(ltName(o0,1))+(on?'':': Off')}</button>${bk?`<button class="btn sm bkbtn" data-act="pos-book" aria-pressed="${on}" title="${on?'Advance booking is on · tap to turn it off':'Advance booking: save this order for a later time today or another day'}" aria-label="Advance booking">${I.book}${on?'':'<span>Advance booking</span>'}</button>`:''}${on?`<input class="inp num" id="pos-bdate" type="date" min="${today()}" value="${esc(P.bdate)}" aria-label="Booking date"><input class="inp num" id="pos-btime" type="time" value="${esc(P.btime)}" aria-label="Booking time">`:''}</div>${on?`<div class="small bkhint" id="pos-bhint">${bookHint(bookTs(P.bdate,P.btime))}</div>`:''}`})()}
         <div id="custbox">${custBox(ci)}</div>
@@ -4653,6 +4677,7 @@ function posGo(kind){
       if(['ready','done'].includes(o.status)){o.status='preparing';o.times.preparing=Date.now();delete o.times.ready;delete o.times.done}}
     if(P.code)o.extra={...(o.extra||{}),code:P.code};
     if(P.lt!=null)o.lt=+P.lt||0;
+    if(P.lt!=null&&(o.customer.phone||'').length===10)ensureCust(o.customer.phone,o.customer.name).lt=+P.lt||0;
     if(P.phone.length===10&&!o.customer.phone)o.customer={name:P.name.trim(),phone:P.phone};
     recalcOrder(o);
     if(P.code&&!(o.discounts||[]).some(d=>d.name==='Code '+P.code.toUpperCase()))o.extra.code='';
@@ -4662,6 +4687,7 @@ function posGo(kind){
       zomatoId:P.type==='zomato'?P.zid.trim():'',lt:posLt(),...(P.type==='dine'&&!P.table?{queue:{at:bookAt||Date.now()}}:{}),wait:bookAt?BOOK_LEAD:P.wait||WAITS[0],...(bookAt?{bookAt}:{}),by:su?.name||'',byRole:su?.role||'',
       extra:{code:b.codeOk?P.code:'',coins:b.coinsUsed},pay:{mode:'pending',given:0,change:0},paid:false}));
     if(P.type==='dine'&&cur().holds?.[P.table]){delete cur().holds[P.table]}
+    if(P.lt!=null&&P.phone.length===10)ensureCust(P.phone,P.name.trim()).lt=+P.lt||0;
   }
   if(bill&&!(run&&o.paid&&!P.cart.length)){
     settleOrder(o,mode,P.pay==='cash'?+P.given||0:0,splits,utr);
@@ -5550,7 +5576,7 @@ function vCust(){
     const byDate={};list.forEach(o=>(byDate[o.date]=byDate[o.date]||[]).push(o));
     const ok=list.filter(o=>o.status!=='cancelled');
     detail=`<div class="card" style="padding:16px;margin-top:12px">
-      <div class="row"><div class="grow"><h3 style="font-size:24px">${esc(one.name||'Customer')}</h3><div class="muted num">${fmtPhone(one.phone)} · ${ok.length} orders · ${rs(ok.reduce((s,o)=>s+o.total,0))}</div>
+      <div class="row"><div class="grow"><h3 style="font-size:24px">${esc(one.name||'Customer')}</h3><div class="muted num">${fmtPhone(one.phone)} · ${ok.length} orders · ${rs(ok.reduce((s,o)=>s+o.total,0))}</div><div class="row" style="gap:8px;margin-top:8px;align-items:center"><span class="small muted">L&amp;T</span>${((c)=>`<div class="ltseg" role="group" aria-label="L&amp;T for ${esc(c.name||c.phone)}">${[0,1,2].map(v=>`<button data-act="cust-lt" data-ph="${c.phone}" data-v="${v}" aria-pressed="${(+c.lt||0)===v}" class="${v===2?'l2':''}">${v?esc(ltName({outletId:S.cur},v)):'None'}</button>`).join('')}</div>`)(one)}</div>
         </div>
       ${one.due?`<div class="custbox due"><b class="num">Baki ${rs(one.due)}</b><button class="btn sm" data-act="settle" data-ph="${one.phone}">Mark as paid</button></div>`:'<span class="chip ready">No baki</span>'}</div>
       <div class="row" style="margin-top:10px"><span class="chip t num">Wallet ${rs(one.wallet||0)}</span><span class="chip c num">${Math.floor(one.coins||0)} coins</span>${one.pin?'<span class="chip ready">Has account</span>':'<span class="chip done">No account</span>'}<span class="grow"></span><input class="inp num" id="tw-amt" type="number" placeholder="₹" style="width:100px" aria-label="Top-up amount"><button class="btn sm" data-act="topup-pos" data-ph="${one.phone}">Add money (cash)</button>${one.pin?`<button class="btn sm bad" data-act="reset-pin" data-ph="${one.phone}">Reset PIN</button>`:''}</div>
@@ -5558,8 +5584,8 @@ function vCust(){
     </div>`;
   }
   return `<div class="ph1"><h2>Customers</h2><input class="inp" id="cu-q" placeholder="Search mobile or name" value="${esc(U.custQ)}" style="max-width:260px"></div>
-  ${one?`<button class="btn sm" data-act="cust-all">← All customers</button>`:`<div class="card tw"><table class="stk"><thead><tr><th>Name</th><th>Mobile</th><th class="r">Orders</th><th class="r">Baki</th><th></th></tr></thead><tbody>
-    ${all.map(c=>{const n=S.orders.filter(o=>o.customer.phone===c.phone&&o.status!=='cancelled').length;return `<tr><td>${esc(c.name||'—')}</td><td class="num">${fmtPhone(c.phone)}</td><td class="r num">${n}</td><td class="r num" style="color:${c.due?'var(--bad)':'inherit'}">${c.due?rs(c.due):'—'}</td><td><button class="btn sm" data-act="cust-open" data-ph="${c.phone}">Open</button></td></tr>`}).join('')||'<tr><td colspan="5" class="empty">No customers found.</td></tr>'}
+  ${one?`<button class="btn sm" data-act="cust-all">← All customers</button>`:`<div class="card tw"><table class="stk"><thead><tr><th>Name</th><th>Mobile</th><th>L&amp;T</th><th class="r">Orders</th><th class="r">Baki</th><th></th></tr></thead><tbody>
+    ${all.map(c=>{const n=S.orders.filter(o=>o.customer.phone===c.phone&&o.status!=='cancelled').length;return `<tr><td>${esc(c.name||'—')}</td><td class="num">${fmtPhone(c.phone)}</td><td>${`<div class="ltseg" role="group" aria-label="L&amp;T for ${esc(c.name||c.phone)}">${[0,1,2].map(v=>`<button data-act="cust-lt" data-ph="${c.phone}" data-v="${v}" aria-pressed="${(+c.lt||0)===v}" class="${v===2?'l2':''}">${v?esc(ltName({outletId:S.cur},v)):'None'}</button>`).join('')}</div>`}</td><td class="r num">${n}</td><td class="r num" style="color:${c.due?'var(--bad)':'inherit'}">${c.due?rs(c.due):'—'}</td><td><button class="btn sm" data-act="cust-open" data-ph="${c.phone}">Open</button></td></tr>`}).join('')||'<tr><td colspan="6" class="empty">No customers found.</td></tr>'}
   </tbody></table></div>`}${detail}`;
 }
 
@@ -6165,6 +6191,8 @@ document.addEventListener('click',e=>{
     case 'pos-hold':openHold();break;
     case 'copy-staff-link':{const v=el.dataset.v;(navigator.clipboard?navigator.clipboard.writeText(v):Promise.reject()).then(()=>toast('Link copied'),()=>{prompt('Copy this link',v)});break}
     case 'pos-lt':U.pos.lt=(posLt()+1)%3;render();break;
+    case 'cust-pick':custPick(el.dataset.ph);break;
+    case 'cust-lt':{const c=ensureCust(el.dataset.ph);c.lt=+el.dataset.v||0;save();render();toast((c.name||fmtPhone(c.phone))+': '+(c.lt?'★ '+ltName({outletId:S.cur},c.lt):'no L&T'));break}
     case 'pos-book':P.book=!P.book;if(P.book&&!bookTs(P.bdate,P.btime))Object.assign(P,bookDefault());render();break;
     case 'adv-new':P.tab='new';if(!bookOk(P,null))P.type='takeaway';P.addTo=null;P.book=true;if(!bookTs(P.bdate,P.btime))Object.assign(P,bookDefault());render();window.scrollTo(0,0);break;
     case 'adv-edit':{const o=find(el.dataset.id);if(o&&o.bookAt)openBookEdit(o);break}
@@ -6280,8 +6308,10 @@ function refocus(id){const q=document.getElementById(id);if(q){q.focus();q.setSe
 document.addEventListener('input',e=>{
   if(mh.onInput&&mroot.contains(e.target)){mh.onInput(e);return}
   const t=e.target,P=U.pos;
-  if(t.id==='pos-ph'){P.phone=t.value.replace(/\D/g,'').slice(0,10);if(P.phone.length===10&&S.customers[P.phone]&&!P.name){P.name=S.customers[P.phone].name;const nm=document.getElementById('pos-nm');if(nm)nm.value=P.name}document.getElementById('custbox').innerHTML=custBox(custInfo(P.phone))}
-  if(t.id==='pos-nm')P.name=t.value;
+  if(t.id==='pos-ph'){P.phone=t.value.replace(/\D/g,'').slice(0,10);if(P.phone.length===10&&!P.name){const x=custIndex().find(c=>c.phone===P.phone);if(x&&x.name){P.name=x.name;const nm=document.getElementById('pos-nm');if(nm)nm.value=P.name}}document.getElementById('custbox').innerHTML=custBox(custInfo(P.phone));
+    if(P.phone.length===10&&custLt(P.phone)&&P.lt==null){P.lt=custLt(P.phone);render();return}
+    custSug(P.phone.length<10?P.phone:'')}
+  if(t.id==='pos-nm'){P.name=t.value;custSug(P.phone.length===10?'':t.value)}
   if(t.id==='pos-tb')P.table=t.value;
   if(t.id==='pos-ad')P.address=t.value;
   if(t.id==='pos-note')P.note=t.value;
