@@ -1422,6 +1422,9 @@ html:has(body:not(.pubmode) .pos){scroll-padding-top:calc(env(safe-area-inset-to
 .qn{flex:none;min-width:40px;height:30px;border-radius:9px;display:grid;place-items:center;background:var(--plum,#6a4fc9);color:#fff;font-size:15px}
 .qpanel{margin-bottom:12px;border-color:var(--plum,#6a4fc9)}.qpanel .trow{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line)}
 .qtag{color:var(--plum,#6a4fc9)}span.chip.qtag{background:var(--plum-soft,#ece8fb);color:var(--plum,#6a4fc9)}
+.chipedit{border-style:dashed!important;color:var(--teal-deep)!important;font-weight:700}
+.chipsed{display:flex;flex-direction:column;gap:12px}.chiplist{display:flex;flex-direction:column;gap:8px}
+.chiprow{display:flex;gap:8px;align-items:center}.chiprow .inp{flex:1;min-width:0}
 #printRoot{display:none}
 @media print{body>*:not(#printRoot){display:none!important}#printRoot{display:block!important}#printRoot pre{font:12px/1.3 "Courier New",monospace;margin:0;white-space:pre}@page{margin:4mm}}
 </style>
@@ -2580,9 +2583,9 @@ function applyConfig(c){
   if(!PAY.bank){PAY.bank='Bank / Cheque';PAYCOL.bank='#56727a'}
   PAY.pending='Not paid yet';PAYCOL.pending='#d23f35';
   PAY.split='Split';PAYCOL.split='#7a5ad2';
-  WAITS=c.waitTimes||[15,20,30,40];
+  WAITS=[20,30,45]; // the till offers 20, 30 and 45 minutes, or the cashier types their own
 }
-let WAITS=[15,20,30,40];
+let WAITS=[20,30,45];
 // Card and Bank / Cheque are switched off everywhere the till takes money; old card or bank sales still show in reports
 const OFF_MODES=['card','bank'];
 const COUNTER_MODES=['cash','upi'];
@@ -4371,6 +4374,29 @@ const bookHint=ts=>{const bad=bookTimeBad(ts);return bad?`<span style="color:var
 // a picture for each item category on the till (the owner's own categories get one by their name)
 function catIcon(k,nm){const s=(k+' '+(nm||'')).toLowerCase();
   return [['combo','🎁'],['pizza','🍕'],['pocket','🥟'],['bread','🥖'],['fries|fry','🍟'],['dessert|cake|sweet|choco','🍫'],['dip|sauce','🥣'],['beverage|drink|cola|juice|soda','🥤'],['topping','🫑'],['burger','🍔'],['pasta','🍝'],['sandwich','🥪'],['salad','🥗'],['shake|coffee|tea','🥤']].find(([re])=>new RegExp(re).test(s))?.[1]||'🍽️'}
+// Kitchen note chips on the till: each outlet keeps its own list; the owner or a manager edits it
+const NOTE_CHIPS0=['Extra crispy','Less spicy','Jain','Pack separately','Rush order'];
+const noteChips=()=>Array.isArray(cur().noteChips)?cur().noteChips:NOTE_CHIPS0;
+const canChips=()=>['owner','oowner','manager'].includes(staff()?.role);
+function openChips(){
+  const o=cur();let list=noteChips().slice(),off=!!o.noteChipsOff,boxOff=!!o.noteBoxOff,add='';
+  const draw=()=>showModal(`<div class="mh"><h3>Kitchen note chips</h3><button class="x" data-act="close" aria-label="Close">×</button></div>
+    <div class="mb chipsed"><div class="small muted">These are the quick notes under the order on the New order screen at ${esc(o.name)}. Tap one there to add it to the kitchen note.</div>
+      <div class="chiplist">${list.map((c,i)=>`<div class="chiprow"><input class="inp" data-ci="${i}" value="${esc(c)}" maxlength="40" aria-label="Chip ${i+1}"><button class="btn sm" data-act="ch-up" data-i="${i}" ${i?'':'disabled'} aria-label="Move up">↑</button><button class="btn sm bad" data-act="ch-rm" data-i="${i}" aria-label="Remove ${esc(c)}">Remove</button></div>`).join('')||'<div class="small muted">No chips yet.</div>'}</div>
+      <div class="row" style="gap:8px"><input class="inp grow" id="ch-new" placeholder="New chip, e.g. No onion" maxlength="40" value="${esc(add)}"><button class="btn" data-act="ch-add">Add</button></div>
+      <label class="opt"><input type="checkbox" id="ch-off" ${off?'checked':''}> Hide the note chips on the till</label>
+      <label class="opt"><input type="checkbox" id="ch-box" ${boxOff?'checked':''}> Hide the kitchen note box too</label>
+      <div class="row" style="gap:8px"><button class="btn lg grow" data-act="ch-reset">Reset to standard</button><button class="btn pri lg grow" data-act="ch-save">Save</button></div></div>`,
+    {onInput:e=>{const t=e.target;if(t.dataset.ci!=null)list[+t.dataset.ci]=t.value;if(t.id==='ch-new')add=t.value},
+     onChange:e=>{if(e.target.id==='ch-off')off=e.target.checked;if(e.target.id==='ch-box')boxOff=e.target.checked},
+     onAct:(act,el)=>{
+      if(act==='ch-rm'){list.splice(+el.dataset.i,1);draw();return true}
+      if(act==='ch-up'){const i=+el.dataset.i;[list[i-1],list[i]]=[list[i],list[i-1]];draw();return true}
+      if(act==='ch-add'){const v=add.trim();if(!v){toast('Type the chip first');return true}if(list.some(x=>x.trim().toLowerCase()===v.toLowerCase())){toast('That chip is already there');return true}list.push(v);add='';draw();setTimeout(()=>document.getElementById('ch-new')?.focus(),30);return true}
+      if(act==='ch-reset'){list=NOTE_CHIPS0.slice();off=false;boxOff=false;draw();return true}
+      if(act==='ch-save'){const clean=[...new Set(list.map(x=>x.trim()).filter(Boolean))];o.noteChips=clean;o.noteChipsOff=off;o.noteBoxOff=boxOff;save();closeModal();render();toast('Note chips saved');return true}
+      return false}});
+  draw()}
 function vNew(){
   U.pos.q=''; // the till has no menu search box now; categories pick the items
   const {P,run,coins,b,t,zom,can}=posCalc();const dow=new Date().getDay();
@@ -4382,7 +4408,7 @@ function vNew(){
   const ci=custInfo(P.phone);const todays=activeOffers(dow);
   const n=P.cart.reduce((a,l)=>a+l.qty,0);
   const optsOn=true; // kitchen note, waiting time and coupon stay open on the till
-  const waitsRow=run?'':`<div class="waits"><span class="lbl" style="margin-right:4px">Waiting time</span>${WAITS.map(w=>`<button data-act="pos-wait" data-v="${w}" aria-pressed="${(P.wait||PREP_MIN)===w}">${w} min</button>`).join('')}<input class="inp num" id="pos-wait" type="number" min="1" placeholder="min" value="${P.wait&&!WAITS.includes(P.wait)?P.wait:''}" aria-label="Other waiting time in minutes"></div>`;
+  const waitsRow=run?'':`<div class="waits"><span class="lbl" style="margin-right:4px">Waiting time</span>${WAITS.map(w=>`<button data-act="pos-wait" data-v="${w}" aria-pressed="${(P.wait||WAITS[0])===w}">${w} min</button>`).join('')}<input class="inp num" id="pos-wait" type="number" min="1" max="600" placeholder="Other min" value="${P.wait&&!WAITS.includes(P.wait)?P.wait:''}" aria-label="Your own waiting time in minutes"></div>`;
   return `
   <div class="neworder"${U.tkw?` style="--tkw:${U.tkw}px"`:''}>
     <div class="menucol">
@@ -4419,11 +4445,11 @@ function vNew(){
         <button class="lrm" data-act="lrm" data-i="${i}" aria-label="Remove ${esc(l.name)}">×</button>
       </div>`).join(''):`<div class="empty small">${run?'Tap items to add them to this table.':'Tap items to add them. Tap the options under an item to change toppings or size.'}</div>`}</div>
       <div class="sec tkopts">
-        ${optsOn?`<input class="inp" id="pos-note" placeholder="Kitchen note (optional)" value="${esc(P.note||'')}" aria-label="Kitchen note">
-        <div class="codes">${['Extra crispy','Less spicy','Jain','Pack separately','Rush order'].map(c=>`<button data-act="pos-chip" data-v="${c}" style="font-family:inherit">+ ${c}</button>`).join('')}</div>
+        ${optsOn?`${cur().noteBoxOff?'':`<input class="inp" id="pos-note" placeholder="Kitchen note (optional)" value="${esc(P.note||'')}" aria-label="Kitchen note">`}
+        ${cur().noteChipsOff?(canChips()?'<div class="codes"><button data-act="chips-edit" class="chipedit" title="Kitchen note chips are hidden · tap to change">✎ Note chips (hidden)</button></div>':''):`<div class="codes">${noteChips().map(c=>`<button data-act="pos-chip" data-v="${esc(c)}" style="font-family:inherit">+ ${esc(c)}</button>`).join('')}${canChips()?'<button data-act="chips-edit" class="chipedit" title="Add, rename, remove or hide these chips" aria-label="Edit note chips">✎</button>':''}</div>`}
         ${zom||(P.book&&bookOk(P,run))?'':waitsRow}
         ${cur().posCoupon?`<div class="row"><input class="inp grow" id="pc-code" placeholder="Coupon code" value="${esc(P.code)}" style="text-transform:uppercase;width:auto" aria-label="Coupon code"><button class="btn sm" data-act="pc-apply">Apply</button></div>`:''}`
-        :`<button class="optbtn" data-act="pos-opts">+ Kitchen note · waiting time ${PREP_MIN} min · coupon</button>`}
+        :`<button class="optbtn" data-act="pos-opts">+ Kitchen note · waiting time ${WAITS[0]} min · coupon</button>`}
         ${b.codeMsg?`<div class="${b.codeOk?'msg-ok':'msg-bad'}">${esc(b.codeMsg)}</div>`:''}
         ${coins&&!run&&!zom?`<label class="opt"><input type="checkbox" id="pc-coins" ${P.useCoins?'checked':''}><span class="coin sm">C</span> Use Cheese Coins <span class="small muted num">(${coins})</span></label>`:''}
       </div>
@@ -4633,7 +4659,7 @@ function posGo(kind){
   }else{
     const b=computeBill(P.cart,null,{code:P.code,coins:P.useCoins&&P.type!=='zomato'?coinsOf(P.phone):0,phone:P.phone});
     o=commitOrder(newOrder({outletId:S.cur,type:P.type,table:P.type==='dine'?P.table:'',address:P.type==='delivery'?P.address:'',customer:{name:P.name.trim(),phone:P.phone},items:P.cart.map(l=>({...l})),note:(P.note||'').trim(),
-      zomatoId:P.type==='zomato'?P.zid.trim():'',lt:posLt(),...(P.type==='dine'&&!P.table?{queue:{at:bookAt||Date.now()}}:{}),wait:bookAt?BOOK_LEAD:P.wait||PREP_MIN,...(bookAt?{bookAt}:{}),by:su?.name||'',byRole:su?.role||'',
+      zomatoId:P.type==='zomato'?P.zid.trim():'',lt:posLt(),...(P.type==='dine'&&!P.table?{queue:{at:bookAt||Date.now()}}:{}),wait:bookAt?BOOK_LEAD:P.wait||WAITS[0],...(bookAt?{bookAt}:{}),by:su?.name||'',byRole:su?.role||'',
       extra:{code:b.codeOk?P.code:'',coins:b.coinsUsed},pay:{mode:'pending',given:0,change:0},paid:false}));
     if(P.type==='dine'&&cur().holds?.[P.table]){delete cur().holds[P.table]}
   }
@@ -7112,6 +7138,7 @@ document.addEventListener('click',e=>{
       else if(v==='account'){U.pubView='account';U.accTab='rewards';render();window.scrollTo(0,0)}
       else openAuth(v==='signup'?'up':'in');break}
     case 'pf-chip':{const t=el.dataset.v;pubForm.note=(pubForm.note?pubForm.note.replace(/[ ,.]*$/,'')+', ':'')+t;openPubCart();break}
+    case 'chips-edit':openChips();break;
     case 'pos-chip':{const t=el.dataset.v;U.pos.note=(U.pos.note?U.pos.note.replace(/[ ,.]*$/,'')+', ':'')+t;render();break}
     case 'account':U.pubView='account';U.accTab=U.accTab||'orders';closeModal();render();window.scrollTo(0,0);break;
     case 'acc-back':U.pubView='menu';render();window.scrollTo(0,0);break;
