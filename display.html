@@ -550,7 +550,7 @@ body.idle{cursor:none}
 const Q=new URLSearchParams(location.search),ONLY_VIPS=/^\/famous-visitors/.test(location.pathname)||Q.get('only')==='vips',SPEED=Math.max(.3,+Q.get('sec')||1);
 const $=(s,r=document)=>r.querySelector(s),esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const IMG=n=>/[\/:]/.test(n)?n:'img/'+n+'.jpg';
-const ING=['basil','capsicum','corn','olive','onion','tomato-slice','slice-veggie','cheese','garlic-stick'].map(n=>'img/ing/'+n+'.webp');
+const ING=['mushroom','capsicum','corn','olive','onion','tomato-slice','slice-veggie','cheese','garlic-stick'].map(n=>'img/ing/'+n+'.webp');
 const hr12=h=>h%12||12,hrText=h=>hr12(h)+' '+(h===12?'noon':h<12||h===24?'am':'pm');
 const letters=t=>[...t].map((c,i)=>c===' '?' ':`<span style="--i:${i}">${esc(c)}</span>`).join('');
 
@@ -582,7 +582,7 @@ const priceTag=m=>{const sz=m.prices?(D.sizes||[]).filter(s=>+m.prices[s.id]):[]
   return`<div class="ptag"><span class="pt-main">${ps.length>1?'<small>from</small>':''}₹${low}</span>${sz.length>1?`<span class="pt-sz">${sz.map(s=>`${esc(s.label)} <b>₹${m.prices[s.id]}</b>`).join('<i></i>')}</span>`:''}</div>`};
 // The cut-out food floating on the slide: a glow and turning light behind it, a soft shadow under it and
 // ingredients drifting round it. Round food (a pizza) turns slowly; the rest floats.
-const FOOD_ING=['basil','tomato-slice','olive','capsicum','corn','onion','cheese'];
+const FOOD_ING=['mushroom','tomato-slice','olive','capsicum','corn','onion','cheese'];
 const floatFood=(m,src)=>{const [w,h]=CUT[(cutOf(m)||'').split('/').pop().replace('.webp','')]||[1,1],round=m.cat==='pizza'&&w/h>.82&&w/h<1.22;
   const spots=[[0,12,150,-20],[90,8,120,30],[97,62,140,-35],[2,74,130,40],[66,96,112,-10],[34,-6,100,25]];
   return`<div class="spotw fw"><div class="beam"></div><div class="halo"></div><div class="gsh"></div>
@@ -652,7 +652,7 @@ const SLIDES0=[
    <div class="copy"><div class="kick rise" style="--d:.1s;color:#7a4300">${KK('hours','Come say kem cho')}</div><div class="h1 anton">${TT('hours',letters('Open')+'<br>'+letters('every day'))}</div>
    <div class="sub rise" style="--d:1s">${hrText(o)} to ${hrText(c)}</div><div class="rise" style="--d:1.3s"><span class="pill hp"></span></div></div>
    <div class="discw"><div class="disc"><div><div class="anton">${hr12(o)} to ${hr12(c)}</div><small>Monday to Sunday</small></div></div></div>
-   ${['slice-veggie','cold-drink','garlic-stick','tomato-slice','basil','olive'].map((n,i)=>`<img class="fl" src="img/ing/${n}.webp" alt="" style="--d:${i*.4}s;left:${[1000,1680,1080,1720,1300,1500][i]}px;top:${[180,170,800,760,120,880][i]}px">`).join('')}`},
+   ${['slice-veggie','cold-drink','garlic-stick','tomato-slice','corn','olive'].map((n,i)=>`<img class="fl" src="img/ing/${n}.webp" alt="" style="--d:${i*.4}s;left:${[1000,1680,1080,1720,1300,1500][i]}px;top:${[180,170,800,760,120,880][i]}px">`).join('')}`},
   enter(el){const p=el.querySelector('.hp'),s=openState();p.className='pill hp'+(s.open?'':' shut');p.textContent=s.text}},
  {k:'order',t:10,make(){const o=outlet(),rays='<div class="rays" style="--rx:1500px;--ry:520px"></div>'+bokeh(8),url=location.origin.replace(/^http:\/\/(localhost|127\.)[^/]*/,'https://cheesypizza.online');
    return`${rays}<div class="copy"><div class="kick rise" style="--d:.1s">${KK('order','Skip the queue')}</div><div class="h1 anton">${TT('order',letters('Order')+'<br><em>'+letters('online')+'</em>')}</div>
@@ -858,7 +858,7 @@ function playSpawn(kind,x,y){const{Bodies,Composite,Body}=Matter,[,w,shape]=PK[k
   else b=Bodies.rectangle(x,y,w*.94,h*.88,{...o,chamfer:{radius:Math.min(w,h)*shape}});
   b.plugin={k:kind,w,h,dy};Body.setAngle(b,Math.random()*6.28);Body.setAngularVelocity(b,(Math.random()-.5)*.2);Composite.add(PL.eng.world,b);PL.bodies.push(b)}
 function playStep(el,t){if(!PL.eng||!window.Matter){if(window.Matter&&!PL.eng)playReset(el);return}
-  const{Engine,Body}=Matter,kinds=['garlic','garlic','garlic','slice','slice2','tomato','tomato','cheese','basil','olive','olive'];
+  const{Engine,Body}=Matter,kinds=['garlic','garlic','garlic','slice','slice2','tomato','tomato','cheese','olive','olive','olive'];
   // a first wave of 30 pieces, then every second one piece is tossed up and a new one drops in
   while(PL.spawned<30&&t>.6+PL.spawned*.09){playSpawn(kinds[PL.spawned%kinds.length],120+Math.random()*1680,-100-Math.random()*200);PL.spawned++}
   if(t>4&&t>PL.next){PL.next=t+.8+Math.random()*.6;const b=PL.bodies[Math.random()*PL.bodies.length|0];

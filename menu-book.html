@@ -10,7 +10,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Hind+Vadodara:wght@400;500;600&family=Courgette&display=swap">
 <!--
   The menu as a book whose pages turn by themselves: a cover, one page for every dish that has a photo
-  (the dish drops onto the page with basil falling round it, then its name, words and price), list pages
+  (the dish drops onto the page with pieces of capsicum, tomato and corn falling round it, then its name, words and price), list pages
   for the dishes without a photo, the drinks, and how to order. It reads the live menu and prices from
   /api/state and the cut-out photos from img/cut, so a change in Admin shows up on its own.
   /menu-book plays it on a loop (for the shop TV or a phone); ?once=1 plays it one time.
@@ -181,8 +181,8 @@ function pageHTML(p,n){
     const leaves=[...Array(5)].map((_,i)=>({x:8+rnd()*84,y:[4,12,70,82,40][i]+rnd()*10,r:rnd()*360,s:.7+rnd()*.5,d:.25+i*.09}));
     p.leaves=leaves;
     return`${head()}<div class="dish"><div class="gs"></div><img class="d${c?'':' ph'}" src="${esc(src)}" alt="">
-      ${leaves.map((l,i)=>`<img class="leaf" data-i="${i}" src="img/ing/basil.webp" alt="" style="left:${l.x}%;top:${l.y}%;width:${(74*l.s)|0}px">`).join('')}
-      ${[...Array(10)].map(()=>`<i class="speck" style="left:${(10+rnd()*80).toFixed(1)}%;top:${(8+rnd()*84).toFixed(1)}%;transform:rotate(${(rnd()*180)|0}deg)"></i>`).join('')}</div>
+      ${leaves.map((l,i)=>`<img class="leaf" data-i="${i}" src="img/promo/${["capsicum-0","tomato-0","corn-0","capsicum-2","tomato-2"][i%5]}.webp" alt="" style="left:${l.x}%;top:${l.y}%;width:${(74*l.s)|0}px">`).join('')}
+      ${[...Array(0)].map(()=>`<i class="speck" style="left:${(10+rnd()*80).toFixed(1)}%;top:${(8+rnd()*84).toFixed(1)}%;transform:rotate(${(rnd()*180)|0}deg)"></i>`).join('')}</div>
       <div class="tx"><h2>${esc(m.name)}</h2><p>${esc(m.desc||'')}</p><div class="pr">${priceHTML(m)}</div>${tags.length?`<div class="tags">${tags.map(t=>`<span>${t}</span>`).join('')}</div>`:''}</div>${foot(n)}`}
   if(p.k==='list')return`${head()}<div class="lt"><h3>${esc(p.title)}</h3><div class="cols">${p.rows.map(r=>r.h?`<div class="row gh">${esc(r.h)}</div>`:`<div class="row"><div class="l">${esc(r.m.name)}<i></i><b>${priceInline(r.m)}</b></div>${r.m.desc&&!/^\d+\s*ml$/i.test(r.m.desc)?`<div class="s">${esc(r.m.desc)}</div>`:''}</div>`).join('')}</div></div>${foot(n)}`;
   if(p.k==='drinks')return`${head()}<div class="lt"><h3>${esc(p.title)}</h3></div><div class="dr">${p.items.map(m=>`<div><img src="${esc(cutOf(m)||IMG(m.img))}" alt=""><b>${esc(m.name)}</b><span>${esc(m.desc||'')}</span><em>₹${m.price}</em></div>`).join('')}</div>${foot(n)}`;

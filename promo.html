@@ -101,9 +101,9 @@ const SQ=Math.cos(58*Math.PI/180); // how flat the tilted plate looks
 const R=405; // pizza radius on screen
 const LIFT=TALL?150:125; // how high the slice is lifted
 
-/* ingredients in the ring: real pieces of capsicum, tomato and corn cut from the toppings photo, basil and shreds of cheese */
-const KINDS=['promo/capsicum-0','promo/tomato-0','promo/capsicum-1','ing/basil','promo/tomato-1','promo/corn-0','promo/capsicum-2','promo/tomato-2','promo/capsicum-3',
-  'promo/tomato-3','promo/corn-1','ing/basil','promo/capsicum-4','promo/tomato-4','promo/corn-2','promo/capsicum-5','promo/tomato-5','promo/corn-3'];
+/* ingredients in the ring: real pieces of capsicum, tomato and corn cut from the toppings photo, and shreds of cheese (no leaves) */
+const KINDS=['promo/capsicum-0','promo/tomato-0','promo/capsicum-1','promo/corn-4','promo/tomato-1','promo/corn-0','promo/capsicum-2','promo/tomato-2','promo/capsicum-3',
+  'promo/tomato-3','promo/corn-1','promo/corn-5','promo/capsicum-4','promo/tomato-4','promo/corn-2','promo/capsicum-5','promo/tomato-5','promo/corn-3'];
 const N=28,items=[];
 for(let i=0;i<N;i++){const k=i%3===2?'cheese':KINDS[i%KINDS.length];const im=document.createElement('img');im.className='it';im.alt='';
   im.src=k==='cheese'?'img/build/drop-cheese.webp':'img/'+k+'.webp';$('#items').appendChild(im);
