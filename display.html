@@ -53,12 +53,19 @@ body.idle{cursor:none}
 .pill::before{content:"";width:12px;height:12px;border-radius:50%;background:#bff5d2;animation:blink 1.2s infinite}
 .pill.shut{background:var(--red)}.pill.shut::before{background:#ffd0cc}
 @keyframes blink{50%{opacity:.25}}
-.ticker{position:absolute;left:0;right:0;bottom:0;height:70px;z-index:20;background:var(--gold);color:#3a2800;overflow:hidden;display:flex;align-items:center;box-shadow:0 -10px 30px rgba(0,0,0,.25)}
-.ticker .tk{display:flex;gap:0;white-space:nowrap;animation:tick var(--tkd,60s) linear infinite;font-size:30px;font-weight:800}
-.ticker .tk span{padding:0 34px;display:inline-flex;align-items:center;gap:14px}
-.ticker .tk span::after{content:"";width:16px;height:16px;border-radius:50%;background:#3a2800;margin-left:34px;opacity:.5}
-.ticker .tk em{font-style:normal;background:#3a2800;color:var(--gold);padding:0 12px;border-radius:8px}
-@keyframes tick{to{translate:-50% 0}}
+/* the moving price strip: dark with gold prices, a fixed "Menu" tag on the left. It moves on its own GPU layer
+   (translate3d + will-change) so slide changes never make it stutter, and it is only refilled when the menu changes,
+   so it never jumps back to the start */
+.ticker{position:absolute;left:0;right:0;bottom:0;height:70px;z-index:20;background:linear-gradient(180deg,#0f4a55,#072a31);color:#fff;overflow:hidden;display:flex;align-items:center;border-top:4px solid var(--gold);box-shadow:0 -10px 30px rgba(0,0,0,.3)}
+.ticker .tkl{position:relative;z-index:2;flex:none;height:100%;display:flex;align-items:center;gap:12px;padding:0 30px 0 26px;background:var(--red);font-family:Anton,Impact,sans-serif;font-size:32px;letter-spacing:.06em;text-transform:uppercase;line-height:1;clip-path:polygon(0 0,100% 0,calc(100% - 22px) 100%,0 100%);padding-right:44px}
+.ticker .tkl img{height:40px;width:auto}
+.ticker .tkw{flex:1;height:100%;overflow:hidden;display:flex;align-items:center;-webkit-mask:linear-gradient(90deg,transparent,#000 40px);mask:linear-gradient(90deg,transparent,#000 40px)}
+.ticker .tk{display:flex;white-space:nowrap;animation:tick var(--tkd,60s) linear infinite;will-change:transform;backface-visibility:hidden;font-size:31px;font-weight:700;line-height:1}
+.ticker .tk span{padding:0 30px;display:inline-flex;align-items:center;gap:14px}
+.ticker .tk span::after{content:"★";color:var(--gold);font-size:22px;margin-left:30px;opacity:.85}
+.ticker .tk em{font-style:normal;font-weight:800;background:var(--gold);color:#3a2800;padding:7px 14px 3px;border-radius:10px;font-size:28px;line-height:1}
+.ticker .tk span.msg{color:var(--gold2)}
+@keyframes tick{from{transform:translate3d(0,0,0)}to{transform:translate3d(-50%,0,0)}}
 .bar{position:absolute;left:0;bottom:70px;height:8px;z-index:21;background:var(--sea);width:100%;transform:scaleX(0);transform-origin:0 50%;will-change:transform}
 /* "No Mayonnaise" badge on every slide. Admin → Shop display picks how it looks (a slim tag, a small or a big stamp)
    and which corner it sits in. The shadows sit on the pieces themselves, not on a filter over the spinning ring,
@@ -546,7 +553,7 @@ body.idle{cursor:none}
     <div class="nm-tagb"><i><svg viewBox="0 0 120 120"><rect x="36" y="22" width="48" height="14" rx="4" fill="#e7a91e"/><path d="M33 40h54a6 6 0 0 1 6 6v50a10 10 0 0 1-10 10H37a10 10 0 0 1-10-10V46a6 6 0 0 1 6-6z" fill="#fff6d8" stroke="#3a2800" stroke-width="4"/><rect x="34" y="58" width="52" height="24" rx="5" fill="#f2b632"/><text x="60" y="76" text-anchor="middle" font-family="Anton,Impact,sans-serif" font-size="17" fill="#3a2800">MAYO</text><circle cx="60" cy="60" r="54" fill="none" stroke="#d23f35" stroke-width="10"/><path d="M22 22L98 98" stroke="#d23f35" stroke-width="10" stroke-linecap="round"/></svg></i>NO MAYONNAISE</div>
   </div></div>
   <div class="bar" id="bar"></div>
-  <div class="ticker"><div class="tk" id="tk"></div></div>
+  <div class="ticker"><div class="tkl"><img src="img/logo-pin-white.svg" alt="">Menu</div><div class="tkw"><div class="tk" id="tk"></div></div></div>
   <div class="tapme" id="tapme">Tap anywhere for full screen</div>
 </div></div>
 <script>
@@ -930,8 +937,8 @@ function rebuild(){needsRebuild=false;
   nm.className='nomayo nm-'+(['tag','small','big'].includes(c.nmStyle)?c.nmStyle:'tag')+' p-'+(['tr','tl','bl','br'].includes(c.nmPos)?c.nmPos:'tr');
   dots.innerHTML=order.map(()=>'<i></i>').join('');
   const tl=picked('ticker',500)||live(),tk=tl.map(m=>`<span>${esc(m.name)} <em>₹${m.prices?Math.min(...Object.values(m.prices)):m.price}</em></span>`).join('');
-  const msg=c.tickerMsg&&c.tickerMsg.trim()?`<span>★ ${esc(c.tickerMsg.trim())} ★</span>`:'';
-  $('#tk').innerHTML=msg+tk+msg+tk;$('#tk').style.setProperty('--tkd',Math.max(40,tl.length*4.5)+'s')}
+  const msg=c.tickerMsg&&c.tickerMsg.trim()?`<span class="msg">${esc(c.tickerMsg.trim())}</span>`:'';
+  const tkh=msg+tk+msg+tk;if($('#tk').dataset.h!==tkh){$('#tk').dataset.h=tkh;$('#tk').innerHTML=tkh;$('#tk').style.setProperty('--tkd',Math.max(40,tl.length*4.5)+'s')}}
 
 function rain(){const r=$('#rain');r.innerHTML=ING.map(()=>`<img src="${ING[Math.random()*ING.length|0]}" alt="" style="left:${Math.random()*1800}px;animation-delay:${(Math.random()*.4).toFixed(2)}s;--r:${(Math.random()*720-360)|0}deg;width:${80+Math.random()*90|0}px">`).join('');setTimeout(()=>r.innerHTML='',2200)}
 
