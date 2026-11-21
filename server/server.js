@@ -10,6 +10,8 @@ const otp = require('./otp');
 const upiAlerts = require('./upi-alerts');
 const backups = require('./backups');
 const { addSampleVisitors } = require('./sample-visitors');
+const { publicCopy } = require('./watermark');
+const fs = require('fs');
 const Models = require('./models');
 const { RiderLoc, Staff } = require('./models');
 
@@ -183,11 +185,78 @@ function createApp(store) {
     if (buf.length > MAX_VIDEO) return res.status(413).json({ error: 'Video is too big' });
     res.json({ url: 'api/images/' + await store.saveImage(type, buf) });
   });
+  /* ----- public copies of photos for the customer site: logo printed across, at most 900px.
+     The customer site asks for p/img/… and p/api/images/…; the till, admin and shop TV keep the originals. ----- */
+  const PHOTO = /\.(?:jpe?g|png|webp)$/i, IMG_DIR = path.join(ROOT, 'img');
+  const sendPublic = (res, v) => { if (!res.get('Cache-Control')) res.set('Cache-Control', 'public, max-age=86400'); res.set('Content-Disposition', 'inline').type(v.type).send(v.data); };
+  async function sendPublicFile(rel, res, next) {
+    const file = path.join(IMG_DIR, rel);
+    if (!PHOTO.test(rel) || !file.startsWith(IMG_DIR + path.sep)) return res.status(404).end();
+    let st; try { st = await fs.promises.stat(file); } catch { return res.status(404).end(); }
+    try {
+      sendPublic(res, await publicCopy('f:' + rel + ':' + st.mtimeMs, async () => ({ data: await fs.promises.readFile(file) })));
+    } catch (e) { next(e); }
+  }
+  app.get('/p/img/*file', (req, res, next) => sendPublicFile([].concat(req.params.file).join('/'), res, next));
+  app.get('/p/api/images/:id', async (req, res, next) => {
+    try {
+      let video = false;
+      const v = await publicCopy('i:' + req.params.id, async () => {
+        const img = await store.getImage(req.params.id);
+        if (!img) return null;
+        if (!/^image\//.test(img.type)) { video = true; return null; }
+        return { type: img.type, data: Buffer.isBuffer(img.data) ? img.data : Buffer.from(img.data.buffer) };
+      });
+      if (video) return res.redirect(302, '/api/images/' + encodeURIComponent(req.params.id));
+      if (!v) return res.status(404).end();
+      sendPublic(res, v);
+    } catch (e) { next(e); }
+  });
+  /* Who gets a clean original of a food photo. Everyone else (a customer's browser, a link opened in a new tab,
+     a copied address, a download tool) gets the logo-marked copy from the same address.
+     - the customer site fetches the clean picture for the screen with the X-Cheesy-Clean header
+     - pages of the till, admin and shop TV (by the page that asks: /staff, /admin, /display, /famous-visitors)
+     - the Admin app, and a browser showing the Outlet POS (it sets the cp_pos cookie)
+     A photo opened as a page of its own is always the marked copy. */
+  // Only the live public site does this (cheesypizza.online); a shop computer or test server serves plain photos.
+  // PUBLIC_IMAGE_HOSTS (comma separated) changes the list.
+  const WM_HOSTS = String(process.env.PUBLIC_IMAGE_HOSTS || 'cheesypizza.online,www.cheesypizza.online').toLowerCase().split(',').map(h => h.trim()).filter(Boolean);
+  const wmHost = req => WM_HOSTS.includes(String(req.hostname || '').toLowerCase());
+  const PROTECT = /^(?!intro-|logo|cheesy-)[^/]+\.jpe?g$|^hero-pizza\.webp$|^gang\/photo\.webp$|^cut\/[^/]+\.webp$/i; // cut/: the food cut out for the shop TV
+  const STAFF_PAGE = /^\/(?:staff|admin|display|famous-visitors)(?:\/|$)/;
+  function cleanOK(req) {
+    if (req.get('Sec-Fetch-Dest') === 'document') return false;
+    if (req.get('X-Cheesy-Clean') === '1' || /CheesyApp\/admin/.test(req.get('User-Agent') || '')) return true;
+    if (/(?:^|;\s*)cp_pos=1(?:;|$)/.test(req.get('Cookie') || '')) return true;
+    try { return STAFF_PAGE.test(new URL(req.get('Referer') || '').pathname); } catch { return false; }
+  }
+  // the same address answers differently, so browsers must not reuse one answer for the other
+  const noReuse = res => res.set('Cache-Control', 'no-store').set('Vary', 'Referer, Cookie, X-Cheesy-Clean, Sec-Fetch-Dest');
+  app.get('/img/*file', (req, res, next) => {
+    const rel = [].concat(req.params.file).join('/');
+    if (!wmHost(req) || !PROTECT.test(rel)) return next();
+    noReuse(res);
+    if (req.get('Sec-Fetch-Dest') === 'document') return res.redirect(302, '/p/img/' + rel);
+    if (!cleanOK(req)) return sendPublicFile(rel, res, next);
+    const file = path.join(IMG_DIR, rel);
+    if (!file.startsWith(IMG_DIR + path.sep)) return res.status(404).end();
+    res.sendFile(file, { cacheControl: false, etag: false, lastModified: false }, e => e && (e.status === 404 ? res.status(404).end() : next(e)));
+  });
+
   app.get('/api/images/:id', async (req, res) => {
     const img = await store.getImage(req.params.id);
+    if (img && wmHost(req) && /^image\//.test(img.type)) {
+      noReuse(res);
+      if (req.get('Sec-Fetch-Dest') === 'document') return res.redirect(302, '/p/api/images/' + encodeURIComponent(req.params.id));
+      if (!cleanOK(req)) {
+        const v = await publicCopy('i:' + req.params.id, async () => ({ type: img.type, data: Buffer.isBuffer(img.data) ? img.data : Buffer.from(img.data.buffer) }));
+        return sendPublic(res, v);
+      }
+    }
     if (!img) return res.status(404).end();
     const data = Buffer.isBuffer(img.data) ? img.data : Buffer.from(img.data.buffer); // a BSON Binary from MongoDB
-    res.set('Cache-Control', 'public, max-age=31536000, immutable').set('Accept-Ranges', 'bytes').type(img.type);
+    if (!res.get('Cache-Control')) res.set('Cache-Control', 'public, max-age=31536000, immutable');
+    res.set('Accept-Ranges', 'bytes').type(img.type);
     // videos are fetched in parts (Safari and most TVs will not play a video without this)
     const m = /^bytes=(\d*)-(\d*)$/.exec(String(req.get('Range') || ''));
     if (m && (m[1] || m[2])) {
@@ -237,6 +306,10 @@ function createApp(store) {
   app.get('/home2', (req, res) => { res.set('X-Robots-Tag', 'noindex'); res.sendFile(path.join(ROOT, 'index.html')); });
   // Full-screen slideshow for the TV in the shop; nothing on the site links to it
   app.get('/display', (req, res) => res.sendFile(path.join(ROOT, 'display.html')));
+  // the 15 second promo film (?v=1 tall for phones); tools/promo-video.js records it into MP4s
+  app.get('/promo', (req, res) => res.sendFile(path.join(ROOT, 'promo.html')));
+  // the menu as a book whose pages turn by themselves, with today's items and prices
+  app.get('/menu-book', (req, res) => res.sendFile(path.join(ROOT, 'menu-book.html')));
   // The same slideshow with only the famous visitors (celebrity) slides
   app.get('/famous-visitors', (req, res) => res.sendFile(path.join(ROOT, 'display.html')));
   // Staff login for one outlet: /staff/<outlet> opens the till's login screen for that outlet only
