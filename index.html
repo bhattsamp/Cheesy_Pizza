@@ -1375,7 +1375,22 @@ html:has(body:not(.pubmode) .pos){scroll-padding-top:calc(env(safe-area-inset-to
 }
 @media (min-width:761px) and (min-height:540px){
   .pos .ticket.order{top:calc(var(--toph,61px) + var(--navh) + 12px);max-height:var(--tkh,calc(100vh - var(--toph,61px) - var(--navh) - 24px))}
+  /* The order panel is always full height, down to the bottom of the screen, even with few items:
+     the items and kitchen note scroll inside it, the totals and Pay / Hold / Save stay pinned at the bottom */
+  .pos .ticket.order{height:var(--tkh,calc(100vh - var(--toph,61px) - var(--navh) - 24px))}
+  .pos .ticket.order>.lines{flex:1 0 auto;overflow:visible}
 }
+/* Added items in the order panel: compact rows so more of them fit on the screen */
+.pos .ticket .lines{padding:2px 12px}
+.pos .ticket .line{gap:0 6px;padding:4px 0}
+.pos .ticket .lnm .nm{font-size:15px;line-height:1.2}
+.pos .ticket .lnm .ad{margin-top:0;font-size:12.5px;line-height:1.25}
+.pos .ticket .lnm .ed{font-size:12.5px}
+.pos .ticket .qty{gap:2px}
+.pos .ticket .qty button{width:30px;height:30px;font-size:20px}
+.pos .ticket .qty span{min-width:34px;padding:2px 0;font-size:15px}
+.pos .ticket .lpr{min-width:54px}.pos .ticket .lp{min-height:28px}
+.pos .ticket .lrm{width:26px;height:26px;font-size:21px}
 /* Customer Menu page on tablets and computers: the categories are a column on the left;
    phones keep the row across the top */
 .menusecs{min-width:0}
@@ -3105,9 +3120,11 @@ function catBar(){
 function fitTicket(){
   const tk=document.getElementById('ticket');if(!tk)return;
   if(getComputedStyle(tk).position!=='sticky'){tk.style.removeProperty('--tkh');return}
+  // The panel's own sticky top (the top bar's height + 12px), so it always reaches the bottom of the screen
+  const st=parseFloat(getComputedStyle(tk).top);
   const th=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--toph'))||60;
   const nh=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--navh'))||0;
-  const top=Math.max(tk.getBoundingClientRect().top,th+nh+12);
+  const top=Math.max(tk.getBoundingClientRect().top,Number.isFinite(st)?st:th+nh+12);
   tk.style.setProperty('--tkh',Math.max(320,Math.floor(window.innerHeight-top-12))+'px');
 }
 let fitRaf=0;const fitSoon=()=>{if(!fitRaf)fitRaf=requestAnimationFrame(()=>{fitRaf=0;fitTicket()})};
