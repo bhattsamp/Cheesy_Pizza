@@ -781,6 +781,10 @@ img[data-wm]:not(.wm){opacity:0!important} /* until the clean photo is ready */
 .tables.tgrid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin:8px 0 12px}
 .pos .tables.tgrid button{padding:10px 12px;text-align:left;display:flex;flex-direction:column;gap:2px;font-size:16px}
 .tables.tgrid button small{font-size:12.5px}
+.tcw{position:relative;display:flex}.tcw>button[data-act=tbl-pick]{flex:1;min-width:0}
+.tgrid button.trel{position:absolute;top:6px;right:6px;width:40px;height:40px;padding:0;display:grid;place-items:center;border-radius:10px;background:var(--ok);color:#fff;border-color:var(--ok);box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.tday{display:flex;flex-direction:column;gap:8px;max-height:60vh;overflow:auto}.tdrow{border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:4px}.tdrow.cx{opacity:.6}.tdh{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.tgrid .tfn{font-size:14px;font-weight:700;opacity:.9}
 .tables.tgrid button.sel{box-shadow:0 0 0 3px var(--ink);border-color:var(--ink)}
 .thist{padding:14px;display:flex;flex-direction:column;gap:10px}
 .hicon{border:0;background:var(--surface2,#f1efe8);border-radius:8px;padding:1px 5px;font-size:14px;cursor:pointer;vertical-align:1px}
@@ -5039,14 +5043,15 @@ async function openOrderScreen(){
 function vTables(){
   const n=+cur().tables||8;
   const card=t=>{const {run,hold}=tableState(t);
-    return `<button data-act="tbl-pick" data-v="${t}" class="${run?tableClass(run):hold?'held':''}"><b>T${t}</b>${run?`<small class="num">${esc(run.no)} · ${run.items.reduce((a,l)=>a+l.qty,0)} items</small>${gstTxt(run)?`<small class="tgst num">${+run.guests} person${+run.guests>1?'s':''}</small>`:''}<small>${run.paid?'Paid, at table':partPaid(run)?rs(balanceOf(run))+' left':'Eating · '+rs(balanceOf(run))+' due'}</small>`:hold?`<small>Booked · ${esc((hold.name||'').split(' ')[0].slice(0,10))}</small>`:'<small>Free</small>'}</button>`};
+    const fn=run&&(run.customer.name||'').trim().split(/\s+/)[0]||'';
+    return `<div class="tcw"><button data-act="tbl-pick" data-v="${t}" class="${run?tableClass(run):hold?'held':''}"><b>T${t}${fn?` <span class="tfn">${esc(fn.slice(0,12))}</span>`:''}</b>${run?`<small class="num">${esc(run.no)} · ${run.items.reduce((a,l)=>a+l.qty,0)} items</small>${gstTxt(run)?`<small class="tgst num">${+run.guests} person${+run.guests>1?'s':''}</small>`:''}<small>${run.paid?'Paid, at table':partPaid(run)?rs(balanceOf(run))+' left':'Eating · '+rs(balanceOf(run))+' due'}</small>`:hold?`<small>Booked · ${esc((hold.name||'').split(' ')[0].slice(0,10))}</small>`:'<small>Free</small>'}</button>${run&&run.paid?`<button class="trel" data-act="tbl-rel" data-v="${t}" title="Paid · release T${t}" aria-label="Release T${t} (paid)"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg></button>`:''}</div>`};
   const runs=[...Array(n)].map((_,i)=>String(i+1)).map(t=>({t,run:tableState(t).run})).filter(x=>x.run);
   return `<div class="ph1"><h2>Tables</h2><span class="small muted num">${runs.length} of ${n} table${n===1?'':'s'} in use</span></div>
   <div class="tlegend"><span><i style="background:var(--bad)"></i>Not paid</span><span><i style="background:var(--warn)"></i>Part paid</span><span><i style="background:var(--ok)"></i>Paid</span><span><i style="background:var(--plum,#6a4fc9)"></i>Booked</span></div>
   ${(()=>{const q=queued(),fr=freeTables().length;return q.length?`<div class="card panel qpanel"><div class="row" style="justify-content:space-between"><h3 style="margin:0">Waiting queue · ${q.length}</h3><span class="small muted">${fr?fr+' table'+(fr>1?'s':'')+' free':'No table free'}</span></div>
     ${q.map((o,i)=>`<div class="trow"><b class="qn">Q${i+1}</b><span class="grow small"><b class="num">${esc(o.no)}</b> · ${esc(o.customer.name||'Guest')}${gstTxt(o)?' · <span class="num">'+gstTxt(o)+'</span>':''} · ${o.items.reduce((a,l)=>a+l.qty,0)} items · <span class="num">${rs(o.total)}</span> · waiting ${Math.max(1,Math.round((Date.now()-o.queue.at)/60000))} min${o.status==='ready'?' · <b style="color:var(--ok)">food ready</b>':''}</span><button class="btn sm pri" data-act="q-seat" data-id="${o.id}" ${fr?'':'disabled'}>Assign table</button></div>`).join('')}</div>`:''})()}
   <div class="tables tgrid">${[...Array(n)].map((_,i)=>card(String(i+1))).join('')}</div>
-  <div class="small muted" style="margin-top:10px">Tap a table to add items to it (or start its order). Past orders of a table are on the Orders screen.</div>
+  <div class="small muted" style="margin-top:10px">Tap a table to add items to it (or start its order). Double-tap it to see all of today's orders on that table. Past orders of a table are on the Orders screen.</div>
   ${runs.length?`<div class="card panel trun"><h3 style="margin:0">Tables in use</h3>${runs.map(({t,run})=>`<div class="trow"><b class="num">T${esc(t)}</b><span class="grow small"><b class="num">${esc(run.no)}</b> · ${esc(run.customer.name||'Walk-in guest')}${gstTxt(run)?' · <span class="num">'+gstTxt(run)+'</span>':''} · <span class="num">${rs(run.total)}</span> · ${run.paid?'<span style="color:var(--ok)">paid</span>':partPaid(run)?rs(balanceOf(run))+' left':'<span style="color:var(--bad)">baki</span>'}</span><button class="btn sm" data-act="tbl-move" data-v="${esc(t)}">⇄ Move or merge</button><button class="btn sm" data-act="tbl-free" data-v="${esc(t)}">Release table</button></div>`).join('')}</div>`:''}`;
 }
 // Release a table as free by hand, e.g. the guests left before the order was closed. The order is kept
@@ -5266,6 +5271,19 @@ function itemHist(o){
   const seen=new Set(log.filter(e=>e.act==='add').map(e=>e.round));
   const old=o.items.filter(l=>(l.round||1)>1&&!seen.has(l.round)).map(l=>({act:'add',at:l.at||o.ts,by:l.by||'',round:l.round,name:lineName(l),qty:l.qty,from:l.from}));
   return [...old,...log].sort((a,b)=>a.at-b.at)}
+// Double tap on a table: every order on that table today at this outlet (merged-away ones included), oldest first
+function openTableDay(t){
+  const day=today(),list=S.orders.filter(o=>o.outletId===S.cur&&o.date===day&&o.type==='dine'&&(String(o.table)===t||(o.moves||[]).some(m=>m.from===t||m.to===t))).sort((a,b)=>a.ts-b.ts);
+  const tot=list.filter(o=>o.status!=='cancelled').reduce((a,o)=>a+o.total,0),guests=list.filter(o=>o.status!=='cancelled').reduce((a,o)=>a+(+o.guests||0),0);
+  const st=o=>o.mergedInto?'Merged':o.status==='cancelled'?'Cancelled':o.paid?'Paid':partPaid(o)?rs(balanceOf(o))+' left':'Baki';
+  const stc=o=>o.status==='cancelled'?'r':o.paid?'ready':'r';
+  showModal(`<div class="mh"><h3>T${esc(t)} · today</h3><button class="x" data-act="close" aria-label="Close">×</button></div>
+  <div class="mb"><div class="small muted">${fmtDate(day)} · ${list.length} order${list.length===1?'':'s'}${guests?' · '+guests+' persons':''} · <span class="num">${rs(tot)}</span></div>
+  <div class="tday">${list.map(o=>{const left=o.tableFreed?.at||(o.paid&&o.times?.done)||null;return `<div class="tdrow${o.status==='cancelled'?' cx':''}">
+    <div class="tdh"><b class="num">${esc(o.no)}</b><span>${esc(o.customer.name||'Walk-in guest')}${+o.guests?' · 👥 '+(+o.guests):''}</span><span class="grow"></span><span class="chip ${stc(o)}">${esc(st(o))}</span><b class="num">${rs(o.total)}</b></div>
+    <div class="small muted num">Seated ${fmtTime(o.ts)}${left?' · left '+fmtTime(left):tableState(t).run===o?' · still at the table':''}${o.paid?' · '+esc(payName(o)):''}${o.by?' · by '+esc(o.by):''}${(o.moves||[]).length?' · '+o.moves.map(m=>'T'+m.from+'→T'+m.to).join(', '):''}</div>
+    <div class="small">${o.items.map(l=>l.qty+'× '+esc(lineName(l))+((l.round||1)>1?' <span class="muted">(+'+fmtTime(l.at||o.ts)+')</span>':'')).join(', ')}</div>
+    <div><button class="btn sm" data-act="tday-bill" data-id="${o.id}">Bill</button></div></div>`}).join('')||'<div class="empty small">No orders on this table today.</div>'}</div></div>`)}
 function openOrderHist(o){
   const all=[...itemHist(o),...(o.log||[]).filter(e=>e.act==='hold'||e.act==='release'||e.act==='pay'),...(o.tableFreed?[{act:'free',...o.tableFreed}]:[])].sort((a,b)=>a.at-b.at);
   const what=e=>e.act==='add'?`<span class="ohxt add">Added</span> ${e.qty} × ${esc(e.name)}${e.from?' <span class="muted">(from '+esc(e.from)+')</span>':''}`
@@ -6186,9 +6204,14 @@ document.addEventListener('click',e=>{
     case 'hold-table':{const o=cur();o.holds=o.holds||{};if(el.dataset.v==='on'){o.holds[P.table]={name:P.name.trim(),ts:Date.now()};toast('T'+P.table+' on hold')}else{delete o.holds[P.table];toast('T'+P.table+' is free')}save();render();break}
     case 'book-open':openBook(P.table);break;
     case 'tbl-pick':{const t=el.dataset.v;
+      // double tap: that table's orders for today; a single tap waits a moment to tell the two apart
+      if(U.tblTap&&U.tblTap.t===t){clearTimeout(U.tblTap.h);U.tblTap=null;openTableDay(t);break}
+      if(U.tblTap)clearTimeout(U.tblTap.h);
+      U.tblTap={t,h:setTimeout(()=>{U.tblTap=null;
       //: the table's running order opens in the add-items popup; a free table opens a new dine-in order for it
-      const run=tableState(t).run;if(run){openAddPop(run);break}
-      const h=(cur().holds||{})[t];Object.assign(U.pos,JSON.parse(JSON.stringify(POS_BLANK)),{type:'dine',table:t,name:h&&h.name||'',phone:h&&h.phone||'',note:h&&h.note||'',guests:h&&+h.guests||0});U.addPop='tbl:'+t;render();window.scrollTo(0,0);break}
+      const run=tableState(t).run;if(run){openAddPop(run);return}
+      const h=(cur().holds||{})[t];Object.assign(U.pos,JSON.parse(JSON.stringify(POS_BLANK)),{type:'dine',table:t,name:h&&h.name||'',phone:h&&h.phone||'',note:h&&h.note||'',guests:h&&+h.guests||0});U.addPop='tbl:'+t;render();window.scrollTo(0,0)},280)};break}
+    case 'tday-bill':{const o=S.orders.find(x=>x.id===el.dataset.id);if(o){closeModal();openReceipt(o,'bill')}break}
     case 'book-seat':{const h=(cur().holds||{})[P.table];if(h){if(!P.name)P.name=h.name||'';if(!P.phone&&h.phone)P.phone=h.phone;if(h.note&&!P.note)P.note=h.note;if(!+P.guests&&+h.guests)P.guests=+h.guests}render();toast('Add their order · the booking clears when you send the KOT or bill');break}
     case 'pos-pm':P.pay=el.dataset.v;render();break;
     case 'pos-gv':P.given=el.dataset.v;render();break;
@@ -6325,6 +6348,9 @@ document.addEventListener('click',e=>{
     case 'scope':U.salesScope=el.dataset.v;render();break;
     case 'tbl-move':openMoveTable(el.dataset.v);break;
     case 'tbl-free':openFreeTable(el.dataset.v);break;
+    case 'tbl-rel':{const t=el.dataset.v,run=tableState(t).run;if(!run||!run.paid){openFreeTable(t);break}
+      run.tableFreed={at:Date.now(),by:staff()?.name||''};if(U.addPop===run.id){U.addPop=null;Object.assign(U.pos,JSON.parse(JSON.stringify(POS_BLANK)))}
+      save();render();toast('T'+t+' released · '+run.no+' is paid');break}
     case 'q-seat':openSeat(el.dataset.id);break;
     case 'cx-xls':cxExcel();break;
     case 'bk-json':bkDo('json');break;case 'bk-xls':bkDo('xls');break;case 'bk-list':bkDo('list');break;case 'bk-day':bkDo('day',el);break;
