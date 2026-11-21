@@ -260,6 +260,69 @@ body.idle{cursor:none}
 .s-build.gb .done{color:#fff}
 .s-build .done.go{opacity:1;scale:1}
 
+/* Ekdum cheesy six as a showcase: one big pizza at a time rolls in like a wheel, with its name, words and price
+   beside it, and the six as round thumbnails along the bottom. Flat moves only (transform and opacity). */
+.sc-head{position:absolute;left:120px;top:170px;z-index:3}
+.sc-head .h1{font-size:96px;color:var(--gold)}
+.sc-txw{position:absolute;left:120px;top:400px;width:760px;height:420px;z-index:3}
+.sc-tx{position:absolute;inset:0;opacity:0;transform:translateY(40px);transition:opacity .6s,transform .8s cubic-bezier(.2,.9,.3,1)}
+.sc-tx.cur{opacity:1;transform:none;transition-delay:.35s}
+.sc-tx .no{font-family:Anton,Impact,sans-serif;font-size:44px;color:transparent;-webkit-text-stroke:2px rgba(255,215,106,.85);letter-spacing:.06em}
+.sc-tx .no b{color:var(--gold);-webkit-text-stroke:0}
+.sc-tx h3{font-family:Anton,Impact,sans-serif;font-weight:400;text-transform:uppercase;font-size:var(--fs,104px);line-height:.95;color:#fff;margin-top:10px;text-shadow:0 8px 24px rgba(0,0,0,.35)}
+.sc-tx p{font-size:40px;line-height:1.25;margin-top:18px;color:rgba(255,255,255,.88);max-width:700px}
+.sc-tx .pr{display:inline-flex;align-items:baseline;gap:14px;margin-top:26px;padding:12px 30px 8px;border-radius:18px;background:var(--gold);color:#3a2800;font-size:54px;font-weight:800;box-shadow:0 14px 34px rgba(0,0,0,.3)}
+.sc-tx .pr s{text-decoration:none;font-size:28px;font-weight:700;opacity:.75}
+.sc-tx .pr span+span{margin-left:18px;padding-left:18px;border-left:3px solid rgba(58,40,0,.3)}
+.sc-tx .bs{display:inline-block;margin-left:14px;vertical-align:middle;background:var(--red);color:#fff;font-size:26px;font-weight:800;padding:6px 18px 2px;border-radius:99px;transform:rotate(-4deg)}
+.sc-st{position:absolute;left:930px;top:70px;width:900px;height:900px;z-index:2}
+.sc-glow{position:absolute;inset:-8%;border-radius:50%;background:radial-gradient(circle,rgba(255,215,106,.35),rgba(255,215,106,.08) 55%,transparent 70%)}
+.sc-ring{position:absolute;inset:2%;border-radius:50%;border:3px dashed rgba(255,215,106,.55);animation:spin 40s linear infinite}
+.sc-pz{position:absolute;inset:7%;opacity:0;transform:translate3d(110%,0,0) rotate(200deg) scale(.7);transition:transform 1.2s cubic-bezier(.25,.9,.25,1),opacity .5s;will-change:transform,opacity}
+.sc-pz.cur{opacity:1;transform:none}
+.sc-pz.gone{opacity:0;transform:translate3d(-80%,10%,0) rotate(-160deg) scale(.6);transition:transform 1s cubic-bezier(.6,0,.8,.4),opacity .8s .2s}
+.sc-pz .im{position:absolute;inset:0;border-radius:50%;background:#f5ead3 center/cover;box-shadow:0 0 0 14px rgba(255,255,255,.95),0 50px 80px rgba(0,0,0,.5);animation:spin 50s linear infinite}
+.sc-pz .im.cut{background:none center/contain no-repeat;box-shadow:none;filter:drop-shadow(0 40px 40px rgba(0,0,0,.5))}
+.sc-st .steam{z-index:3}
+.sc-th{position:absolute;left:120px;bottom:118px;display:flex;gap:22px;z-index:3}
+.sc-th i{position:relative;width:96px;height:96px;border-radius:50%;background:#f5ead3 center/cover;box-shadow:0 0 0 4px rgba(255,255,255,.35);opacity:.6;transform:scale(.88);transition:transform .5s cubic-bezier(.3,1.5,.5,1),opacity .4s,box-shadow .4s}
+.sc-th i.cut{background-size:contain;background-repeat:no-repeat;background-color:rgba(255,255,255,.12)}
+.sc-th i.cur{opacity:1;transform:scale(1.14);box-shadow:0 0 0 5px var(--gold),0 12px 26px rgba(0,0,0,.4)}
+
+/* Ekdum cheesy six as a menu book: the pizza's photo on the left page, its name, words and price on the right,
+   and the page turns over to the next pizza */
+.bk-head{position:absolute;left:0;right:0;top:118px;text-align:center;z-index:3}
+.bk-head .kick{font-size:30px}
+.bk-head .h1{font-size:76px;color:var(--gold)}
+.bk{position:absolute;left:150px;top:270px;width:1620px;height:690px;perspective:2600px;z-index:2}
+.bk::before{content:"";position:absolute;inset:-18px -22px -26px;border-radius:26px;background:linear-gradient(180deg,#7a1e1a,#5a1412);box-shadow:0 40px 80px rgba(0,0,0,.55)}
+.bk-pg{position:absolute;top:0;bottom:0;width:50%;overflow:hidden;background:#fbf3e2}
+.bk-pg.l{left:0;border-radius:14px 0 0 14px;background:linear-gradient(90deg,#f3e6c9 0,#fbf3e2 12%,#fbf3e2 82%,#e6d5b0 100%)}
+.bk-pg.r{right:0;border-radius:0 14px 14px 0;background:linear-gradient(90deg,#e2cfa6 0,#fbf3e2 14%,#fbf3e2 90%,#f1e3c4 100%)}
+.bk-ph{position:absolute;inset:40px 60px 40px 50px;display:grid;place-items:center}
+.bk-ph .im{width:600px;height:600px;border-radius:50%;background:#f5ead3 center/cover;box-shadow:0 0 0 12px #fff,0 30px 50px rgba(80,40,0,.35);transform:rotate(-4deg)}
+.bk-ph .im.cut{background:none center/contain no-repeat;box-shadow:none;filter:drop-shadow(0 30px 30px rgba(80,40,0,.4))}
+.bk-tx{position:absolute;inset:56px 70px 40px 80px;color:#3a2800;display:flex;flex-direction:column}
+.bk-tx .no{font-family:Anton,Impact,sans-serif;font-size:40px;letter-spacing:.08em;color:#b77708}
+.bk-tx h3{font-family:Anton,Impact,sans-serif;font-weight:400;text-transform:uppercase;font-size:var(--fs,100px);line-height:.95;color:#c0281e;margin-top:14px}
+.bk-tx p{font-size:38px;line-height:1.25;margin-top:20px;color:#4a3410}
+.bk-tx .pr{align-self:flex-start;margin-top:auto;display:inline-flex;align-items:baseline;padding:12px 28px 8px;border-radius:16px;background:#c0281e;color:#fff;font-size:52px;font-weight:800;box-shadow:0 10px 24px rgba(120,20,0,.3)}
+.bk-tx .pr s{text-decoration:none;font-size:26px;font-weight:700;opacity:.85}
+.bk-tx .pr span+span{margin-left:16px;padding-left:16px;border-left:3px solid rgba(255,255,255,.35)}
+.bk-tx .bs{position:absolute;right:0;top:-6px;width:150px;height:150px;border-radius:50%;display:grid;place-items:center;text-align:center;background:var(--gold);color:#3a2800;font-family:Anton,Impact,sans-serif;font-size:30px;line-height:1;text-transform:uppercase;transform:rotate(12deg);box-shadow:0 0 0 6px #fbf3e2,0 0 0 9px var(--gold),0 12px 22px rgba(0,0,0,.25)}
+.bk-tx .dots{display:flex;gap:10px;margin-top:22px}
+.bk-tx .dots i{width:14px;height:14px;border-radius:50%;background:#e2cfa6}
+.bk-tx .dots i.on{background:#c0281e;width:38px;border-radius:7px}
+.bk-fl{position:absolute;top:0;bottom:0;left:50%;width:50%;transform-origin:0 50%;transform-style:preserve-3d;visibility:hidden;will-change:transform}
+.bk-fl.go{visibility:visible;animation:bkflip 1.4s cubic-bezier(.45,.05,.3,1) both}
+@keyframes bkflip{from{transform:rotateY(0)}to{transform:rotateY(-180deg)}}
+.bk-fl>.bk-pg{width:100%;backface-visibility:hidden}
+.bk-fl>.bk-pg.r{left:0;right:auto}
+.bk-fl>.bk-pg.l{left:0;transform:rotateY(180deg)}
+.bk-fl.go>.bk-pg::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(0,0,0,.25),transparent 40%);animation:bkshade 1.4s ease both;pointer-events:none}
+@keyframes bkshade{0%{opacity:0}50%{opacity:1}100%{opacity:0}}
+.bk-spine{position:absolute;left:50%;top:0;bottom:0;width:60px;margin-left:-30px;background:linear-gradient(90deg,transparent,rgba(90,50,10,.28) 45%,rgba(90,50,10,.35) 50%,rgba(90,50,10,.28) 55%,transparent);pointer-events:none;z-index:3}
+
 /* 6 best sellers */
 .s-best{background:linear-gradient(160deg,#1a93a8,#0b3a43)}
 .s-best .bigword{top:80px;left:0}
@@ -640,15 +703,19 @@ const SLIDES0=[
    // two pulls per slide: lift for 2.6s, hold, snap, settle
    const c=(t-1.2)%3.9,p=t<1.2?0:Math.min(1,c/3.2);st.style.setProperty('--lift',Math.min(1,Math.max(0,(p-.12)*1.6)).toFixed(3));
    st.style.setProperty('--snap',Math.min(1,Math.max(0,(p-.8)*8)).toFixed(3));st.classList.toggle('up',p>.35&&p<.85);pullDraw(st,p)}},
- {k:'ring',t:13,make(){const it=homeItems();this.items=it;const n=it.length,r=Math.max(640,n*122);this.r=r;
-   return`<div class="bigword anton">Ekdum cheesy</div><div class="head"><div class="kick rise" style="--d:.1s">${KK('ring','Our signature six')}</div><div class="h1 anton">${TT('ring',letters('Ekdum cheesy'))}</div></div>
-   <div class="ringw"><div class="ring">${it.map((m,i)=>`<div class="card" style="transform:rotateY(${i*360/n}deg) translateZ(${r}px)">${m.best?'<span class="badge">Best seller</span>':''}<div class="ph${cutOf(m)?' cut':isPng(m)?' png':''}" style="background-image:url('${pic(m)}')"></div><div class="tx"><h3>${esc(m.name)}</h3><div class="price">${priceOf(m)}</div></div></div>`).join('')}</div></div>
-   <div class="now"></div>`},
-  enter(el){this.step=-1},
-  tick(el,t){const n=this.items.length;if(!n)return;const s=Math.max(0,Math.floor((t-.8)/((SHOW-2)/n)));if(s===this.step)return;this.step=s;
-   const ring=el.querySelector('.ring'),i=s%n;ring.style.transform=`translateZ(${-this.r}px) rotateX(-6deg) rotateY(${-s*360/n}deg)`;
-   el.querySelectorAll('.card').forEach((c,j)=>c.classList.toggle('front',j===i));const m=this.items[i];
-   el.querySelector('.now').innerHTML=`<span class="nw">${esc(m.desc||m.name)}</span>`}},
+ {k:'ring',t:13,make(){const it=homeItems();this.items=it;const n=it.length;this.per=3.6;this.dur=Math.max(SHOW,n*this.per+1);
+   return`<div class="bk-head"><div class="kick rise" style="--d:.1s">${KK('ring','Our signature six')}</div><div class="h1 anton">${TT('ring',letters('Ekdum cheesy'))}</div></div>
+   <div class="bk"><div class="bk-pg l"></div><div class="bk-pg r"></div><div class="bk-fl"><div class="bk-pg r"></div><div class="bk-pg l"></div></div><div class="bk-spine"></div></div>`},
+  // the two halves of the open book for item i
+  bkL(i){const m=this.items[i];return`<div class="bk-ph"><div class="im${cutOf(m)?' cut':''}" style="background-image:url('${pic(m)}')"></div></div>`},
+  bkR(i){const m=this.items[i],n=this.items.length,pad=x=>String(x+1).padStart(2,'0');
+   return`<div class="bk-tx">${m.best?'<span class="bs">Best<br>seller</span>':''}<div class="no">${pad(i)} / ${pad(n-1)}</div><h3 style="--fs:${m.name.length>16?76:m.name.length>11?88:104}px">${esc(m.name)}</h3><p>${esc(m.desc||'')}</p><div class="pr">${priceOf(m)}</div><div class="dots">${this.items.map((_,j)=>`<i class="${j===i?'on':''}"></i>`).join('')}</div></div>`},
+  enter(el){this.step=-1;const q=x=>el.querySelector(x);q('.bk-fl').classList.remove('go');if(this.items.length){q('.bk>.bk-pg.l').innerHTML=this.bkL(0);q('.bk>.bk-pg.r').innerHTML=this.bkR(0)}},
+  tick(el,t){const n=this.items.length;if(!n)return;const s=Math.min(n-1,Math.max(0,Math.floor((t-.3)/this.per)));if(s===this.step)return;const was=this.step;this.step=s;if(was<0||s===was)return;
+   // the page turns: its front is this pizza's words, its back the next pizza's photo; under it the next words wait
+   const q=x=>el.querySelector(x),fl=q('.bk-fl');fl.querySelector('.bk-pg.r').innerHTML=this.bkR(was);fl.querySelector('.bk-pg.l').innerHTML=this.bkL(s);
+   q('.bk>.bk-pg.r').innerHTML=this.bkR(s);fl.classList.remove('go');void fl.offsetWidth;fl.classList.add('go');
+   fl.onanimationend=e=>{if(e.animationName!=='bkflip')return;q('.bk>.bk-pg.l').innerHTML=this.bkL(s);fl.classList.remove('go')}}},
  {k:'pizza',t:11,make(){return build('pizza')},tick(el,t){buildTick(el,t,[1.5,3.8,6.1,8.4,10.7])}},
  {k:'garlic',t:11,make(){return build('garlic')},tick(el,t){buildTick(el,t,[1.5,3.8,6.1,8.4,10.7])}},
  {k:'poster',t:12,make(){return`<div class="pstw"><div class="pst"><img src="img/menu-poster.jpg" alt="Cheesy Pizza menu card"></div></div>`}},
