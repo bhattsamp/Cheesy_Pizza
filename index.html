@@ -2997,7 +2997,8 @@ staff:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="
  vips:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18h18M4 18 3 8l5 4 4-7 4 7 5-4-1 10"/></svg>',
  outlet:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l2-5h14l2 5M4 9v11h16V9M3 9h18M9 20v-6h6v6"/></svg>',
 };
-const TABS=[['new','New order'],['kitchen','Kitchen'],['counter','Counter'],['orders','Orders'],['tables','Tables'],['book','Advance booking'],['sales','Day sale'],['reports','Reports'],['stock','Stock'],['offers','Offers'],['cust','Customers'],['menu','Menu & sizes'],['home','Home page'],['display','Shop display'],['vips','Famous visitors'],['outlet','Outlets'],['staff','Staff'],['review','Reviews'],['trips','Deliveries']];
+// Menu order: New order, Orders, Tables, Advance booking, Parcel (counter), then the rest
+const TABS=[['new','New order'],['orders','Orders'],['tables','Tables'],['book','Advance booking'],['counter','Counter'],['kitchen','Kitchen'],['sales','Day sale'],['reports','Reports'],['stock','Stock'],['offers','Offers'],['cust','Customers'],['menu','Menu & sizes'],['home','Home page'],['display','Shop display'],['vips','Famous visitors'],['outlet','Outlets'],['staff','Staff'],['review','Reviews'],['trips','Deliveries']];
 
 const app=document.getElementById('app');
 // A section marked data-keep="name" that comes out of a re-render the same as before stays on the page as it is:
@@ -4143,7 +4144,7 @@ function renderPOS(){
   const su=staff();if(!su)return renderLogin();
   // The owner can rename menu sections and switch them off for everyone (kept in one hidden S.cats record)
   const nv=navCfg(),roleTabs=TABS.filter(([k])=>ROLE_TABS[su.role].includes(k)&&(k!=='trips'||delOn()||su.role==='rider')).map(([k,n])=>[k,(nv.names||{})[k]||n]);
-  let allowed=roleTabs.filter(([k])=>NAV_LOCK.includes(k)||!(nv.off||[]).includes(k));if(!allowed.length)allowed=roleTabs;if(!allowed.some(([k])=>k===U.pos.tab))U.pos.tab=allowed[0][0];
+  let allowed=roleTabs.filter(([k])=>NAV_LOCK.includes(k)||!(nv.off||[]).includes(k));if(!allowed.length)allowed=roleTabs;if(!allowed.some(([k])=>k===U.pos.tab))U.pos.tab=(su.role==='kitchen'&&allowed.some(([k])=>k==='kitchen')?'kitchen':allowed[0][0]);
   const mine=liveOrders();
   const k=mine.filter(o=>o.status==='placed'||o.status==='preparing').length;
   const c=mine.filter(o=>o.status==='ready'||o.status==='out').length;
