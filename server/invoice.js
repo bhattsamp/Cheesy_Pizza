@@ -58,7 +58,7 @@ table{width:100%;border-collapse:collapse;font-size:14px}th{font-weight:500;text
 <body><div class="w"><header class="hd"><img class="lg" src="/img/logo-badge.png" alt="Cheesy Pizza" width="150" height="150">
 ${/^cheesy pizza$/i.test(shop.trim()) ? '' : `<h1>${esc(shop)}</h1>`}${outlet.name ? `<div class="on">${esc(outlet.name)}</div>` : ''}
 ${outlet.area ? `<div class="oa">📍 ${esc(outlet.area)}</div>` : ''}${outlet.phone ? `<div class="op">📞 <a href="tel:${esc(String(outlet.phone).replace(/\s/g, ''))}">${esc(outlet.phone)}</a></div>` : ''}</header>
-<div class="grid">${cell('Order Number', o.no || '')}${cell('Date', when(o.ts))}${cell('Order amount', rs(total))}${cell('Order type', TYPES[o.type] || '')}${cell('Biller Name', o.source === 'online' ? 'Online order' : (o.by || 'Counter'))}${cell('Token No.', token || '-')}</div>
+<div class="grid">${cell('Order Number', o.no || '')}${cell('Date', when(o.ts))}${cell('Order amount', rs(total))}${cell('Order type', TYPES[o.type] || '')}${cell('Biller Name', o.source === 'online' ? 'Online order' : (o.by || 'Counter'))}${cell('Token No.', token || '-')}${o.type === 'dine' && o.table ? cell('Table No.', o.table) : ''}${o.type === 'dine' && Number(o.guests) > 0 ? cell('No. of Persons', Number(o.guests)) : ''}</div>
 <div class="cu"><div class="k">Customer Details</div>${o.customer && o.customer.name ? `<div class="v">${esc(o.customer.name)}</div>` : ''}${o.customer && o.customer.phone ? `<div class="v p">${esc(o.customer.phone)}</div>` : ''}${o.address ? `<div class="v p">${esc(o.address)}</div>` : ''}</div>
 <div class="box">${outlet.gstin ? `<div class="ad">GSTIN : ${esc(outlet.gstin)}</div>` : ''}
 <div class="tt">${rate ? 'TAX INVOICE' : 'INVOICE'}</div>
