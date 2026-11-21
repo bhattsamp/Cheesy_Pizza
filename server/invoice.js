@@ -12,10 +12,21 @@ function invoicePage(o, outlet, { sizes = [], addons = {} } = {}) {
   outlet = outlet || {};
   const size = id => (sizes.find(s => s.id === id) || { label: id + '"' }).label;
   const items = o.items || [];
-  const rows = items.map((l, i) => {
+  // A merged table's bill: items grouped under the table they were ordered on (the order's own table first)
+  const own = 'T' + (o.table || '?');
+  const merged = items.some(l => l.from);
+  const order = merged ? [own, ...new Set(items.filter(l => l.from).map(l => l.from))] : [null];
+  let n = 0;
+  const rows = order.map(g => {
+    const its = g === null ? items : items.filter(l => (l.from || own) === g);
+    if (!its.length) return '';
+    const head = g === null ? '' : `<tr class="grp"><td colspan="4">${esc(g)}</td><td class="r">${money(its.reduce((a, l) => a + l.unit * l.qty, 0))}</td></tr>`;
+    return head + its.map(l => row(l, n++)).join('');
+  }).join('');
+  function row(l, i) {
     const extra = l.combo ? (l.picks || []).join(', ') : [l.size ? size(l.size) : '', ...(l.addons || []).map(a => (addons[a] && addons[a].name) || a)].filter(Boolean).join(', ');
     return `<tr><td>${i + 1}.</td><td class="n">${esc(l.name)}${extra ? `<div class="x">${esc(extra)}</div>` : ''}</td><td class="c">${esc(l.qty)}</td><td class="r">${money(l.unit)}</td><td class="r">${money(l.unit * l.qty)}</td></tr>`;
-  }).join('');
+  }
   const qty = items.reduce((a, l) => a + (Number(l.qty) || 0), 0);
   const disc = (o.discounts || []).filter(d => d.amt);
   const total = Number(o.total) || 0;
@@ -52,7 +63,7 @@ h1,.tt,.bsb{font-family:var(--head,system-ui,sans-serif);font-weight:700}h1{font
 .k{color:#6b7280;font-size:14px}.v{margin-top:2px;font-size:15px}.cu{margin:16px 0}.cu .v{text-transform:uppercase}.cu .p{text-transform:none}
 .box{border:1px solid #e5e7eb;border-radius:12px;padding:16px 14px}.ad{text-align:center;font-weight:600;line-height:1.5}.tt{text-align:center;font-weight:700;margin:18px 0 10px}
 table{width:100%;border-collapse:collapse;font-size:14px}th{font-weight:500;text-align:left;padding:8px 4px;border-top:2px solid #e5e7eb;border-bottom:2px solid #e5e7eb}td{padding:9px 4px;border-bottom:1px solid #f0f1f3;vertical-align:top}
-.n{font-weight:600}.x{font-weight:400;color:#6b7280;font-size:12px}.c{text-align:center}.r{text-align:right;white-space:nowrap}th.c{text-align:center}th.r{text-align:right}
+.n{font-weight:600}.grp td{font-weight:800;color:#0f4a55;background:#f3f8f9;border-bottom:1px solid #e5e7eb}.x{font-weight:400;color:#6b7280;font-size:12px}.c{text-align:center}.r{text-align:right;white-space:nowrap}th.c{text-align:center}th.r{text-align:right}
 .sums{border-top:2px solid #e5e7eb;margin-top:2px;padding-top:6px}.s{display:flex;justify-content:space-between;padding:5px 0;font-weight:600}.tot{border-top:2px solid #e5e7eb;margin-top:6px;padding-top:8px}
 .pm{font-weight:600;padding:6px 0}.ids{text-align:center;color:#374151;margin-top:8px;font-size:14px;line-height:1.6}.ft{text-align:center;color:#6b7280;font-size:13px;margin-top:16px;border-top:1px solid #e5e7eb;padding-top:12px}</style></head>
 <body><div class="w"><header class="hd"><img class="lg" src="/img/logo-badge.png" alt="Cheesy Pizza" width="150" height="150">

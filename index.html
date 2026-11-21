@@ -1361,6 +1361,10 @@ html:has(body:not(.pubmode) .pos){scroll-padding-top:calc(env(safe-area-inset-to
 .navdrawer .ndl>button:hover{background:var(--surface2)}
 .navdrawer .ndl>button[aria-current="page"]{background:var(--teal-soft);color:var(--teal-deep)}
 .navdrawer .ndl .cnt{margin-left:auto}
+/* compact list so every section fits without scrolling: small icons, tight rows; tighter still on short screens */
+.navdrawer .ndl{gap:1px}.navdrawer .ndl>button{gap:10px;padding:6px 10px;font-size:14.5px;line-height:1.3;border-radius:8px}
+.navdrawer .ndl>button svg{width:16px;height:16px}.navdrawer .ndh{padding:2px 6px 6px;font-size:16px}
+@media (max-height:700px){.navdrawer .ndl>button{padding:4px 10px;font-size:14px}.navdrawer .ndf{padding-top:6px;gap:6px}}
 .navdrawer .ndf{border-top:1px solid var(--line);padding:10px 6px 0;display:flex;flex-direction:column;gap:8px}
 @keyframes ndIn{from{transform:translateX(-100%)}to{transform:none}}@keyframes ndFade{from{opacity:0}}
 .pos .side-foot .btn.sm{font-size:13px;padding:6px 10px;white-space:nowrap}
@@ -4519,7 +4523,7 @@ function vNew(){
         <div class="tkacts tk3">
           <button class="btn tkpaybtn" data-act="pos-pay" ${can?'':'disabled'} title="Choose how the customer pays">Pay${P.pay?`<small>${esc(modeName(P.pay))}</small>`:''}</button>
           <button class="btn" data-act="pos-hold" ${P.cart.length&&!(P.book&&bookOk(P,run))?'':'disabled'} title="Add these items to a table, paid or pending">Hold</button>
-          ${P.book&&bookOk(P,run)?`<button class="btn pri tkbig" data-act="pos-go" data-v="save" ${P.cart.length?'':'disabled'} title="Save the booking now, take the payment later (or tap Pay for an advance)">Save booking</button>`:zom?`<button class="btn pri tkbig" data-act="pos-bill" data-v="bill" ${can?'':'disabled'} title="Save the Zomato order (paid through Zomato)">Save</button>`:`<button class="btn pri tkbig" data-act="pos-go" data-v="save" ${P.cart.length||exChanged(P,run)?'':'disabled'} title="Save the order as baki: take the payment later with Pay or Collect">Save</button>${SHOW_SAVE_PRINT?`<button class="btn tkbig" data-act="pos-go" data-v="saveprint" ${P.cart.length||exChanged(P,run)?'':'disabled'} title="Save as baki and print the bill">Save & print</button>`:''}`}
+          ${P.book&&bookOk(P,run)?`<button class="btn pri tkbig" data-act="pos-go" data-v="save" ${P.cart.length?'':'disabled'} title="Save the booking now, take the payment later (or tap Pay for an advance)">Save booking</button>`:zom?`<button class="btn pri tkbig" data-act="pos-bill" data-v="bill" ${can?'':'disabled'} title="Save the Zomato order (paid through Zomato)">Save</button>`:`<button class="btn pri tkbig" data-act="pos-go" data-v="save" ${P.cart.length||exChanged(P,run)||custChg(P,run)?'':'disabled'} title="Save the order as baki: take the payment later with Pay or Collect">Save</button>${SHOW_SAVE_PRINT?`<button class="btn tkbig" data-act="pos-go" data-v="saveprint" ${P.cart.length||exChanged(P,run)||custChg(P,run)?'':'disabled'} title="Save as baki and print the bill">Save & print</button>`:''}`}
           ${''/* KOT button hidden for now: <button class="btn chz tkbig" data-act="pos-go" data-v="kot">KOT</button> */}
         </div>
       </div>
@@ -4675,11 +4679,13 @@ function openHold(){
   };
   draw();
 }
+// the mobile number or name on the ticket differs from the running order's (typed later, e.g. at payment)
+const custChg=(P,run)=>!!run&&((P.phone.length===10&&P.phone!==(run.customer.phone||''))||(!!P.name.trim()&&P.name.trim()!==(run.customer.name||'')));
 function posGo(kind){
   const P=U.pos;const su=staff();
   const run=P.addTo&&S.orders.find(o=>o.id===P.addTo);
   const amended=exChanged(P,run),added=P.cart.length;
-  if(!P.cart.length&&!amended&&!(run&&kind!=='kot'&&kind!=='save'))return;
+  if(!P.cart.length&&!amended&&!custChg(P,run)&&!(run&&kind!=='kot'&&kind!=='save'))return;
   if(run&&amended&&!P.cart.length&&!runItems(P,run).length){toast('Keep at least one item, or cancel the order on the Orders screen');return}
   if(P.phone&&P.phone.length!==10){toast('Mobile number should be 10 digits');return}
   if(!run){
@@ -4718,7 +4724,8 @@ function posGo(kind){
     if(P.code)o.extra={...(o.extra||{}),code:P.code};
     if(P.lt!=null)o.lt=+P.lt||0;
     if(P.lt!=null&&(o.customer.phone||'').length===10)ensureCust(o.customer.phone,o.customer.name).lt=+P.lt||0;
-    if(P.phone.length===10&&!o.customer.phone)o.customer={name:P.name.trim(),phone:P.phone};
+    // a mobile number (or name) typed later on a running order is saved onto it
+    if(custChg(P,o)){const nm=P.name.trim()||o.customer.name||'',ph=P.phone.length===10?P.phone:o.customer.phone||'';o.customer={...o.customer,name:nm,phone:ph};if(ph.length===10)ensureCust(ph,nm)}
     recalcOrder(o);
     if(P.code&&!(o.discounts||[]).some(d=>d.name==='Code '+P.code.toUpperCase()))o.extra.code='';
   }else{
@@ -4784,6 +4791,11 @@ function openDone(o){
 
 function pad(a,b,w=32){a=String(a);b=String(b);const sp=w-a.length-b.length;return sp>0?a+' '.repeat(sp)+b:a.slice(0,w-b.length-1)+' '+b}
 function center(s,w=32){s=String(s);return ' '.repeat(Math.max(0,Math.floor((w-s.length)/2)))+s}
+// Items of a merged bill grouped by the table they were ordered on: the order's own table first, then each merged table
+function billGroups(o){
+  if(!o.items.some(l=>l.from))return [];
+  const own='T'+(o.table||'?'),m=new Map([[own,[]]]);o.items.forEach(l=>{const k=l.from||own;if(!m.has(k))m.set(k,[]);m.get(k).push(l)});
+  return [...m].filter(([,it])=>it.length).map(([name,items])=>({name,items,amt:items.reduce((a,l)=>a+l.unit*l.qty,0)}))}
 function billText(o){
   const out=outletOf(o);const L=[];const hr='-'.repeat(32);
   L.push(center(out.legal||'CHEESY PIZZA'),center('Really Cheesy...!'),center(out.name),center('Ph: '+fmtPhone(out.phone)),...(out.gstin?[center('GSTIN: '+out.gstin)]:[]),...(out.fssai?[center('FSSAI: '+out.fssai)]:[]),center('PURE VEG'),hr);
@@ -4791,7 +4803,10 @@ function billText(o){
   if(o.customer.name||o.customer.phone)L.push('Cust: '+(o.customer.name||'')+' '+(o.customer.phone||''));
   if(o.table||+o.guests)L.push(pad(o.table?'Table: '+o.table:'',+o.guests?'Persons: '+o.guests:''));if(o.bookAt)L.push('Booked for: '+advWhen(o.bookAt));if(o.address)L.push('Addr: '+o.address.slice(0,26));if(o.zomatoId)L.push('Zomato ID: '+o.zomatoId);
   L.push(hr,pad('Item','Amt'),hr);
-  o.items.forEach(l=>{L.push(pad(l.qty+' x '+l.name.slice(0,20),String(l.unit*l.qty)));const a=addonText(l);if(a)L.push('   '+a.slice(0,29))});
+  // A merged table's bill lists each table's items under its own heading (T2 first, then the tables merged into it)
+  const line=l=>{L.push(pad(l.qty+' x '+l.name.slice(0,20),String(l.unit*l.qty)));const a=addonText(l);if(a)L.push('   '+a.slice(0,29))};
+  const groups=billGroups(o);
+  if(groups.length>1)groups.forEach(g=>{L.push(pad('-- '+g.name+' --','Rs '+g.amt));g.items.forEach(line)});else o.items.forEach(line);
   L.push(hr,pad('Item total','Rs '+o.subtotal));(o.discounts||[]).forEach(d=>L.push(pad(d.name.slice(0,22),'-'+d.amt)));
   if(o.gst){const h=(o.gst.tax/2).toFixed(2);L.push(pad(`SGST ${o.gst.rate/2}%`+(o.gst.mode==='incl'?' (incl)':''),h),pad(`CGST ${o.gst.rate/2}%`+(o.gst.mode==='incl'?' (incl)':''),h));const ro=o.gst.mode==='excl'&&o.gst.net!=null?Math.round((o.total-o.gst.net-2*h)*100)/100:0;if(ro)L.push(pad('Round off',(ro>0?'+':'')+ro.toFixed(2)))}
   const sp=paySplits(o);
@@ -5083,7 +5098,7 @@ function openMoveTable(t){
       askConfirm('Merge T'+t+' into T'+to+'?','All items of '+src.no+' go onto '+dst.no+' (T'+to+') and the guests get one bill. '+src.no+' is closed as merged.','Merge',()=>{
         if(dst.paid)keepPaidParts(dst);
         const round=Math.max(1,...dst.items.map(l=>l.round||1))+1,at=Date.now(),by=staff()?.name||'';
-        src.items.forEach(l=>dst.items.push({...l,round,at:l.at||src.ts,by:l.by||src.by||by,from:'T'+t}));
+        src.items.forEach(l=>dst.items.push({...l,round,at:l.at||src.ts,by:l.by||src.by||by,from:l.from||'T'+t}));
         if(+src.guests)dst.guests=(+dst.guests||0)+(+src.guests);if(src.note)dst.note=[dst.note,'T'+t+': '+src.note].filter(Boolean).join(' · ');
         if(!dst.customer.phone&&src.customer.phone)dst.customer={...src.customer};
         recalcOrder(dst);if(['ready','done'].includes(dst.status)&&src.status==='preparing'){dst.status='preparing';dst.times.preparing=Date.now()}
@@ -6420,6 +6435,7 @@ document.addEventListener('input',e=>{
     if(P.phone.length===10&&custLt(P.phone)&&P.lt==null){P.lt=custLt(P.phone);render();return}
     custSug(P.phone.length<10?P.phone:'')}
   if(t.id==='pos-nm'){P.name=t.value;custSug(P.phone.length===10?'':t.value)}
+  if((t.id==='pos-ph'||t.id==='pos-nm')&&P.addTo){const run=S.orders.find(o=>o.id===P.addTo);document.querySelectorAll('[data-act="pos-go"][data-v="save"],[data-act="pos-go"][data-v="saveprint"]').forEach(b=>b.disabled=!(P.cart.length||exChanged(P,run)||custChg(P,run)))}
   if(t.id==='pos-tb')P.table=t.value;
   if(t.id==='pos-ad')P.address=t.value;
   if(t.id==='pos-note')P.note=t.value;
