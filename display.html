@@ -39,7 +39,7 @@ body.idle{cursor:none}
 /* only the slide that is leaving gets its own GPU layer: phones and TVs have little graphics memory, and when it
    runs out they skip drawing parts of the screen for a frame, which shows as flicker */
 .sl.on,.sl.out,.sl.pre{visibility:visible;backface-visibility:hidden}
-.sl.out{will-change:transform,opacity}
+.sl.out,.sl.in{will-change:transform,opacity}
 .sl.on{z-index:2}.sl.on.out{z-index:1}.sl.pre{z-index:0}
 .anton{font-family:Anton,Impact,sans-serif;font-weight:400;letter-spacing:.01em;text-transform:uppercase;line-height:.9}
 .script{font-family:Courgette,cursive}
@@ -53,13 +53,20 @@ body.idle{cursor:none}
 .pill::before{content:"";width:12px;height:12px;border-radius:50%;background:#bff5d2;animation:blink 1.2s infinite}
 .pill.shut{background:var(--red)}.pill.shut::before{background:#ffd0cc}
 @keyframes blink{50%{opacity:.25}}
-.ticker{position:absolute;left:0;right:0;bottom:0;height:70px;z-index:20;background:var(--gold);color:#3a2800;overflow:hidden;display:flex;align-items:center;box-shadow:0 -10px 30px rgba(0,0,0,.25)}
-.ticker .tk{display:flex;gap:0;white-space:nowrap;animation:tick var(--tkd,60s) linear infinite;font-size:30px;font-weight:800}
+/* the moving price strip: dark with gold prices, a fixed "Menu" tag on the left. It moves on its own GPU layer
+   (translate3d + will-change) so slide changes never make it stutter, and it is only refilled when the menu changes,
+   so it never jumps back to the start */
+.ticker{position:absolute;left:0;right:0;bottom:0;height:88px;z-index:20;background:linear-gradient(180deg,#0f4a55,#072a31);color:#fff;overflow:hidden;display:flex;align-items:center;border-top:4px solid var(--gold);box-shadow:0 -10px 30px rgba(0,0,0,.3)}
+.ticker .tkl{position:relative;z-index:2;flex:none;height:100%;display:flex;align-items:center;gap:12px;padding:0 30px 0 26px;background:var(--red);font-family:Anton,Impact,sans-serif;font-size:42px;letter-spacing:.06em;text-transform:uppercase;line-height:1;clip-path:polygon(0 0,100% 0,calc(100% - 22px) 100%,0 100%);padding-right:44px}
+.ticker .tkl img{height:50px;width:auto}
+.ticker .tkw{flex:1;height:100%;overflow:hidden;display:flex;align-items:center}
+.ticker .tk{display:flex;white-space:nowrap;animation:tick var(--tkd,60s) linear infinite;will-change:transform;backface-visibility:hidden;font-size:42px;font-weight:700;line-height:1}
 .ticker .tk span{padding:0 34px;display:inline-flex;align-items:center;gap:14px}
-.ticker .tk span::after{content:"";width:16px;height:16px;border-radius:50%;background:#3a2800;margin-left:34px;opacity:.5}
-.ticker .tk em{font-style:normal;background:#3a2800;color:var(--gold);padding:0 12px;border-radius:8px}
-@keyframes tick{to{translate:-50% 0}}
-.bar{position:absolute;left:0;bottom:70px;height:8px;z-index:21;background:var(--sea);width:100%;transform:scaleX(0);transform-origin:0 50%;will-change:transform}
+.ticker .tk span::after{content:"★";color:var(--gold);font-size:28px;margin-left:34px;opacity:.85}
+.ticker .tk em{font-style:normal;font-weight:800;background:var(--gold);color:#3a2800;padding:8px 16px 4px;border-radius:12px;font-size:38px;line-height:1}
+.ticker .tk span.msg{color:var(--gold2)}
+@keyframes tick{from{transform:translate3d(0,0,0)}to{transform:translate3d(-50%,0,0)}}
+.bar{position:absolute;left:0;bottom:88px;height:8px;z-index:21;background:var(--sea);width:100%;transform:scaleX(0);transform-origin:0 50%;will-change:transform}
 /* "No Mayonnaise" badge on every slide. Admin → Shop display picks how it looks (a slim tag, a small or a big stamp)
    and which corner it sits in. The shadows sit on the pieces themselves, not on a filter over the spinning ring,
    so the TV does not redraw the whole badge every frame. */
@@ -92,7 +99,7 @@ body.idle{cursor:none}
 @keyframes nmspin{to{transform:rotate(360deg)}}
 @keyframes nmbeat{0%,60%,100%{transform:scale(1) rotate(0)}70%{transform:scale(1.14) rotate(-8deg)}80%{transform:scale(.96) rotate(5deg)}90%{transform:scale(1.05) rotate(-2deg)}}
 @keyframes nmpop{from{transform:scale(.3) rotate(-120deg)}}
-.dots{position:absolute;right:56px;bottom:96px;z-index:21;display:flex;gap:10px}
+.dots{position:absolute;right:56px;bottom:112px;z-index:21;display:flex;gap:10px}
 .dots i{width:14px;height:14px;border-radius:50%;background:rgba(255,255,255,.3);transition:.4s}
 .dots i.on{background:var(--gold);width:40px;border-radius:8px}
 .tapme{position:absolute;left:50%;top:50%;translate:-50% -50%;z-index:40;background:rgba(0,0,0,.65);padding:22px 40px;border-radius:20px;font-size:32px;font-weight:700;pointer-events:none;transition:opacity .6s}
@@ -124,8 +131,8 @@ body.idle{cursor:none}
 .s-hero .pz3{position:absolute;inset:0;transform-style:preserve-3d;transform:rotateX(52deg)}
 .on.s-hero .pz3{animation:tilt 15s ease-in-out both}
 @keyframes tilt{0%{transform:rotateX(80deg) scale(.4) translateZ(-400px)}18%{transform:rotateX(48deg) scale(1)}60%{transform:rotateX(30deg) rotateY(-12deg)}100%{transform:rotateX(55deg) rotateY(8deg)}}
-.s-hero .pz3 .plate{position:absolute;inset:-2%;border-radius:50%;background:radial-gradient(circle,#5a3a22 0 58%,#3b2414 70%,#2a180c 100%);box-shadow:0 0 0 14px #6b4528,0 60px 80px rgba(0,0,0,.55);transform:translateZ(-30px)}
-.s-hero .pz3 img{position:absolute;inset:0;width:100%;height:100%;animation:spin 24s linear infinite}
+.s-hero .pz3 .plate{position:absolute;inset:-4%;border-radius:50%;background:radial-gradient(circle at 40% 35%,rgba(255,255,255,.12),transparent 60%),repeating-linear-gradient(95deg,#9a6534 0 16px,#8c5a2c 16px 26px,#a66e3a 26px 44px,#86552a 44px 50px);box-shadow:0 0 0 12px #6e4422,0 60px 80px rgba(0,0,0,.55);transform:translateZ(-30px)}
+.s-hero .pz3 img{position:absolute;inset:0;width:100%;height:100%;border-radius:50%;filter:drop-shadow(0 10px 8px rgba(40,20,0,.45));animation:spin 60s linear infinite}
 @keyframes spin{to{rotate:360deg}}
 .orbit{position:absolute;inset:0;pointer-events:none}
 .orbit img{position:absolute;left:0;top:0;width:150px;height:150px;object-fit:contain;filter:drop-shadow(0 18px 18px rgba(0,0,0,.35));will-change:transform}
@@ -155,8 +162,10 @@ body.idle{cursor:none}
 .s-ring .head .h1{font-size:108px;color:var(--gold)}
 .ringw{position:absolute;left:50%;top:572px;width:0;height:0;perspective:2200px}
 .ring{position:absolute;transform-style:preserve-3d;transition:transform 1.4s cubic-bezier(.65,0,.35,1)}
-.card{position:absolute;left:-260px;top:-290px;width:520px;height:590px;border-radius:34px;background:#fff;color:var(--ink);overflow:hidden;box-shadow:0 30px 60px rgba(0,0,0,.4);transition:filter .6s,opacity .6s;filter:brightness(.5)}
-.card.front{filter:none}
+.card{position:absolute;left:-260px;top:-290px;width:520px;height:590px;border-radius:34px;background:#fff;color:var(--ink);overflow:hidden;box-shadow:0 30px 60px rgba(0,0,0,.4);transition:opacity .6s}
+.card::after{content:"";position:absolute;inset:0;background:#000;opacity:.5;transition:opacity .6s;pointer-events:none}
+.card.front::after{opacity:0}
+
 .card .ph{height:390px;background:#f5ead3 center/cover}
 .card .ph.png{background-size:96%;background-repeat:no-repeat}
 .card .tx{padding:16px 30px}
@@ -241,8 +250,12 @@ body.idle{cursor:none}
 @keyframes knife{0%{opacity:1;left:21%;top:2%}8%{top:24%}20%{top:2%;left:21%}25%{left:39%}29%{top:24%}41%{top:2%;left:39%}46%{left:57%}50%{top:24%}62%{top:2%;left:57%}67%{left:75%}71%{top:24%}85%{top:2%;left:75%;opacity:1}100%{opacity:0;left:90%;top:-10%}}
 .steam{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity 1s}
 .steam.go{opacity:1}
-.steam i{position:absolute;bottom:55%;width:60px;height:180px;border-radius:50%;background:radial-gradient(rgba(255,255,255,.5),transparent 70%);animation:steam 2.4s linear infinite}
-@keyframes steam{from{transform:translateY(0) scale(.6);opacity:0}30%{opacity:.8}to{transform:translateY(-300px) scale(1.6);opacity:0}}
+.steam i{position:absolute;bottom:50%;width:140px;height:360px;margin-left:-70px;border-radius:50%;background:radial-gradient(ellipse 40% 50% at 50% 55%,rgba(255,255,255,.42),rgba(255,255,255,.16) 45%,rgba(255,255,255,.05) 65%,transparent 78%);transform-origin:50% 100%;animation:steam 4.8s ease-out infinite;will-change:transform,opacity}
+.steam i:nth-child(even){animation-name:steam2;animation-duration:5.6s}
+/* soft curls of steam rising off the hot food: they drift up, sway and spread out as they fade */
+@keyframes steam{0%{transform:translate(0,60px) scale(.45,.5) rotate(0);opacity:0}20%{opacity:.9}55%{transform:translate(-26px,-120px) scale(.9,1.1) rotate(-8deg);opacity:.5}100%{transform:translate(18px,-330px) scale(1.7,1.6) rotate(10deg);opacity:0}}
+@keyframes steam2{0%{transform:translate(0,60px) scale(.45,.5) rotate(0);opacity:0}22%{opacity:.85}55%{transform:translate(24px,-110px) scale(.95,1.1) rotate(9deg);opacity:.45}100%{transform:translate(-20px,-320px) scale(1.8,1.6) rotate(-10deg);opacity:0}}
+.steam.on{opacity:1}
 .s-build .done{position:absolute;z-index:6;right:130px;top:150px;font-size:70px;color:#3a2800;font-family:Courgette,cursive;opacity:0;scale:.5;rotate:-8deg;transition:.6s cubic-bezier(.3,1.8,.5,1)}
 .s-build.gb .done{color:#fff}
 .s-build .done.go{opacity:1;scale:1}
@@ -546,7 +559,7 @@ body.idle{cursor:none}
     <div class="nm-tagb"><i><svg viewBox="0 0 120 120"><rect x="36" y="22" width="48" height="14" rx="4" fill="#e7a91e"/><path d="M33 40h54a6 6 0 0 1 6 6v50a10 10 0 0 1-10 10H37a10 10 0 0 1-10-10V46a6 6 0 0 1 6-6z" fill="#fff6d8" stroke="#3a2800" stroke-width="4"/><rect x="34" y="58" width="52" height="24" rx="5" fill="#f2b632"/><text x="60" y="76" text-anchor="middle" font-family="Anton,Impact,sans-serif" font-size="17" fill="#3a2800">MAYO</text><circle cx="60" cy="60" r="54" fill="none" stroke="#d23f35" stroke-width="10"/><path d="M22 22L98 98" stroke="#d23f35" stroke-width="10" stroke-linecap="round"/></svg></i>NO MAYONNAISE</div>
   </div></div>
   <div class="bar" id="bar"></div>
-  <div class="ticker"><div class="tk" id="tk"></div></div>
+  <div class="ticker"><div class="tkl"><img src="img/logo-pin-white.svg" alt="">Menu</div><div class="tkw"><div class="tk" id="tk"></div></div></div>
   <div class="tapme" id="tapme">Tap anywhere for full screen</div>
 </div></div>
 <script>
@@ -613,7 +626,7 @@ const SLIDES0=[
    <div class="copy"><div class="kick rise" style="--d:.1s">${KK('hero','Fresh from our oven')}</div><div class="h1 anton shine">${TT('hero',letters('Cheesy'))}</div>
    <div class="sub script rise" style="--d:.9s">Ekdum cheesy pizza!</div>
    <div class="tags rise" style="--d:1.2s"><b>Pizza</b><b>Garlic bread</b><b>Pockets</b><b>Fries</b></div></div>
-   <div class="pzw"><div class="pz3"><div class="plate"></div><img src="img/hero-pizza.webp" alt=""></div><div class="orbit">${ING.slice(0,8).map(s=>`<img src="${s}" alt="">`).join('')}</div></div>`},
+   <div class="pzw"><div class="pz3"><div class="plate"></div><img src="img/real/pizza-sliced.webp" alt=""></div>${smoke(6)}</div>`},
   tick(el,t){const imgs=el.querySelectorAll('.orbit img'),n=imgs.length,cx=400,cy=400;
    imgs.forEach((im,i)=>{const a=t*.45+i/n*Math.PI*2,x=Math.cos(a)*470,z=Math.sin(a),y=Math.sin(a)*170-40+Math.sin(t*1.3+i)*30,s=.7+(z+1)*.35;
     im.style.transform=`translate(${cx+x-75}px,${cy+y-75}px) scale(${s.toFixed(3)}) rotate(${(a*60+i*40)%360}deg)`;im.style.zIndex=z>0?3:0;im.style.opacity=Math.min(1,t*1.2)})}},
@@ -622,7 +635,7 @@ const SLIDES0=[
    <div class="sub script rise" style="--d:1s">Watch that cheese stretch.</div></div>
    <div class="pullw"><div class="pull-stage"><div class="pull-plate"></div><img class="pull-pz" src="img/real/pizza-sliced.webp" alt="">
    <svg class="pull-svg" viewBox="0 0 100 100" preserveAspectRatio="none"><defs><linearGradient id="pullg" x1="0" x2="1"><stop offset="0" stop-color="#e2a93a"/><stop offset=".35" stop-color="#fff0b0"/><stop offset=".65" stop-color="#f7d670"/><stop offset="1" stop-color="#d49a2c"/></linearGradient></defs><g fill="url(#pullg)"></g><g class="pull-hi" fill="none" stroke="#fffbe6" stroke-linecap="round"></g></svg>
-   <div class="pull-sl"><img src="img/real/pizza-sliced.webp" alt=""></div><span class="pull-tag">¡Stretchy!</span></div></div>`},
+   <div class="pull-sl"><img src="img/real/pizza-sliced.webp" alt=""></div><span class="pull-tag">¡Stretchy!</span></div>${smoke(4)}</div>`},
   tick(el,t){const st=el.querySelector('.pull-stage');
    // two pulls per slide: lift for 2.6s, hold, snap, settle
    const c=(t-1.2)%3.9,p=t<1.2?0:Math.min(1,c/3.2);st.style.setProperty('--lift',Math.min(1,Math.max(0,(p-.12)*1.6)).toFixed(3));
@@ -795,6 +808,8 @@ function comboPics(c){const L=live(),sz=c.size||'7',tier=+c.tier||1e9;
 function openState(){const[o,c]=hours(),n=new Date(),h=n.getHours()+n.getMinutes()/60;
   return h>=o&&h<c?{open:1,text:`Open now · till ${hrText(c)}`}:{open:0,text:`Opens at ${hrText(o)}`}}
 
+// steam rising off a hot pizza: n soft curls spread over the middle, each starting at its own moment
+const smoke=n=>`<div class="steam on">${[...Array(n)].map((_,i)=>`<i style="left:${(30+i*40/Math.max(1,n-1)).toFixed(0)}%;animation-delay:${(i*.9%4.8).toFixed(1)}s"></i>`).join('')}</div>`;
 /* the pizza and garlic bread being made, layer by layer */
 const BUILD={
  pizza:{title:'Made fresh',steps:['Fresh dough','Tangy sauce','Loads of mozzarella','Fresh veggies','Baked hot!'],
@@ -803,7 +818,7 @@ const BUILD={
   layers:()=>`<img class="ly dough" src="img/build/dough.webp" alt=""><img class="ly sauce" src="img/build/sauce.webp" alt="">
    <img class="ly cheese" src="img/build/cheese-raw.webp" alt="">
    ${HANDS.map(([x,y],i)=>`<img class="ly hand" src="img/build/toppings.webp" alt="" style="clip-path:circle(24% at ${x}% ${y}%);--i:${i}">`).join('')}
-   <img class="ly baked" src="img/hero-pizza.webp" alt=""><div class="oven"></div>
+   <img class="ly baked" src="img/real/pizza.webp" alt=""><div class="oven"></div>
    ${SHREDS.map(([x,y,r],i)=>`<img class="shred" src="img/build/drop-cheese.webp" alt="" style="left:${x}%;top:${y}%;--r:${r}deg;--i:${i}">`).join('')}`},
  garlic:{title:'Garlic bread',steps:['Fresh dough','Garlic butter','Loads of cheese','Baked and sliced','Hot to your table'],
   // dough rolled out, a block of garlic butter melts and spreads, cheese is piled on and spreads, it bakes golden,
@@ -873,7 +888,7 @@ function playStep(el,t){if(!PL.eng||!window.Matter){if(window.Matter&&!PL.eng)pl
 
 /* ---------- 3D transitions between slides ---------- */
 // a gentle ease in and out, so a change starts and ends slowly with no sudden jump in the middle
-const E='cubic-bezier(.37,0,.63,1)';let DUR=5000,SHOW=15; // set from the owner's settings in rebuild()
+const E='cubic-bezier(.33,.0,.2,1)';let DUR=5000,SHOW=15; // set from the owner's settings in rebuild()
 const FX=[
  // cube turning left
  [[{transformOrigin:'100% 50%',transform:'translateX(0) rotateY(0)'},{transformOrigin:'100% 50%',transform:'translateX(-100%) rotateY(-90deg)'}],
@@ -896,9 +911,11 @@ const FXN={cube:FX[0],zoom:FX[1],roll:FX[2],door:FX[3],
  fade:[[{opacity:1},{opacity:1}],[{opacity:0},{opacity:1}]],
  // a swipe to the right brings back the slide before, moving the way the finger went
  slideBack:[[{transform:'translateX(0)'},{transform:'translateX(100%)'}],[{transform:'translateX(-100%)'},{transform:'translateX(0)'}]],
+ // a soft glide: the new slide drifts in from the right as it fades in over the old one
+ glide:[[{transform:'translate3d(0,0,0)',opacity:1},{transform:'translate3d(-6%,0,0)',opacity:.3}],[{transform:'translate3d(8%,0,0)',opacity:0},{transform:'translate3d(0,0,0)',opacity:1}]],
  pop:[[{transform:'scale(1)',opacity:1},{transform:'scale(.88)',opacity:.4}],[{transform:'scale(1.22)',opacity:0},{transform:'scale(1)',opacity:1}]]};
 function fxFor(next){const c=CFG(),w=(c.fxs||{})[next.grp||next.key]||c.fx||'mix';
-  if(w==='mix')return fxN%3===2?'curtain':FX[fxN%FX.length];
+  if(w==='mix')return fxN%3===2?'curtain':[FXN.glide,FXN.fade,FXN.glide,FXN.pop][fxN%4];
   return w==='curtain'||w==='none'?w:(FXN[w]||FX[0])}
 
 const deck=$('#deck'),bar=$('#bar'),dots=$('#dots');
@@ -930,8 +947,8 @@ function rebuild(){needsRebuild=false;
   nm.className='nomayo nm-'+(['tag','small','big'].includes(c.nmStyle)?c.nmStyle:'tag')+' p-'+(['tr','tl','bl','br'].includes(c.nmPos)?c.nmPos:'tr');
   dots.innerHTML=order.map(()=>'<i></i>').join('');
   const tl=picked('ticker',500)||live(),tk=tl.map(m=>`<span>${esc(m.name)} <em>₹${m.prices?Math.min(...Object.values(m.prices)):m.price}</em></span>`).join('');
-  const msg=c.tickerMsg&&c.tickerMsg.trim()?`<span>★ ${esc(c.tickerMsg.trim())} ★</span>`:'';
-  $('#tk').innerHTML=msg+tk+msg+tk;$('#tk').style.setProperty('--tkd',Math.max(40,tl.length*4.5)+'s')}
+  const msg=c.tickerMsg&&c.tickerMsg.trim()?`<span class="msg">${esc(c.tickerMsg.trim())}</span>`:'';
+  const tkh=msg+tk+msg+tk;if($('#tk').dataset.h!==tkh){$('#tk').dataset.h=tkh;$('#tk').innerHTML=tkh;$('#tk').style.setProperty('--tkd',Math.max(40,tl.length*4.5)+'s')}}
 
 function rain(){const r=$('#rain');r.innerHTML=ING.map(()=>`<img src="${ING[Math.random()*ING.length|0]}" alt="" style="left:${Math.random()*1800}px;animation-delay:${(Math.random()*.4).toFixed(2)}s;--r:${(Math.random()*720-360)|0}deg;width:${80+Math.random()*90|0}px">`).join('');setTimeout(()=>r.innerHTML='',2200)}
 
@@ -955,7 +972,7 @@ function show(next,n,fxIn,opt={duration:DUR,easing:E,fill:'none'}){
   const el=next.el;el._s=null;el.getAnimations().forEach(a=>a.cancel());if(preEl&&preEl!==el)unprep();preEl=null;el.classList.remove('on','pre','out');void el.offsetWidth;el.classList.add('on');
   // clear what the last pass built so it plays again from the start
   el.querySelectorAll('.go,.fade,.front').forEach(x=>x.classList.remove('go','fade','front'));
-  if(fxIn)el.animate(fxIn,opt);if(next.enter)next.enter(el);
+  if(fxIn){el.classList.add('in');const a=el.animate(fxIn,opt);a.onfinish=a.oncancel=()=>el.classList.remove('in')}if(next.enter)next.enter(el);
   // videos on a slide that has gone stop, so the TV is only ever playing the ones on screen
   setTimeout(()=>{deck.querySelectorAll('.sl:not(.on) video').forEach(v=>v.pause());deck.querySelectorAll('.sl:not(.on) iframe.promo').forEach(f=>{if(f.src!=='about:blank')f.src='about:blank'})},(opt.duration||DUR)+300);
   // the ingredient shower waits until the change is under way, so it does not add work to its first frames
