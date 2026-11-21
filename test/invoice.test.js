@@ -87,3 +87,14 @@ test('bill layout: hidden parts, own address and mobile, title and footer', () =
   assert.match(h, /<div class="tt">BILL<\/div>/);
   assert.match(h, /Line one<br>Line two/);
 });
+
+test('bill sections follow the order the owner dragged them to', () => {
+  const out = { name: 'Main', area: 'Nadiad', bill: { order: ['footer', 'items', 'head'] } };
+  const h = invoicePage(o, out, opts);
+  const at = s => h.indexOf(s);
+  assert.ok(at('class="ft"') < at('<table>'), 'footer before items');
+  assert.ok(at('<table>') < at('<header'), 'items before the heading');
+  assert.ok(at('<header') < at('class="grid"'), 'sections not listed keep their standard place after the ones before them');
+  const plain = invoicePage(o, { name: 'Main' }, opts);
+  assert.ok(plain.indexOf('<header') < plain.indexOf('class="grid"') && plain.indexOf('<table>') < plain.indexOf('class="ft"'));
+});
