@@ -289,6 +289,40 @@ body.idle{cursor:none}
 .sc-th i.cut{background-size:contain;background-repeat:no-repeat;background-color:rgba(255,255,255,.12)}
 .sc-th i.cur{opacity:1;transform:scale(1.14);box-shadow:0 0 0 5px var(--gold),0 12px 26px rgba(0,0,0,.4)}
 
+/* Ekdum cheesy six as a menu book: the pizza's photo on the left page, its name, words and price on the right,
+   and the page turns over to the next pizza */
+.bk-head{position:absolute;left:0;right:0;top:118px;text-align:center;z-index:3}
+.bk-head .kick{font-size:30px}
+.bk-head .h1{font-size:76px;color:var(--gold)}
+.bk{position:absolute;left:150px;top:270px;width:1620px;height:690px;perspective:2600px;z-index:2}
+.bk::before{content:"";position:absolute;inset:-18px -22px -26px;border-radius:26px;background:linear-gradient(180deg,#7a1e1a,#5a1412);box-shadow:0 40px 80px rgba(0,0,0,.55)}
+.bk-pg{position:absolute;top:0;bottom:0;width:50%;overflow:hidden;background:#fbf3e2}
+.bk-pg.l{left:0;border-radius:14px 0 0 14px;background:linear-gradient(90deg,#f3e6c9 0,#fbf3e2 12%,#fbf3e2 82%,#e6d5b0 100%)}
+.bk-pg.r{right:0;border-radius:0 14px 14px 0;background:linear-gradient(90deg,#e2cfa6 0,#fbf3e2 14%,#fbf3e2 90%,#f1e3c4 100%)}
+.bk-ph{position:absolute;inset:40px 60px 40px 50px;display:grid;place-items:center}
+.bk-ph .im{width:600px;height:600px;border-radius:50%;background:#f5ead3 center/cover;box-shadow:0 0 0 12px #fff,0 30px 50px rgba(80,40,0,.35);transform:rotate(-4deg)}
+.bk-ph .im.cut{background:none center/contain no-repeat;box-shadow:none;filter:drop-shadow(0 30px 30px rgba(80,40,0,.4))}
+.bk-tx{position:absolute;inset:56px 70px 40px 80px;color:#3a2800;display:flex;flex-direction:column}
+.bk-tx .no{font-family:Anton,Impact,sans-serif;font-size:40px;letter-spacing:.08em;color:#b77708}
+.bk-tx h3{font-family:Anton,Impact,sans-serif;font-weight:400;text-transform:uppercase;font-size:var(--fs,100px);line-height:.95;color:#c0281e;margin-top:14px}
+.bk-tx p{font-size:38px;line-height:1.25;margin-top:20px;color:#4a3410}
+.bk-tx .pr{align-self:flex-start;margin-top:auto;display:inline-flex;align-items:baseline;padding:12px 28px 8px;border-radius:16px;background:#c0281e;color:#fff;font-size:52px;font-weight:800;box-shadow:0 10px 24px rgba(120,20,0,.3)}
+.bk-tx .pr s{text-decoration:none;font-size:26px;font-weight:700;opacity:.85}
+.bk-tx .pr span+span{margin-left:16px;padding-left:16px;border-left:3px solid rgba(255,255,255,.35)}
+.bk-tx .bs{position:absolute;right:0;top:-6px;width:150px;height:150px;border-radius:50%;display:grid;place-items:center;text-align:center;background:var(--gold);color:#3a2800;font-family:Anton,Impact,sans-serif;font-size:30px;line-height:1;text-transform:uppercase;transform:rotate(12deg);box-shadow:0 0 0 6px #fbf3e2,0 0 0 9px var(--gold),0 12px 22px rgba(0,0,0,.25)}
+.bk-tx .dots{display:flex;gap:10px;margin-top:22px}
+.bk-tx .dots i{width:14px;height:14px;border-radius:50%;background:#e2cfa6}
+.bk-tx .dots i.on{background:#c0281e;width:38px;border-radius:7px}
+.bk-fl{position:absolute;top:0;bottom:0;left:50%;width:50%;transform-origin:0 50%;transform-style:preserve-3d;visibility:hidden;will-change:transform}
+.bk-fl.go{visibility:visible;animation:bkflip 1.4s cubic-bezier(.45,.05,.3,1) both}
+@keyframes bkflip{from{transform:rotateY(0)}to{transform:rotateY(-180deg)}}
+.bk-fl>.bk-pg{width:100%;backface-visibility:hidden}
+.bk-fl>.bk-pg.r{left:0;right:auto}
+.bk-fl>.bk-pg.l{left:0;transform:rotateY(180deg)}
+.bk-fl.go>.bk-pg::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(0,0,0,.25),transparent 40%);animation:bkshade 1.4s ease both;pointer-events:none}
+@keyframes bkshade{0%{opacity:0}50%{opacity:1}100%{opacity:0}}
+.bk-spine{position:absolute;left:50%;top:0;bottom:0;width:60px;margin-left:-30px;background:linear-gradient(90deg,transparent,rgba(90,50,10,.28) 45%,rgba(90,50,10,.35) 50%,rgba(90,50,10,.28) 55%,transparent);pointer-events:none;z-index:3}
+
 /* 6 best sellers */
 .s-best{background:linear-gradient(160deg,#1a93a8,#0b3a43)}
 .s-best .bigword{top:80px;left:0}
@@ -669,18 +703,19 @@ const SLIDES0=[
    // two pulls per slide: lift for 2.6s, hold, snap, settle
    const c=(t-1.2)%3.9,p=t<1.2?0:Math.min(1,c/3.2);st.style.setProperty('--lift',Math.min(1,Math.max(0,(p-.12)*1.6)).toFixed(3));
    st.style.setProperty('--snap',Math.min(1,Math.max(0,(p-.8)*8)).toFixed(3));st.classList.toggle('up',p>.35&&p<.85);pullDraw(st,p)}},
- {k:'ring',t:13,make(){const it=homeItems();this.items=it;const n=it.length;this.per=3.4;this.dur=Math.max(SHOW,n*this.per+.6);
-   const bg=m=>`background-image:url('${pic(m)}')`,pad=i=>String(i+1).padStart(2,'0');
-   return`<div class="bigword anton">Ekdum cheesy</div><div class="sc-head"><div class="kick rise" style="--d:.1s">${KK('ring','Our signature six')}</div><div class="h1 anton">${TT('ring',letters('Ekdum cheesy'))}</div></div>
-   <div class="sc-txw">${it.map((m,i)=>`<div class="sc-tx"><div class="no"><b>${pad(i)}</b> / ${pad(n-1)}</div><h3 style="--fs:${m.name.length>16?78:m.name.length>11?92:110}px">${esc(m.name)}</h3><p>${esc(m.desc||'')}</p><div class="pr">${priceOf(m)}</div>${m.best?'<span class="bs">Best seller</span>':''}</div>`).join('')}</div>
-   <div class="sc-st"><div class="sc-glow"></div><div class="sc-ring"></div>${it.map(m=>`<div class="sc-pz"><div class="im${cutOf(m)?' cut':''}" style="${bg(m)}"></div></div>`).join('')}${smoke(5)}</div>
-   <div class="sc-th">${it.map(m=>`<i class="${cutOf(m)?'cut':''}" style="${bg(m)}"></i>`).join('')}</div>`},
-  enter(el){this.step=-1;el.querySelectorAll('.sc-pz,.sc-tx,.sc-th i').forEach(x=>x.classList.remove('cur','gone'))},
-  tick(el,t){const n=this.items.length;if(!n)return;const s=Math.min(n-1,Math.max(0,Math.floor((t-.3)/this.per)));if(s===this.step)return;const was=this.step;this.step=s;
-   const pz=el.querySelectorAll('.sc-pz'),tx=el.querySelectorAll('.sc-tx'),th=el.querySelectorAll('.sc-th i');
-   pz.forEach((p,j)=>{p.classList.toggle('cur',j===s);p.classList.toggle('gone',j===was)});
-   setTimeout(()=>{if(was>=0&&pz[was])pz[was].classList.remove('gone')},1300);
-   tx.forEach((x,j)=>x.classList.toggle('cur',j===s));th.forEach((x,j)=>x.classList.toggle('cur',j===s))}},
+ {k:'ring',t:13,make(){const it=homeItems();this.items=it;const n=it.length;this.per=3.6;this.dur=Math.max(SHOW,n*this.per+1);
+   return`<div class="bk-head"><div class="kick rise" style="--d:.1s">${KK('ring','Our signature six')}</div><div class="h1 anton">${TT('ring',letters('Ekdum cheesy'))}</div></div>
+   <div class="bk"><div class="bk-pg l"></div><div class="bk-pg r"></div><div class="bk-fl"><div class="bk-pg r"></div><div class="bk-pg l"></div></div><div class="bk-spine"></div></div>`},
+  // the two halves of the open book for item i
+  bkL(i){const m=this.items[i];return`<div class="bk-ph"><div class="im${cutOf(m)?' cut':''}" style="background-image:url('${pic(m)}')"></div></div>`},
+  bkR(i){const m=this.items[i],n=this.items.length,pad=x=>String(x+1).padStart(2,'0');
+   return`<div class="bk-tx">${m.best?'<span class="bs">Best<br>seller</span>':''}<div class="no">${pad(i)} / ${pad(n-1)}</div><h3 style="--fs:${m.name.length>16?76:m.name.length>11?88:104}px">${esc(m.name)}</h3><p>${esc(m.desc||'')}</p><div class="pr">${priceOf(m)}</div><div class="dots">${this.items.map((_,j)=>`<i class="${j===i?'on':''}"></i>`).join('')}</div></div>`},
+  enter(el){this.step=-1;const q=x=>el.querySelector(x);q('.bk-fl').classList.remove('go');if(this.items.length){q('.bk>.bk-pg.l').innerHTML=this.bkL(0);q('.bk>.bk-pg.r').innerHTML=this.bkR(0)}},
+  tick(el,t){const n=this.items.length;if(!n)return;const s=Math.min(n-1,Math.max(0,Math.floor((t-.3)/this.per)));if(s===this.step)return;const was=this.step;this.step=s;if(was<0||s===was)return;
+   // the page turns: its front is this pizza's words, its back the next pizza's photo; under it the next words wait
+   const q=x=>el.querySelector(x),fl=q('.bk-fl');fl.querySelector('.bk-pg.r').innerHTML=this.bkR(was);fl.querySelector('.bk-pg.l').innerHTML=this.bkL(s);
+   q('.bk>.bk-pg.r').innerHTML=this.bkR(s);fl.classList.remove('go');void fl.offsetWidth;fl.classList.add('go');
+   fl.onanimationend=e=>{if(e.animationName!=='bkflip')return;q('.bk>.bk-pg.l').innerHTML=this.bkL(s);fl.classList.remove('go')}}},
  {k:'pizza',t:11,make(){return build('pizza')},tick(el,t){buildTick(el,t,[1.5,3.8,6.1,8.4,10.7])}},
  {k:'garlic',t:11,make(){return build('garlic')},tick(el,t){buildTick(el,t,[1.5,3.8,6.1,8.4,10.7])}},
  {k:'poster',t:12,make(){return`<div class="pstw"><div class="pst"><img src="img/menu-poster.jpg" alt="Cheesy Pizza menu card"></div></div>`}},
