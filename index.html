@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Baloo+Bhai+2:wght@500;600;700;800&family=Fraunces:ital,opsz,wght@0,9..144,500..800;1,9..144,400..700&family=Hind+Vadodara:wght@400;500;600;700&family=Courgette&display=swap">
+<link rel="stylesheet" href="img/fonts/blogger-sans.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
 :root{
@@ -2462,6 +2463,11 @@ html.lenis,html.lenis body{height:auto}
   .vi-here{left:18%;top:30%}.vi-here b{font-size:22px}
   .vi-badge{width:92px;right:-6px;bottom:-26px}
 }
+/* Blogger Sans Bold for every heading and the brand name (img/fonts/blogger-sans.css), body text keeps its own font */
+:is(h1,h2,h3,h4,h5,h6),.brand b,.ndh b{font-family:var(--head)!important;font-weight:700!important;font-variation-settings:normal!important}
+/* the home hero line was sized for the narrow Anton letters */
+.hx2 h1{font-size:clamp(30px,2.9vw,50px)}
+@media (max-width:900px){.hx2 h1{font-size:clamp(32px,9vw,46px)}}
 </style>
 <div id="intro" role="status" aria-label="Cheesy Pizza is loading">
   <div class="in-sea" aria-hidden="true"><div class="in-wave b"></div><div class="in-wave f"></div><div class="in-tops"></div>
@@ -3520,7 +3526,7 @@ function renderHome(){if(HOME2)return renderHome2();
 
   <section class="visit" id="visit" aria-labelledby="visit-title"><div class="sx-in visit-in">
     <div class="vi-copy">
-      <span class="vi-kick">Cheesy Pizza is at</span>
+      <span class="vi-kick"><span class="bsb">Cheesy Pizza</span> is at</span>
       <h2 id="visit-title" class="vi-big">Cheesy<br>Pizza</h2><span class="vi-outlet">${esc(o.name)}</span>
       <div class="vi-addr"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s-7-7.5-7-13a7 7 0 0 1 14 0c0 5.5-7 13-7 13z" fill="#F2B632"/><circle cx="12" cy="9" r="2.6" fill="#0f7f91"/></svg><p>${esc(addr.toUpperCase())}</p></div>
       <div class="vi-open"><small>Every day · ${esc(hrText(OPEN_H).toUpperCase())} to ${esc(hrText(CLOSE_H).toUpperCase())}</small>
@@ -3532,7 +3538,7 @@ function renderHome(){if(HOME2)return renderHome2();
     <a class="vi-map" href="${mapUrl}" target="_blank" rel="noopener" aria-label="Open Cheesy Pizza in Google Maps"><div class="vi-card">
       ${visitMap()}
       ${[['Pizza',24,30],['Garlic bread',78,22],['Cold drinks',82,60],['French fries',18,72],['Paneer pockets',60,84],['Dips',88,40]].map(([t,x,y])=>`<span class="vi-lab" style="left:${x}%;top:${y}%">${t}</span>`).join('')}
-      <div class="vi-here"><b>Ahiyā!</b><small>Cheesy Pizza</small></div>
+      <div class="vi-here"><b>Ahiyā!</b><small class="bsb">Cheesy Pizza</small></div>
       <img class="vi-pin" src="img/cheesy-pin.png" alt="" width="720" height="720">
       <span class="vi-note">Tap the map for directions ↗</span></div>
       <img class="vi-badge" src="img/logo-badge.png" alt="" width="820" height="820" loading="lazy"></a>
@@ -3550,7 +3556,7 @@ function siteFooter(){
         <div class="vam-food" aria-hidden="true"><i class="vam-str"></i>${[['slice-veggie',7],['garlic-stick',14],['tomato-slice',5.5],['slice-veggie2',7],['basil',4.5],['garlic-stick',14],['tomato-slice',5.5],['slice-veggie',7],['olive',3.5],['garlic-stick',14],['tomato-slice',5.5],['slice-veggie2',7]].map(([k,w],i)=>`<span class="vf" style="--w:${w};--i:${i}"><img src="img/ing/${k}.webp" alt="" draggable="false" loading="lazy"></span>`).join('')}</div></div>
       <p class="vam-hint">Psst… touch the slices.</p></div>
     <div class="play"><div class="ft-big" data-sx aria-hidden="true">Really cheesy</div>${U.pubView==='home'?'<p class="play-hint" aria-hidden="true"><span class="m">Psst… grab the garlic bread</span><span class="t">Psst… tap the garlic bread</span></p>':''}</div>
-    <div class="ft-bottom"><span>© ${new Date().getFullYear()} Cheesy Pizza · Pure veg</span><span class="ft-mini"><a href="${PRIVACY_URL}" target="_blank" rel="noopener">Privacy policy</a><button class="ft-link" data-act="mode" data-v="pos">Staff login</button></span><span lang="gu">ચીઝી પિઝ્ઝા</span></div>
+    <div class="ft-bottom"><span>© ${new Date().getFullYear()} <span class="bsb">Cheesy Pizza</span> · Pure veg</span><span class="ft-mini"><a href="${PRIVACY_URL}" target="_blank" rel="noopener">Privacy policy</a><button class="ft-link" data-act="mode" data-v="pos">Staff login</button></span><span lang="gu">ચીઝી પિઝ્ઝા</span></div>
   </div></footer>`;
 }
 
@@ -5995,7 +6001,7 @@ function vOutlets(){const own=staff()?.role==='owner';
     </div>
     <div class="field"><label for="ou-${o.id}">UPI ID for this branch</label><input class="inp" id="ou-${o.id}" data-ou="${o.id}" data-f="upi" value="${esc(o.upi)}" placeholder="name@okaxis" autocapitalize="off" autocomplete="off" spellcheck="false" ${own?'':'readonly'}>
       <span class="small muted" id="oue-${o.id}">${own?'Customers of this branch pay here. The QR below updates as you type.':'Only the owner can change the UPI ID.'}</span></div>
-    ${o.upi?`<div class="qr" id="oqr-${o.id}"><div data-qr="${esc(shopQr(o))}"></div><b>Cheesy Pizza · ${esc(o.name)}</b><span class="small num">${esc(o.upi)}</span></div>
+    ${o.upi?`<div class="qr" id="oqr-${o.id}"><div data-qr="${esc(shopQr(o))}"></div><b><span class="bsb">Cheesy Pizza</span> · ${esc(o.name)}</b><span class="small num">${esc(o.upi)}</span></div>
     <div class="row"><button class="btn sm" data-act="qr-save" data-o="${o.id}">⬇ Save / share QR</button><span class="small muted">Print it for the counter</span></div>`:'<div class="small" style="color:var(--bad)">No UPI ID yet, so customers of this branch can only pay cash.</div>'}
     <div class="grp-h">Order tags</div>
     <div class="row"><div class="field grow"><label for="olt1-${o.id}">First tap</label><input class="inp" id="olt1-${o.id}" data-ou="${o.id}" data-f="lt1" value="${esc(o.lt1||'')}" placeholder="L&amp;T" maxlength="20" ${own?'':'readonly'}></div>
@@ -6072,9 +6078,10 @@ const shopQr=o=>`upi://pay?pa=${encodeURIComponent(o.upi)}&pn=${encodeURICompone
 /* Poster PNG of a branch's UPI QR: name on top, QR, UPI ID below. Shared on phones, downloaded on the web. */
 async function qrPoster(o){
   const src=document.querySelector(`#oqr-${o.id} canvas`);if(!src)return toast('QR is still loading');
+  try{await document.fonts.load("bold 44px 'Blogger Sans'")}catch(_){}
   const W=600,H=820,c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');
   x.fillStyle='#fff';x.fillRect(0,0,W,H);x.fillStyle='#0f2e36';x.textAlign='center';
-  x.font='bold 40px system-ui,sans-serif';x.fillText('Cheesy Pizza',W/2,80);
+  x.font="bold 44px 'Blogger Sans',system-ui,sans-serif";x.fillText('Cheesy Pizza',W/2,80);
   x.font='28px system-ui,sans-serif';x.fillText(o.name,W/2,125);
   x.imageSmoothingEnabled=false;x.drawImage(src,90,170,420,420);
   x.font='bold 26px system-ui,sans-serif';x.fillText('Scan & pay with any UPI app',W/2,650);
@@ -6750,7 +6757,7 @@ function vUpiAlerts(from,to,sc){
 function upiSetupCard(){
   const last=S.upialerts.filter(a=>a.outletId===S.cur).sort((x,y)=>y.ts-x.ts)[0];
   const lastTxt=last?`Last alert ${fmtDate(today(new Date(last.ts)))} ${fmtTime(last.ts)}.`:'No alert has come in yet.';
-  if(!UPIAL)return `<div class="card uasetup"><b>How it works</b><span class="small">Set it up once in the <b>Cheesy Pizza Admin</b> app on the shop phone that gets your UPI app's alerts (Day sale › UPI alerts › Turn on). ${lastTxt}</span></div>`;
+  if(!UPIAL)return `<div class="card uasetup"><b>How it works</b><span class="small">Set it up once in the <b class="bsb">Cheesy Pizza Admin</b> app on the shop phone that gets your UPI app's alerts (Day sale › UPI alerts › Turn on). ${lastTxt}</span></div>`;
   const st=U.uaSt;if(!st){UPIAL.status().then(r=>{U.uaSt=r;render()}).catch(()=>{U.uaSt={supported:false}});return '<div class="card uasetup small muted">Checking this phone…</div>'}
   if(!st.supported)return '<div class="card uasetup small">Update the Admin app to read UPI alerts on this phone.</div>';
   const apps=new Set((st.apps||'').split(',').filter(Boolean));

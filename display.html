@@ -10,6 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Baloo+Bhai+2:wght@500;600;700;800&family=Courgette&display=swap">
+<link rel="stylesheet" href="img/fonts/blogger-sans.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js" defer></script>
 <!--
@@ -21,12 +22,9 @@
   ?slide=v_abc starts on that slide (Admin's preview buttons use it), arrow keys step, space pauses.
 -->
 <style>
-/* Blogger Sans by Sergiy Tkachenko (CC BY-ND 4.0, free for commercial use), for "Cheesy Pizza" and the big headings
-   on the famous visitors slides. Put BloggerSans-Bold.woff in img/fonts for the true bold; until then the browser
-   thickens the regular one. */
-@font-face{font-family:'Blogger Sans';src:url(img/fonts/BloggerSans.woff) format('woff');font-weight:400;font-display:swap}
-@font-face{font-family:'Blogger Sans';src:url(img/fonts/BloggerSans-Bold.woff2) format('woff2'),url(img/fonts/BloggerSans-Bold.woff) format('woff'),url(img/fonts/BloggerSans-Bold.ttf) format('truetype');font-weight:700;font-display:swap}
-.blogger{font-family:'Blogger Sans','Baloo Bhai 2',sans-serif!important;font-weight:700}
+.blogger{font-family:var(--head)!important;font-weight:700}
+/* Blogger Sans Bold (img/fonts/blogger-sans.css) for every slide heading; prices, numbers and tickers keep Anton */
+.h1,h1,h2,h3,h4{font-family:var(--head)!important;font-weight:700!important}
 :root{--teal:#0b3a43;--teal2:#0f4a55;--sea:#1a93a8;--gold:#F2B632;--gold2:#ffd76a;--cream:#fff8e8;--ink:#0f2e36;--red:#d23f35}
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;background:#061e23;overflow:hidden;color:#fff;font-family:'Baloo Bhai 2',system-ui,sans-serif}
@@ -604,6 +602,8 @@ body.idle{cursor:none}
 .sin>.done{scale:-.5 .5}.sin>.done.go{scale:-1 1}
 .sin>.copy{translate:-40px 0} /* (mirrored) keeps the words a little clear of the picture */
 @media (prefers-reduced-motion:reduce){.on *{animation-duration:.01s!important}}
+/* Blogger Sans is wider than Anton, so the Anton-sized slide headings are drawn at 80% to keep them off the pictures */
+.h1.anton{font-size:calc(150px*0.8)}.s-pull .h1.anton{font-size:calc(180px*0.8)}.s-ring .head .h1.anton{font-size:calc(108px*0.8)}.s-build .h1.anton{font-size:calc(120px*0.8)}.sc-head .h1.anton{font-size:calc(96px*0.8)}.bk-head .h1.anton{font-size:calc(76px*0.8)}.s-best .head .h1.anton{font-size:calc(120px*0.8)}.s-offers .head .h1.anton{font-size:calc(130px*0.8)}.s-combos .head .h1.anton{font-size:calc(120px*0.8)}.s-hours .h1.anton{font-size:calc(200px*0.8)}.s-order .h1.anton{font-size:calc(190px*0.8)}.s-spot .h1.anton{font-size:calc(var(--fs,170px)*0.8)}.s-address .h1.anton{font-size:calc(150px*0.8)}.sc-tx h3{font-size:calc(var(--fs,104px)*0.8)}.bk-tx h3{font-size:calc(var(--fs,100px)*0.8)}
 </style>
 </head>
 <body>
@@ -742,7 +742,7 @@ const SLIDES0=[
    <div class="sub rise" style="--d:1.2s">Scan the code, pick your pizza, pay by UPI${o.phone?` · Call ${esc(o.phone)}`:''}</div></div>
    <div class="qrw"><div class="qr"><div class="code" data-qr="${esc(url)}">${esc(url)}</div><div class="scan"></div><p>Scan to order</p></div></div>`},
   enter(el){const c=el.querySelector('.code');if(c.dataset.done||!window.QRCode)return;c.innerHTML='';try{new QRCode(c,{text:c.dataset.qr,width:460,height:460,colorDark:'#0b3a43',correctLevel:QRCode.CorrectLevel.M});c.dataset.done=1}catch(e){}}},
- {k:'play',t:12,make(){return`<div class="head"><div class="kick rise" style="--d:.1s">${KK('play','Play zone')}</div><div class="h1 anton" style="font-size:110px;color:#fff">${TT('play',letters('Come play with your food'))}</div></div>
+ {k:'play',t:12,make(){return`<div class="head"><div class="kick rise" style="--d:.1s">${KK('play','Play zone')}</div><div class="h1 anton" style="font-size:88px;color:#fff">${TT('play',letters('Come play with your food'))}</div></div>
    <div class="pbig anton">${letters('Really cheesy')}</div><canvas class="pcv" width="1920" height="1010"></canvas><p class="hint script rise" style="--d:1.6s">Psst… try it on our website!</p>`},
   enter(el){playReset(el)},tick(el,t){playStep(el,t)}},
 
