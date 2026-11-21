@@ -55,3 +55,11 @@ test('dine-in invoice shows the table and the number of persons', () => {
   assert.match(h, /No. of Persons<\/div><div class="v">4/);
   assert.doesNotMatch(invoicePage(o, { name: 'Main' }, opts), /No. of Persons/);
 });
+
+test('merged table invoice groups items by table', () => {
+  const h = invoicePage({ ...o, type: 'dine', table: '2', items: [{ qty: 1, name: 'Mexican', unit: 270, addons: [] }, { qty: 2, name: 'Fries', unit: 100, addons: [], from: 'T1' }] }, { name: 'Main' }, opts);
+  assert.match(h, /<tr class="grp"><td colspan="4">T2<\/td><td class="r">270/);
+  assert.match(h, /<tr class="grp"><td colspan="4">T1<\/td><td class="r">200/);
+  assert.ok(h.indexOf('>T2<') < h.indexOf('>T1<'));
+  assert.doesNotMatch(invoicePage(o, { name: 'Main' }, opts), /class="grp"/);
+});
