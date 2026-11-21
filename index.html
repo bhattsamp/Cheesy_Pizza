@@ -1459,6 +1459,11 @@ html:has(body:not(.pubmode) .pos){scroll-padding-top:calc(env(safe-area-inset-to
 @media (min-width:900px){.blgrid{grid-template-columns:minmax(0,1fr) minmax(300px,420px)}.blprev{position:sticky;top:calc(var(--toph,61px) + var(--navh,0px) + 12px)}}
 .blset{padding:16px;display:flex;flex-direction:column;gap:10px}.blset h3{margin:10px 0 0;font-size:16px}.blset h3:first-child{margin-top:0}
 .blrow{display:flex;align-items:center;gap:12px;padding:6px 0;border-top:1px solid var(--line);cursor:pointer}.blrow small{display:block;color:var(--muted);font-size:12.5px;font-weight:400}
+.blord{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.blord li{display:flex;align-items:center;gap:8px;padding:6px 8px;border:1px solid var(--line);border-radius:10px;background:var(--card,#fff);font-weight:600;font-size:14px}
+.blord li.drag{box-shadow:var(--shadow);border-color:var(--brand,#1a93a8);opacity:.9}
+.blord .bldrag{cursor:grab;touch-action:none;user-select:none;font-size:20px;line-height:1;padding:6px 6px;color:var(--muted)}.blord li.drag .bldrag{cursor:grabbing}
+.blord .blmv{min-width:34px;padding:4px 0;font-size:15px}.blord .blmv:disabled{opacity:.35}
 .blprev{display:flex;flex-direction:column;align-items:center;gap:10px}
 .blpaper{background:#fff;color:#111;border:1px solid var(--line);box-shadow:var(--shadow);padding:14px 12px 18px;border-radius:4px;width:max-content;max-width:100%;overflow-x:auto}
 .blpaper img{display:block;width:120px;margin:0 auto 4px}.blpaper pre{margin:0;font:12px/1.35 "Courier New",monospace;white-space:pre}
@@ -4825,36 +4830,45 @@ const BILL_PARTS=[['logo','Logo','Your logo on top (bills printed from the websi
   ['gstin','GSTIN','Only shows when the outlet has a GSTIN'],['fssai','FSSAI number','Only shows when the outlet has an FSSAI number'],['token','Token number',''],['biller','Biller name','Who made the bill'],['customer','Customer name and mobile',''],
   ['options','Item options','Size, toppings and extras under each item'],['qty','Quantity line','Total number of items'],['coins','Cheese Coins earned',''],['pays','Payment lines','Paid via Cash / UPI and Not paid'],['footids','GSTIN and FSSAI again at the bottom','']];
 const BILL_DEF={tagline:'Really Cheesy...!',footer:'Pure veg - No mayonnaise\nOregano and chilli flakes sachets served with your order are for immediate use only. Please do not preserve them for future use.\nYou authorise us to send promotional offers to your contact details.\nThank You & Visit Again...!!!',w:32};
-const billCfg=out=>{const b=(out&&out.bill)||{};return {...BILL_DEF,...b,hide:b.hide||{}}};
+// Sections of the bill, in the order the owner drags them to (Admin → Bill layout). The printed bill and
+// the e-bill each keep their own standard order until the owner moves a section; then both follow it.
+const BILL_SECS=[['head','Shop name and tagline'],['shop','Outlet, address, phone, GSTIN, FSSAI'],['title','Bill title (INVOICE)'],['details','Order no, date, type, table'],['customer','Customer name and mobile'],
+  ['items','Items'],['totals','Sub total and total payable'],['pays','Payments'],['footids','GSTIN and FSSAI at the bottom'],['footer','Footer lines']];
+const BILL_ORDER=BILL_SECS.map(x=>x[0]);
+const billOrder=(b,def=BILL_ORDER)=>{const o=(b&&Array.isArray(b.order)?b.order:[]).filter((k,i,a)=>def.includes(k)&&a.indexOf(k)===i);
+  def.forEach((k,i)=>{if(!o.includes(k)){const after=def.slice(0,i).reverse().find(x=>o.includes(x));o.splice(after?o.indexOf(after)+1:0,0,k)}});return o};
+const billCfg=out=>{const b=(out&&out.bill)||{};return {...BILL_DEF,...b,hide:b.hide||{},order:billOrder(b)}};
 function billText(o){
   // Same order as the e-bill (a standard tax invoice): shop, address, GSTIN and FSSAI (each only when the
   // outlet has it), the order details, numbered items with qty, rate and price, then totals and payments
-  const B=billCfg(outletOf(o)),out={...outletOf(o),...(B.address?{area:B.address}:{}),...(B.phone?{phone:B.phone}:{})},on=k=>!B.hide[k],W=+B.w===48?48:32;const L=[];const hr='-'.repeat(W);const m2=n=>(Math.round(n*100)/100).toFixed(2);
+  const B=billCfg(outletOf(o)),out={...outletOf(o),...(B.address?{area:B.address}:{}),...(B.phone?{phone:B.phone}:{})},on=k=>!B.hide[k],W=+B.w===48?48:32;const hr='-'.repeat(W);const m2=n=>(Math.round(n*100)/100).toFixed(2);
   const P=(a,b)=>pad(a,b,W),C=x=>center(x,W);
   const wrap=(s,w=W)=>{const r=[];let cur='';String(s).split(/\s+/).forEach(x=>{if((cur+' '+x).trim().length>w){if(cur)r.push(cur);cur=x}else cur=(cur+' '+x).trim()});if(cur)r.push(cur);return r};
-  L.push(C((B.title||out.legal||'CHEESY PIZZA').toUpperCase()));if(on('tagline')&&B.tagline)L.push(C(B.tagline));
-  if(on('outlet')&&out.name)L.push(C(out.name));if(on('address')&&out.area)wrap(out.area).forEach(x=>L.push(C(x)));if(on('phone')&&out.phone)L.push(C('Ph: '+fmtPhone(out.phone)));
-  if(on('gstin')&&out.gstin)L.push(C('GSTIN: '+out.gstin));if(on('fssai')&&out.fssai)L.push(C('FSSAI: '+out.fssai));
-  L.push(hr,C(B.invTitle||(o.gst?'TAX INVOICE':'INVOICE')),hr);
+  const T={};let L;const sec=(k,f)=>{L=[];f();T[k]=L};
+  sec('head',()=>{L.push(C((B.title||out.legal||'CHEESY PIZZA').toUpperCase()));if(on('tagline')&&B.tagline)L.push(C(B.tagline))});
+  sec('shop',()=>{if(on('outlet')&&out.name)L.push(C(out.name));if(on('address')&&out.area)wrap(out.area).forEach(x=>L.push(C(x)));if(on('phone')&&out.phone)L.push(C('Ph: '+fmtPhone(out.phone)));
+    if(on('gstin')&&out.gstin)L.push(C('GSTIN: '+out.gstin));if(on('fssai')&&out.fssai)L.push(C('FSSAI: '+out.fssai))});
+  sec('title',()=>L.push(hr,C(B.invTitle||(o.gst?'TAX INVOICE':'INVOICE')),hr));
   const tok=String(o.no||'').replace(/^\D+/,'').replace(/^0+(?=\d)/,'');
-  L.push(P('Order No: '+o.no,on('token')?'Token: '+(tok||'-'):''),P(fmtDate(o.date),fmtTime(o.ts)),P('Type: '+TYPES[o.type],on('biller')?'Biller: '+(o.source==='online'?'Online':(o.by||'Counter')).slice(0,12):''));
-  if(on('customer')){if(o.customer.name)L.push('Cust: '+o.customer.name.slice(0,W-6));if(o.customer.phone)L.push('Mob: '+o.customer.phone)}
-  if(o.table||+o.guests)L.push(P(o.table?'Table: '+o.table:'',+o.guests?'Persons: '+o.guests:''));if(o.bookAt)L.push('Booked for: '+advWhen(o.bookAt));if(o.address)wrap('Addr: '+o.address).forEach(x=>L.push(x));if(o.zomatoId)L.push('Zomato ID: '+o.zomatoId);
+  sec('details',()=>{L.push(P('Order No: '+o.no,on('token')?'Token: '+(tok||'-'):''),P(fmtDate(o.date),fmtTime(o.ts)),P('Type: '+TYPES[o.type],on('biller')?'Biller: '+(o.source==='online'?'Online':(o.by||'Counter')).slice(0,12):''));
+    if(o.table||+o.guests)L.push(P(o.table?'Table: '+o.table:'',+o.guests?'Persons: '+o.guests:''));if(o.bookAt)L.push('Booked for: '+advWhen(o.bookAt));if(o.address)wrap('Addr: '+o.address).forEach(x=>L.push(x));if(o.zomatoId)L.push('Zomato ID: '+o.zomatoId)});
+  sec('customer',()=>{if(on('customer')){if(o.customer.name)L.push('Cust: '+o.customer.name.slice(0,W-6));if(o.customer.phone)L.push('Mob: '+o.customer.phone)}});
   // columns: No. + Name | Qty (3) | Rate (6) | Price (7)
   const NW=W-16,col=(a,q,r,p)=>String(a).padEnd(NW).slice(0,NW)+String(q).padStart(3)+String(r).padStart(6)+String(p).padStart(7);
-  L.push(hr,col('No. Name','Qty','Rate','Price'),hr);
+  sec('items',()=>{L.push(hr,col('No. Name','Qty','Rate','Price'),hr);
   let n=0;const line=l=>{n++;const nm=n+'.'+l.name;if(nm.length<=NW)L.push(col(nm,l.qty,l.unit,l.unit*l.qty));else{wrap(nm).forEach(x=>L.push(x));L.push(col('',l.qty,l.unit,l.unit*l.qty))}
     const a=on('options')?addonText(l):'';if(a)wrap(a,W-3).forEach(x=>L.push('   '+x))};
   // A merged table's bill lists each table's items under its own heading (T2 first, then the tables merged into it)
   const groups=billGroups(o);
   if(groups.length>1)groups.forEach(g=>{L.push(P('-- '+g.name+' --','Rs '+g.amt));g.items.forEach(line)});else o.items.forEach(line);
-  L.push(hr);if(on('qty'))L.push(P('Quantity',String(o.items.reduce((a,l)=>a+(+l.qty||0),0))));
+  L.push(hr)});
+  sec('totals',()=>{if(on('qty'))L.push(P('Quantity',String(o.items.reduce((a,l)=>a+(+l.qty||0),0))));
   if((o.discounts||[]).length){L.push(P('Item Total','Rs '+o.subtotal));o.discounts.forEach(d=>L.push(P(d.name.slice(0,W-10),'-'+d.amt)))}
   if(o.gst){const t=o.total,g=o.gst,net=g.mode==='excl'&&g.net!=null?g.net:g.mode==='excl'?t-g.tax:Math.round(t/(1+g.rate/100)*100)/100;const h=Math.round((g.mode==='excl'&&g.tax!=null?g.tax:t-net)/2*100)/100;const ro=Math.round((t-net-2*h)*100)/100;
     L.push(P('Sub Total','Rs '+m2(net)),P(`SGST (${g.rate/2}%)`,'Rs '+m2(h)),P(`CGST (${g.rate/2}%)`,'Rs '+m2(h)));if(ro)L.push(P('Round off',(ro>0?'+':'')+m2(ro)))}
   else L.push(P('Sub Total','Rs '+m2(o.total)));
-  L.push(hr,P('TOTAL PAYABLE','Rs '+m2(o.total)));
-  const sp=paySplits(o),wal=+o.walletUsed||0;
+  L.push(hr,P('TOTAL PAYABLE','Rs '+m2(o.total)))});
+  sec('pays',()=>{const sp=paySplits(o),wal=+o.walletUsed||0;
   const parts=sp?sp.filter(x=>x.amt>0&&x.mode!=='due').map(x=>[x.mode,x.amt]):o.paid&&!['due','pending'].includes(o.pay.mode)?[[o.pay.mode,o.total-(o.pay.mode==='wallet'?0:wal)]]:[];
   if(wal&&o.pay.mode!=='wallet')parts.unshift(['wallet',wal]);
   const left=Math.max(0,Math.round((o.total-parts.reduce((a,[,v])=>a+v,0))*100)/100);
@@ -4863,10 +4877,14 @@ function billText(o){
   if(on('coins')&&o.coinsEarned)L.push(P('Cheese Coins earned','+'+o.coinsEarned));
   if(o.pay.utr&&!o.pay.app)L.push(P('UPI ref (UTR)',o.pay.utr));
   if(o.pay.mode==='cash'&&o.pay.given)L.push(P('Given','Rs '+o.pay.given),P('Return','Rs '+o.pay.change));
-  if(o.status==='cancelled')L.push(hr,C('*** CANCELLED ***'));
-  L.push(hr);if(on('footids')){if(out.fssai&&on('fssai'))L.push(C('FSSAI: '+out.fssai));if(out.gstin&&on('gstin'))L.push(C('GSTIN: '+out.gstin))}
-  String(B.footer||'').split('\n').map(x=>x.trim()).filter(Boolean).forEach(x=>wrap(x).forEach(y=>L.push(C(y))));
-  return L.join('\n');
+  if(o.status==='cancelled')L.push(hr,C('*** CANCELLED ***'))});
+  sec('footids',()=>{if(on('footids')){if(out.fssai&&on('fssai'))L.push(C('FSSAI: '+out.fssai));if(out.gstin&&on('gstin'))L.push(C('GSTIN: '+out.gstin))}});
+  sec('footer',()=>String(B.footer||'').split('\n').map(x=>x.trim()).filter(Boolean).forEach(x=>wrap(x).forEach(y=>L.push(C(y)))));
+  // Join the sections in the owner's order. The closing lines (bottom GSTIN/FSSAI and footer) start after a rule;
+  // two rules never stand together, and the bill never starts or ends with one.
+  const R=[];let last='';B.order.forEach(k=>{const x=T[k];if(!x||!x.length)return;if((k==='footids'||k==='footer')&&R.length&&!(last==='footids'||last==='footer'))R.push(hr);x.forEach(y=>{if(y===hr&&R[R.length-1]===hr)return;R.push(y)});last=k});
+  while(R[0]===hr)R.shift();while(R[R.length-1]===hr)R.pop();
+  return R.join('\n');
 }
 
 
@@ -6111,6 +6129,9 @@ function vBillLayout(){
     <div class="field"><label for="bl-inv">Bill title</label><input class="inp" id="bl-inv" data-bltx="invTitle" value="${esc(B.invTitle||'')}" placeholder="INVOICE (TAX INVOICE when GST is on)" maxlength="30"></div>
     <div class="field"><label for="bl-ad">Address on the bill</label><textarea class="inp" id="bl-ad" data-bltx="address" rows="2" maxlength="160" placeholder="${esc(o.area||'Outlet address from Outlets')}">${esc(B.address||'')}</textarea></div>
     <div class="field"><label for="bl-ph">Mobile number on the bill</label><input class="inp num" id="bl-ph" data-bltx="phone" inputmode="tel" maxlength="15" value="${esc(B.phone||'')}" placeholder="${esc(o.phone||'Outlet phone from Outlets')}"></div>
+    <h3>Order on the bill</h3>
+    <span class="small muted">Drag a section by its handle to move it up or down the bill, or use the arrows. The preview updates as you move.</span>
+    <ol class="blord" id="blord">${B.order.map((k,i,a)=>`<li data-sec="${k}"><span class="bldrag" aria-hidden="true">⠿</span><span class="grow">${esc((BILL_SECS.find(x=>x[0]===k)||[,k])[1])}</span><button class="btn sm blmv" data-act="bl-mv" data-k="${k}" data-v="-1" aria-label="Move up" ${i?'':'disabled'}>↑</button><button class="btn sm blmv" data-act="bl-mv" data-k="${k}" data-v="1" aria-label="Move down" ${i<a.length-1?'':'disabled'}>↓</button></li>`).join('')}</ol>
     <h3>Show on the bill</h3>
     ${BILL_PARTS.map(([k,l,h])=>sw(k,l,h)).join('')}
     <h3>Footer</h3>
@@ -6459,7 +6480,8 @@ document.addEventListener('click',e=>{
     case 'del':openDelete(find(el.dataset.id));break;
     case 'scope':U.salesScope=el.dataset.v;render();break;
     case 'bl-w':if(staff()?.role==='owner'){blSet('w',+el.dataset.v===48?48:null);render()}break;
-    case 'bl-reset':if(staff()?.role==='owner')askConfirm('Reset the bill layout?','Every part of the bill shows again, and the heading, tagline, title, footer and paper go back to the standard ones.','Reset',()=>{delete cur().bill;save();render();toast('Bill layout reset')});break;
+    case 'bl-reset':if(staff()?.role==='owner')askConfirm('Reset the bill layout?','Every part of the bill shows again, and the sections go back to the standard order, and the heading, tagline, title, footer and paper go back to the standard ones.','Reset',()=>{delete cur().bill;save();render();toast('Bill layout reset')});break;
+    case 'bl-mv':if(staff()?.role==='owner'){const ord=billCfg(cur()).order,i=ord.indexOf(el.dataset.k),j=i+(+el.dataset.v);if(i>=0&&j>=0&&j<ord.length){[ord[i],ord[j]]=[ord[j],ord[i]];blSet('order',ord);render()}}break;
     case 'bl-test':printText(billText(billSample()));break;
     case 'tbl-move':openMoveTable(el.dataset.v);break;
     case 'tbl-free':openFreeTable(el.dataset.v);break;
@@ -6530,6 +6552,14 @@ function selectReceipt(){const r=document.querySelector('.receipt');if(!r)return
 function refocus(id){const q=document.getElementById(id);if(q){q.focus();q.setSelectionRange(q.value.length,q.value.length)}}
 // Bill layout settings (owner only): saved on the outlet, preview redrawn as you type
 const blSet=(k,v)=>{const o=cur();o.bill=o.bill||{};if(v==null)delete o.bill[k];else o.bill[k]=v;save()};
+// Drag a bill section by its handle (mouse, touch or pen); the new order is saved when it is let go.
+// Moves are followed on the window, because moving the row in the page drops pointer capture.
+document.addEventListener('pointerdown',e=>{const h=e.target.closest&&e.target.closest('.blord .bldrag');if(!h||staff()?.role!=='owner')return;e.preventDefault();
+  const li=h.closest('li'),ol=li.parentNode;li.classList.add('drag');
+  const mv=ev=>{const sib=[...ol.children].filter(x=>x!==li);const nx=sib.find(x=>{const r=x.getBoundingClientRect();return ev.clientY<r.top+r.height/2});if(nx){if(li.nextSibling!==nx)ol.insertBefore(li,nx)}else if(ol.lastChild!==li)ol.appendChild(li)};
+  const up=()=>{removeEventListener('pointermove',mv);removeEventListener('pointerup',up);removeEventListener('pointercancel',up);li.classList.remove('drag');
+    const ord=[...ol.children].map(x=>x.dataset.sec);if(ord.join()!==billCfg(cur()).order.join()){blSet('order',ord);render()}};
+  addEventListener('pointermove',mv);addEventListener('pointerup',up);addEventListener('pointercancel',up)});
 const blPreview=()=>{const pv=document.querySelector('.blpaper pre');if(pv)try{pv.textContent=billText(billSample())}catch(_){}};
 document.addEventListener('change',e=>{const t=e.target;if(!t.dataset||t.dataset.blhide==null||staff()?.role!=='owner')return;const o=cur();o.bill=o.bill||{};o.bill.hide={...(o.bill.hide||{})};
   if(t.checked)delete o.bill.hide[t.dataset.blhide];else o.bill.hide[t.dataset.blhide]=true;save();render()});
