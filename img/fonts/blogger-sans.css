@@ -1,0 +1,9 @@
+/* Blogger Sans by Sergiy Tkachenko (CC BY-ND 4.0, free for commercial use, files kept unmodified).
+   Bold is the shop's heading and brand-name font: every page links this file, then sets
+   font-family:var(--head) (or class="bsb") on its headings and on the words "Cheesy Pizza".
+   The .otf files are the originals from Font Squirrel, unmodified (licence in BloggerSans-LICENSE.txt). */
+@font-face{font-family:'Blogger Sans';src:url(BloggerSans.woff) format('woff');font-weight:400;font-display:swap}
+@font-face{font-family:'Blogger Sans';src:url(Blogger_Sans-Bold.otf) format('opentype');font-weight:700 900;font-style:normal;font-display:swap}
+@font-face{font-family:'Blogger Sans';src:url(Blogger_Sans-Bold_Italic.otf) format('opentype');font-weight:700 900;font-style:italic;font-display:swap}
+:root{--head:'Blogger Sans','Baloo Bhai 2','Trebuchet MS',system-ui,sans-serif}
+.bsb{font-family:var(--head)!important;font-weight:700!important;font-style:normal}

@@ -44,9 +44,10 @@ function invoicePage(o, outlet, { sizes = [], addons = {} } = {}) {
   const ids = [outlet.fssai ? 'FSSAI: ' + esc(outlet.fssai) : '', outlet.gstin ? 'GSTIN: ' + esc(outlet.gstin) : ''].filter(Boolean).join('<br>');
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Invoice ${esc(o.no)} · ${esc(shop)}</title><meta name="robots" content="noindex">
+<link rel="stylesheet" href="/img/fonts/blogger-sans.css">
 <style>*{box-sizing:border-box}body{margin:0;background:#fff;color:#1f2a37;font:15px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif}.w{max-width:560px;margin:0 auto;padding:18px 14px 28px}
 .hd{text-align:center;margin:0 0 18px;padding-bottom:14px;border-bottom:2px dashed #e5e7eb}.lg{display:block;width:150px;height:auto;margin:-14px auto -18px}
-h1{font-size:18px;text-align:center;margin:4px 0 2px;letter-spacing:.3px;text-transform:uppercase;color:#0f4a55}.on{font-weight:800;font-size:17px;color:#e09a12;margin-top:4px}
+h1,.tt,.bsb{font-family:var(--head,system-ui,sans-serif);font-weight:700}h1{font-size:18px;text-align:center;margin:4px 0 2px;letter-spacing:.3px;text-transform:uppercase;color:#0f4a55}.on{font-weight:800;font-size:17px;color:#e09a12;margin-top:4px}
 .oa{margin:6px auto 0;max-width:420px;color:#374151;font-size:14px;line-height:1.45}.op{margin-top:3px;font-size:14px}.op a{color:#1a93a8;text-decoration:none;font-weight:600}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px}.g{border-left:3px solid #e5e7eb;padding:2px 0 2px 12px}
 .k{color:#6b7280;font-size:14px}.v{margin-top:2px;font-size:15px}.cu{margin:16px 0}.cu .v{text-transform:uppercase}.cu .p{text-transform:none}
 .box{border:1px solid #e5e7eb;border-radius:12px;padding:16px 14px}.ad{text-align:center;font-weight:600;line-height:1.5}.tt{text-align:center;font-weight:700;margin:18px 0 10px}
@@ -64,7 +65,7 @@ ${outlet.area ? `<div class="oa">📍 ${esc(outlet.area)}</div>` : ''}${outlet.p
 <table><thead><tr><th>No.</th><th>Name</th><th class="c">Qty.</th><th class="r">Rate(₹)</th><th class="r">Price(₹)</th></tr></thead><tbody>${rows}</tbody></table>
 <div class="sums">${sums}<div class="s tot"><span>Total Payable Amount:</span><span>${rs(total)}</span></div><div class="pm">${pay}</div></div>
 ${ids ? `<div class="ids">${ids}</div>` : ''}</div>
-<div class="ft">Cheesy Pizza · ${esc(outlet.name || '')}<br>Thank you! Visit again 🍕</div></div></body></html>`;
+<div class="ft"><span class="bsb">Cheesy Pizza</span> · ${esc(outlet.name || '')}<br>Thank you! Visit again 🍕</div></div></body></html>`;
 }
 
 module.exports = { invoicePage, when };
