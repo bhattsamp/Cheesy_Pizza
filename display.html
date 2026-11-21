@@ -151,19 +151,19 @@ body.idle{cursor:none}
 /* 3 ekdum cheesy carousel */
 .s-ring{background:radial-gradient(circle at 50% 60%,#14606e 0,#0b3a43 60%,#072328 100%)}
 .s-ring .bigword{top:110px;left:0}
-.s-ring .head{position:absolute;left:0;right:0;top:150px;text-align:center}
-.s-ring .head .h1{font-size:130px;color:var(--gold)}
-.ringw{position:absolute;left:50%;top:575px;width:0;height:0;perspective:2200px}
+.s-ring .head{position:absolute;left:0;right:0;top:128px;text-align:center}
+.s-ring .head .h1{font-size:108px;color:var(--gold)}
+.ringw{position:absolute;left:50%;top:572px;width:0;height:0;perspective:2200px}
 .ring{position:absolute;transform-style:preserve-3d;transition:transform 1.4s cubic-bezier(.65,0,.35,1)}
-.card{position:absolute;left:-210px;top:-215px;width:420px;height:440px;border-radius:34px;background:#fff;color:var(--ink);overflow:hidden;box-shadow:0 30px 60px rgba(0,0,0,.4);transition:filter .6s,opacity .6s;filter:brightness(.5)}
+.card{position:absolute;left:-260px;top:-290px;width:520px;height:590px;border-radius:34px;background:#fff;color:var(--ink);overflow:hidden;box-shadow:0 30px 60px rgba(0,0,0,.4);transition:filter .6s,opacity .6s;filter:brightness(.5)}
 .card.front{filter:none}
-.card .ph{height:270px;background:#f5ead3 center/cover}
-.card .ph.png{background-size:80%;background-repeat:no-repeat}
-.card .tx{padding:20px 28px}
-.card h3{font-size:40px;line-height:1.05;font-weight:800}
+.card .ph{height:390px;background:#f5ead3 center/cover}
+.card .ph.png{background-size:96%;background-repeat:no-repeat}
+.card .tx{padding:16px 30px}
+.card h3{font-size:42px;line-height:1.05;font-weight:800}
 .card .price{font-size:40px;color:var(--sea);margin-top:6px}
 .card .badge{position:absolute;top:18px;left:18px;background:var(--gold);color:#3a2800;font-weight:800;font-size:22px;padding:4px 16px 0;border-radius:99px}
-.s-ring .now{position:absolute;left:200px;right:200px;bottom:92px;font-size:38px!important;line-height:1.2;text-align:center;font-size:48px;font-weight:700;color:#fff;min-height:70px}
+.s-ring .now{position:absolute;left:200px;right:200px;bottom:80px;z-index:5;text-shadow:0 3px 10px rgba(0,0,0,.6);font-size:38px!important;line-height:1.2;text-align:center;font-size:48px;font-weight:700;color:#fff;min-height:70px}
 .s-ring .now .price{color:var(--gold)}
 .s-ring .nw{display:inline-block;animation:nw .8s .3s cubic-bezier(.3,1,.4,1) both}
 @keyframes nw{from{opacity:0;transform:translateY(24px)}}
@@ -227,6 +227,10 @@ body.idle{cursor:none}
 .gbw .oven{inset:6% -6%;border-radius:40%}
 .gbw.st4 .oven{animation:oven 2.4s ease-in-out both}
 .gbw.st4 .ly.baked{animation:bake 1.8s .5s ease-in-out both}
+/* the real garlic bread photo is a little taller than the drawn layers: it sits centred on them and the drawn ones fade under it */
+.b3.gbw .ly.baked{top:17%;filter:drop-shadow(0 22px 20px rgba(0,0,0,.45))}
+.gbw.st4 .ly:is(.dough,.butter,.cheese){animation:gone .6s 1.3s ease both}
+@keyframes gone{from{opacity:1}to{opacity:0}}
 .gbw .cuts{position:absolute;left:2%;top:24%;width:96%;height:52%;pointer-events:none}
 .gbw .cuts i{position:absolute;top:6%;bottom:6%;width:5px;margin-left:-2px;border-radius:3px;background:linear-gradient(rgba(70,35,10,.0),rgba(70,35,10,.55) 15%,rgba(70,35,10,.55) 85%,rgba(70,35,10,0));transform:scaleY(0) rotate(8deg);transform-origin:50% 0}
 .gbw.st5 .cuts i{animation:cut .45s calc(var(--i) * .5s + .2s) ease-in both}
@@ -584,10 +588,8 @@ const priceTag=m=>{const sz=m.prices?(D.sizes||[]).filter(s=>+m.prices[s.id]):[]
 // ingredients drifting round it. Round food (a pizza) turns slowly; the rest floats.
 const FOOD_ING=['basil','tomato-slice','olive','capsicum','corn','onion','cheese'];
 const floatFood=(m,src)=>{const [w,h]=CUT[(cutOf(m)||'').split('/').pop().replace('.webp','')]||[1,1],round=m.cat==='pizza'&&w/h>.82&&w/h<1.22;
-  const spots=[[0,12,150,-20],[90,8,120,30],[97,62,140,-35],[2,74,130,40],[66,96,112,-10],[34,-6,100,25]];
   return`<div class="spotw fw"><div class="beam"></div><div class="halo"></div><div class="gsh"></div>
    <div class="fd${round?' round':''}"><img src="${esc(src)}" alt=""></div>
-   ${spots.map(([x,y,z,r],j)=>`<img class="sp-ing" src="img/ing/${FOOD_ING[j%FOOD_ING.length]}.webp" alt="" style="left:${x}%;top:${y}%;width:${z}px;--r:${r}deg;--d:${(.5+j*.12).toFixed(2)}s;--b:${(3+j*.4).toFixed(1)}s">`).join('')}
    <div class="steam">${[0,1,2].map(j=>`<i style="left:${35+j*12}%;animation-delay:${j*.6}s"></i>`).join('')}</div></div>`};
 const roundPhoto=(src,png)=>`<div class="spotw"><div class="spot"><img class="${png?'png':''}" src="${esc(src)}" alt=""></div><div class="steam">${[0,1,2].map(j=>`<i style="left:${35+j*12}%;animation-delay:${j*.6}s"></i>`).join('')}</div></div>`;
 const sizeLbl=id=>((D.sizes||[]).find(s=>s.id===id)||{}).label||(id+'"');
@@ -618,14 +620,14 @@ const SLIDES0=[
  {k:'pull',t:9,make(){return`<div class="rays" style="--rx:1370px;--ry:560px;--ra:.18"></div><div class="bigword anton">Stretch it</div>${sparkles(5,1100,1800,160,900)}
    <div class="copy"><div class="kick rise" style="--d:.1s;color:#7a4300">${KK('pull','The cheese pull')}</div><div class="h1 anton">${TT('pull',letters('Pull a')+'<br>'+letters('slice!'))}</div>
    <div class="sub script rise" style="--d:1s">Watch that cheese stretch.</div></div>
-   <div class="pullw"><div class="pull-stage"><div class="pull-plate"></div><img class="pull-pz" src="img/hero-pizza.webp" alt="">
+   <div class="pullw"><div class="pull-stage"><div class="pull-plate"></div><img class="pull-pz" src="img/real/pizza-sliced.webp" alt="">
    <svg class="pull-svg" viewBox="0 0 100 100" preserveAspectRatio="none"><defs><linearGradient id="pullg" x1="0" x2="1"><stop offset="0" stop-color="#e2a93a"/><stop offset=".35" stop-color="#fff0b0"/><stop offset=".65" stop-color="#f7d670"/><stop offset="1" stop-color="#d49a2c"/></linearGradient></defs><g fill="url(#pullg)"></g><g class="pull-hi" fill="none" stroke="#fffbe6" stroke-linecap="round"></g></svg>
-   <div class="pull-sl"><img src="img/hero-pizza.webp" alt=""></div><span class="pull-tag">¡Stretchy!</span></div></div>`},
+   <div class="pull-sl"><img src="img/real/pizza-sliced.webp" alt=""></div><span class="pull-tag">¡Stretchy!</span></div></div>`},
   tick(el,t){const st=el.querySelector('.pull-stage');
    // two pulls per slide: lift for 2.6s, hold, snap, settle
    const c=(t-1.2)%3.9,p=t<1.2?0:Math.min(1,c/3.2);st.style.setProperty('--lift',Math.min(1,Math.max(0,(p-.12)*1.6)).toFixed(3));
    st.style.setProperty('--snap',Math.min(1,Math.max(0,(p-.8)*8)).toFixed(3));st.classList.toggle('up',p>.35&&p<.85);pullDraw(st,p)}},
- {k:'ring',t:13,make(){const it=homeItems();this.items=it;const n=it.length,r=Math.max(520,n*105);this.r=r;
+ {k:'ring',t:13,make(){const it=homeItems();this.items=it;const n=it.length,r=Math.max(640,n*122);this.r=r;
    return`<div class="bigword anton">Ekdum cheesy</div><div class="head"><div class="kick rise" style="--d:.1s">${KK('ring','Our signature six')}</div><div class="h1 anton">${TT('ring',letters('Ekdum cheesy'))}</div></div>
    <div class="ringw"><div class="ring">${it.map((m,i)=>`<div class="card" style="transform:rotateY(${i*360/n}deg) translateZ(${r}px)">${m.best?'<span class="badge">Best seller</span>':''}<div class="ph${cutOf(m)?' cut':isPng(m)?' png':''}" style="background-image:url('${pic(m)}')"></div><div class="tx"><h3>${esc(m.name)}</h3><div class="price">${priceOf(m)}</div></div></div>`).join('')}</div></div>
    <div class="now"></div>`},
@@ -807,7 +809,7 @@ const BUILD={
   // dough rolled out, a block of garlic butter melts and spreads, cheese is piled on and spreads, it bakes golden,
   // and a knife cuts it into sticks
   layers:()=>`<img class="ly dough" src="img/build/gb-dough.webp" alt=""><img class="ly butter" src="img/build/gb-butter.webp" alt="">
-   <img class="ly cheese" src="img/build/gb-cheese.webp" alt=""><img class="ly baked" src="img/build/gb-baked.webp" alt=""><div class="oven"></div>
+   <img class="ly cheese" src="img/build/gb-cheese.webp" alt=""><img class="ly baked" src="img/real/garlic-bread.webp" alt=""><div class="oven"></div>
    <img class="drop db" src="img/build/drop-butter.webp" alt=""><img class="drop dc" src="img/build/drop-cheese.webp" alt="">
    <div class="cuts">${[21,39,57,75].map((x,i)=>`<i style="left:${x}%;--i:${i}"></i>`).join('')}</div><div class="knife"></div>`}};
 // where the handfuls of veggies land (they cover the whole pizza between them) and where the cheese shreds fall
