@@ -11,6 +11,9 @@ const rs2 = n => '₹' + (Math.round(n * 100) / 100).toFixed(2); // totals and p
 
 function invoicePage(o, outlet, { sizes = [], addons = {} } = {}) {
   outlet = outlet || {};
+  // Bill layout chosen by the owner (Admin → Bill layout): parts to hide, heading, title and footer
+  const B = outlet.bill || {}, hide = B.hide || {}, on = k => !hide[k];
+  if (B.address || B.phone) outlet = { ...outlet, area: B.address || outlet.area, phone: B.phone || outlet.phone }; // the owner's own address and mobile for bills
   const size = id => (sizes.find(s => s.id === id) || { label: id + '"' }).label;
   const items = o.items || [];
   // A merged table's bill: items grouped under the table they were ordered on (the order's own table first)
@@ -25,7 +28,7 @@ function invoicePage(o, outlet, { sizes = [], addons = {} } = {}) {
     return head + its.map(l => row(l, n++)).join('');
   }).join('');
   function row(l, i) {
-    const extra = l.combo ? (l.picks || []).join(', ') : [l.size ? size(l.size) : '', ...(l.addons || []).map(a => (addons[a] && addons[a].name) || a)].filter(Boolean).join(', ');
+    const extra = !on('options') ? '' : l.combo ? (l.picks || []).join(', ') : [l.size ? size(l.size) : '', ...(l.addons || []).map(a => (addons[a] && addons[a].name) || a)].filter(Boolean).join(', ');
     return `<tr><td>${i + 1}.</td><td class="n">${esc(l.name)}${extra ? `<div class="x">${esc(extra)}</div>` : ''}</td><td class="c">${esc(l.qty)}</td><td class="r">${money(l.unit)}</td><td class="r">${money(l.unit * l.qty)}</td></tr>`;
   }
   const qty = items.reduce((a, l) => a + (Number(l.qty) || 0), 0);
@@ -41,7 +44,7 @@ function invoicePage(o, outlet, { sizes = [], addons = {} } = {}) {
   const roundOff = rate ? r2(total - taxable - 2 * half) : 0;
   const itemTotal = o.subtotal != null ? o.subtotal : items.reduce((a, l) => a + l.unit * l.qty, 0);
   const sums = [
-    ['Quantity', qty],
+    ...(on('qty') ? [['Quantity', qty]] : []),
     ...(disc.length ? [['Item Total', rs(itemTotal)], ...disc.map(d => [d.name, '−' + rs(d.amt)])] : []),
     ...(rate ? [['Sub Total', rs(taxable)], [`SGST (${rate / 2}%)`, rs(half)], [`CGST (${rate / 2}%)`, rs(half)], ...(roundOff ? [['Round off Amount:', (roundOff > 0 ? '₹+' : '₹') + money(roundOff)]] : [])] : [['Sub Total', rs(total)]]),
   ].map(([k, v]) => `<div class="s"><span>${esc(k)}</span><span>${esc(v)}</span></div>`).join('');
@@ -54,11 +57,12 @@ function invoicePage(o, outlet, { sizes = [], addons = {} } = {}) {
   const utr = o.pay && o.pay.utr ? ' · UPI ref ' + o.pay.utr : '';
   const line = (k, v) => `<div class="s pm"><span>${esc(k)}</span><span>${v}</span></div>`;
   const pay = o.status === 'cancelled' ? '<div class="pm">Order cancelled</div>'
-    : parts.map(([m, v]) => line(`Payment mode (Paid via ${PAY[m] || m}${m === 'upi' ? utr : ''})`, rs2(v))).join('') + (left || !parts.length ? line('Payment mode (Not Paid)', rs2(left)) : '');
-  const shop = outlet.legal || 'CHEESY PIZZA';
+    : !on('pays') ? (left ? line('Not Paid', rs2(left)) : '') : parts.map(([m, v]) => line(`Payment mode (Paid via ${PAY[m] || m}${m === 'upi' ? utr : ''})`, rs2(v))).join('') + (left || !parts.length ? line('Payment mode (Not Paid)', rs2(left)) : '');
+  const shop = B.title || outlet.legal || 'CHEESY PIZZA';
   const token = String(o.no || '').replace(/^\D+/, '').replace(/^0+(?=\d)/, '');
+  const foot = String(B.footer == null ? "Pure veg · We don't use mayonnaise in any product.\nOregano and chilli flakes sachets served with your order are for immediate use only. Please do not preserve them for future use.\nYou authorise us to send promotional offers to your contact details.\nThank You & Visit Again...!!!" : B.footer).split('\n').map(x => x.trim()).filter(Boolean).map(esc).join('<br>');
   const cell = (k, v) => `<div class="g"><div class="k">${k}</div><div class="v">${esc(v)}</div></div>`;
-  const ids = [outlet.fssai ? 'FSSAI: ' + esc(outlet.fssai) : '', outlet.gstin ? 'GSTIN: ' + esc(outlet.gstin) : ''].filter(Boolean).join('<br>');
+  const ids = !on('footids') ? '' : [outlet.fssai && on('fssai') ? 'FSSAI: ' + esc(outlet.fssai) : '', outlet.gstin && on('gstin') ? 'GSTIN: ' + esc(outlet.gstin) : ''].filter(Boolean).join('<br>');
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Invoice ${esc(o.no)} · ${esc(shop)}</title><meta name="robots" content="noindex">
 <link rel="stylesheet" href="/img/fonts/blogger-sans.css">
@@ -71,18 +75,18 @@ h1,.tt,.bsb{font-family:var(--head,system-ui,sans-serif);font-weight:700}h1{font
 table{width:100%;border-collapse:collapse;font-size:14px}th{font-weight:500;text-align:left;padding:8px 4px;border-top:2px solid #e5e7eb;border-bottom:2px solid #e5e7eb}td{padding:9px 4px;border-bottom:1px solid #f0f1f3;vertical-align:top}
 .n{font-weight:600}.grp td{font-weight:800;color:#0f4a55;background:#f3f8f9;border-bottom:1px solid #e5e7eb}.x{font-weight:400;color:#6b7280;font-size:12px}.c{text-align:center}.r{text-align:right;white-space:nowrap}th.c{text-align:center}th.r{text-align:right}
 .sums{border-top:2px solid #e5e7eb;margin-top:2px;padding-top:6px}.s{display:flex;justify-content:space-between;padding:5px 0;font-weight:600}.tot{border-top:2px solid #e5e7eb;margin-top:6px;padding-top:8px}
-.pm{font-weight:600;padding:5px 0}.gi{margin-top:12px}.op{text-align:center;font-size:14px;margin-top:2px}.ids{text-align:center;color:#374151;margin-top:8px;font-size:14px;line-height:1.6}.ft{text-align:center;color:#6b7280;font-size:13px;margin-top:16px;border-top:1px solid #e5e7eb;padding-top:12px}</style></head>
-<body><div class="w"><header class="hd"><img class="lg" src="/img/logo-badge.png" alt="Cheesy Pizza" width="150" height="150">
-<h1>${esc(shop)}</h1></header>
-<div class="grid">${cell('Order Number', o.no || '')}${cell('Date', when(o.ts))}${cell('Order amount', rs(total))}${cell('Order type', TYPES[o.type] || '')}${cell('Biller Name', o.source === 'online' ? 'Online order' : (o.by || 'Counter'))}${cell('Token No.', token || '-')}${o.type === 'dine' && o.table ? cell('Table No.', o.table) : ''}${o.type === 'dine' && Number(o.guests) > 0 ? cell('No. of Persons', Number(o.guests)) : ''}</div>
-<div class="cu"><div class="k">Customer Details</div>${o.customer && o.customer.name ? `<div class="v">${esc(o.customer.name)}</div>` : ''}${o.customer && o.customer.phone ? `<div class="v p">${esc(o.customer.phone)}</div>` : ''}${o.address ? `<div class="v p">${esc(o.address)}</div>` : ''}</div>
-<div class="box">${outlet.name ? `<div class="ad">${esc(outlet.name)}</div>` : ''}${outlet.area ? `<div class="ad">${esc(outlet.area)}</div>` : ''}${outlet.phone ? `<div class="op">Ph: <a href="tel:${esc(String(outlet.phone).replace(/\s/g, ''))}">${esc(outlet.phone)}</a></div>` : ''}
-${outlet.gstin || outlet.fssai ? `<div class="ad gi">${outlet.gstin ? `GSTIN : ${esc(outlet.gstin)}` : ''}${outlet.gstin && outlet.fssai ? '<br>' : ''}${outlet.fssai ? `FSSAI : ${esc(outlet.fssai)}` : ''}</div>` : ''}
-<div class="tt">${rate ? 'TAX INVOICE' : 'INVOICE'}</div>
+.pm{font-weight:600;padding:5px 0}.gi{margin-top:12px}.tg{font-size:13px;color:#6b7280;font-style:italic;margin-top:2px}.op{text-align:center;font-size:14px;margin-top:2px}.ids{text-align:center;color:#374151;margin-top:8px;font-size:14px;line-height:1.6}.ft{text-align:center;color:#6b7280;font-size:13px;margin-top:16px;border-top:1px solid #e5e7eb;padding-top:12px}</style></head>
+<body><div class="w"><header class="hd">${on('logo') ? '<img class="lg" src="/img/logo-badge.png" alt="Cheesy Pizza" width="150" height="150">' : ''}
+<h1>${esc(shop)}</h1>${on('tagline') && (B.tagline == null ? 'Really Cheesy...!' : B.tagline) ? `<div class="tg">${esc(B.tagline == null ? 'Really Cheesy...!' : B.tagline)}</div>` : ''}</header>
+<div class="grid">${cell('Order Number', o.no || '')}${cell('Date', when(o.ts))}${cell('Order amount', rs(total))}${cell('Order type', TYPES[o.type] || '')}${on('biller') ? cell('Biller Name', o.source === 'online' ? 'Online order' : (o.by || 'Counter')) : ''}${on('token') ? cell('Token No.', token || '-') : ''}${o.type === 'dine' && o.table ? cell('Table No.', o.table) : ''}${o.type === 'dine' && Number(o.guests) > 0 ? cell('No. of Persons', Number(o.guests)) : ''}</div>
+${on('customer') || o.address ? `<div class="cu"><div class="k">Customer Details</div>${on('customer') && o.customer && o.customer.name ? `<div class="v">${esc(o.customer.name)}</div>` : ''}${on('customer') && o.customer && o.customer.phone ? `<div class="v p">${esc(o.customer.phone)}</div>` : ''}${o.address ? `<div class="v p">${esc(o.address)}</div>` : ''}</div>` : ''}
+<div class="box">${outlet.name && on('outlet') ? `<div class="ad">${esc(outlet.name)}</div>` : ''}${outlet.area && on('address') ? `<div class="ad">${esc(outlet.area)}</div>` : ''}${outlet.phone && on('phone') ? `<div class="op">Ph: <a href="tel:${esc(String(outlet.phone).replace(/\s/g, ''))}">${esc(outlet.phone)}</a></div>` : ''}
+${(outlet.gstin && on('gstin')) || (outlet.fssai && on('fssai')) ? `<div class="ad gi">${outlet.gstin && on('gstin') ? `GSTIN : ${esc(outlet.gstin)}` : ''}${outlet.gstin && on('gstin') && outlet.fssai && on('fssai') ? '<br>' : ''}${outlet.fssai && on('fssai') ? `FSSAI : ${esc(outlet.fssai)}` : ''}</div>` : ''}
+<div class="tt">${esc(B.invTitle || (rate ? 'TAX INVOICE' : 'INVOICE'))}</div>
 <table><thead><tr><th>No.</th><th>Name</th><th class="c">Qty.</th><th class="r">Rate(₹)</th><th class="r">Price(₹)</th></tr></thead><tbody>${rows}</tbody></table>
 <div class="sums">${sums}<div class="s tot"><span>Total Payable Amount:</span><span>${rs2(total)}</span></div>${pay}</div>
 ${ids ? `<div class="ids">${ids}</div>` : ''}</div>
-<div class="ft">Pure veg · We don't use mayonnaise in any product.<br>Thank You &amp; Visit Again...!!!</div></div></body></html>`;
+${foot ? `<div class="ft">${foot}</div>` : ''}</div></body></html>`;
 }
 
 module.exports = { invoicePage, when };
