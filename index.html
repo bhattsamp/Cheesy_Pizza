@@ -1477,7 +1477,7 @@ html:has(body:not(.pubmode) .pos){scroll-padding-top:calc(env(safe-area-inset-to
 .ltseg button{border:0;background:none;border-radius:999px;padding:4px 10px;font:600 12.5px inherit;color:var(--muted);white-space:nowrap;cursor:pointer}
 .ltseg button[aria-pressed="true"]{background:var(--teal);color:#fff}.ltseg button.l2[aria-pressed="true"]{background:#c9771a}
 #printRoot{display:none}
-@media print{body>*:not(#printRoot){display:none!important}#printRoot{display:block!important}#printRoot pre{font:12px/1.3 "Courier New",monospace;margin:0;white-space:pre}@page{margin:4mm}}
+@media print{body>*:not(#printRoot){display:none!important}#printRoot{display:block!important}#printRoot pre{font:12px/1.3 "Courier New",monospace;margin:0;white-space:pre}#printRoot .plogo{display:block;width:34mm;height:auto;margin:0 0 1mm 9mm}@page{margin:4mm}}
 </style>
 <style>
 /* Opening animation: shown while the app starts, removed by introDone() */
@@ -4579,7 +4579,9 @@ function openPay(){
 // Dine-in and takeaway: the customer's name is required and the mobile number optional. A cashier's delivery still needs the number.
 const needPhone=()=>staff()?.role==='cashier'&&U.pos.type==='delivery';
 const needName=()=>['dine','takeaway'].includes(U.pos.type);
-function printText(txt,o){if(btp())return btPrint(txt,o&&o.drawer);const r=document.getElementById('printRoot');r.innerHTML=`<pre>${esc(txt)}</pre>`;try{window.print()}catch(_){}}
+function printText(txt,o){if(btp())return btPrint(txt,o&&o.drawer);const r=document.getElementById('printRoot');
+  // a customer bill printed from the browser carries the logo on top (receipt printers in the app print text only)
+  r.innerHTML=(/TOTAL PAYABLE/.test(txt)?'<img class="plogo" src="img/logo-badge.png" alt="">':'')+`<pre>${esc(txt)}</pre>`;try{window.print()}catch(_){}}
 /* Admin app: bills and KOTs go straight to the receipt printer (Bluetooth or USB, chosen once, kept
    on this device), and cash payments open the cash drawer plugged into that printer. The website
    and older apps use the browser's print box. */
@@ -4809,27 +4811,46 @@ function billGroups(o){
   const own='T'+(o.table||'?'),m=new Map([[own,[]]]);o.items.forEach(l=>{const k=l.from||own;if(!m.has(k))m.set(k,[]);m.get(k).push(l)});
   return [...m].filter(([,it])=>it.length).map(([name,items])=>({name,items,amt:items.reduce((a,l)=>a+l.unit*l.qty,0)}))}
 function billText(o){
-  const out=outletOf(o);const L=[];const hr='-'.repeat(32);
-  L.push(center(out.legal||'CHEESY PIZZA'),center('Really Cheesy...!'),center(out.name),center('Ph: '+fmtPhone(out.phone)),...(out.gstin?[center('GSTIN: '+out.gstin)]:[]),...(out.fssai?[center('FSSAI: '+out.fssai)]:[]),center('PURE VEG'),hr);
-  L.push(pad('Bill: '+o.no,TYPES[o.type]),pad(fmtDate(o.date),fmtTime(o.ts)));
-  if(o.customer.name||o.customer.phone)L.push('Cust: '+(o.customer.name||'')+' '+(o.customer.phone||''));
-  if(o.table||+o.guests)L.push(pad(o.table?'Table: '+o.table:'',+o.guests?'Persons: '+o.guests:''));if(o.bookAt)L.push('Booked for: '+advWhen(o.bookAt));if(o.address)L.push('Addr: '+o.address.slice(0,26));if(o.zomatoId)L.push('Zomato ID: '+o.zomatoId);
-  L.push(hr,pad('Item','Amt'),hr);
+  // Same order as the e-bill (a standard tax invoice): shop, address, GSTIN and FSSAI (each only when the
+  // outlet has it), the order details, numbered items with qty, rate and price, then totals and payments
+  const out=outletOf(o);const L=[];const hr='-'.repeat(32);const m2=n=>(Math.round(n*100)/100).toFixed(2);
+  const wrap=(s,w=32)=>{const r=[];let cur='';String(s).split(/\s+/).forEach(x=>{if((cur+' '+x).trim().length>w){if(cur)r.push(cur);cur=x}else cur=(cur+' '+x).trim()});if(cur)r.push(cur);return r};
+  L.push(center((out.legal||'CHEESY PIZZA').toUpperCase()),center('Really Cheesy...!'));
+  if(out.name)L.push(center(out.name));if(out.area)wrap(out.area).forEach(x=>L.push(center(x)));if(out.phone)L.push(center('Ph: '+fmtPhone(out.phone)));
+  if(out.gstin)L.push(center('GSTIN: '+out.gstin));if(out.fssai)L.push(center('FSSAI: '+out.fssai));
+  L.push(hr,center(o.gst?'TAX INVOICE':'INVOICE'),hr);
+  const tok=String(o.no||'').replace(/^\D+/,'').replace(/^0+(?=\d)/,'');
+  L.push(pad('Order No: '+o.no,'Token: '+(tok||'-')),pad(fmtDate(o.date),fmtTime(o.ts)),pad('Type: '+TYPES[o.type],'Biller: '+(o.source==='online'?'Online':(o.by||'Counter')).slice(0,12)));
+  if(o.customer.name)L.push('Cust: '+o.customer.name.slice(0,26));if(o.customer.phone)L.push('Mob: '+o.customer.phone);
+  if(o.table||+o.guests)L.push(pad(o.table?'Table: '+o.table:'',+o.guests?'Persons: '+o.guests:''));if(o.bookAt)L.push('Booked for: '+advWhen(o.bookAt));if(o.address)wrap('Addr: '+o.address).forEach(x=>L.push(x));if(o.zomatoId)L.push('Zomato ID: '+o.zomatoId);
+  // columns: No. + Name (16) | Qty (3) | Rate (6) | Price (7)
+  const col=(a,q,r,p)=>String(a).padEnd(16).slice(0,16)+String(q).padStart(3)+String(r).padStart(6)+String(p).padStart(7);
+  L.push(hr,col('No. Name','Qty','Rate','Price'),hr);
+  let n=0;const line=l=>{n++;const nm=n+'.'+l.name;if(nm.length<=16)L.push(col(nm,l.qty,l.unit,l.unit*l.qty));else{wrap(nm,32).forEach(x=>L.push(x));L.push(col('',l.qty,l.unit,l.unit*l.qty))}const a=addonText(l);if(a)wrap(a,29).forEach(x=>L.push('   '+x))};
   // A merged table's bill lists each table's items under its own heading (T2 first, then the tables merged into it)
-  const line=l=>{L.push(pad(l.qty+' x '+l.name.slice(0,20),String(l.unit*l.qty)));const a=addonText(l);if(a)L.push('   '+a.slice(0,29))};
   const groups=billGroups(o);
   if(groups.length>1)groups.forEach(g=>{L.push(pad('-- '+g.name+' --','Rs '+g.amt));g.items.forEach(line)});else o.items.forEach(line);
-  L.push(hr,pad('Item total','Rs '+o.subtotal));(o.discounts||[]).forEach(d=>L.push(pad(d.name.slice(0,22),'-'+d.amt)));
-  if(o.gst){const h=(o.gst.tax/2).toFixed(2);L.push(pad(`SGST ${o.gst.rate/2}%`+(o.gst.mode==='incl'?' (incl)':''),h),pad(`CGST ${o.gst.rate/2}%`+(o.gst.mode==='incl'?' (incl)':''),h));const ro=o.gst.mode==='excl'&&o.gst.net!=null?Math.round((o.total-o.gst.net-2*h)*100)/100:0;if(ro)L.push(pad('Round off',(ro>0?'+':'')+ro.toFixed(2)))}
-  const sp=paySplits(o);
-  if(sp){L.push(pad('TOTAL','Rs '+o.total));sp.forEach(x=>L.push(pad(x.mode==='due'?'Baki (on account)':'Paid by '+PAY[x.mode],'Rs '+x.amt)));if(!o.paid&&balanceOf(o))L.push(pad('BALANCE DUE','Rs '+balanceOf(o)))}
-  else L.push(pad('TOTAL','Rs '+o.total),o.paid?pad('Paid by',PAY[o.pay.mode]):pad('Payment','BAKI '+(o.pay.mode==='due'?'(on account)':'(not paid)')));if(o.walletUsed&&o.pay.mode!=='wallet')L.push(pad('From wallet','Rs '+o.walletUsed));if(o.coinsEarned)L.push(pad('Cheese Coins earned','+'+o.coinsEarned));
+  L.push(hr,pad('Quantity',String(o.items.reduce((a,l)=>a+(+l.qty||0),0))));
+  if((o.discounts||[]).length){L.push(pad('Item Total','Rs '+o.subtotal));o.discounts.forEach(d=>L.push(pad(d.name.slice(0,22),'-'+d.amt)))}
+  if(o.gst){const t=o.total,g=o.gst,net=g.mode==='excl'&&g.net!=null?g.net:g.mode==='excl'?t-g.tax:Math.round(t/(1+g.rate/100)*100)/100;const h=Math.round((g.mode==='excl'&&g.tax!=null?g.tax:t-net)/2*100)/100;const ro=Math.round((t-net-2*h)*100)/100;
+    L.push(pad('Sub Total','Rs '+m2(net)),pad(`SGST (${g.rate/2}%)`,'Rs '+m2(h)),pad(`CGST (${g.rate/2}%)`,'Rs '+m2(h)));if(ro)L.push(pad('Round off',(ro>0?'+':'')+m2(ro)))}
+  else L.push(pad('Sub Total','Rs '+m2(o.total)));
+  L.push(hr,pad('TOTAL PAYABLE','Rs '+m2(o.total)));
+  const sp=paySplits(o),wal=+o.walletUsed||0;
+  const parts=sp?sp.filter(x=>x.amt>0&&x.mode!=='due').map(x=>[x.mode,x.amt]):o.paid&&!['due','pending'].includes(o.pay.mode)?[[o.pay.mode,o.total-(o.pay.mode==='wallet'?0:wal)]]:[];
+  if(wal&&o.pay.mode!=='wallet')parts.unshift(['wallet',wal]);
+  parts.forEach(([md,v])=>L.push(pad('Paid via '+(PAY[md]||md),'Rs '+m2(v))));
+  const left=Math.max(0,Math.round((o.total-parts.reduce((a,[,v])=>a+v,0))*100)/100);
+  if(left||!parts.length)L.push(pad('Not Paid'+(o.pay.mode==='due'?' (on account)':' (baki)'),'Rs '+m2(left)));
+  if(o.coinsEarned)L.push(pad('Cheese Coins earned','+'+o.coinsEarned));
   if(o.pay.utr&&!o.pay.app)L.push(pad('UPI ref (UTR)',o.pay.utr));
   if(o.pay.mode==='cash'&&o.pay.given)L.push(pad('Given','Rs '+o.pay.given),pad('Return','Rs '+o.pay.change));
   if(o.status==='cancelled')L.push(hr,center('*** CANCELLED ***'));
-  L.push(hr,center('Thank you! Visit again'),center('No Mayonnaise Products'));
+  L.push(hr);if(out.fssai)L.push(center('FSSAI: '+out.fssai));if(out.gstin)L.push(center('GSTIN: '+out.gstin));
+  L.push(center('Pure veg - No mayonnaise'),center('Thank You & Visit Again...!!!'));
   return L.join('\n');
 }
+
 function wrapTxt(t,w){const out=[];let line='';String(t).split(' ').forEach(x=>{if((line+' '+x).trim().length>w){if(line)out.push(line);line=x}else line=(line+' '+x).trim()});if(line)out.push(line);return out}
 // round: print only the items added in that round (more items for a running table)
 function kotText(o,round){

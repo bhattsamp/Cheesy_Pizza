@@ -7,6 +7,7 @@ const PAY = { cash: 'Cash', upi: 'UPI', card: 'Card', bank: 'Bank transfer', wal
 const TYPES = { delivery: 'Delivery', takeaway: 'Pick Up', dine: 'Dine In' };
 const money = n => (Math.round(n * 100) / 100).toFixed(2).replace(/\.00$/, '');
 const rs = n => '₹' + money(n);
+const rs2 = n => '₹' + (Math.round(n * 100) / 100).toFixed(2); // totals and payments always show paise, e.g. ₹1155.00
 
 function invoicePage(o, outlet, { sizes = [], addons = {} } = {}) {
   outlet = outlet || {};
@@ -42,13 +43,18 @@ function invoicePage(o, outlet, { sizes = [], addons = {} } = {}) {
   const sums = [
     ['Quantity', qty],
     ...(disc.length ? [['Item Total', rs(itemTotal)], ...disc.map(d => [d.name, '−' + rs(d.amt)])] : []),
-    ...(rate ? [['Sub Total', rs(taxable)], [`SGST (${rate / 2}%)`, rs(half)], [`CGST (${rate / 2}%)`, rs(half)], ...(roundOff ? [['Round off Amount:', (roundOff > 0 ? '₹+' : '₹') + money(roundOff)]] : [])] : []),
+    ...(rate ? [['Sub Total', rs(taxable)], [`SGST (${rate / 2}%)`, rs(half)], [`CGST (${rate / 2}%)`, rs(half)], ...(roundOff ? [['Round off Amount:', (roundOff > 0 ? '₹+' : '₹') + money(roundOff)]] : [])] : [['Sub Total', rs(total)]]),
   ].map(([k, v]) => `<div class="s"><span>${esc(k)}</span><span>${esc(v)}</span></div>`).join('');
-  // A split bill lists each part, e.g. "Cash ₹100 + UPI ₹170"
+  // One "Payment mode" line per way of paying, as on a standard tax invoice, then what is still not paid
   const splits = o.pay && o.pay.mode === 'split' && Array.isArray(o.pay.splits) ? o.pay.splits : null;
-  const via = splits ? splits.map(x => (PAY[x.mode] || x.mode) + ' ' + rs(x.amt)).join(' + ') : PAY[o.pay && o.pay.mode] || 'Cash';
+  const wallet = Number(o.walletUsed) || 0;
+  const parts = splits ? splits.filter(x => Number(x.amt) > 0 && x.mode !== 'due').map(x => [x.mode, Number(x.amt)]) : o.paid && o.pay && !['due', 'pending'].includes(o.pay.mode) ? [[o.pay.mode, total - (o.pay.mode === 'wallet' ? 0 : wallet)]] : [];
+  if (wallet && !(o.pay && o.pay.mode === 'wallet')) parts.unshift(['wallet', wallet]);
+  const left = Math.max(0, Math.round((total - parts.reduce((a, [, v]) => a + v, 0)) * 100) / 100);
   const utr = o.pay && o.pay.utr ? ' · UPI ref ' + o.pay.utr : '';
-  const pay = o.status === 'cancelled' ? 'Order cancelled' : o.paid ? `Payment mode (Paid via ${esc(via + utr)})` : splits ? `Paid so far: ${esc(via + utr)} · Balance due ${rs(Math.max(0, total - (Number(o.walletUsed) || 0) - splits.reduce((a, x) => a + (Number(x.amt) || 0), 0)))}` : 'Payment mode (Not paid yet)';
+  const line = (k, v) => `<div class="s pm"><span>${esc(k)}</span><span>${v}</span></div>`;
+  const pay = o.status === 'cancelled' ? '<div class="pm">Order cancelled</div>'
+    : parts.map(([m, v]) => line(`Payment mode (Paid via ${PAY[m] || m}${m === 'upi' ? utr : ''})`, rs2(v))).join('') + (left || !parts.length ? line('Payment mode (Not Paid)', rs2(left)) : '');
   const shop = outlet.legal || 'CHEESY PIZZA';
   const token = String(o.no || '').replace(/^\D+/, '').replace(/^0+(?=\d)/, '');
   const cell = (k, v) => `<div class="g"><div class="k">${k}</div><div class="v">${esc(v)}</div></div>`;
@@ -59,24 +65,24 @@ function invoicePage(o, outlet, { sizes = [], addons = {} } = {}) {
 <style>*{box-sizing:border-box}body{margin:0;background:#fff;color:#1f2a37;font:15px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif}.w{max-width:560px;margin:0 auto;padding:18px 14px 28px}
 .hd{text-align:center;margin:0 0 18px;padding-bottom:14px;border-bottom:2px dashed #e5e7eb}.lg{display:block;width:150px;height:auto;margin:-14px auto -18px}
 h1,.tt,.bsb{font-family:var(--head,system-ui,sans-serif);font-weight:700}h1{font-size:18px;text-align:center;margin:4px 0 2px;letter-spacing:.3px;text-transform:uppercase;color:#0f4a55}.on{font-weight:800;font-size:17px;color:#e09a12;margin-top:4px}
-.oa{margin:6px auto 0;max-width:420px;color:#374151;font-size:14px;line-height:1.45}.op{margin-top:3px;font-size:14px}.op a{color:#1a93a8;text-decoration:none;font-weight:600}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px}.g{border-left:3px solid #e5e7eb;padding:2px 0 2px 12px}
+.oa{margin:6px auto 0;max-width:420px;color:#374151;font-size:14px;line-height:1.45}.op a{color:#1a93a8;text-decoration:none;font-weight:600}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px}.g{border-left:3px solid #e5e7eb;padding:2px 0 2px 12px}
 .k{color:#6b7280;font-size:14px}.v{margin-top:2px;font-size:15px}.cu{margin:16px 0}.cu .v{text-transform:uppercase}.cu .p{text-transform:none}
 .box{border:1px solid #e5e7eb;border-radius:12px;padding:16px 14px}.ad{text-align:center;font-weight:600;line-height:1.5}.tt{text-align:center;font-weight:700;margin:18px 0 10px}
 table{width:100%;border-collapse:collapse;font-size:14px}th{font-weight:500;text-align:left;padding:8px 4px;border-top:2px solid #e5e7eb;border-bottom:2px solid #e5e7eb}td{padding:9px 4px;border-bottom:1px solid #f0f1f3;vertical-align:top}
 .n{font-weight:600}.grp td{font-weight:800;color:#0f4a55;background:#f3f8f9;border-bottom:1px solid #e5e7eb}.x{font-weight:400;color:#6b7280;font-size:12px}.c{text-align:center}.r{text-align:right;white-space:nowrap}th.c{text-align:center}th.r{text-align:right}
 .sums{border-top:2px solid #e5e7eb;margin-top:2px;padding-top:6px}.s{display:flex;justify-content:space-between;padding:5px 0;font-weight:600}.tot{border-top:2px solid #e5e7eb;margin-top:6px;padding-top:8px}
-.pm{font-weight:600;padding:6px 0}.ids{text-align:center;color:#374151;margin-top:8px;font-size:14px;line-height:1.6}.ft{text-align:center;color:#6b7280;font-size:13px;margin-top:16px;border-top:1px solid #e5e7eb;padding-top:12px}</style></head>
+.pm{font-weight:600;padding:5px 0}.gi{margin-top:12px}.op{text-align:center;font-size:14px;margin-top:2px}.ids{text-align:center;color:#374151;margin-top:8px;font-size:14px;line-height:1.6}.ft{text-align:center;color:#6b7280;font-size:13px;margin-top:16px;border-top:1px solid #e5e7eb;padding-top:12px}</style></head>
 <body><div class="w"><header class="hd"><img class="lg" src="/img/logo-badge.png" alt="Cheesy Pizza" width="150" height="150">
-${/^cheesy pizza$/i.test(shop.trim()) ? '' : `<h1>${esc(shop)}</h1>`}${outlet.name ? `<div class="on">${esc(outlet.name)}</div>` : ''}
-${outlet.area ? `<div class="oa">📍 ${esc(outlet.area)}</div>` : ''}${outlet.phone ? `<div class="op">📞 <a href="tel:${esc(String(outlet.phone).replace(/\s/g, ''))}">${esc(outlet.phone)}</a></div>` : ''}</header>
+<h1>${esc(shop)}</h1></header>
 <div class="grid">${cell('Order Number', o.no || '')}${cell('Date', when(o.ts))}${cell('Order amount', rs(total))}${cell('Order type', TYPES[o.type] || '')}${cell('Biller Name', o.source === 'online' ? 'Online order' : (o.by || 'Counter'))}${cell('Token No.', token || '-')}${o.type === 'dine' && o.table ? cell('Table No.', o.table) : ''}${o.type === 'dine' && Number(o.guests) > 0 ? cell('No. of Persons', Number(o.guests)) : ''}</div>
 <div class="cu"><div class="k">Customer Details</div>${o.customer && o.customer.name ? `<div class="v">${esc(o.customer.name)}</div>` : ''}${o.customer && o.customer.phone ? `<div class="v p">${esc(o.customer.phone)}</div>` : ''}${o.address ? `<div class="v p">${esc(o.address)}</div>` : ''}</div>
-<div class="box">${outlet.gstin ? `<div class="ad">GSTIN : ${esc(outlet.gstin)}</div>` : ''}
+<div class="box">${outlet.name ? `<div class="ad">${esc(outlet.name)}</div>` : ''}${outlet.area ? `<div class="ad">${esc(outlet.area)}</div>` : ''}${outlet.phone ? `<div class="op">Ph: <a href="tel:${esc(String(outlet.phone).replace(/\s/g, ''))}">${esc(outlet.phone)}</a></div>` : ''}
+${outlet.gstin || outlet.fssai ? `<div class="ad gi">${outlet.gstin ? `GSTIN : ${esc(outlet.gstin)}` : ''}${outlet.gstin && outlet.fssai ? '<br>' : ''}${outlet.fssai ? `FSSAI : ${esc(outlet.fssai)}` : ''}</div>` : ''}
 <div class="tt">${rate ? 'TAX INVOICE' : 'INVOICE'}</div>
 <table><thead><tr><th>No.</th><th>Name</th><th class="c">Qty.</th><th class="r">Rate(₹)</th><th class="r">Price(₹)</th></tr></thead><tbody>${rows}</tbody></table>
-<div class="sums">${sums}<div class="s tot"><span>Total Payable Amount:</span><span>${rs(total)}</span></div><div class="pm">${pay}</div></div>
+<div class="sums">${sums}<div class="s tot"><span>Total Payable Amount:</span><span>${rs2(total)}</span></div>${pay}</div>
 ${ids ? `<div class="ids">${ids}</div>` : ''}</div>
-<div class="ft"><span class="bsb">Cheesy Pizza</span> · ${esc(outlet.name || '')}<br>Thank you! Visit again 🍕</div></div></body></html>`;
+<div class="ft">Pure veg · We don't use mayonnaise in any product.<br>Thank You &amp; Visit Again...!!!</div></div></body></html>`;
 }
 
 module.exports = { invoicePage, when };
