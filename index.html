@@ -5268,10 +5268,11 @@ function itemHist(o){
   const old=o.items.filter(l=>(l.round||1)>1&&!seen.has(l.round)).map(l=>({act:'add',at:l.at||o.ts,by:l.by||'',round:l.round,name:lineName(l),qty:l.qty,from:l.from}));
   return [...old,...log].sort((a,b)=>a.at-b.at)}
 function openOrderHist(o){
-  const all=[...itemHist(o),...(o.log||[]).filter(e=>e.act==='hold'||e.act==='release'),...(o.tableFreed?[{act:'free',...o.tableFreed}]:[])].sort((a,b)=>a.at-b.at);
+  const all=[...itemHist(o),...(o.log||[]).filter(e=>e.act==='hold'||e.act==='release'||e.act==='pay'),...(o.tableFreed?[{act:'free',...o.tableFreed}]:[])].sort((a,b)=>a.at-b.at);
   const what=e=>e.act==='add'?`<span class="ohxt add">Added</span> ${e.qty} × ${esc(e.name)}${e.from?' <span class="muted">(from '+esc(e.from)+')</span>':''}`
     :e.act==='update'?`<span class="ohxt upd">Changed</span> ${esc(e.name)}: <span class="num">${e.from} → ${e.to}</span>`
     :e.act==='remove'?`<span class="ohxt rem">Removed</span> ${e.qty} × ${esc(e.name)}`
+    :e.act==='pay'?`<span class="ohxt upd">Payment changed</span> ${esc(e.from)} → ${esc(e.to)}`
     :e.act==='hold'?'<span class="ohxt">On hold</span> Timer stopped, not shown in the kitchen'
     :e.act==='release'?'<span class="ohxt">Released</span> Timer started again':'<span class="ohxt">Table released</span> Set free by hand';
   showModal(`<div class="mh"><h3>History · <span class="num">${esc(o.no)}</span></h3><button class="x" data-act="close" aria-label="Close">×</button></div>
@@ -5279,6 +5280,46 @@ function openOrderHist(o){
   ${all.map(e=>`<div class="ohx-r"><b class="num">${fmtTime(e.at)}</b><div>${what(e)}${e.by?`<div class="small muted">by ${esc(e.by)}</div>`:''}</div></div>`).join('')}
   <div class="small muted">Now ${o.items.reduce((a,l)=>a+l.qty,0)} items · <b class="num">${rs(o.total)}</b></div></div>`);
 }
+// Change payment mode: an owner, manager or cashier fixes how a paid order was paid (e.g. billed as
+// Cash but the customer paid by UPI) from Order history. Each change is kept in o.log as
+// {act:'pay',at,by,role,from,to}; day sale, reports and the bill read o.pay, so they follow at once.
+// Zomato, wallet and baki orders are left out, since their money is not taken at the counter.
+const PAY_EDIT_ROLES=['owner','oowner','manager','cashier'];
+const payLog=o=>(o.log||[]).filter(e=>e.act==='pay');
+const payChgNote=o=>{const e=payLog(o).slice(-1)[0];return e?'Changed from '+e.from+(e.by?' by '+e.by:'')+' · '+fmtTime(e.at):''};
+function canPayEdit(o){if(!o||!o.paid||!o.pay||o.status==='cancelled'||!PAY_EDIT_ROLES.includes(staff()?.role))return false;
+  const sp=paySplits(o);if(sp)return sp.every(x=>COUNTER_MODES.includes(x.mode));return COUNTER_MODES.includes(o.pay.mode)||OFF_MODES.includes(o.pay.mode)}
+function openPayEdit(o){
+  if(!canPayEdit(o)){toast('This payment can not be changed here');return}
+  const amt=r2(o.total-(o.walletUsed||0)),sp0=paySplits(o);
+  let mode=sp0?'split':o.pay.mode,v={},utr=o.pay.utr||'',err='';
+  if(sp0)sp0.forEach(x=>v[x.mode]=String(x.amt));
+  const draw=()=>showModal(`<div class="mh"><h3>Change payment · <span class="num">${esc(o.no)}</span></h3><button class="x" data-act="close" aria-label="Close">×</button></div>
+  <div class="mb"><div class="small">${esc(o.customer.name||'Walk-in')} · ${fmtTime(o.ts)} · <b class="num">${rs(amt)}</b>${o.walletUsed?` <span class="muted">(${rs(o.walletUsed)} from wallet stays)</span>`:''}</div>
+   <div class="small muted">Now: <b>${esc(payName(o))}</b></div>
+   <div class="field"><label>Paid by</label><div class="paymodes">${[...COUNTER_MODES,'split'].map(k=>`<button data-act="pe-mode" data-v="${k}" aria-pressed="${mode===k}">${k==='split'?'Split':PAY[k]||k}</button>`).join('')}</div></div>
+   ${mode==='split'?splitHtml(amt,v,COUNTER_MODES,'pe'):''}
+   ${mode==='upi'||mode==='split'?utrField('pe-utr',utr):''}
+   ${dayClose(o.date,outletOf(o))?'<div class="notice small">This day is already closed. Close it again afterwards so the cash count is right.</div>':''}
+   ${err?`<div class="msg-bad">${esc(err)}</div>`:''}
+   <div class="row" style="gap:8px"><button class="btn lg grow" data-act="close">Back</button><button class="btn pri lg grow" data-act="pe-save">Save</button></div></div>`,
+  {onAct:(act,el)=>{
+    if(act==='pe-mode'){mode=el.dataset.v;err='';draw();return true}
+    if(act==='sp-rest'){splitRest(v,COUNTER_MODES,amt,el.dataset.v);draw();return true}
+    if(act!=='pe-save')return false;
+    const u=mode==='cash'?'':utrClean(utr);if(utrBad(u)){err=utrBad(u);draw();return true}
+    let pay;
+    if(mode==='split'){const list=splitList(v,COUNTER_MODES);const pr=splitProblem(list,amt);if(pr){err=pr;draw();return true}
+      pay=list.length===1?{mode:list[0].mode,given:0,change:0}:{mode:'split',splits:list,given:0,change:0}}
+    else pay={mode,given:0,change:0};
+    const hasUpi=pay.mode==='upi'||(pay.splits||[]).some(x=>x.mode==='upi');
+    if(hasUpi){if(u)pay.utr=u;if(o.pay.app&&(!u||u===o.pay.utr))Object.assign(pay,{app:true,...(o.pay.ref?{ref:o.pay.ref}:{}),...(o.pay.txn?{txn:o.pay.txn}:{})});if(o.pay.check)pay.check=o.pay.check}
+    const from=payName(o),to=payName({...o,pay});
+    if(from===to&&(o.pay.utr||'')===(pay.utr||'')){closeModal();return true}
+    const su=staff();o.pay=pay;o.log=[...(o.log||[]),{act:'pay',at:Date.now(),by:su?.name||'',role:su?.role||'',from,to}];
+    save();closeModal();toast(o.no+' · now paid by '+to);render();return true},
+   onInput:e=>{if(e.target.id==='pe-utr'){utr=e.target.value;return}splitInput(e,v,COUNTER_MODES,amt,'pe')}});
+  draw()}
 // Order history sorting: tap a column heading; tap again to flip the direction
 const ORD_SORT={no:o=>o.no,cust:o=>(o.customer.name||'').toLowerCase(),type:o=>TYPES[o.type]||'',time:o=>o.ts,total:o=>o.total,pay:o=>(o.paid?'1':'0')+payName(o),status:o=>statusName(o.status,o.type),by:o=>o.source==='online'?'Customer site':(o.by||'')};
 function ordSorter(){const st=U.ordSort||{k:'time',d:-1},f=ORD_SORT[st.k]||ORD_SORT.time;return (a,b)=>{const x=f(a),y=f(b);return (x<y?-1:x>y?1:0)*st.d||b.ts-a.ts}}
@@ -5296,12 +5337,12 @@ function vOrders(){
     <input class="inp" id="od-q" placeholder="Order no, name, mobile or Zomato ID" value="${esc(U.ordersQ)}" style="max-width:260px"></div>
   ${unpaid.length?`<div class="notice" style="margin-bottom:10px;background:var(--bad-soft);color:var(--bad)"><b>${unpaid.length} order${unpaid.length>1?'s':''} not paid yet · ${rs(unpaid.reduce((a,o)=>a+o.total,0))}</b></div>`:''}
   <div class="card tw"><table class="stk ordtbl ohist"><thead><tr><th data-l="No."><button class="sortb" data-act="od-sort" data-v="no">No.${sortMark('no')}</button></th><th data-l="Customer"><button class="sortb" data-act="od-sort" data-v="cust">Customer${sortMark('cust')}</button></th><th data-l="Type"><button class="sortb" data-act="od-sort" data-v="type">Type${sortMark('type')}</button></th><th>Items</th><th data-l="Time"><button class="sortb" data-act="od-sort" data-v="time">Time${sortMark('time')}</button></th><th class="r" data-l="Total"><button class="sortb" data-act="od-sort" data-v="total">Total${sortMark('total')}</button></th><th data-l="Payment"><button class="sortb" data-act="od-sort" data-v="pay">Payment${sortMark('pay')}</button></th><th data-l="Status"><button class="sortb" data-act="od-sort" data-v="status">Status${sortMark('status')}</button></th><th data-l="Made by"><button class="sortb" data-act="od-sort" data-v="by">Made by${sortMark('by')}</button></th><th></th></tr></thead><tbody>
-  ${list.map(o=>`<tr class="${o.status==='cancelled'?'cx':''}${isActive(o)?' heat':''}"${isActive(o)?` style="--h:${heatOf(o)}"`:''}><td><b class="num">${o.no}</b>${itemHist(o).length?` <button class="hicon" data-act="ord-hist" data-id="${o.id}" title="Items were added or changed after the order was made · tap to see when" aria-label="History of ${esc(o.no)}">🕘</button>`:''}${all?`<div class="small muted">${esc(outletOf(o).name)}</div>`:''}</td>
+  ${list.map(o=>`<tr class="${o.status==='cancelled'?'cx':''}${isActive(o)?' heat':''}"${isActive(o)?` style="--h:${heatOf(o)}"`:''}><td><b class="num">${o.no}</b>${itemHist(o).length||payLog(o).length?` <button class="hicon" data-act="ord-hist" data-id="${o.id}" title="Items or payment were changed after the order was made · tap to see when" aria-label="History of ${esc(o.no)}">🕘</button>`:''}${all?`<div class="small muted">${esc(outletOf(o).name)}</div>`:''}</td>
     <td>${esc(o.customer.name||'—')} ${o.status!=='cancelled'&&o.outletId===S.cur?`<button class="ltchip ${+o.lt?(+o.lt===2?'l2':''):'ltadd'}" data-act="ord-lt" data-id="${o.id}" title="Tap to change: Off › ${esc(ltName(o,1))} › ${esc(ltName(o,2))} › Off">${+o.lt?esc(ltName(o)):'+ '+esc(ltName(o,1))}</button>`:ltChip(o)} ${isNewCust(o)?'<span class="chip c">New</span>':''}<div class="small muted num">${esc(o.customer.phone)}</div></td>
     <td>${TYPES[o.type]}${o.table?' · T'+esc(o.table):o.queue&&o.type==='dine'&&!o.table?' · <span class="chip qtag">Queue</span>':''}${o.source==='online'?' <span class="chip t">online</span>':''}${+o.guests?`<div class="small muted num">👥 ${+o.guests} person${+o.guests>1?'s':''}</div>`:''}${o.bookAt?`<div><span class="chip bkchip">Booked · ${esc(advWhen(o.bookAt))}</span></div>`:''}${o.zomatoId?`<div class="small muted num">ID ${esc(o.zomatoId)}</div>`:''}</td>
     <td class="small"><span class="oits">${o.items.map(l=>`<span class="oit">${VEG_ICO}${l.qty}× ${esc(l.name)}${l.size?' '+sizeLabel(l.size):''}</span>`).join(' <span class="isep">|</span> ')}</span>${o.status!=='cancelled'&&o.outletId===S.cur?`<div><button class="btn sm addit" data-act="order-add" data-id="${o.id}">+ Add items</button></div>`:''}</td>
     <td class="tm num">${fmtTime(o.ts)}${onHold(o)?`<div><span class="chip onhold">⏸ On hold</span></div><div class="small muted">${leftText(minsLeft(o))}</div>`:isActive(o)&&!bookLater(o)?`<div class="small" style="font-weight:700;color:${minsLeft(o)<0?'var(--bad)':'var(--warn)'}">${leftText(minsLeft(o))}</div><button class="btn sm wbtn" data-act="set-wait" data-id="${o.id}" title="Change waiting time">⏱ ${waitOf(o)} min</button>`:''}</td><td class="r num"><b>${rs(o.total)}</b>${o.subtotal>o.total?`<div class="small" style="color:var(--ok)">−${rs(o.subtotal-o.total)}</div>`:''}</td>
-    <td class="pay">${o.status==='cancelled'?esc(payName(o)):o.paid?`<div class="small">${esc(payName(o))}</div><span class="chip ready">Done</span>${o.pay.utr?`<div class="small muted num">UTR ${esc(fmtUtr(o.pay.utr))}</div>`:''}`:`${o.pay.mode==='due'?'<div class="small">On account</div>':partPaid(o)?`<div class="small">${esc(payName(o))} paid</div>`:''}<span class="chip r">${partPaid(o)?rs(balanceOf(o))+' left':'Baki'}</span> <button class="btn sm" data-act="collect-open" data-id="${o.id}">Collect</button>`}</td>
+    <td class="pay">${o.status==='cancelled'?esc(payName(o)):o.paid?`<div class="small">${esc(payName(o))}</div><span class="chip ready">Done</span>${canPayEdit(o)?` <button class="btn sm pmchg" data-act="pay-edit" data-id="${o.id}" title="Change how this order was paid">✎ Change</button>`:''}${o.pay.utr?`<div class="small muted num">UTR ${esc(fmtUtr(o.pay.utr))}</div>`:''}${payChgNote(o)?`<div class="small muted">${esc(payChgNote(o))}</div>`:''}`:`${o.pay.mode==='due'?'<div class="small">On account</div>':partPaid(o)?`<div class="small">${esc(payName(o))} paid</div>`:''}<span class="chip r">${partPaid(o)?rs(balanceOf(o))+' left':'Baki'}</span> <button class="btn sm" data-act="collect-open" data-id="${o.id}">Collect</button>`}</td>
     <td class="st"><span class="chip ${o.status}">${statusName(o.status,o.type)}</span>${o.status==='cancelled'&&cancelNote(o)?`<div class="small muted">${esc(cancelNote(o))}</div>`:''}</td>
     <td class="small">${o.source==='online'?'Customer site':esc(o.by||'—')}</td>
     <td style="white-space:nowrap">${onHold(o)?`<button class="btn sm ok" data-act="ord-hold" data-id="${o.id}" data-v="off" title="Start the timer again and show it in the kitchen">▶ Release order</button> `:!o.paid&&o.status!=='cancelled'&&isActive(o)&&!bookLater(o)&&o.outletId===S.cur?`<button class="btn sm" data-act="ord-hold" data-id="${o.id}" data-v="on" title="Baki order: stop its timer and hide it from the kitchen">⏸ Hold order</button> `:''}${`<button class="btn sm" data-act="bill" data-id="${o.id}">Bill</button> ${o.status==='cancelled'?`<button class="btn sm bad" data-act="del" data-id="${o.id}">Delete</button>`:`<button class="btn sm bad" data-act="cancel" data-id="${o.id}">Cancel</button>`}`}</td></tr>`).join('')||`<tr><td colspan="10" class="empty">No orders on ${fmtDate(day)}${all?'':' at '+esc(cur().name)}.</td></tr>`}
@@ -6159,6 +6200,7 @@ document.addEventListener('click',e=>{
     case 'pc-apply':P.code=(document.getElementById('pc-code').value||'').trim().toUpperCase();render();break;
     case 'pos-qr':openQr(false);break;
     case 'collect-open':openCollect(find(el.dataset.id));break;
+    case 'pay-edit':openPayEdit(find(el.dataset.id));break;
     case 'pay-detail':openModeDetail(el.dataset.v);break;
     case 'collect':{const o=find(el.dataset.id);if(o.paid){closeModal();render();break}
       const cu=el.dataset.v==='upi'&&U.colSp&&U.colSp.id===o.id?utrClean(U.colSp.utr):'';if(utrBad(cu)){toast(utrBad(cu));break}
