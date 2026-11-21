@@ -41,12 +41,15 @@ test('invoice for GST added on top shows tax over the net amount and the round o
 
 test('invoice lists each part of a split payment and the UPI reference', () => {
   const h = invoicePage({ ...o, pay: { mode: 'split', splits: [{ mode: 'cash', amt: 100 }, { mode: 'upi', amt: 61 }], utr: '123456789012' } }, { name: 'Main' }, opts);
-  assert.match(h, /Paid via Cash ₹100 \+ UPI ₹61 · UPI ref 123456789012/);
+  assert.match(h, /Payment mode \(Paid via Cash\)<\/span><span>₹100.00/);
+  assert.match(h, /Payment mode \(Paid via UPI · UPI ref 123456789012\)<\/span><span>₹61.00/);
+  assert.doesNotMatch(h, /Not Paid/);
 });
 
 test('invoice for a part paid order shows what is paid and the balance', () => {
   const h = invoicePage({ ...o, paid: false, pay: { mode: 'split', splits: [{ mode: 'cash', amt: 100 }] } }, { name: 'Main' }, opts);
-  assert.match(h, /Paid so far: Cash ₹100 · Balance due ₹61/);
+  assert.match(h, /Payment mode \(Paid via Cash\)<\/span><span>₹100.00/);
+  assert.match(h, /Payment mode \(Not Paid\)<\/span><span>₹61.00/);
 });
 
 test('dine-in invoice shows the table and the number of persons', () => {
@@ -63,3 +66,14 @@ test('merged table invoice groups items by table', () => {
   assert.ok(h.indexOf('>T2<') < h.indexOf('>T1<'));
   assert.doesNotMatch(invoicePage(o, { name: 'Main' }, opts), /class="grp"/);
 });
+
+test('invoice shows the outlet address, and GSTIN and FSSAI only when the outlet has them', () => {
+  const h = invoicePage(o, { name: 'Main', legal: 'Cheesy Foods Pvt Ltd', area: 'G 9-10, Radhe Complex, Nadiad', fssai: '107240' }, opts);
+  assert.match(h, /G 9-10, Radhe Complex, Nadiad/);
+  assert.match(h, /FSSAI : 107240/);
+  assert.doesNotMatch(h, /GSTIN/);
+  assert.match(h, /Sub Total<\/span><span>₹161/);
+  const none = invoicePage(o, { name: 'Main' }, opts);
+  assert.doesNotMatch(none, /GSTIN|FSSAI/);
+});
+
