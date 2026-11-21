@@ -39,7 +39,7 @@ body.idle{cursor:none}
 /* only the slide that is leaving gets its own GPU layer: phones and TVs have little graphics memory, and when it
    runs out they skip drawing parts of the screen for a frame, which shows as flicker */
 .sl.on,.sl.out,.sl.pre{visibility:visible;backface-visibility:hidden}
-.sl.out{will-change:transform,opacity}
+.sl.out,.sl.in{will-change:transform,opacity}
 .sl.on{z-index:2}.sl.on.out{z-index:1}.sl.pre{z-index:0}
 .anton{font-family:Anton,Impact,sans-serif;font-weight:400;letter-spacing:.01em;text-transform:uppercase;line-height:.9}
 .script{font-family:Courgette,cursive}
@@ -59,7 +59,7 @@ body.idle{cursor:none}
 .ticker{position:absolute;left:0;right:0;bottom:0;height:88px;z-index:20;background:linear-gradient(180deg,#0f4a55,#072a31);color:#fff;overflow:hidden;display:flex;align-items:center;border-top:4px solid var(--gold);box-shadow:0 -10px 30px rgba(0,0,0,.3)}
 .ticker .tkl{position:relative;z-index:2;flex:none;height:100%;display:flex;align-items:center;gap:12px;padding:0 30px 0 26px;background:var(--red);font-family:Anton,Impact,sans-serif;font-size:42px;letter-spacing:.06em;text-transform:uppercase;line-height:1;clip-path:polygon(0 0,100% 0,calc(100% - 22px) 100%,0 100%);padding-right:44px}
 .ticker .tkl img{height:50px;width:auto}
-.ticker .tkw{flex:1;height:100%;overflow:hidden;display:flex;align-items:center;-webkit-mask:linear-gradient(90deg,transparent,#000 40px);mask:linear-gradient(90deg,transparent,#000 40px)}
+.ticker .tkw{flex:1;height:100%;overflow:hidden;display:flex;align-items:center}
 .ticker .tk{display:flex;white-space:nowrap;animation:tick var(--tkd,60s) linear infinite;will-change:transform;backface-visibility:hidden;font-size:42px;font-weight:700;line-height:1}
 .ticker .tk span{padding:0 34px;display:inline-flex;align-items:center;gap:14px}
 .ticker .tk span::after{content:"★";color:var(--gold);font-size:28px;margin-left:34px;opacity:.85}
@@ -162,8 +162,10 @@ body.idle{cursor:none}
 .s-ring .head .h1{font-size:108px;color:var(--gold)}
 .ringw{position:absolute;left:50%;top:572px;width:0;height:0;perspective:2200px}
 .ring{position:absolute;transform-style:preserve-3d;transition:transform 1.4s cubic-bezier(.65,0,.35,1)}
-.card{position:absolute;left:-260px;top:-290px;width:520px;height:590px;border-radius:34px;background:#fff;color:var(--ink);overflow:hidden;box-shadow:0 30px 60px rgba(0,0,0,.4);transition:filter .6s,opacity .6s;filter:brightness(.5)}
-.card.front{filter:none}
+.card{position:absolute;left:-260px;top:-290px;width:520px;height:590px;border-radius:34px;background:#fff;color:var(--ink);overflow:hidden;box-shadow:0 30px 60px rgba(0,0,0,.4);transition:opacity .6s}
+.card::after{content:"";position:absolute;inset:0;background:#000;opacity:.5;transition:opacity .6s;pointer-events:none}
+.card.front::after{opacity:0}
+
 .card .ph{height:390px;background:#f5ead3 center/cover}
 .card .ph.png{background-size:96%;background-repeat:no-repeat}
 .card .tx{padding:16px 30px}
@@ -248,7 +250,7 @@ body.idle{cursor:none}
 @keyframes knife{0%{opacity:1;left:21%;top:2%}8%{top:24%}20%{top:2%;left:21%}25%{left:39%}29%{top:24%}41%{top:2%;left:39%}46%{left:57%}50%{top:24%}62%{top:2%;left:57%}67%{left:75%}71%{top:24%}85%{top:2%;left:75%;opacity:1}100%{opacity:0;left:90%;top:-10%}}
 .steam{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity 1s}
 .steam.go{opacity:1}
-.steam i{position:absolute;bottom:50%;width:140px;height:360px;margin-left:-70px;border-radius:50%;background:radial-gradient(ellipse 40% 50% at 50% 55%,rgba(255,255,255,.8),rgba(255,255,255,.3) 55%,transparent 75%);filter:blur(14px);mix-blend-mode:screen;transform-origin:50% 100%;animation:steam 4.8s ease-out infinite;will-change:transform,opacity}
+.steam i{position:absolute;bottom:50%;width:140px;height:360px;margin-left:-70px;border-radius:50%;background:radial-gradient(ellipse 40% 50% at 50% 55%,rgba(255,255,255,.42),rgba(255,255,255,.16) 45%,rgba(255,255,255,.05) 65%,transparent 78%);transform-origin:50% 100%;animation:steam 4.8s ease-out infinite;will-change:transform,opacity}
 .steam i:nth-child(even){animation-name:steam2;animation-duration:5.6s}
 /* soft curls of steam rising off the hot food: they drift up, sway and spread out as they fade */
 @keyframes steam{0%{transform:translate(0,60px) scale(.45,.5) rotate(0);opacity:0}20%{opacity:.9}55%{transform:translate(-26px,-120px) scale(.9,1.1) rotate(-8deg);opacity:.5}100%{transform:translate(18px,-330px) scale(1.7,1.6) rotate(10deg);opacity:0}}
@@ -886,7 +888,7 @@ function playStep(el,t){if(!PL.eng||!window.Matter){if(window.Matter&&!PL.eng)pl
 
 /* ---------- 3D transitions between slides ---------- */
 // a gentle ease in and out, so a change starts and ends slowly with no sudden jump in the middle
-const E='cubic-bezier(.37,0,.63,1)';let DUR=5000,SHOW=15; // set from the owner's settings in rebuild()
+const E='cubic-bezier(.33,.0,.2,1)';let DUR=5000,SHOW=15; // set from the owner's settings in rebuild()
 const FX=[
  // cube turning left
  [[{transformOrigin:'100% 50%',transform:'translateX(0) rotateY(0)'},{transformOrigin:'100% 50%',transform:'translateX(-100%) rotateY(-90deg)'}],
@@ -909,9 +911,11 @@ const FXN={cube:FX[0],zoom:FX[1],roll:FX[2],door:FX[3],
  fade:[[{opacity:1},{opacity:1}],[{opacity:0},{opacity:1}]],
  // a swipe to the right brings back the slide before, moving the way the finger went
  slideBack:[[{transform:'translateX(0)'},{transform:'translateX(100%)'}],[{transform:'translateX(-100%)'},{transform:'translateX(0)'}]],
+ // a soft glide: the new slide drifts in from the right as it fades in over the old one
+ glide:[[{transform:'translate3d(0,0,0)',opacity:1},{transform:'translate3d(-6%,0,0)',opacity:.3}],[{transform:'translate3d(8%,0,0)',opacity:0},{transform:'translate3d(0,0,0)',opacity:1}]],
  pop:[[{transform:'scale(1)',opacity:1},{transform:'scale(.88)',opacity:.4}],[{transform:'scale(1.22)',opacity:0},{transform:'scale(1)',opacity:1}]]};
 function fxFor(next){const c=CFG(),w=(c.fxs||{})[next.grp||next.key]||c.fx||'mix';
-  if(w==='mix')return fxN%3===2?'curtain':FX[fxN%FX.length];
+  if(w==='mix')return fxN%3===2?'curtain':[FXN.glide,FXN.fade,FXN.glide,FXN.pop][fxN%4];
   return w==='curtain'||w==='none'?w:(FXN[w]||FX[0])}
 
 const deck=$('#deck'),bar=$('#bar'),dots=$('#dots');
@@ -968,7 +972,7 @@ function show(next,n,fxIn,opt={duration:DUR,easing:E,fill:'none'}){
   const el=next.el;el._s=null;el.getAnimations().forEach(a=>a.cancel());if(preEl&&preEl!==el)unprep();preEl=null;el.classList.remove('on','pre','out');void el.offsetWidth;el.classList.add('on');
   // clear what the last pass built so it plays again from the start
   el.querySelectorAll('.go,.fade,.front').forEach(x=>x.classList.remove('go','fade','front'));
-  if(fxIn)el.animate(fxIn,opt);if(next.enter)next.enter(el);
+  if(fxIn){el.classList.add('in');const a=el.animate(fxIn,opt);a.onfinish=a.oncancel=()=>el.classList.remove('in')}if(next.enter)next.enter(el);
   // videos on a slide that has gone stop, so the TV is only ever playing the ones on screen
   setTimeout(()=>{deck.querySelectorAll('.sl:not(.on) video').forEach(v=>v.pause());deck.querySelectorAll('.sl:not(.on) iframe.promo').forEach(f=>{if(f.src!=='about:blank')f.src='about:blank'})},(opt.duration||DUR)+300);
   // the ingredient shower waits until the change is under way, so it does not add work to its first frames
