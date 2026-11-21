@@ -1434,10 +1434,10 @@ html:has(body:not(.pubmode) .pos){scroll-padding-top:calc(env(safe-area-inset-to
 }
 /* New order: the item categories as a slim column of pictures (tablets and computers) */
 @media (min-width:761px){
-  .pos .menucol{grid-template-columns:92px minmax(0,1fr)}
+  .pos .menucol{grid-template-columns:84px minmax(0,1fr)}
   .pos .catrail{padding:6px 4px;gap:4px}
-  .pos .catrail button{display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 2px 8px;text-align:center;font-size:12.5px;line-height:1.15;position:relative;border-radius:12px}
-  .pos .catrail button .ci{font-style:normal;font-size:30px;line-height:1}
+  .pos .catrail button{display:flex;flex-direction:column;align-items:center;gap:2px;padding:7px 2px 6px;text-align:center;font-size:12.5px;line-height:1.15;position:relative;border-radius:12px}
+  .pos .catrail button .ci{font-style:normal;font-size:20px;line-height:1}
   .pos .catrail button .cn{position:absolute;top:4px;right:6px;font-size:10.5px;opacity:.7}
 }
 /* Dine-in waiting queue */
@@ -1450,6 +1450,17 @@ html:has(body:not(.pubmode) .pos){scroll-padding-top:calc(env(safe-area-inset-to
 .qlist small{display:block;color:var(--muted);font-size:13px;margin-top:2px}
 .qn{flex:none;min-width:40px;height:30px;border-radius:9px;display:grid;place-items:center;background:var(--plum,#6a4fc9);color:#fff;font-size:15px}
 .qpanel{margin-bottom:12px;border-color:var(--plum,#6a4fc9)}.qpanel .trow{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line)}
+/* Tables screen on tablets and computers: tables on the left (70%), waiting queue on the right (30%) */
+.qempty{display:none}
+@media (min-width:761px){
+  .tsplit{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,3fr);gap:16px;align-items:start}
+  .tright{position:sticky;top:calc(var(--toph,61px) + var(--navh,0px) + 12px);max-height:calc(100vh - var(--toph,61px) - var(--navh,0px) - 24px);overflow-y:auto}
+  .tright .qpanel{margin:0;padding:14px}
+  .tright .qempty{display:block}
+  .tright .qpanel .trow{flex-wrap:wrap}
+  .tright .qpanel .trow .btn{margin-left:auto}
+}
+@media (max-width:760px){.tsplit{display:flex;flex-direction:column}.tright{order:-1}}
 .qtag{color:var(--plum,#6a4fc9)}span.chip.qtag{background:var(--plum-soft,#ece8fb);color:var(--plum,#6a4fc9)}
 .chipedit{border-style:dashed!important;color:var(--teal-deep)!important;font-weight:700}
 .chipsed{display:flex;flex-direction:column;gap:12px}.chiplist{display:flex;flex-direction:column;gap:8px}
@@ -4370,9 +4381,9 @@ function tableState(t){
 // Table colours: red = eating, not paid · amber = paid for some items, more ordered and not paid ·
 // green = fully paid, still at the table · purple = booked
 const tableClass=run=>!run?'':run.paid?'paidt':partPaid(run)?'part':'busy';
-// No. of persons at a dine-in table (o.guests). Asked for every new dine-in order; a running table's count can change.
+// No. of persons at a dine-in table (o.guests). Optional on every screen; a running table's count can change.
 const gstTxt=o=>+o.guests?'👥 '+(+o.guests):'';
-const gstStep=(g,req)=>`<div class="gstep"><span class="lbl">No. of persons${req?' *':''}</span><div class="qty"><button data-act="pos-gst" data-v="-1" aria-label="One person less" ${g>0?'':'disabled'}>−</button><span class="num gstn">${g||'–'}</span><button data-act="pos-gst" data-v="1" aria-label="One person more">+</button></div><span class="gquick">${[2,3,4,6].map(n=>`<button data-act="pos-gst" data-set="${n}" aria-pressed="${g===n}" class="num">${n}</button>`).join('')}</span></div>`;
+const gstStep=(g,req)=>`<div class="gstep"><span class="lbl">No. of persons${req?' (optional)':''}</span><div class="qty"><button data-act="pos-gst" data-v="-1" aria-label="One person less" ${g>0?'':'disabled'}>−</button><span class="num gstn">${g||'–'}</span><button data-act="pos-gst" data-v="1" aria-label="One person more">+</button></div><span class="gquick">${[2,3,4,6].map(n=>`<button data-act="pos-gst" data-set="${n}" aria-pressed="${g===n}" class="num">${n}</button>`).join('')}</span></div>`;
 const bookWhen=h=>h&&h.at?new Date(h.at).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'}):'';
 function tablePicker(P){
   const n=+cur().tables||8;
@@ -4437,7 +4448,7 @@ const bookOk=(P,run)=>!run&&!P.table&&['takeaway','delivery','dine'].includes(P.
 const bookHint=ts=>{const bad=bookTimeBad(ts);return bad?`<span style="color:var(--bad)">${esc(bad)}</span>`:`${esc(advWhen(ts))} · kitchen at <b class="num">${fmtTime(ts-BOOK_LEAD*6e4)}</b>`};
 // a picture for each item category on the till (the owner's own categories get one by their name)
 function catIcon(k,nm){const s=(k+' '+(nm||'')).toLowerCase();
-  return [['combo','🎁'],['pizza','🍕'],['pocket','🥟'],['bread','🥖'],['fries|fry','🍟'],['dessert|cake|sweet|choco','🍫'],['dip|sauce','🥣'],['beverage|drink|cola|juice|soda','🥤'],['topping','🫑'],['burger','🍔'],['pasta','🍝'],['sandwich','🥪'],['salad','🥗'],['shake|coffee|tea','🥤']].find(([re])=>new RegExp(re).test(s))?.[1]||'🍽️'}
+  return [['combo','🎁'],['pizza','🍕'],['pocket','🥟'],['bread','🥖'],['fries|fry','🍟'],['dessert|cake|sweet|choco','🍫'],['dip|sauce','🥣'],['beverage|drink|cola|juice|soda','🥤'],['topping','🌶️'],['burger','🍔'],['pasta','🍝'],['sandwich','🥪'],['salad','🥗'],['shake|coffee|tea','🥤']].find(([re])=>new RegExp(re).test(s))?.[1]||'🍽️'}
 // Kitchen note chips on the till: each outlet keeps its own list; the owner or a manager edits it
 const NOTE_CHIPS0=['Extra crispy','Less spicy','Jain','Pack separately','Rush order'];
 const noteChips=()=>Array.isArray(cur().noteChips)?cur().noteChips:NOTE_CHIPS0;
@@ -4659,7 +4670,7 @@ function openHold(){
     <div class="mb holdsheet">
       <div class="small muted">Add ${cnt>1?'these '+cnt+' items':'this item'} (<span class="num">${rs(amt)}</span>) to a table. Running tables are first.</div>
       <div class="holdtables">${list.map(({t,run,hold})=>`<button data-act="hold-t" data-v="${t}" aria-pressed="${sel===t}" class="${run?tableClass(run):hold?'held':'free'}"><b>T${t}</b><span class="num">${run?(run.paid?'Paid '+rs(run.total):rs(balanceOf(run))+' due'):hold?esc((hold.name||'Booked').split(' ')[0].slice(0,10)):'Free'}</span>${run?`<small class="num">${gstTxt(run)?gstTxt(run)+' · ':''}${run.items.reduce((a,l)=>a+l.qty,0)} items · ${Math.max(1,Math.round((Date.now()-run.ts)/60000))} min</small>`:''}</button>`).join('')}</div>
-      ${!(sr)&&!P.addTo?`<div class="grp-h">No. of persons</div><div class="holdg">${[1,2,3,4,5,6,8,10].map(g=>`<button data-act="hold-g" data-v="${g}" aria-pressed="${+P.guests===g}" class="num">${g}</button>`).join('')}<div class="qty"><button data-act="hold-g" data-d="-1" aria-label="One less">−</button><span class="num">${+P.guests||'–'}</span><button data-act="hold-g" data-d="1" aria-label="One more">+</button></div></div>`:''}
+      ${!(sr)&&!P.addTo?`<div class="grp-h">No. of persons (optional)</div><div class="holdg">${[1,2,3,4,5,6,8,10].map(g=>`<button data-act="hold-g" data-v="${g}" aria-pressed="${+P.guests===g}" class="num">${g}</button>`).join('')}<div class="qty"><button data-act="hold-g" data-d="-1" aria-label="One less">−</button><span class="num">${+P.guests||'–'}</span><button data-act="hold-g" data-d="1" aria-label="One more">+</button></div></div>`:''}
       <div class="grp-h">These items are</div>
       <div class="holdpay"><button data-act="hold-p" data-v="0" aria-pressed="${!paid}"><b>Pending</b><span>Added to the table's bill, paid when the table settles</span></button><button data-act="hold-p" data-v="1" aria-pressed="${paid}"><b>Paid now</b><span>${sr&&!sr.paid&&balanceOf(sr)>0?'Bills the table\'s whole balance'+(pm?' by '+esc(pm):''):pm?'Bill now by '+esc(pm):'Bill now, then pick how they pay'}</span></button></div>
       ${!P.addTo?(()=>{const full=!freeTables().length,qn=queued().length;return `<div class="qbox${full?' full':''}"><div><b>${full?'All tables are busy':'No table yet?'}</b><span>${full?'Add this order to the waiting queue. When a table is released you will be asked to seat it.':'Add it to the waiting queue and give it a table later.'}${qn?` · ${qn} already waiting`:''}</span></div><button class="btn${full?' pri':''}" data-act="hold-q">Add to queue${qn?' as Q'+(qn+1):''}</button></div>`})():''}
@@ -4668,11 +4679,9 @@ function openHold(){
       if(act==='hold-t'){sel=el.dataset.v;draw();return true}
       if(act==='hold-p'){paid=el.dataset.v==='1';draw();return true}
       if(act==='hold-g'){P.guests=el.dataset.d?Math.min(50,Math.max(0,(+P.guests||0)+ +el.dataset.d)):+el.dataset.v;draw();return true}
-      if(act==='hold-q'&&!(+P.guests>0)){toast('Pick the number of persons');return true}
       if(act==='hold-q'){P.type='dine';P.table='';P.addTo=null;P.queue=true;closeModal();if(paid)posBill('bill');else posGo('save');return true}
       if(act!=='hold-go')return false;
       if(!sel)return true;
-      if(!tableState(sel).run&&!(+P.guests>0)){toast('Pick the number of persons');return true}
       const {run}=tableState(sel);P.type='dine';P.table=sel;P.addTo=run?run.id:null;
       if(run){P.phone=run.customer.phone||P.phone;P.name=run.customer.name||P.name}
       closeModal();if(paid)posBill('bill');else posGo('save');return true}});
@@ -4693,7 +4702,6 @@ function posGo(kind){
     if(needPhone()&&P.phone.length!==10){toast('Enter the customer mobile number');document.getElementById('pos-ph')?.focus();return}
     if(P.type==='zomato'&&!P.zid.trim()){toast('Enter the Zomato order ID');document.getElementById('pos-zid')?.focus();return}
     if(P.type==='delivery'&&!P.address.trim()){toast('Add the delivery address');return}
-    if(P.type==='dine'&&!(+P.guests>0)){toast('Enter the number of persons');document.querySelector('.gstep')?.scrollIntoView({block:'center'});return}
     if(P.type==='dine'&&!P.table&&!P.queue&&!(P.book&&bookOk(P,run))){openHold();return} // the table is picked in the Hold popup (or the order joins the queue)
     if(P.book&&bookOk(P,run)){const bad=bookTimeBad(bookTs(P.bdate,P.btime));if(bad){toast(bad);document.getElementById('pos-btime')?.focus();return}}
   }
@@ -4716,7 +4724,8 @@ function posGo(kind){
   let o,round=1;
   if(run){
     o=run;
-    if(P.cart.length)keepPaidParts(o); // a paid table ordering more: keep what it paid, the rest is due
+    const was=amended&&canAmend(o)?paidSoFar(o):0;
+    if(P.cart.length||(was&&o.type!=='zomato'))keepPaidParts(o); // a paid table ordering more: keep what it paid, the rest is due
     if(amended&&canAmend(o))applyAmend(o,P);
     if(P.cart.length){round=Math.max(1,...o.items.map(l=>l.round||1))+1;const at=Date.now(),by=su?.name||'';P.cart.forEach(l=>o.items.push({...l,round,at,by}));
       o.log=[...(o.log||[]),...P.cart.map(l=>({act:'add',at,by,round,name:lineName(l),qty:l.qty}))];
@@ -4728,6 +4737,7 @@ function posGo(kind){
     if(custChg(P,o)){const nm=P.name.trim()||o.customer.name||'',ph=P.phone.length===10?P.phone:o.customer.phone||'';o.customer={...o.customer,name:nm,phone:ph};if(ph.length===10)ensureCust(ph,nm)}
     recalcOrder(o);
     if(P.code&&!(o.discounts||[]).some(d=>d.name==='Code '+P.code.toUpperCase()))o.extra.code='';
+    if(was){const back=settleAmend(o,was);if(back)setTimeout(()=>toast('Bill went down: give back '+rs(back)),400)}
   }else{
     const b=computeBill(P.cart,null,{code:P.code,coins:P.useCoins&&P.type!=='zomato'?coinsOf(P.phone):0,phone:P.phone});
     o=commitOrder(newOrder({outletId:S.cur,type:P.type,table:P.type==='dine'?P.table:'',address:P.type==='delivery'?P.address:'',customer:{name:P.name.trim(),phone:P.phone},...(P.type==='dine'?{guests:+P.guests||0}:{}),items:P.cart.map(l=>({...l})),note:(P.note||'').trim(),
@@ -5062,12 +5072,14 @@ function vTables(){
     return `<div class="tcw"><button data-act="tbl-pick" data-v="${t}" class="${run?tableClass(run):hold?'held':''}"><b>T${t}${fn?` <span class="tfn">${esc(fn.slice(0,12))}</span>`:''}</b>${run?`<small class="num">${esc(run.no)} · ${run.items.reduce((a,l)=>a+l.qty,0)} items</small>${gstTxt(run)?`<small class="tgst num">${+run.guests} person${+run.guests>1?'s':''}</small>`:''}<small>${run.paid?'Paid, at table':partPaid(run)?rs(balanceOf(run))+' left':'Eating · '+rs(balanceOf(run))+' due'}</small>`:hold?`<small>Booked · ${esc((hold.name||'').split(' ')[0].slice(0,10))}</small>`:'<small>Free</small>'}</button>${run&&run.paid?`<button class="trel" data-act="tbl-rel" data-v="${t}" title="Paid · release T${t}" aria-label="Release T${t} (paid)"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg></button>`:''}</div>`};
   const runs=[...Array(n)].map((_,i)=>String(i+1)).map(t=>({t,run:tableState(t).run})).filter(x=>x.run);
   return `<div class="ph1"><h2>Tables</h2><span class="small muted num">${runs.length} of ${n} table${n===1?'':'s'} in use</span></div>
+  <div class="tsplit"><div class="tleft">
   <div class="tlegend"><span><i style="background:var(--bad)"></i>Not paid</span><span><i style="background:var(--warn)"></i>Part paid</span><span><i style="background:var(--ok)"></i>Paid</span><span><i style="background:var(--plum,#6a4fc9)"></i>Booked</span></div>
-  ${(()=>{const q=queued(),fr=freeTables().length;return q.length?`<div class="card panel qpanel"><div class="row" style="justify-content:space-between"><h3 style="margin:0">Waiting queue · ${q.length}</h3><span class="small muted">${fr?fr+' table'+(fr>1?'s':'')+' free':'No table free'}</span></div>
-    ${q.map((o,i)=>`<div class="trow"><b class="qn">Q${i+1}</b><span class="grow small"><b class="num">${esc(o.no)}</b> · ${esc(o.customer.name||'Guest')}${gstTxt(o)?' · <span class="num">'+gstTxt(o)+'</span>':''} · ${o.items.reduce((a,l)=>a+l.qty,0)} items · <span class="num">${rs(o.total)}</span> · waiting ${Math.max(1,Math.round((Date.now()-o.queue.at)/60000))} min${o.status==='ready'?' · <b style="color:var(--ok)">food ready</b>':''}</span><button class="btn sm pri" data-act="q-seat" data-id="${o.id}" ${fr?'':'disabled'}>Assign table</button></div>`).join('')}</div>`:''})()}
   <div class="tables tgrid">${[...Array(n)].map((_,i)=>card(String(i+1))).join('')}</div>
   <div class="small muted" style="margin-top:10px">Tap a table to add items to it (or start its order). Double-tap it to see all of today's orders on that table. Past orders of a table are on the Orders screen.</div>
-  ${runs.length?`<div class="card panel trun"><h3 style="margin:0">Tables in use</h3>${runs.map(({t,run})=>`<div class="trow"><b class="num">T${esc(t)}</b><span class="grow small"><b class="num">${esc(run.no)}</b> · ${esc(run.customer.name||'Walk-in guest')}${gstTxt(run)?' · <span class="num">'+gstTxt(run)+'</span>':''} · <span class="num">${rs(run.total)}</span> · ${run.paid?'<span style="color:var(--ok)">paid</span>':partPaid(run)?rs(balanceOf(run))+' left':'<span style="color:var(--bad)">baki</span>'}</span><button class="btn sm" data-act="tbl-move" data-v="${esc(t)}">⇄ Move or merge</button><button class="btn sm" data-act="tbl-free" data-v="${esc(t)}">Release table</button></div>`).join('')}</div>`:''}`;
+  ${runs.length?`<div class="card panel trun"><h3 style="margin:0">Tables in use</h3>${runs.map(({t,run})=>`<div class="trow"><b class="num">T${esc(t)}</b><span class="grow small"><b class="num">${esc(run.no)}</b> · ${esc(run.customer.name||'Walk-in guest')}${gstTxt(run)?' · <span class="num">'+gstTxt(run)+'</span>':''} · <span class="num">${rs(run.total)}</span> · ${run.paid?'<span style="color:var(--ok)">paid</span>':partPaid(run)?rs(balanceOf(run))+' left':'<span style="color:var(--bad)">baki</span>'}</span><button class="btn sm" data-act="tbl-move" data-v="${esc(t)}">⇄ Move or merge</button><button class="btn sm" data-act="tbl-free" data-v="${esc(t)}">Release table</button></div>`).join('')}</div>`:''}  </div><aside class="tright">
+  ${(()=>{const q=queued(),fr=freeTables().length;return q.length?`<div class="card panel qpanel"><div class="row" style="justify-content:space-between"><h3 style="margin:0">Waiting queue · ${q.length}</h3><span class="small muted">${fr?fr+' table'+(fr>1?'s':'')+' free':'No table free'}</span></div>
+    ${q.map((o,i)=>`<div class="trow"><b class="qn">Q${i+1}</b><span class="grow small"><b class="num">${esc(o.no)}</b> · ${esc(o.customer.name||'Guest')}${gstTxt(o)?' · <span class="num">'+gstTxt(o)+'</span>':''} · ${o.items.reduce((a,l)=>a+l.qty,0)} items · <span class="num">${rs(o.total)}</span> · waiting ${Math.max(1,Math.round((Date.now()-o.queue.at)/60000))} min${o.status==='ready'?' · <b style="color:var(--ok)">food ready</b>':''}</span><button class="btn sm pri" data-act="q-seat" data-id="${o.id}" ${fr?'':'disabled'}>Assign table</button></div>`).join('')}</div>`:`<div class="card panel qpanel qempty"><div class="row" style="justify-content:space-between"><h3 style="margin:0">Waiting queue · 0</h3><span class="small muted">${fr?fr+' table'+(fr>1?'s':'')+' free':'No table free'}</span></div><div class="small muted">No one is waiting. When all tables are busy, put guests in the queue from New order and they show here.</div></div>`})()}
+  </aside></div>`;
 }
 // Release a table as free by hand, e.g. the guests left before the order was closed. The order is kept
 // as it is (if it is not paid it stays on Orders as baki); only the table stops showing it.
@@ -5261,7 +5273,21 @@ function addPopHtml(){
 // Amending an order from Orders: the items already on a baki order can be changed (quantity) or removed
 // in the add-items popup, as well as new items added. The changes wait in U.pos.exq ({line index: new qty})
 // until Save / Pay, so closing the popup drops them. Orders with a payment on them can only get new items.
-const canAmend=o=>!!o&&!o.paid&&(!o.pay||o.pay.mode==='pending')&&!paidSoFar(o)&&!o.walletUsed&&o.status!=='cancelled';
+// Items already on an order can be changed or removed while adding more: by anyone while nothing is paid,
+// and by the owner, a manager or a cashier on paid Takeaway, Dine-in and Zomato orders too (not wallet orders)
+const AMEND_ROLES=['owner','oowner','manager','cashier'];
+const canAmend=o=>!!o&&o.status!=='cancelled'&&!o.walletUsed&&((!o.paid&&(!o.pay||o.pay.mode==='pending')&&!paidSoFar(o))||(['takeaway','dine','zomato'].includes(o.type)&&AMEND_ROLES.includes(staff()?.role)));
+// After a paid order's items change: Zomato stays paid through Zomato; otherwise what was paid is kept as
+// fixed parts, anything more is due, and if the bill went down the extra paid is trimmed (to give back)
+function settleAmend(o,was){
+  if(!was||o.type==='zomato')return 0;
+  const t=r2(o.total-(o.walletUsed||0)),sp=paySplits(o);if(!sp)return 0;
+  let over=r2(splitSum(sp)-t);if(over<0)return 0; // more to pay: the balance stays due
+  const back=over;
+  for(let k=sp.length-1;k>=0&&over>0;k--){const cut=Math.min(sp[k].amt,over);sp[k].amt=r2(sp[k].amt-cut);over=r2(over-cut)}
+  const left=sp.filter(x=>x.amt>0);
+  if(left.length===1){const {splits,...rest}=o.pay;o.pay={...rest,mode:left[0].mode}}else o.pay.splits=left;
+  o.paid=true;return back}
 const exQty=(P,i,l)=>P.exq&&P.exq[i]!=null?+P.exq[i]:l.qty;
 const runItems=(P,run)=>run?run.items.map((l,i)=>({...l,qty:exQty(P,i,l)})).filter(l=>l.qty>0):[];
 const exChanged=(P,run)=>!!run&&run.items.some((l,i)=>exQty(P,i,l)!==l.qty);
