@@ -48,3 +48,10 @@ test('invoice for a part paid order shows what is paid and the balance', () => {
   const h = invoicePage({ ...o, paid: false, pay: { mode: 'split', splits: [{ mode: 'cash', amt: 100 }] } }, { name: 'Main' }, opts);
   assert.match(h, /Paid so far: Cash ₹100 · Balance due ₹61/);
 });
+
+test('dine-in invoice shows the table and the number of persons', () => {
+  const h = invoicePage({ ...o, type: 'dine', table: '5', guests: 4 }, { name: 'Main' }, opts);
+  assert.match(h, /Table No.<\/div><div class="v">5/);
+  assert.match(h, /No. of Persons<\/div><div class="v">4/);
+  assert.doesNotMatch(invoicePage(o, { name: 'Main' }, opts), /No. of Persons/);
+});
