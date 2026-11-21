@@ -77,3 +77,13 @@ test('invoice shows the outlet address, and GSTIN and FSSAI only when the outlet
   assert.doesNotMatch(none, /GSTIN|FSSAI/);
 });
 
+
+test('bill layout: hidden parts, own address and mobile, title and footer', () => {
+  const out = { name: 'Main', legal: 'Cheesy Pizza', area: 'Old address', phone: '111', fssai: '107240', bill: { hide: { token: true, biller: true, fssai: true, logo: true }, address: 'Shop 4, College Road, Nadiad', phone: '98989 05689', invTitle: 'BILL', footer: 'Line one\nLine two' } };
+  const h = invoicePage(o, out, opts);
+  assert.match(h, /Shop 4, College Road, Nadiad/);
+  assert.match(h, /98989 05689/);
+  assert.doesNotMatch(h, /Old address|Token No\.|Biller Name|FSSAI|logo-badge/);
+  assert.match(h, /<div class="tt">BILL<\/div>/);
+  assert.match(h, /Line one<br>Line two/);
+});
